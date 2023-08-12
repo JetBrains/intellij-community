@@ -22,7 +22,6 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.NlsContexts.DialogMessage;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtil;
@@ -297,6 +296,6 @@ public final class ExecutionUtil {
   }
 
   public static @NotNull Icon getIndicator(final @Nullable Icon base, int emptyIconWidth, int emptyIconHeight, Color color) {
-    return new LayeredIcon(base, new IndicatorIcon(base, emptyIconWidth, emptyIconHeight, color));
+    return LayeredIcon.layeredIcon(new Icon[]{base, new IndicatorIcon(base, emptyIconWidth, emptyIconHeight, color)});
   }
 }

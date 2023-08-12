@@ -43,7 +43,7 @@ import java.util.*;
 
 import static com.intellij.debugger.memory.action.DebuggerTreeAction.getObjectReference;
 
-public class RetainedSizeDialog extends DialogWrapper {
+public final class RetainedSizeDialog extends DialogWrapper {
   private static final Icon HELD_OBJECTS_MARK_ICON = AllIcons.Nodes.Locked;
   public static final Color HELD_OBJECTS_BACKGROUND_COLOR;
 
@@ -246,7 +246,7 @@ public class RetainedSizeDialog extends DialogWrapper {
       if (presentation != null && icon != PlatformDebuggerImplIcons.PinToTop.UnpinnedItem) {
         mySkipNotification = true;
         node.applyPresentation(
-          myCachedIcons.computeIfAbsent(icon, nodeIcon -> new LayeredIcon(nodeIcon, HELD_OBJECTS_MARK_ICON)),
+          myCachedIcons.computeIfAbsent(icon, nodeIcon -> LayeredIcon.layeredIcon(new Icon[]{nodeIcon, HELD_OBJECTS_MARK_ICON})),
           presentation,
           !node.isLeaf()
         );

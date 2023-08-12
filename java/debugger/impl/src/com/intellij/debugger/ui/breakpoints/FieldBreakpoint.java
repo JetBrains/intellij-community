@@ -47,7 +47,7 @@ import org.jetbrains.java.debugger.breakpoints.properties.JavaFieldBreakpointPro
 
 import javax.swing.*;
 
-public class FieldBreakpoint extends BreakpointWithHighlighter<JavaFieldBreakpointProperties> {
+public final class FieldBreakpoint extends BreakpointWithHighlighter<JavaFieldBreakpointProperties> {
   private static final Logger LOG = Logger.getInstance(FieldBreakpoint.class);
   private boolean myIsStatic;
 
@@ -85,8 +85,8 @@ public class FieldBreakpoint extends BreakpointWithHighlighter<JavaFieldBreakpoi
 
   @Override
   protected Icon getVerifiedWarningsIcon(boolean isMuted) {
-    return new LayeredIcon(isMuted ? AllIcons.Debugger.Db_muted_field_breakpoint : AllIcons.Debugger.Db_field_breakpoint,
-                           AllIcons.General.WarningDecorator);
+    return LayeredIcon.layeredIcon(new Icon[]{isMuted ? AllIcons.Debugger.Db_muted_field_breakpoint : AllIcons.Debugger.Db_field_breakpoint,
+                               AllIcons.General.WarningDecorator});
   }
 
   @Override

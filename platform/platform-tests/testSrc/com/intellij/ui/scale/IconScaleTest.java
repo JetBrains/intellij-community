@@ -88,7 +88,7 @@ public class IconScaleTest extends BareTestFixtureTestCase {
     //
     // 3. LayeredIcon
     //
-    test(new LayeredIcon(createIcon()), UserScaleContext.create(context));
+    test(LayeredIcon.layeredIcon(new Icon[]{createIcon()}), UserScaleContext.create(context));
 
     //
     // 4. RowIcon

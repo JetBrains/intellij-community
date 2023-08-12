@@ -4,7 +4,10 @@ package com.intellij.codeInsight.documentation.render
 import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.icons.AllIcons
 import com.intellij.ide.HelpTooltip
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.editor.CustomFoldRegion
@@ -185,7 +188,7 @@ internal class DocRenderItemImpl(override val editor: Editor,
       }
 
     init {
-      this.icon = LayeredIcon(icon)
+      this.icon = LayeredIcon.layeredIcon(arrayOf(icon))
       isIconVisible = iconVisible
     }
 

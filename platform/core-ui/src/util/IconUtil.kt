@@ -177,12 +177,12 @@ object IconUtil {
       icon = patcher.patchIcon(icon, file, flags and Iconable.ICON_FLAG_READ_STATUS.inv(), project)
     }
     if (file.`is`(VFileProperty.SYMLINK)) {
-      icon = LayeredIcon(icon, PlatformIcons.SYMLINK_ICON)
+      icon = LayeredIcon.layeredIcon(arrayOf(icon, PlatformIcons.SYMLINK_ICON))
     }
     if (BitUtil.isSet(flags, Iconable.ICON_FLAG_READ_STATUS) &&
         Registry.`is`("ide.locked.icon.enabled", false) &&
         (!file.isWritable || !WritingAccessProvider.isPotentiallyWritable(file, project))) {
-      icon = LayeredIcon(icon, PlatformIcons.LOCKED_ICON)
+      icon = LayeredIcon.layeredIcon(arrayOf(icon, PlatformIcons.LOCKED_ICON))
     }
     LastComputedIconCache.put(file, icon, flags)
     return icon

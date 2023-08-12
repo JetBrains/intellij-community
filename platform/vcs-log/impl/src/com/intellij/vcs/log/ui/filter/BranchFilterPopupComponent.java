@@ -23,6 +23,7 @@ import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
@@ -164,8 +165,8 @@ public final class BranchFilterPopupComponent
       BranchFilterAction(@NotNull Supplier<String> displayName, @NotNull Collection<? extends VcsRef> references) {
         super(new ArrayList<>(ContainerUtil.map2LinkedSet(references, ref -> ref.getName())), displayName, true);
         myReferences = references;
-        myIcon = new LayeredIcon(AllIcons.Nodes.Favorite, EmptyIcon.ICON_16);
-        myHoveredIcon = new LayeredIcon(AllIcons.Nodes.Favorite, AllIcons.Nodes.NotFavoriteOnHover);
+        myIcon = LayeredIcon.layeredIcon(new Icon[]{AllIcons.Nodes.Favorite, EmptyIcon.ICON_16});
+        myHoveredIcon = LayeredIcon.layeredIcon(new Icon[]{AllIcons.Nodes.Favorite, AllIcons.Nodes.NotFavoriteOnHover});
         getTemplatePresentation().setIcon(myIcon);
         getTemplatePresentation().setSelectedIcon(myHoveredIcon);
 

@@ -15,9 +15,9 @@ import javax.swing.Icon
 
 class BranchIconUtil {
   companion object {
-    private val INCOMING_LAYERED: Icon = LayeredIcon(AllIcons.Vcs.Branch, DvcsImplIcons.IncomingLayer)
-    private val INCOMING_OUTGOING_LAYERED: Icon = LayeredIcon(AllIcons.Vcs.Branch, DvcsImplIcons.IncomingOutgoingLayer)
-    private val OUTGOING_LAYERED: Icon = LayeredIcon(AllIcons.Vcs.Branch, DvcsImplIcons.OutgoingLayer)
+    private val INCOMING_LAYERED = LayeredIcon.layeredIcon { arrayOf(AllIcons.Vcs.Branch, DvcsImplIcons.IncomingLayer) }
+    private val INCOMING_OUTGOING_LAYERED = LayeredIcon.layeredIcon { arrayOf(AllIcons.Vcs.Branch, DvcsImplIcons.IncomingOutgoingLayer) }
+    private val OUTGOING_LAYERED = LayeredIcon.layeredIcon { arrayOf(AllIcons.Vcs.Branch, DvcsImplIcons.OutgoingLayer) }
 
     fun getBranchIcon(repository: GitRepository): Icon {
       if (repository.state != Repository.State.NORMAL) {

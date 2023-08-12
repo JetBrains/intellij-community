@@ -54,6 +54,8 @@ open class LayeredIcon : JBCachingScalableIcon<LayeredIcon>, DarkIconProvider, C
     scaledIcons = null
   }
 
+  constructor() : this(layerCount = 0)
+
   constructor(vararg icons: Icon) {
     val layerCount = icons.size
 
@@ -96,7 +98,10 @@ open class LayeredIcon : JBCachingScalableIcon<LayeredIcon>, DarkIconProvider, C
     val GEAR_WITH_DROPDOWN: Icon = LayeredIcon(Supplier { arrayOf(AllIcons.General.GearPlain, AllIcons.General.Dropdown) })
 
     @JvmStatic
-    fun layeredIcon(icons: Supplier<Array<Icon>>): Icon = LayeredIcon(icons)
+    fun layeredIcon(icons: Supplier<Array<Icon>>): LayeredIcon = LayeredIcon(icons)
+
+    @JvmStatic
+    fun layeredIcon(icons: Array<Icon>): LayeredIcon = LayeredIcon(*icons)
 
     @JvmStatic
     fun create(backgroundIcon: Icon?, foregroundIcon: Icon?): Icon {

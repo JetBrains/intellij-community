@@ -90,10 +90,10 @@ public final class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
         }
       }
       if (fieldDescriptor.getField().isFinal()) {
-        nodeIcon = new LayeredIcon(nodeIcon, IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.FinalMark));
+        nodeIcon = LayeredIcon.layeredIcon(new Icon[]{nodeIcon, IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.FinalMark)});
       }
       if (fieldDescriptor.isStatic()) {
-        nodeIcon = new LayeredIcon(nodeIcon, IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.StaticMark));
+        nodeIcon = LayeredIcon.layeredIcon(new Icon[]{nodeIcon, IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.StaticMark)});
       }
     }
     else if (valueDescriptor instanceof ThrownExceptionValueDescriptorImpl) {

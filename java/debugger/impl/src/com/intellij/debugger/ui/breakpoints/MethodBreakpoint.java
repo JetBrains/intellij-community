@@ -69,7 +69,7 @@ import java.util.function.BiConsumer;
 
 public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakpointProperties> implements MethodBreakpointBase {
   private static final Logger LOG = Logger.getInstance(MethodBreakpoint.class);
-  @Nullable protected JVMName mySignature;
+  protected @Nullable JVMName mySignature;
   protected boolean myIsStatic;
 
   public static final @NonNls Key<MethodBreakpoint> CATEGORY = BreakpointCategory.lookup("method_breakpoints");
@@ -83,8 +83,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
   }
 
   @Override
-  @NotNull
-  public Key<MethodBreakpoint> getCategory() {
+  public @NotNull Key<MethodBreakpoint> getCategory() {
     return CATEGORY;
   }
 
@@ -391,10 +390,9 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
   }
 
   @Override
-  @NotNull
-  protected Icon getVerifiedWarningsIcon(boolean isMuted) {
-    return new LayeredIcon(isMuted ? AllIcons.Debugger.Db_muted_method_breakpoint : AllIcons.Debugger.Db_method_breakpoint,
-                           AllIcons.General.WarningDecorator);
+  protected @NotNull Icon getVerifiedWarningsIcon(boolean isMuted) {
+    return LayeredIcon.layeredIcon(new Icon[]{isMuted ? AllIcons.Debugger.Db_muted_method_breakpoint : AllIcons.Debugger.Db_method_breakpoint,
+                               AllIcons.General.WarningDecorator});
   }
 
   @Override
@@ -427,7 +425,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
     return super.evaluateCondition(context, event);
   }
 
-  public boolean matchesEvent(@NotNull final LocatableEvent event, final DebugProcessImpl process) {
+  public boolean matchesEvent(final @NotNull LocatableEvent event, final DebugProcessImpl process) {
     if (isEmulated()) {
       return true;
     }
@@ -438,8 +436,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
     return isMethodMatch(method, process);
   }
 
-  @Nullable
-  public static MethodBreakpoint create(@NotNull Project project, XBreakpoint xBreakpoint) {
+  public static @Nullable MethodBreakpoint create(@NotNull Project project, XBreakpoint xBreakpoint) {
     final MethodBreakpoint breakpoint = new MethodBreakpoint(project, xBreakpoint);
     return (MethodBreakpoint)breakpoint.init();
   }
@@ -452,8 +449,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
   /**
    * finds FQ method's class name and method's signature
    */
-  @Nullable
-  private static MethodDescriptor getMethodDescriptor(@NotNull final Project project, @NotNull final SourcePosition sourcePosition) {
+  private static @Nullable MethodDescriptor getMethodDescriptor(final @NotNull Project project, final @NotNull SourcePosition sourcePosition) {
     Document document = PsiDocumentManager.getInstance(project).getDocument(sourcePosition.getFile());
     if (document == null) {
       return null;
@@ -493,8 +489,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
     return descriptor;
   }
 
-  @Nullable
-  static <T extends EventRequest> T findRequest(@NotNull DebugProcessImpl debugProcess, Class<T> requestClass, Requestor requestor) {
+  static @Nullable <T extends EventRequest> T findRequest(@NotNull DebugProcessImpl debugProcess, Class<T> requestClass, Requestor requestor) {
     return StreamEx.of(debugProcess.getRequestsManager().findRequests(requestor)).select(requestClass).findFirst().orElse(null);
   }
 
@@ -540,8 +535,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
     return StreamEx.empty();
   }
 
-  @Nullable
-  protected String getMethodName() {
+  protected @Nullable String getMethodName() {
     return getProperties().myMethodName;
   }
 
