@@ -37,7 +37,8 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.diagnostic.telemetry.helpers.computeWithSpan
 import com.intellij.platform.diagnostic.telemetry.helpers.runWithSpan
-import com.intellij.util.*
+import com.intellij.util.SlowOperations
+import com.intellij.util.TimeoutUtil
 import com.intellij.util.containers.*
 import com.intellij.util.ui.EDT
 import io.opentelemetry.api.trace.Span
@@ -63,7 +64,7 @@ import kotlin.time.Duration.Companion.minutes
 private val LOG = logger<ActionUpdater>()
 
 @JvmField
-val SUPPRESS_SUBMENU_IMPL: Key<Boolean> = Key.create("SUPPRESS_SUBMENU_IMPL")
+internal val SUPPRESS_SUBMENU_IMPL: Key<Boolean> = Key.create("SUPPRESS_SUBMENU_IMPL")
 private const val NESTED_WA_REASON_PREFIX = "nested write-action requested by "
 private const val OLD_EDT_MSG_SUFFIX = ". Revise AnAction.getActionUpdateThread property"
 
@@ -232,6 +233,7 @@ internal class ActionUpdater @JvmOverloads constructor(
     if (PopupMenuPreloader.isToSkipComputeOnEDT(place)) {
       throw ComputeOnEDTSkipped()
     }
+    @Suppress("removal", "DEPRECATION")
     if (preCacheSlowDataKeys && updateThread == ActionUpdateThread.OLD_EDT) {
       ApplicationManagerEx.getApplicationEx().tryRunReadAction {
         ensureSlowDataKeysPreCached(action, operationName)
@@ -242,16 +244,13 @@ internal class ActionUpdater @JvmOverloads constructor(
 
   /** @noinspection AssignmentToStaticFieldFromInstanceMethod
    */
-  private fun <T> computeOnEdt(action: Any,
-                               operationName: String,
-                               call: Supplier<out T>,
-                               noRulesInEDT: Boolean): T {
+  private fun <T> computeOnEdt(action: Any, operationName: String, call: () -> T, noRulesInEDT: Boolean): T {
     currentEDTPerformMillis = 0L
     currentEDTWaitMillis = currentEDTPerformMillis
     val progress = ProgressIndicatorProvider.getGlobalProgressIndicator()!!
-    val edtTracesRef = AtomicReference<List<Throwable>>()
+    val edtTraceListRef = AtomicReference<List<Throwable>>()
     val start0 = System.nanoTime()
-    val supplier: Supplier<out T> = Supplier<T> {
+    val supplier: Supplier<out T> = Supplier {
       val start = System.nanoTime()
       edtCallsCount++
       edtWaitNanos += start - start0
@@ -268,7 +267,7 @@ internal class ActionUpdater @JvmOverloads constructor(
                 traceCookie = cookie
                 ourInEDTActionOperationStack = prevStack.prepend(operationName)
                 isNoRulesInEDTSection = noRulesInEDT
-                return@Computable call.get()
+                return@Computable call()
               }
             }
           }
@@ -277,7 +276,7 @@ internal class ActionUpdater @JvmOverloads constructor(
             ourInEDTActionOperationStack = prevStack
             if (traceCookie != null) {
               currentEDTPerformMillis = TimeoutUtil.getDurationMillis(traceCookie!!.startNanos)
-              edtTracesRef.set(traceCookie!!.traces)
+              edtTraceListRef.set(traceCookie!!.traces)
             }
           }
         }
@@ -294,9 +293,9 @@ internal class ActionUpdater @JvmOverloads constructor(
       if (currentEDTPerformMillis > 300) {
         val throwable: Throwable = PluginException.createByClass(
           elapsedReport(currentEDTPerformMillis, true, operationName) + OLD_EDT_MSG_SUFFIX, null, action.javaClass)
-        val edtTraces = edtTracesRef.get()
-        // do not report pauses without EDT traces (e.g. due to debugging)
-        if (edtTraces != null && !edtTraces.isEmpty() && edtTraces[0].stackTrace.size > 0) {
+        val edtTraces = edtTraceListRef.get()
+        // do not report pauses without EDT traces (e.g., due to debugging)
+        if (edtTraces != null && !edtTraces.isEmpty() && edtTraces[0].stackTrace.isNotEmpty()) {
           for (trace in edtTraces) {
             throwable.addSuppressed(trace)
           }
@@ -325,7 +324,7 @@ internal class ActionUpdater @JvmOverloads constructor(
 
   /**
    * @return actions from the given and nested non-popup groups that are visible after updating
-   * don't check progress.isCanceled (to obtain full list of actions)
+   * don't check progress.isCanceled (to obtain a full list of actions)
    */
   fun expandActionGroupFull(group: ActionGroup, hideDisabled: Boolean): List<AnAction> {
     try {
@@ -400,7 +399,7 @@ internal class ActionUpdater @JvmOverloads constructor(
     }
     val targetPromises = if (toolbarAction) ourToolbarPromises else ourPromises
     targetPromises.add(promise)
-    val computable = Computable<Computable<Void?>> {
+    val computable = Computable {
       indicator.checkCanceled()
       if (testDelayMillis > 0) {
         waitTheTestDelay()
@@ -516,6 +515,7 @@ internal class ActionUpdater @JvmOverloads constructor(
 
   private fun doExpandActionGroup(group: ActionGroup, hideDisabled: Boolean, strategy: UpdateStrategy): List<AnAction> {
     if (group is ActionGroupStub) {
+      @Suppress("SpellCheckingInspection")
       throw IllegalStateException("Trying to expand non-unstubbed group")
     }
     if (allowPartialExpand) {
@@ -528,12 +528,21 @@ internal class ActionUpdater @JvmOverloads constructor(
       // don't process invisible groups
       return emptyList()
     }
+
     val children = getGroupChildren(group, strategy)
-    val result = ContainerUtil.concat(children, Function<AnAction, Collection<AnAction>> { child: AnAction ->
-      expandGroupChild(child, hideDisabled, strategy)
-    })
+    val result = if (children.isEmpty()) {
+      emptyList()
+    }
+    else {
+      val result = ArrayList<AnAction>()
+      for (v in children) {
+        result.addAll(expandGroupChild(child = v, hideDisabledBase = hideDisabled, strategy = strategy))
+      }
+      result
+    }
+
     forcedUpdateThread = prevForceAsync
-    val actions = group.postProcessVisibleChildren(result, asUpdateSession(strategy))
+    val actions = group.postProcessVisibleChildren(/* visibleChildren = */ result, /* updateSession = */ asUpdateSession(strategy))
     for (action in actions) {
       if (action is InlineActionsHolder) {
         for (inlineAction in action.getInlineActions()) {
@@ -544,17 +553,24 @@ internal class ActionUpdater @JvmOverloads constructor(
     return actions
   }
 
-  private fun getGroupChildren(group: ActionGroup, strategy: UpdateStrategy): List<AnAction> = groupChildren.computeIfAbsent(group) {
-    val children = try { strategy.getChildren(group) }
-    catch (ignore: ComputeOnEDTSkipped) { emptyArray() }
-    val nullIndex = children.indexOf(null)
-    @Suppress("UNCHECKED_CAST")
-    if (nullIndex < 0) {
-      listOf(*children as Array<AnAction>)
-    }
-    else {
-      LOG.error("action is null: i=" + nullIndex + " group=" + group + " group id=" + ActionManager.getInstance().getId(group))
-      children.filterNotNull()
+  private fun getGroupChildren(group: ActionGroup, strategy: UpdateStrategy): List<AnAction> {
+    return groupChildren.computeIfAbsent(group) {
+      val children = try {
+        strategy.getChildren(group)
+      }
+      catch (ignore: ComputeOnEDTSkipped) {
+        emptyArray()
+      }
+
+      val nullIndex = (children as Array<*>).indexOf(null)
+      if (nullIndex < 0) {
+        children.asList()
+      }
+      else {
+        LOG.error("action is null: i=$nullIndex group=$group group id=${ActionManager.getInstance().getId(group)}")
+        @Suppress("UselessCallOnCollection")
+        children.filterNotNull()
+      }
     }
   }
 
@@ -573,20 +589,22 @@ internal class ActionUpdater @JvmOverloads constructor(
     else if (child !is ActionGroup) {
       return listOf(child)
     }
-    val group = child
     val isPopup = presentation.isPopupGroup
     val canBePerformed = presentation.isPerformGroup
     var performOnly = isPopup && canBePerformed && presentation.getClientProperty(SUPPRESS_SUBMENU) == true
     val alwaysVisible = child is AlwaysVisibleActionGroup || presentation.getClientProperty(ALWAYS_VISIBLE) == true
     val skipChecks = performOnly || alwaysVisible
     val hideDisabled = isPopup && !skipChecks && hideDisabledBase
-    val hideEmpty = isPopup && !skipChecks && (presentation.isHideGroupIfEmpty || group.hideIfNoVisibleChildren())
-    val disableEmpty = isPopup && !skipChecks && presentation.isDisableGroupIfEmpty && group.disableIfNoVisibleChildren()
+    @Suppress("removal", "DEPRECATION")
+    val hideEmpty = isPopup && !skipChecks && (presentation.isHideGroupIfEmpty || child.hideIfNoVisibleChildren())
+
+    @Suppress("removal", "DEPRECATION")
+    val disableEmpty = isPopup && !skipChecks && presentation.isDisableGroupIfEmpty && child.disableIfNoVisibleChildren()
     val checkChildren = isPopup && !skipChecks && (canBePerformed || hideDisabled || hideEmpty || disableEmpty)
     var hasEnabled = false
     var hasVisible = false
     if (checkChildren) {
-      val childrenIterable = iterateGroupChildren(group, strategy)
+      val childrenIterable = iterateGroupChildren(child, strategy)
       for (action in childrenIterable.take(100)) {
         if (action is Separator) continue
         val p = update(action, strategy)
@@ -604,17 +622,17 @@ internal class ActionUpdater @JvmOverloads constructor(
         presentation.setEnabled(false)
       }
     }
-    val hideDisabledChildren = (hideDisabledBase || group is CompactActionGroup) && !alwaysVisible
+    val hideDisabledChildren = (hideDisabledBase || child is CompactActionGroup) && !alwaysVisible
     return when {
       !hasEnabled && hideDisabled || !hasVisible && hideEmpty -> when {
-        canBePerformed -> listOf(group)
+        canBePerformed -> listOf(child)
         else -> emptyList()
       }
       isPopup -> when {
-        hideDisabledChildren && group !is CompactActionGroup -> listOf(ActionGroupUtil.forceHideDisabledChildren(group))
-        else -> listOf(group)
+        hideDisabledChildren && child !is CompactActionGroup -> listOf(ActionGroupUtil.forceHideDisabledChildren(child))
+        else -> listOf(child)
       }
-      else -> doExpandActionGroup(group, hideDisabledChildren, strategy)
+      else -> doExpandActionGroup(child, hideDisabledChildren, strategy)
     }
   }
 
@@ -646,7 +664,7 @@ internal class ActionUpdater @JvmOverloads constructor(
 
   private fun iterateGroupChildren(group: ActionGroup, strategy: UpdateStrategy): JBIterable<AnAction> {
     val isDumb = project != null && getInstance(project).isDumb
-    return JBTreeTraverser.from<AnAction> { o: AnAction ->
+    return JBTreeTraverser.from { o: AnAction ->
       if (o === group) return@from null
       if (isDumb && !o.isDumbAware()) return@from null
       if (o !is ActionGroup) {
@@ -664,7 +682,7 @@ internal class ActionUpdater @JvmOverloads constructor(
       .withRoots(getGroupChildren(group, strategy))
       .unique()
       .traverse(TreeTraversal.LEAVES_DFS)
-      .filter(Condition<AnAction> { o: AnAction -> !isDumb || o.isDumbAware() })
+      .filter(Condition { !isDumb || it.isDumbAware() })
   }
 
   private fun update(action: AnAction, strategy: UpdateStrategy): Presentation? {
@@ -732,7 +750,7 @@ internal class ActionUpdater @JvmOverloads constructor(
 private enum class Op { Update, GetChildren }
 
 private data class UpdateStrategy(@JvmField val update: (AnAction) -> Presentation?,
-                                  @JvmField val getChildren: (ActionGroup) -> Array<AnAction?>)
+                                  @JvmField val getChildren: (ActionGroup) -> Array<AnAction>)
 
 private class ComputeOnEDTSkipped : ProcessCanceledException() {
   override fun fillInStackTrace(): Throwable = this
@@ -793,13 +811,14 @@ catch (ex: Throwable) {
   false
 }
 
-private fun doGetChildren(group: ActionGroup, e: AnActionEvent?): Array<AnAction?> = try {
-  if (ApplicationManager.getApplication().isDisposed()) AnAction.EMPTY_ARRAY
-  else group.getChildren(e)
-}
-catch (ex: Throwable) {
-  handleException(group, Op.GetChildren, e, ex)
-  AnAction.EMPTY_ARRAY
+private fun doGetChildren(group: ActionGroup, e: AnActionEvent?): Array<AnAction> {
+  try {
+    return if (ApplicationManager.getApplication().isDisposed()) AnAction.EMPTY_ARRAY else group.getChildren(e)
+  }
+  catch (ex: Throwable) {
+    handleException(group, Op.GetChildren, e, ex)
+    return AnAction.EMPTY_ARRAY
+  }
 }
 
 private val ourDebugPromisesMap = CollectionFactory.createConcurrentWeakIdentityMap<AsyncPromise<*>, String>()
