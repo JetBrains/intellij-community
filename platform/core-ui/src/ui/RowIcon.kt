@@ -1,195 +1,167 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ui;
+package com.intellij.ui
 
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.ui.icons.IconReplacer;
-import com.intellij.ui.icons.IconWithToolTip;
-import com.intellij.ui.scale.ScaleType;
-import com.intellij.util.IconUtil;
-import com.intellij.util.ui.JBCachingScalableIcon;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.util.IconLoader.getDarkIcon
+import com.intellij.ui.icons.IconReplacer
+import com.intellij.ui.icons.IconWithToolTip
+import com.intellij.ui.scale.ScaleType
+import com.intellij.ui.scale.UserScaleContext
+import com.intellij.util.IconUtil.copy
+import com.intellij.util.IconUtil.scale
+import com.intellij.util.ui.JBCachingScalableIcon
+import java.awt.Component
+import java.awt.Graphics
+import javax.swing.Icon
+import kotlin.math.ceil
+import kotlin.math.max
 
-import javax.swing.*;
-import java.awt.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+open class RowIcon : JBCachingScalableIcon<RowIcon>, com.intellij.ui.icons.RowIcon, IconWithToolTip {
+  private val alignment: com.intellij.ui.icons.RowIcon.Alignment
+  private var width = 0
+  private var height = 0
+  private val icons: Array<Icon?>
+  private var myScaledIcons: Array<Icon?>?
 
-public class RowIcon extends JBCachingScalableIcon<RowIcon> implements com.intellij.ui.icons.RowIcon, IconWithToolTip {
-  private final Alignment myAlignment;
-
-  private int myWidth;
-  private int myHeight;
-
-  private final Icon @NotNull [] myIcons;
-  private Icon[] myScaledIcons;
-
-  {
-    getScaleContext().addUpdateListener(() -> updateSize());
-    setAutoUpdateScaleContext(false);
+  init {
+    scaleContext.addUpdateListener(UserScaleContext.UpdateListener { updateSize() })
+    setAutoUpdateScaleContext(false)
   }
 
-  public RowIcon(int iconCount/*, int orientation*/) {
-    this(iconCount, Alignment.TOP);
-  }
-
-  public RowIcon(int iconCount, Alignment alignment) {
-    myAlignment = alignment;
-    myIcons = new Icon[iconCount];
-  }
-
-  public RowIcon(Icon... icons) {
-    this(icons.length);
-    System.arraycopy(icons, 0, myIcons, 0, icons.length);
-    updateSize();
-  }
-
-  protected RowIcon(@NotNull RowIcon icon) {
-    super(icon);
-
-    myAlignment = icon.myAlignment;
-    myWidth = icon.myWidth;
-    myHeight = icon.myHeight;
-    myIcons = icon.myIcons.clone();
-    myScaledIcons = null;
-  }
-
-  @Override
-  public @NotNull RowIcon replaceBy(@NotNull IconReplacer replacer) {
-    RowIcon icon = new RowIcon(this);
-    for (int i = 0; i < icon.myIcons.length; i++) {
-      icon.myIcons[i] = icon.myIcons[i] != null ? replacer.replaceIcon(icon.myIcons[i]) : null;
-    }
-    return icon;
-  }
-
-  @Override
-  public @NotNull RowIcon copy() {
-    return new RowIcon(this);
-  }
-
-  @Override
-  public @NotNull com.intellij.ui.icons.RowIcon deepCopy() {
-    RowIcon icon = new RowIcon(this);
-    for (int i = 0; i < icon.myIcons.length; i++) {
-      icon.myIcons[i] = icon.myIcons[i] == null ? null : IconUtil.copy(icon.myIcons[i], null);
-    }
-    return icon;
-  }
-
-  private Icon @NotNull [] myScaledIcons() {
-    if (myScaledIcons != null) {
-      return myScaledIcons;
-    }
-    return myScaledIcons = scaleIcons(myIcons, getScale());
-  }
-
-  static Icon @NotNull [] scaleIcons(Icon @NotNull [] icons, float scale) {
-    if (scale == 1f) return icons;
-    Icon[] scaledIcons = new Icon[icons.length];
-    for (int i = 0; i < icons.length; i++) {
-      if (icons[i] != null) {
-        scaledIcons[i] = IconUtil.scale(icons[i], null, scale);
+  companion object {
+    fun scaleIcons(icons: Array<Icon?>, scale: Float): Array<Icon?> {
+      if (scale == 1f) return icons
+      val scaledIcons = arrayOfNulls<Icon>(icons.size)
+      for (i in icons.indices) {
+        if (icons[i] != null) {
+          scaledIcons[i] = scale(icons[i]!!, null, scale)
+        }
       }
+      return scaledIcons
     }
-    return scaledIcons;
   }
 
-  @Override
-  public @NotNull List<Icon> getAllIcons() {
-    List<Icon> list = new ArrayList<>(myIcons.length);
-    for (Icon element : myIcons) {
-      if (element != null) {
-        list.add(element);
+  @JvmOverloads
+  constructor(iconCount: Int, alignment: com.intellij.ui.icons.RowIcon.Alignment = com.intellij.ui.icons.RowIcon.Alignment.TOP) {
+    this.alignment = alignment
+    icons = arrayOfNulls(iconCount)
+    myScaledIcons = null
+  }
+
+  constructor(vararg icons: Icon?) : this(icons.size) {
+    System.arraycopy(icons, 0, this.icons, 0, icons.size)
+    updateSize()
+  }
+
+  protected constructor(icon: RowIcon) : super(icon) {
+    alignment = icon.alignment
+    width = icon.width
+    height = icon.height
+    icons = icon.icons.clone()
+    myScaledIcons = null
+  }
+
+  override fun replaceBy(replacer: IconReplacer): RowIcon {
+    val result = RowIcon(icon = this)
+    for ((i, icon) in result.icons.withIndex()) {
+      result.icons[i] = icon?.let { replacer.replaceIcon(it) }
+    }
+    return result
+  }
+
+  override fun copy() = RowIcon(icon = this)
+
+  override fun deepCopy(): com.intellij.ui.icons.RowIcon {
+    val result = RowIcon(this)
+    for ((i, icon) in result.icons.withIndex()) {
+      result.icons[i] = icon?.let { copy(it, null) }
+    }
+    return result
+  }
+
+  private fun myScaledIcons(): Array<Icon?> {
+    myScaledIcons?.let {
+      return it
+    }
+    return scaleIcons(icons, scale).also { myScaledIcons = it }
+  }
+
+  override fun getAllIcons() = icons.filterNotNull()
+
+  override fun hashCode() = icons.firstOrNull()?.hashCode() ?: 0
+
+  override fun equals(other: Any?): Boolean {
+    return other === this || other is RowIcon && other.icons.contentEquals(icons)
+  }
+
+  override fun getIconCount(): Int {
+    return icons.size
+  }
+
+  override fun setIcon(icon: Icon, layer: Int) {
+    icons[layer] = icon
+    myScaledIcons = null
+    updateSize()
+  }
+
+  override fun getIcon(index: Int): Icon? {
+    return icons[index]
+  }
+
+  override fun paintIcon(c: Component, g: Graphics, x: Int, y: Int) {
+    scaleContext.update()
+    var _x = x
+    var _y: Int
+    for (icon in myScaledIcons()) {
+      if (icon == null) {
+        continue
       }
-    }
-    return list;
-  }
 
-  public int hashCode() {
-    return myIcons.length > 0 ? myIcons[0].hashCode() : 0;
-  }
-
-  public boolean equals(Object obj) {
-    return obj == this || (obj instanceof RowIcon && Arrays.equals(((RowIcon)obj).myIcons, myIcons));
-  }
-
-  @Override
-  public int getIconCount() {
-    return myIcons.length;
-  }
-
-  @Override
-  public void setIcon(Icon icon, int layer) {
-    myIcons[layer] = icon;
-    myScaledIcons = null;
-    updateSize();
-  }
-
-  @Override
-  public Icon getIcon(int index) {
-    return myIcons[index];
-  }
-
-  @Override
-  public void paintIcon(Component c, Graphics g, int x, int y) {
-    getScaleContext().update();
-    int _x = x;
-    int _y;
-    for (Icon icon : myScaledIcons()) {
-      if (icon == null) continue;
-      _y = switch (myAlignment) {
-        case TOP -> y;
-        case CENTER -> y + (myHeight - icon.getIconHeight()) / 2;
-        case BOTTOM -> y + (myHeight - icon.getIconHeight());
-      };
-      icon.paintIcon(c, g, _x, _y);
-      _x += icon.getIconWidth();
+      _y = when (alignment) {
+        com.intellij.ui.icons.RowIcon.Alignment.TOP -> y
+        com.intellij.ui.icons.RowIcon.Alignment.CENTER -> y + (height - icon.iconHeight) / 2
+        com.intellij.ui.icons.RowIcon.Alignment.BOTTOM -> y + (height - icon.iconHeight)
+      }
+      icon.paintIcon(c, g, _x, _y)
+      _x += icon.iconWidth
       //_y += icon.getIconHeight();
     }
   }
 
-  @Override
-  public int getIconWidth() {
-    getScaleContext().update();
-    return (int)Math.ceil(scaleVal(myWidth, ScaleType.OBJ_SCALE));
+  override fun getIconWidth(): Int {
+    scaleContext.update()
+    return ceil(scaleVal(width.toDouble(), ScaleType.OBJ_SCALE)).toInt()
   }
 
-  @Override
-  public int getIconHeight() {
-    getScaleContext().update();
-    return (int)Math.ceil(scaleVal(myHeight, ScaleType.OBJ_SCALE));
+  override fun getIconHeight(): Int {
+    scaleContext.update()
+    return ceil(scaleVal(height.toDouble(), ScaleType.OBJ_SCALE)).toInt()
   }
 
-  private void updateSize() {
-    int width = 0;
-    int height = 0;
-    for (Icon icon : myIcons) {
-      if (icon == null) continue;
-      width += icon.getIconWidth();
+  private fun updateSize() {
+    var width = 0
+    var height = 0
+    for (icon in icons) {
+      if (icon == null) {
+        continue
+      }
+
+      width += icon.iconWidth
       //height += icon.getIconHeight();
-      height = Math.max(height, icon.getIconHeight());
+      height = max(height.toDouble(), icon.iconHeight.toDouble()).toInt()
     }
-    myWidth = width;
-    myHeight = height;
+    this.width = width
+    this.height = height
   }
 
-  @Override
-  public @NotNull Icon getDarkIcon(boolean isDark) {
-    RowIcon newIcon = copy();
-    for (int i = 0; i < newIcon.myIcons.length; i++) {
-      newIcon.myIcons[i] = newIcon.myIcons[i] == null ? null : IconLoader.getDarkIcon(newIcon.myIcons[i], isDark);
+  override fun getDarkIcon(isDark: Boolean): Icon {
+    val newIcon = copy()
+    for ((i, icon) in newIcon.icons.withIndex()) {
+      newIcon.icons[i] = icon?.let { getDarkIcon(it, isDark) }
     }
-    return newIcon;
+    return newIcon
   }
 
-  @Override
-  public String toString() {
-    return "RowIcon(icons=" + Arrays.asList(myIcons) + ")";
-  }
+  override fun toString() = "RowIcon(icons=${icons.joinToString(separator = ", ")})"
 
-  @Override
-  public String getToolTip(boolean composite) {
-    return LayeredIconKt.combineIconTooltips(myIcons);
-  }
+  override fun getToolTip(composite: Boolean) = combineIconTooltips(icons)
 }
