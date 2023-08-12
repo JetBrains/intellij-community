@@ -3,6 +3,7 @@ package com.intellij.openapi.vfs.newvfs.persistent.namecache;
 
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.util.io.DataEnumeratorEx;
+import io.opentelemetry.api.metrics.BatchCallback;
 import io.opentelemetry.api.metrics.Meter;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -22,22 +23,20 @@ import static com.intellij.util.SystemProperties.getBooleanProperty;
 public final class MRUFileNameCache implements FileNameCache {
   private static final boolean TRACK_STATS = getBooleanProperty("vfs.name-cache.track-stats", true);
 
-  private static final AtomicInteger requestsCount = new AtomicInteger();
-  private static final AtomicInteger cacheMissesCount = new AtomicInteger();
-
-  static {
-    if (TRACK_STATS) {
-      setupReportingToOpenTelemetry();
-    }
-  }
-
+  //TODO RC: cache size is better be ctor parameter
   private static final int MRU_CACHE_SIZE = 1024 * 64;
 
-  private final NameWithId[] mruCache = new NameWithId[MRU_CACHE_SIZE];
+  private final CacheEntryNameWithId[] mruCache = new CacheEntryNameWithId[MRU_CACHE_SIZE];
 
   private final @NotNull DataEnumeratorEx<String> namesEnumerator;
 
   private final boolean checkFileNamesSanity;
+
+  //=========== monitoring: =======================================================
+  private final AtomicInteger requestsCount = new AtomicInteger();
+  private final AtomicInteger cacheMissesCount = new AtomicInteger();
+  private final @Nullable BatchCallback otelHandlerToClose;
+
 
   public MRUFileNameCache(@NotNull DataEnumeratorEx<String> namesEnumerator) {
     this(namesEnumerator, SLRUFileNameCache.isFileNameSanityCheckEnabledByDefault());
@@ -48,6 +47,10 @@ public final class MRUFileNameCache implements FileNameCache {
                           boolean checkFileNamesSanity) {
     this.namesEnumerator = namesEnumerator;
     this.checkFileNamesSanity = checkFileNamesSanity;
+
+    otelHandlerToClose = TRACK_STATS ?
+                         setupReportingToOpenTelemetry() :
+                         null;
   }
 
   @Override
@@ -73,11 +76,11 @@ public final class MRUFileNameCache implements FileNameCache {
   private void cacheData(int nameId,
                          @Nullable String name) {
     int mruCacheEntryIndex = nameId % MRU_CACHE_SIZE;
-    NameWithId entry = mruCache[mruCacheEntryIndex];
+    CacheEntryNameWithId entry = mruCache[mruCacheEntryIndex];
     if (entry != null && entry.nameId == nameId) {
       return;//already cached
     }
-    mruCache[mruCacheEntryIndex] = new NameWithId(nameId, name);
+    mruCache[mruCacheEntryIndex] = new CacheEntryNameWithId(nameId, name);
   }
 
   @Override
@@ -89,7 +92,7 @@ public final class MRUFileNameCache implements FileNameCache {
     }
 
     int mruCacheEntryIndex = nameId % MRU_CACHE_SIZE;
-    NameWithId entry = mruCache[mruCacheEntryIndex];
+    CacheEntryNameWithId entry = mruCache[mruCacheEntryIndex];
     if (entry != null && entry.nameId == nameId) {
       return entry.name;
     }
@@ -102,28 +105,35 @@ public final class MRUFileNameCache implements FileNameCache {
     if (name == null) {
       throw new IOException("VFS name enumerator corrupted: nameId(=" + nameId + ") is not found in enumerator (=null)");
     }
-    mruCache[mruCacheEntryIndex] = new NameWithId(nameId, name);
+    mruCache[mruCacheEntryIndex] = new CacheEntryNameWithId(nameId, name);
 
     return name;
   }
 
-  private static void setupReportingToOpenTelemetry() {
+  @Override
+  public void close() throws Exception {
+    if (otelHandlerToClose != null) {
+      otelHandlerToClose.close();
+    }
+  }
+
+  private BatchCallback setupReportingToOpenTelemetry() {
     final Meter meter = TelemetryManager.getInstance().getMeter(VFS);
 
     var queriesCounter = meter.counterBuilder("FileNameCache.queries").buildObserver();
     var totalMissesCounter = meter.counterBuilder("FileNameCache.totalMisses").buildObserver();
 
-    meter.batchCallback(() -> {
+    return meter.batchCallback(() -> {
       queriesCounter.record(requestsCount.longValue());
       totalMissesCounter.record(cacheMissesCount.longValue());
     }, queriesCounter, totalMissesCounter);
   }
 
-  private static class NameWithId {
+  private static class CacheEntryNameWithId {
     public final int nameId;
     public final String name;
 
-    private NameWithId(int nameId, String name) {
+    CacheEntryNameWithId(int nameId, String name) {
       this.nameId = nameId;
       this.name = name;
     }

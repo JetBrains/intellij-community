@@ -22,6 +22,7 @@ import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.events.ChildInfo;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.ByteBufferReader;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.ByteBufferWriter;
+import com.intellij.openapi.vfs.newvfs.persistent.namecache.FileNameCache;
 import com.intellij.openapi.vfs.newvfs.persistent.namecache.MRUFileNameCache;
 import com.intellij.openapi.vfs.newvfs.persistent.namecache.SLRUFileNameCache;
 import com.intellij.openapi.vfs.newvfs.persistent.intercept.ConnectionInterceptor;
@@ -164,7 +165,7 @@ public final class FSRecordsImpl {
   /** Keep stacktrace of {@link #dispose()} call -- for better diagnostics of unexpected dispose */
   private volatile Exception disposedStackTrace = null;
 
-  private final CopyOnWriteArraySet<Closeable> closeables = new CopyOnWriteArraySet<>();
+  private final CopyOnWriteArraySet<AutoCloseable> closeables = new CopyOnWriteArraySet<>();
 
   private static int nextMask(int value,
                               int bits,
@@ -311,12 +312,11 @@ public final class FSRecordsImpl {
     //RC: this cache is actually a replacement for CachingEnumerator inside PersistentStringEnumerator.
     //    This inside-cache is disabled in VFS, and re-implemented on top.
     if (USE_FILE_NAME_CACHE) {
-      if (USE_MRU_FILE_NAME_CACHE) {
-        this.fileNamesEnumerator = new MRUFileNameCache(connection.getNames());
-      }
-      else {
-        this.fileNamesEnumerator = new SLRUFileNameCache(connection.getNames());
-      }
+      FileNameCache cacheOverEnumerator = USE_MRU_FILE_NAME_CACHE ?
+                                          new MRUFileNameCache(connection.getNames()) :
+                                          new SLRUFileNameCache(connection.getNames());
+      closeables.add(cacheOverEnumerator);
+      this.fileNamesEnumerator = cacheOverEnumerator;
     }
     else {
       this.fileNamesEnumerator = connection.getNames();
@@ -333,22 +333,25 @@ public final class FSRecordsImpl {
       try {
         //ensure async scanning is finished -- until that records file is still in use,
         // which could cause e.g. problems with its deletion
-        invertedNameIndexLazy.get();
+        InvertedNameIndex invertedNameIndex = invertedNameIndexLazy.get();
+        //Clear index is not required, but help GC by releasing huge table faster
+        invertedNameIndex.clear();
       }
       catch (Throwable t) {
         LOG.warn("VFS: invertedNameIndex building is not terminated properly", t);
         stackTraceEx.addSuppressed(t);
       }
 
-      for (Closeable closeable : closeables) {
+      for (AutoCloseable toClose : closeables) {
         try {
-          closeable.close();
+          toClose.close();
         }
-        catch (IOException e) {
-          LOG.warn("Can't close " + closeable, e);
+        catch (Exception e) {
+          LOG.warn("Can't close " + toClose, e);
           stackTraceEx.addSuppressed(e);
         }
       }
+      
       try {
         PersistentFSConnector.disconnect(connection);
       }
@@ -356,8 +359,6 @@ public final class FSRecordsImpl {
         //handleError(e);
         stackTraceEx.addSuppressed(e);
       }
-
-      invertedNameIndexLazy.getValue().clear();
 
       disposedStackTrace = stackTraceEx;
     }

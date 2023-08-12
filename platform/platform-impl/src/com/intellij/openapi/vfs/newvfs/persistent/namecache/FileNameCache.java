@@ -13,7 +13,7 @@ import java.io.IOException;
  * MAYBE RC: Probably just drop the interface in favor of pure {@link DataEnumerator<String>}?
  */
 @ApiStatus.Internal
-public interface FileNameCache extends DataEnumeratorEx<@NotNull String> {
+public interface FileNameCache extends DataEnumeratorEx<@NotNull String>, AutoCloseable {
   @Override
   int tryEnumerate(@NotNull String value) throws IOException;
 
@@ -22,4 +22,7 @@ public interface FileNameCache extends DataEnumeratorEx<@NotNull String> {
 
   @Override
   @NotNull String valueOf(int nameId) throws IOException;
+
+  @Override
+  void close() throws Exception;
 }
