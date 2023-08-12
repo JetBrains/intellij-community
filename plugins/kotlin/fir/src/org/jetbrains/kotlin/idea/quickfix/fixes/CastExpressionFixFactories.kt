@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.quickfix.fixes
 
 import com.intellij.psi.PsiElement
@@ -25,7 +25,7 @@ import org.jetbrains.kotlin.types.Variance
 object CastExpressionFixFactories {
     class Input(val typePresentation: String, val typeSourceCode: String) : KotlinApplicatorInput
 
-    val applicator = applicator<PsiElement, Input> {
+    private val applicator = applicator<PsiElement, Input> {
         familyName(KotlinBundle.lazyMessage("fix.cast.expression.family"))
         actionName { psi, input -> KotlinBundle.message("fix.cast.expression.text", psi.text, input.typePresentation) }
         applyToWithEditorRequired { psi, input, project, editor ->

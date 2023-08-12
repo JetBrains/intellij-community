@@ -459,26 +459,26 @@ class CompactedVfsModel(
       var attributesRecordId: Int = 0
     ) {
       companion object {
-        const val NAME_ID_OFFSET = 0L
-        const val NAME_ID_BYTES = Int.SIZE_BYTES
+        private const val NAME_ID_OFFSET = 0L
+        private const val NAME_ID_BYTES = Int.SIZE_BYTES
 
-        const val PARENT_ID_OFFSET = NAME_ID_OFFSET + NAME_ID_BYTES
-        const val PARENT_ID_BYTES = Int.SIZE_BYTES
+        private const val PARENT_ID_OFFSET = NAME_ID_OFFSET + NAME_ID_BYTES
+        private const val PARENT_ID_BYTES = Int.SIZE_BYTES
 
-        const val LENGTH_OFFSET = PARENT_ID_OFFSET + PARENT_ID_BYTES
-        const val LENGTH_BYTES = Long.SIZE_BYTES
+        private const val LENGTH_OFFSET = PARENT_ID_OFFSET + PARENT_ID_BYTES
+        private const val LENGTH_BYTES = Long.SIZE_BYTES
 
-        const val TIMESTAMP_OFFSET = LENGTH_OFFSET + LENGTH_BYTES
-        const val TIMESTAMP_BYTES = Long.SIZE_BYTES
+        private const val TIMESTAMP_OFFSET = LENGTH_OFFSET + LENGTH_BYTES
+        private const val TIMESTAMP_BYTES = Long.SIZE_BYTES
 
-        const val FLAGS_OFFSET = TIMESTAMP_OFFSET + TIMESTAMP_BYTES
-        const val FLAGS_BYTES = Int.SIZE_BYTES
+        private const val FLAGS_OFFSET = TIMESTAMP_OFFSET + TIMESTAMP_BYTES
+        private const val FLAGS_BYTES = Int.SIZE_BYTES
 
-        const val CONTENT_RECORD_ID_OFFSET = FLAGS_OFFSET + FLAGS_BYTES
-        const val CONTENT_RECORD_ID_BYTES = Int.SIZE_BYTES
+        private const val CONTENT_RECORD_ID_OFFSET = FLAGS_OFFSET + FLAGS_BYTES
+        private const val CONTENT_RECORD_ID_BYTES = Int.SIZE_BYTES
 
-        const val ATTRIBUTES_RECORD_ID_OFFSET = CONTENT_RECORD_ID_OFFSET + CONTENT_RECORD_ID_BYTES
-        const val ATTRIBUTES_RECORD_ID_BYTES = Int.SIZE_BYTES
+        private const val ATTRIBUTES_RECORD_ID_OFFSET = CONTENT_RECORD_ID_OFFSET + CONTENT_RECORD_ID_BYTES
+        private const val ATTRIBUTES_RECORD_ID_BYTES = Int.SIZE_BYTES
 
         const val HEADER_SIZE_BYTES = ATTRIBUTES_RECORD_ID_OFFSET + ATTRIBUTES_RECORD_ID_BYTES // 36 bytes
       }

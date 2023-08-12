@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.eclipse.detect
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup
@@ -9,7 +9,7 @@ object EclipseProjectDetectorUsagesCollector : CounterUsagesCollector() {
 
   override fun getGroup() = GROUP
 
-  val GROUP = EventLogGroup("eclipse.projects.detector", 2)
+  private val GROUP = EventLogGroup("eclipse.projects.detector", 2)
 
   private val projectsDetected = GROUP.registerEvent("detected", EventFields.Int("projectsCount"))
   private val projectOpened = GROUP.registerEvent("opened", EventFields.Boolean("fromEmptyState"))

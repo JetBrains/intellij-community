@@ -23,7 +23,7 @@ class IdeaFrameUI(data: ComponentData) : UiComponent(data) {
     waitForSmartMode(timeout)
   }
 
-  fun waitForSmartMode(timeout: Duration = Duration.ofMinutes(1)) {
+  private fun waitForSmartMode(timeout: Duration = Duration.ofMinutes(1)) {
     driver.waitForSmartMode(project!!, timeout)
   }
 }

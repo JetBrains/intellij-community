@@ -44,9 +44,9 @@ abstract class BlockBasedFeedbackDialog<T : SystemDataJsonSerializable>(
   protected abstract val mySystemInfoData: T
   protected abstract val myShowFeedbackSystemInfoDialog: () -> Unit
 
-  protected val myJsonConverter = Json { prettyPrint = true }
+  private val myJsonConverter = Json { prettyPrint = true }
 
-  protected val mySystemInfoJsonName: String = "system_info"
+  private val mySystemInfoJsonName: String = "system_info"
 
   private val myNoEmailAgreementBlock: NoEmailAgreementBlock = NoEmailAgreementBlock(myProject) {
     myShowFeedbackSystemInfoDialog()

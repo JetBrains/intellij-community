@@ -25,7 +25,7 @@ class ChangedConfiguratorFiles {
         }
     }
 
-    fun getChangedFilesWithContent(): Map<PsiFile, String> {
+    private fun getChangedFilesWithContent(): Map<PsiFile, String> {
         return originalFileContents.filter { (f, originalContent) ->
             f.text != originalContent
         }

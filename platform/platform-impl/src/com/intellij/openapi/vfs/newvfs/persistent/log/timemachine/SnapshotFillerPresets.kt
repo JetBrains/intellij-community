@@ -42,7 +42,7 @@ object SnapshotFillerPresets {
     val flags = RulePropertyRelation(VfsModificationContract.flags, FillInVirtualFileSnapshot::flags)
     val contentRecordId = RulePropertyRelation(VfsModificationContract.contentRecordId, FillInVirtualFileSnapshot::contentRecordId)
     val attributeRecordId = RulePropertyRelation(VfsModificationContract.attributeRecordId, FillInVirtualFileSnapshot::attributesRecordId)
-    val recordAllocationExists = RulePropertyRelation(
+    private val recordAllocationExists = RulePropertyRelation(
       PropertyOverwriteRule(VfsOperationTagsMask(VfsOperationTag.REC_ALLOC)) { setValue ->
         if (this !is VfsOperation.RecordsOperation.AllocateRecord)
           throw AssertionError("operation $this does not allocate record")

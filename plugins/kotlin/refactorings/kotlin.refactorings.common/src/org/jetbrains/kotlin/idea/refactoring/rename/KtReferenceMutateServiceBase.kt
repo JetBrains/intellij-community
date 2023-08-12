@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.refactoring.rename
 
 import com.intellij.psi.PsiElement
@@ -180,7 +180,7 @@ abstract class KtReferenceMutateServiceBase : KtReferenceMutateService {
         return renameImplicitConventionalCall(newElementName)
     }
 
-    protected fun KtSimpleNameReference.renameTo(newElementName: String): KtExpression {
+    private fun KtSimpleNameReference.renameTo(newElementName: String): KtExpression {
         if (!canRename()) throw IncorrectOperationException()
 
         if (newElementName.unquoteKotlinIdentifier() == "") {
@@ -234,7 +234,7 @@ abstract class KtReferenceMutateServiceBase : KtReferenceMutateService {
         return expression
     }
 
-    protected fun KtDefaultAnnotationArgumentReference.renameTo(newElementName: String): KtValueArgument {
+    private fun KtDefaultAnnotationArgumentReference.renameTo(newElementName: String): KtValueArgument {
         val psiFactory = KtPsiFactory(expression.project)
         val newArgument = psiFactory.createArgument(
           expression.getArgumentExpression(),

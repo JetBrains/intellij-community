@@ -117,7 +117,7 @@ object Switcher : BaseSwitcherAction(null) {
       : Boolean
     val pinned // false - auto closeable on modifier key release, true - default popup
       : Boolean
-    val onKeyRelease: SwitcherKeyReleaseListener
+    private val onKeyRelease: SwitcherKeyReleaseListener
     val mySpeedSearch: SwitcherSpeedSearch?
     val myTitle: String
     private var myHint: JBPopup? = null
@@ -486,7 +486,7 @@ object Switcher : BaseSwitcherAction(null) {
     val selectedList: JBList<out SwitcherListItem>?
       get() = getSelectedList(files)
 
-    fun getSelectedList(preferable: JBList<out SwitcherListItem>?): JBList<out SwitcherListItem>? {
+    private fun getSelectedList(preferable: JBList<out SwitcherListItem>?): JBList<out SwitcherListItem>? {
       return if (files.hasFocus()) files else if (toolWindows.hasFocus()) toolWindows else preferable
     }
 
@@ -654,7 +654,7 @@ object Switcher : BaseSwitcherAction(null) {
     }
 
     companion object {
-      const val SWITCHER_ELEMENTS_LIMIT: Int = 30
+      private const val SWITCHER_ELEMENTS_LIMIT: Int = 30
       private fun collectFiles(project: Project, onlyEdited: Boolean): List<VirtualFile> {
         return if (onlyEdited) IdeDocumentHistory.getInstance(project).changedFiles else getRecentFiles(project)
       }

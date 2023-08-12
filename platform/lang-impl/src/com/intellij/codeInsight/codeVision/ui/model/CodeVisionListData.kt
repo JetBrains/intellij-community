@@ -1,3 +1,4 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.codeVision.ui.model
 
 import com.intellij.codeInsight.codeVision.CodeVisionAnchorKind
@@ -16,7 +17,7 @@ class CodeVisionListData(
   val projectModel: ProjectCodeVisionModel,
   val rangeCodeVisionModel: RangeCodeVisionModel,
   val inlay: Inlay<*>,
-  val anchoredLens: List<CodeVisionEntry>,
+  private val anchoredLens: List<CodeVisionEntry>,
   val anchor: CodeVisionAnchorKind
 ) {
   companion object {

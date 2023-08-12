@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.util
 
 import com.intellij.diff.util.DiffDrawUtil.*
@@ -17,11 +17,11 @@ class DiffLineMarkerRenderer internal constructor(
   val diffType: TextDiffType,
   val editorMode: PaintMode,
   val gutterMode: PaintMode,
-  val hideWithoutLineNumbers: Boolean,
+  private val hideWithoutLineNumbers: Boolean,
   val isEmptyRange: Boolean,
   val isFirstLine: Boolean,
   val isLastLine: Boolean,
-  val alignedSides: Boolean
+  private val alignedSides: Boolean
 ) : LineMarkerRendererEx {
 
   override fun paint(editor: Editor, g: Graphics, range: Rectangle) {

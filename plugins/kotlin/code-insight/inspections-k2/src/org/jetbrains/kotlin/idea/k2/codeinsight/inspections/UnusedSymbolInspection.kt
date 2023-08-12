@@ -142,7 +142,7 @@ internal class UnusedSymbolInspection : LocalInspectionTool(), UnfairLocalInspec
         toLightMethods().any { JavaHighlightUtil.isSerializationRelatedMethod(it, it.containingClass) }
 
 
-    fun PsiNamedElement.getClassNameForCompanionObject(): String? {
+    private fun PsiNamedElement.getClassNameForCompanionObject(): String? {
         return if (this is KtObjectDeclaration && this.isCompanion()) {
             getNonStrictParentOfType<KtClass>()?.name
         } else {

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.quickfix.expectactual
 
@@ -38,10 +38,10 @@ import org.jetbrains.kotlin.psi.psiUtil.hasActualModifier
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 sealed class CreateExpectedFix<D : KtNamedDeclaration>(
-    declaration: D,
-    targetExpectedClass: KtClassOrObject?,
-    val module: Module,
-    val generateIt: KtPsiFactory.(Project, TypeAccessibilityChecker, D) -> D?
+  declaration: D,
+  targetExpectedClass: KtClassOrObject?,
+  val module: Module,
+  private val generateIt: KtPsiFactory.(Project, TypeAccessibilityChecker, D) -> D?
 ) : KotlinQuickFixAction<D>(declaration) {
 
     override fun getFamilyName(): String = KotlinBundle.message("fix.create.expect.actual")

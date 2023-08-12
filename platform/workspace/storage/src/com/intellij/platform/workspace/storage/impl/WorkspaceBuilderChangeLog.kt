@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.impl
 
 import com.intellij.openapi.diagnostic.logger
@@ -36,7 +36,7 @@ class WorkspaceBuilderChangeLog {
    * This function adds replace event that represents changes in references between entities (without change of data)
    * Use [addReplaceDataEvent] to record changes in data inside the entity
    */
-  internal fun addReplaceReferencesEvent(
+  private fun addReplaceReferencesEvent(
     entityId: EntityId,
     originalParents: Map<ConnectionId, ParentEntityId>,
     addedChildren: List<Pair<ConnectionId, ChildEntityId>>,

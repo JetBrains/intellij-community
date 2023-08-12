@@ -13,7 +13,7 @@ import com.intellij.searchEverywhereMl.semantics.settings.SemanticSearchSettings
 
 private val LOG = logger<ServerSemanticActionsProvider>()
 
-class ServerSemanticActionsProvider(val model: GotoActionModel) : SemanticActionsProvider() {
+class ServerSemanticActionsProvider(private val model: GotoActionModel) : SemanticActionsProvider() {
   private val mapper = jacksonObjectMapper()
 
   private val URL_BASE = Registry.stringValue("search.everywhere.ml.semantic.actions.server.host")

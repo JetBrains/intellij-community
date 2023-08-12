@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.completion.contributors
 
@@ -76,7 +76,7 @@ internal open class FirCallableCompletionContributor(
     }
 
     context(KtAnalysisSession)
-    protected fun getOptions(
+    private fun getOptions(
         signature: KtCallableSignature<*>,
         noImportRequired: Boolean = false
     ): CallableInsertionOptions = CallableInsertionOptions(getImportStrategy(signature, noImportRequired), getInsertionStrategy(signature))
@@ -506,7 +506,7 @@ internal open class FirCallableCompletionContributor(
     }
 
     context(KtAnalysisSession)
-    protected fun createCallableWithMetadata(
+    private fun createCallableWithMetadata(
         signature: KtCallableSignature<*>,
         symbolOrigin: CompletionSymbolOrigin,
         options: CallableInsertionOptions = getOptions(signature),

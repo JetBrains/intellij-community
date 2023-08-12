@@ -172,7 +172,7 @@ abstract class CombinedDiffPreviewModel(protected val tree: ChangesTree,
     selected = newSelected
   }
 
-  internal fun iterateSelectedOrAllChanges(): Iterable<Wrapper> {
+  private fun iterateSelectedOrAllChanges(): Iterable<Wrapper> {
     return if (iterateSelectedChanges().none() && showAllChangesForEmptySelection()) iterateAllChanges() else iterateSelectedChanges()
   }
 

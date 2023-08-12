@@ -21,7 +21,7 @@ object KotlinPluginKindSwitcher {
         VMOptions.setOption(USE_K2_VM_OPTION_PREFIX, isK2Enabled.toString())
     }
 
-    const val USE_K2_VM_OPTION_NAME: String = "idea.kotlin.plugin.use.k2"
+    private const val USE_K2_VM_OPTION_NAME: String = "idea.kotlin.plugin.use.k2"
 
     private const val USE_K2_VM_OPTION_PREFIX: String = "-D${USE_K2_VM_OPTION_NAME}="
 }

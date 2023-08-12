@@ -57,6 +57,8 @@ abstract class AttachToProcessViewWithHosts(
     updateProcesses()
   }
 
+  // used externally
+  @Suppress("MemberVisibilityCanBePrivate")
   protected suspend fun updateHosts(): List<AttachHostItem> {
     val hosts = getHosts()
 

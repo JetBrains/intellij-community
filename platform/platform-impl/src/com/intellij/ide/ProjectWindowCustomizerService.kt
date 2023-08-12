@@ -61,7 +61,7 @@ internal enum class MainToolbarCustomizationType {
   DROPDOWN_WITH_ICON,
   JUST_DROPDOWN;
 
-  fun isLinearGradient() = this == LINEAR_GRAD_WITH_ICON
+  private fun isLinearGradient() = this == LINEAR_GRAD_WITH_ICON
   fun isCircularGradient() = this == CIRCULAR_GRADIENT_WITH_ICON
   fun isGradient() = isLinearGradient() || isCircularGradient()
   fun isShowIcon() = this != JUST_DROPDOWN

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.gradleTooling
 
 import org.gradle.api.Project
@@ -142,7 +142,7 @@ class PrepareKotlinIdeaImportTaskModelBuilder : AbstractModelBuilderService() {
      * Will calculate the build path from the previously accessible [BuildIdentifier.getName]:
      * Note, this calculation will not be correct for nested composite builds!
      */
-    internal val BuildIdentifier.buildPathCompat: String
+    private val BuildIdentifier.buildPathCompat: String
         get() = if (GradleVersion.current() >= GradleVersion.version("8.2")) buildPath
         else @Suppress("DEPRECATION") if (name.startsWith(":")) name else ":$name"
 }

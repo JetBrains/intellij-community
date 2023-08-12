@@ -1,3 +1,4 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.customize.transferSettings
 
 import com.intellij.ide.customize.transferSettings.controllers.TransferSettingsListener
@@ -24,7 +25,7 @@ class TransferSettingsFacade(private val project: Project?) {
   val status by lazy { JLabel("No yet status") }
   val progressBar by lazy { JProgressBar(0, 100) }
   val successOrFailureLabel by lazy { JLabel().apply { isVisible = false } }
-  val progressBase by lazy { TransferSettingsProgressIndicatorBase(progressBar, status, successOrFailureLabel) }
+  private val progressBase by lazy { TransferSettingsProgressIndicatorBase(progressBar, status, successOrFailureLabel) }
 
   val view by lazy { initView() }
 

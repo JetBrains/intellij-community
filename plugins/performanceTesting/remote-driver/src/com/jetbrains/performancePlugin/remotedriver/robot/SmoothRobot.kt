@@ -328,7 +328,7 @@ internal class SmoothRobot : Robot {
     basicRobot.pressModifiersWhileRunning(modifierMask, runnable)
   }
 
-  fun fastPressAndReleaseKey(keyCode: Int, vararg modifiers: Int) {
+  private fun fastPressAndReleaseKey(keyCode: Int, vararg modifiers: Int) {
     val unifiedModifiers = unify(*modifiers)
     val updatedModifiers = Modifiers.updateModifierWithKeyCode(keyCode, unifiedModifiers)
     fastPressModifiers(updatedModifiers)
@@ -346,7 +346,7 @@ internal class SmoothRobot : Robot {
     fastReleaseModifiers(unifiedModifiers)
   }
 
-  fun fastPressAndReleaseKeyWithoutModifiers(keyCode: Int) {
+  private fun fastPressAndReleaseKeyWithoutModifiers(keyCode: Int) {
     fastPressKey(keyCode)
     fastReleaseKey(keyCode)
   }
@@ -360,7 +360,7 @@ internal class SmoothRobot : Robot {
     fastTyping(string, delayBetweenShortcutAndTypingMs)
   }
 
-  fun fastTyping(string: String, delayBetweenShortcutAndTypingMs: Int = 0) {
+  private fun fastTyping(string: String, delayBetweenShortcutAndTypingMs: Int = 0) {
     val keyCodeArray: IntArray = string
       .map { KeyStrokeMap.keyStrokeFor(it)?.keyCode ?: throw Exception("Unable to get keystroke for char '$it'") }
       .toIntArray()
@@ -370,7 +370,7 @@ internal class SmoothRobot : Robot {
 
   fun makeScreenshot(): ByteArray = makeScreenshot(Rectangle(Toolkit.getDefaultToolkit().screenSize))
 
-  fun makeScreenshot(screenshotArea: Rectangle): ByteArray {
+  private fun makeScreenshot(screenshotArea: Rectangle): ByteArray {
     return ByteArrayOutputStream().use { b ->
       ImageIO.write(fastRobot.createScreenCapture(screenshotArea), "png", b)
       b.toByteArray()

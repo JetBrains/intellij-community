@@ -153,7 +153,7 @@ internal class LoggingUtil {
       return getGuardedCondition(condition, loggerSource)
     }
 
-    internal fun getReferencesForVariable(variable: UElement, context: UElement): List<UQualifiedReferenceExpression> {
+    private fun getReferencesForVariable(variable: UElement, context: UElement): List<UQualifiedReferenceExpression> {
       val sourcePsi = variable.sourcePsi ?: return emptyList()
       val result = mutableListOf<UQualifiedReferenceExpression>()
       val visitor = object : AbstractUastVisitor() {

@@ -1,3 +1,4 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.codeVision.ui.model
 
 import com.intellij.codeInsight.codeVision.CodeVisionAnchorKind
@@ -14,7 +15,7 @@ class RangeCodeVisionModel(
   val project: Project,
   val editor: Editor,
   lensMap: Map<CodeVisionAnchorKind, List<CodeVisionEntry>>,
-  val anchoringRange: TextRange,
+  private val anchoringRange: TextRange,
   @Nls val name: String = CodeVisionBundle.message("codeLens.more.popup.header")
 ) {
 

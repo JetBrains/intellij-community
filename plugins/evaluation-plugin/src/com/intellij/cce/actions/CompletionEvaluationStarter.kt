@@ -96,7 +96,7 @@ internal class CompletionEvaluationStarter : ApplicationStarter {
 
   abstract class EvaluationCommandBase(name: String, help: String) : EvaluationCommand(name, help) {
 
-    protected val configPath by argument(name = "config-path", help = "Path to config").default(ConfigFactory.DEFAULT_CONFIG_NAME)
+    private val configPath by argument(name = "config-path", help = "Path to config").default(ConfigFactory.DEFAULT_CONFIG_NAME)
 
     override fun run() {
       val feature = EvaluableFeature.forFeature(featureName) ?: throw Exception("No support for the feature")

@@ -7,7 +7,7 @@ class MutableLinearGitFileHistory(private val commitHashes: List<String>) : GitF
 
   private val history: MutableMap<String, Entry>
 
-  val firstKnownFilePath: String?
+  private val firstKnownFilePath: String?
     get() = (history.values.find { it.patch != null }?.patch ?: error("Empty history")).beforeName
 
   val lastKnownFilePath: String?

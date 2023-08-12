@@ -54,7 +54,7 @@ value class PayloadRef(val compressedInfo: ULong) {
 
   companion object {
     const val SIZE_BYTES: Int = ULong.SIZE_BYTES
-    const val SIZE_BITS: Int = ULong.SIZE_BITS
+    private const val SIZE_BITS: Int = ULong.SIZE_BITS
 
     fun DataInputStream.readPayloadRef(): PayloadRef = PayloadRef(readLong().toULong())
     fun DataOutputStream.writePayloadRef(payloadRef: PayloadRef) = writeLong(payloadRef.compressedInfo.toLong())

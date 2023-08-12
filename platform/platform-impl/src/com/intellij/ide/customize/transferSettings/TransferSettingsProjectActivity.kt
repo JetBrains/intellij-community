@@ -14,7 +14,7 @@ import com.intellij.openapi.util.registry.Registry
 
 class TransferSettingsProjectActivity : ProjectActivity, Disposable {
   private val config = DefaultTransferSettingsConfiguration(TransferSettingsDataProvider(VSCodeTransferSettingsProvider()), false)
-  val hasVsCode: Boolean
+  private val hasVsCode: Boolean
     get() = _hasVsCode.value
 
   private val _hasVsCode: Lazy<Boolean> = lazy {

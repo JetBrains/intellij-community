@@ -40,7 +40,7 @@ class LocalizationFeedbackService(private val coroutineScope: CoroutineScope) : 
 
   fun isEnabled() = (PlatformUtils.isRider() && application.isEAP) || isTesting()
 
-  fun hasLanguagePack() = getLanguagePack().first != "none"
+  private fun hasLanguagePack() = getLanguagePack().first != "none"
 
   fun tryRecordInstallation(): Boolean {
     if (!hasLanguagePack()) return false
@@ -54,7 +54,7 @@ class LocalizationFeedbackService(private val coroutineScope: CoroutineScope) : 
 
   fun setInteraction() { state.balloonWasInteractedWith = true }
 
-  fun wasInteracted() = state.balloonWasInteractedWith
+  private fun wasInteracted() = state.balloonWasInteractedWith
 
   private fun isTimeForNotification(): Boolean {
     val state = myState

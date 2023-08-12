@@ -66,7 +66,7 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
 
   fun isVisible(): Boolean = component.isVisible()
 
-  fun findAllText(predicate: (TextData) -> Boolean): List<UiText> {
+  private fun findAllText(predicate: (TextData) -> Boolean): List<UiText> {
     return robotService.findAllText(component).filter(predicate).map { UiText(this, it) }
   }
 

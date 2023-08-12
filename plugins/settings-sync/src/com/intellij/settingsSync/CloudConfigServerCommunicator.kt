@@ -282,9 +282,9 @@ internal open class CloudConfigServerCommunicator(serverUrl: String? = null) : S
 
   companion object {
     private const val URL_PROVIDER = "https://www.jetbrains.com/config/IdeaCloudConfig.xml"
-    internal const val DEFAULT_PRODUCTION_URL = "https://cloudconfig.jetbrains.com/cloudconfig"
+    private const val DEFAULT_PRODUCTION_URL = "https://cloudconfig.jetbrains.com/cloudconfig"
     private const val DEFAULT_DEBUG_URL = "https://stgn.cloudconfig.jetbrains.com/cloudconfig"
-    internal const val URL_PROPERTY = "idea.settings.sync.cloud.url"
+    private const val URL_PROPERTY = "idea.settings.sync.cloud.url"
 
     internal val defaultUrl get() = _url.value
 

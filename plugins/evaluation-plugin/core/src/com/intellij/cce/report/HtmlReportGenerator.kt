@@ -21,7 +21,7 @@ import kotlin.io.path.writeText
 class HtmlReportGenerator(
   private val dirs: GeneratorDirectories,
   private val defaultMetrics: List<String>?,
-  val fileGenerator: FileReportGenerator
+  private val fileGenerator: FileReportGenerator
 ) : FullReportGenerator {
   companion object {
     private const val globalReportName = "index.html"

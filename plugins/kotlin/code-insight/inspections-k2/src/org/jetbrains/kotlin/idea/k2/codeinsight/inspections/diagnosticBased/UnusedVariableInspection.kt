@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections.diagnosticBased
 
@@ -42,7 +42,7 @@ internal class UnusedVariableInspection
     override fun getApplicabilityRange() = ApplicabilityRanges.DECLARATION_NAME
 
     context(KtAnalysisSession)
-    fun isApplicableByDiagnostic(element: KtNamedDeclaration, diagnostic: KtFirDiagnostic.UnusedVariable): Boolean {
+    private fun isApplicableByDiagnostic(element: KtNamedDeclaration, diagnostic: KtFirDiagnostic.UnusedVariable): Boolean {
         val ktProperty = diagnostic.psi as? KtProperty ?: return false
         return !ktProperty.isExplicitTypeReferenceNeededForTypeInference()
     }

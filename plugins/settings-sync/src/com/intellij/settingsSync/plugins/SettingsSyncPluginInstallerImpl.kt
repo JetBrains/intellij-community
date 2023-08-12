@@ -86,7 +86,7 @@ internal open class SettingsSyncPluginInstallerImpl(private val notifyErrors: Bo
   }
 
   internal class PrepareInstallationRunnable(
-    val pluginIds: List<PluginId>,
+    private val pluginIds: List<PluginId>,
     val dwnldPreparer: (pluginId: PluginId, indicator: ProgressIndicator) -> PluginDownloader?
   ) : Runnable {
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.base.fir.analysisApiProviders
 
@@ -30,7 +30,7 @@ internal class FirIdeOutOfBlockModificationService(val project: Project) : Dispo
     /**
      * Publishes out-of-block modification for [module]. Must be called in a write action.
      */
-    fun publishModuleOutOfBlockModification(module: KtModule) {
+    private fun publishModuleOutOfBlockModification(module: KtModule) {
         ApplicationManager.getApplication().assertWriteAccessAllowed()
 
         project.analysisMessageBus.syncPublisher(KotlinTopics.MODULE_OUT_OF_BLOCK_MODIFICATION).onModification(module)

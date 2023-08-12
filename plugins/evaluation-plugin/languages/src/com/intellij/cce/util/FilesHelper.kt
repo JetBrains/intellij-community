@@ -21,7 +21,7 @@ object FilesHelper {
            ?: throw IllegalArgumentException("No files for $language found")
   }
 
-  fun getFiles(project: Project, evaluationRoots: List<VirtualFile>): Map<String, Set<VirtualFile>> {
+  private fun getFiles(project: Project, evaluationRoots: List<VirtualFile>): Map<String, Set<VirtualFile>> {
     val language2files = mutableMapOf<String, MutableSet<VirtualFile>>()
     val index = ProjectRootManager.getInstance(project).fileIndex
     for (file in evaluationRoots) {

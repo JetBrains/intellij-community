@@ -48,7 +48,7 @@ abstract class JvmInspectionTestBase : LightJavaCodeInsightFixtureTestCase() {
   /**
    * Checks whether preview matches [preview] specified by the quickfix [hint] at the cursor position marked with <caret> in [code].
    */
-  protected fun JavaCodeInsightTestFixture.testPreview(
+  private fun JavaCodeInsightTestFixture.testPreview(
     lang: JvmLanguage,
     code: String,
     preview: String,

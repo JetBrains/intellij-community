@@ -146,7 +146,7 @@ class SearchEverywhereFileFeaturesProvider
     }
   }
 
-  internal fun getRelativePathNameMatchingFeatures(item: PsiFileSystemItem, searchQuery: String): Collection<EventPair<*>> {
+  private fun getRelativePathNameMatchingFeatures(item: PsiFileSystemItem, searchQuery: String): Collection<EventPair<*>> {
     val filePath = item.virtualFile.toNioPathOrNull() ?: return emptyList()
     val basePath = item.project.guessProjectDir()?.toNioPathOrNull() ?: return emptyList()
 

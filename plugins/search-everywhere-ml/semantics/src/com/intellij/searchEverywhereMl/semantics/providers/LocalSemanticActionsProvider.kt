@@ -4,7 +4,7 @@ import com.intellij.ide.actions.searcheverywhere.FoundItemDescriptor
 import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.searchEverywhereMl.semantics.services.ActionEmbeddingsStorage
 
-class LocalSemanticActionsProvider(val model: GotoActionModel) : SemanticActionsProvider() {
+class LocalSemanticActionsProvider(private val model: GotoActionModel) : SemanticActionsProvider() {
   override fun search(pattern: String): List<FoundItemDescriptor<GotoActionModel.MatchedValue>> {
     if (pattern.isBlank()) return emptyList()
     return ActionEmbeddingsStorage.getInstance().searchNeighbours(pattern, ITEMS_LIMIT, SIMILARITY_THRESHOLD).mapNotNull {

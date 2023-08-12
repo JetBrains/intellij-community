@@ -233,7 +233,7 @@ class VfsLogCompactionController(
   /**
    * @param checkSkipStep will run testCandidate only on every [checkSkipStep] candidate found
    */
-  fun VfsLogCompactionContext.findNextSuitableCompactionPosition(
+  private fun VfsLogCompactionContext.findNextSuitableCompactionPosition(
     initialPosition: CompactionPosition,
     checkSkipStep: Int = 100,
     testCandidate: (CompactionPosition) -> Boolean

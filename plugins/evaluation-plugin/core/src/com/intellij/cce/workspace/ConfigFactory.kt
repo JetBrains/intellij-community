@@ -19,7 +19,7 @@ object ConfigFactory {
 
   private lateinit var gson: Gson
 
-  fun defaultConfig(projectPath: String = "", language: String = "Java"): Config =
+  private fun defaultConfig(projectPath: String = "", language: String = "Java"): Config =
     Config.build(projectPath, language) {}
 
   fun <T : EvaluationStrategy> load(path: Path, strategySerializer: StrategySerializer<T>): Config {

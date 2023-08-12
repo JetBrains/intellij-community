@@ -1,3 +1,4 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.teamcity
 
 import com.fasterxml.jackson.databind.JsonNode
@@ -57,7 +58,7 @@ class TeamCityClient(
 
   val configurationName by lazy { systemProperties["teamcity.buildConfName"] }
 
-  val buildParams by lazy {
+  private val buildParams by lazy {
     val configurationPropertiesFile = systemProperties["teamcity.configuration.properties.file"]
 
     if (configurationPropertiesFile.isNullOrBlank()) return@lazy emptyMap()
@@ -187,7 +188,7 @@ class TeamCityClient(
     return processData(jacksonMapper.readTree(rawChange))
   }
 
-  fun getTestRunInfo(buildId: String): List<JsonNode> {
+  private fun getTestRunInfo(buildId: String): List<JsonNode> {
     val countOfTestsOnPage = 200
     var startPosition = 0
     val accumulatedTests: MutableList<JsonNode> = mutableListOf()

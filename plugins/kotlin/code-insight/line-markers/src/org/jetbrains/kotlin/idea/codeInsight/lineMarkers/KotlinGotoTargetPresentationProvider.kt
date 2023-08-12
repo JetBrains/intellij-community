@@ -36,7 +36,7 @@ class KotlinGotoTargetPresentationProvider : GotoTargetPresentationProvider {
         return getTargetPresentation(container)
     }
 
-    fun getTargetPresentation(declaration: KtNamedDeclaration): TargetPresentation? {
+    private fun getTargetPresentation(declaration: KtNamedDeclaration): TargetPresentation? {
         val presentation = declaration.presentation ?: return null
         val presentableText = presentation.presentableText ?: return null
         val ktFile = declaration.containingKtFile

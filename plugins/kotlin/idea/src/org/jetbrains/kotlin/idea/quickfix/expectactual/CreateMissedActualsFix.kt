@@ -59,8 +59,8 @@ import kotlin.io.path.nameWithoutExtension
 import kotlin.io.path.pathString
 
 class CreateMissedActualsFix(
-    val declaration: KtNamedDeclaration,
-    val notActualizedLeafModules: Collection<Module>
+  val declaration: KtNamedDeclaration,
+  private val notActualizedLeafModules: Collection<Module>
 ) : KotlinQuickFixAction<KtNamedDeclaration>(declaration) {
 
     override fun startInWriteAction(): Boolean = false

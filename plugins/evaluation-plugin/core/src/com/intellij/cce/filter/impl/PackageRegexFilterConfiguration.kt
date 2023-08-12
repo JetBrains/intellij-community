@@ -10,7 +10,7 @@ import com.intellij.cce.filter.EvaluationFilter
 import com.intellij.cce.filter.EvaluationFilterConfiguration
 
 class PackageRegexFilter(pattern: String) : EvaluationFilter {
-  val regex = Regex(pattern)
+  private val regex = Regex(pattern)
   override fun shouldEvaluate(properties: TokenProperties): Boolean {
     return PropertyAdapters.Jvm.adapt(properties)?.packageName?.matches(regex) ?: false
   }
