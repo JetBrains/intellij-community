@@ -33,7 +33,7 @@ import java.util.function.Supplier;
 
 import static com.intellij.vcs.log.visible.filters.VcsLogFilterObject.fromBranchPatterns;
 
-public class BranchFilterPopupComponent
+public final class BranchFilterPopupComponent
   extends MultipleValueFilterPopupComponent<BranchFilters, VcsLogClassicFilterUi.BranchFilterModel> {
   private final VcsLogClassicFilterUi.BranchFilterModel myBranchFilterModel;
 
@@ -155,7 +155,7 @@ public class BranchFilterPopupComponent
       actionGroup.add(new PredefinedValueAction(favorites, VcsLogBundle.messagePointer("vcs.log.branch.filter.favorites"), false));
     }
 
-    private class BranchFilterAction extends PredefinedValueAction {
+    private final class BranchFilterAction extends PredefinedValueAction {
       private final @NotNull LayeredIcon myIcon;
       private final @NotNull LayeredIcon myHoveredIcon;
       private final @NotNull Collection<? extends VcsRef> myReferences;
