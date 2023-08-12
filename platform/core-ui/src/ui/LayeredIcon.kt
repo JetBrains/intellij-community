@@ -12,6 +12,7 @@ import com.intellij.ui.icons.IconWithToolTip
 import com.intellij.ui.scale.ScaleType
 import com.intellij.ui.scale.UserScaleContext
 import com.intellij.util.ArrayUtilRt
+import com.intellij.util.IconUtil
 import com.intellij.util.IconUtil.copy
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.ui.JBCachingScalableIcon
@@ -38,6 +39,8 @@ open class LayeredIcon : JBCachingScalableIcon<LayeredIcon>, DarkIconProvider, C
   private var yShift = 0
   private var width = 0
   private var height = 0
+
+  private var sizeIsDirty = true
 
   init {
     scaleContext.addUpdateListener(UserScaleContext.UpdateListener { updateSize(allLayers) })
@@ -68,7 +71,6 @@ open class LayeredIcon : JBCachingScalableIcon<LayeredIcon>, DarkIconProvider, C
     hShifts = IntArray(layerCount)
     vShifts = IntArray(layerCount)
     scaledIcons = null
-    updateSize(arrayOfNulls)
   }
 
   private constructor(icons: Supplier<Array<out Icon>>) {
@@ -79,7 +81,7 @@ open class LayeredIcon : JBCachingScalableIcon<LayeredIcon>, DarkIconProvider, C
       disabledLayers = BooleanArray(result.size)
       hShifts = IntArray(result.size)
       vShifts = IntArray(result.size)
-      updateSize(result)
+      sizeIsDirty = true
 
       result
     }
@@ -148,11 +150,11 @@ open class LayeredIcon : JBCachingScalableIcon<LayeredIcon>, DarkIconProvider, C
     })
   }
 
-  private fun myScaledIcons(): Array<Icon?> {
+  private fun getOrComputeScaledIcons(): Array<Icon?> {
     scaledIcons?.let {
       return it
     }
-    return RowIcon.scaleIcons(allLayers, scale).also { scaledIcons = it }
+    return scaleIcons(icons = allLayers, scale = scale).also { scaledIcons = it }
   }
 
   override fun withIconPreScaled(preScaled: Boolean): LayeredIcon {
@@ -194,7 +196,7 @@ open class LayeredIcon : JBCachingScalableIcon<LayeredIcon>, DarkIconProvider, C
     scaledIcons = null
     hShifts[layer] = hShift
     vShifts[layer] = vShift
-    updateSize(allLayers)
+    sizeIsDirty = true
   }
 
   /**
@@ -204,12 +206,13 @@ open class LayeredIcon : JBCachingScalableIcon<LayeredIcon>, DarkIconProvider, C
   fun setIcon(icon: Icon, layer: Int, @MagicConstant(valuesFromClass = SwingConstants::class) constraint: Int) {
     val width = getIconWidth()
     val height = getIconHeight()
-    val w = icon.iconWidth
-    val h = icon.iconHeight
     if (width <= 1 || height <= 1) {
       setIcon(icon, layer)
       return
     }
+
+    val w = icon.iconWidth
+    val h = icon.iconHeight
 
     val x: Int
     val y: Int
@@ -268,7 +271,11 @@ open class LayeredIcon : JBCachingScalableIcon<LayeredIcon>, DarkIconProvider, C
 
   override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {
     scaleContext.update()
-    val icons = myScaledIcons()
+    if (sizeIsDirty) {
+      updateSize(allLayers)
+    }
+
+    val icons = getOrComputeScaledIcons()
     for ((i, icon) in icons.withIndex()) {
       if (icon == null || disabledLayers[i]) {
         continue
@@ -291,7 +298,7 @@ open class LayeredIcon : JBCachingScalableIcon<LayeredIcon>, DarkIconProvider, C
 
   override fun getIconWidth(): Int {
     scaleContext.update()
-    if (width <= 1) {
+    if (sizeIsDirty) {
       updateSize(allLayers)
     }
     return ceil(scaleVal(width.toDouble(), ScaleType.OBJ_SCALE)).toInt()
@@ -299,7 +306,7 @@ open class LayeredIcon : JBCachingScalableIcon<LayeredIcon>, DarkIconProvider, C
 
   override fun getIconHeight(): Int {
     scaleContext.update()
-    if (height <= 1) {
+    if (sizeIsDirty) {
       updateSize(allLayers)
     }
     return ceil(scaleVal(height.toDouble(), ScaleType.OBJ_SCALE)).toInt()
@@ -314,6 +321,8 @@ open class LayeredIcon : JBCachingScalableIcon<LayeredIcon>, DarkIconProvider, C
   }
 
   protected fun updateSize(allLayers: Array<Icon?>) {
+    sizeIsDirty = false
+
     var minX = Int.MAX_VALUE
     var maxX = Int.MIN_VALUE
     var minY = Int.MAX_VALUE
@@ -327,10 +336,10 @@ open class LayeredIcon : JBCachingScalableIcon<LayeredIcon>, DarkIconProvider, C
       allIconsAreNull = false
       val hShift = getHShift(i)
       val vShift = getVShift(i)
-      minX = min(minX.toDouble(), hShift.toDouble()).toInt()
-      maxX = max(maxX.toDouble(), (hShift + icon.iconWidth).toDouble()).toInt()
-      minY = min(minY.toDouble(), vShift.toDouble()).toInt()
-      maxY = max(maxY.toDouble(), (vShift + icon.iconHeight).toDouble()).toInt()
+      minX = min(minX, hShift)
+      maxX = max(maxX, (hShift + icon.iconWidth))
+      minY = min(minY, vShift)
+      maxY = max(maxY, (vShift + icon.iconHeight))
     }
 
     if (allIconsAreNull) {
@@ -395,5 +404,15 @@ private fun buildCompositeTooltip(icons: Array<Icon?>, result: StringBuilder, se
         result.append(toolTip)
       }
     }
+  }
+}
+
+internal fun scaleIcons(icons: Array<Icon?>, scale: Float): Array<Icon?> {
+  if (scale == 1f) {
+    return icons
+  }
+
+  return Array(icons.size) { index ->
+    icons[index]?.let { IconUtil.scale(icon = it, ancestor = null, scale = scale) }
   }
 }

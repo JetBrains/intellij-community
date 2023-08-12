@@ -9,7 +9,6 @@ import com.intellij.ui.icons.IconWithToolTip
 import com.intellij.ui.scale.ScaleType
 import com.intellij.ui.scale.UserScaleContext
 import com.intellij.util.IconUtil.copy
-import com.intellij.util.IconUtil.scale
 import com.intellij.util.ui.JBCachingScalableIcon
 import java.awt.Component
 import java.awt.Graphics
@@ -24,21 +23,11 @@ open class RowIcon : JBCachingScalableIcon<RowIcon>, com.intellij.ui.icons.RowIc
   private val icons: Array<Icon?>
   private var scaledIcons: Array<Icon?>?
 
+  private var sizeIsDirty = true
+
   init {
     scaleContext.addUpdateListener(UserScaleContext.UpdateListener { updateSize() })
     setAutoUpdateScaleContext(false)
-  }
-
-  companion object {
-    internal fun scaleIcons(icons: Array<Icon?>, scale: Float): Array<Icon?> {
-      if (scale == 1f) {
-        return icons
-      }
-
-      return Array(icons.size) { index ->
-        icons[index]?.let { scale(icon = it, ancestor = null, scale = scale) }
-      }
-    }
   }
 
   @JvmOverloads
@@ -82,7 +71,7 @@ open class RowIcon : JBCachingScalableIcon<RowIcon>, com.intellij.ui.icons.RowIc
     scaledIcons?.let {
       return it
     }
-    return scaleIcons(icons, scale).also { scaledIcons = it }
+    return scaleIcons(icons = icons, scale = scale).also { scaledIcons = it }
   }
 
   override fun getAllIcons() = icons.filterNotNull()
@@ -96,14 +85,16 @@ open class RowIcon : JBCachingScalableIcon<RowIcon>, com.intellij.ui.icons.RowIc
   override fun setIcon(icon: Icon?, layer: Int) {
     icons[layer] = icon
     scaledIcons = null
-    updateSize()
   }
 
   override fun getIcon(index: Int) = icons[index]
 
   @Suppress("LocalVariableName")
-  override fun paintIcon(c: Component, g: Graphics, x: Int, y: Int) {
+  override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {
     scaleContext.update()
+    if (sizeIsDirty) {
+      updateSize()
+    }
     var _x = x
     var _y: Int
     for (icon in getOrComputeScaledIcons()) {
@@ -124,7 +115,7 @@ open class RowIcon : JBCachingScalableIcon<RowIcon>, com.intellij.ui.icons.RowIc
 
   override fun getIconWidth(): Int {
     scaleContext.update()
-    if (width <= 1) {
+    if (sizeIsDirty) {
       updateSize()
     }
     return ceil(scaleVal(width.toDouble(), ScaleType.OBJ_SCALE)).toInt()
@@ -132,13 +123,15 @@ open class RowIcon : JBCachingScalableIcon<RowIcon>, com.intellij.ui.icons.RowIc
 
   override fun getIconHeight(): Int {
     scaleContext.update()
-    if (height <= 1) {
+    if (sizeIsDirty) {
       updateSize()
     }
     return ceil(scaleVal(height.toDouble(), ScaleType.OBJ_SCALE)).toInt()
   }
 
   private fun updateSize() {
+    sizeIsDirty = false
+
     var width = 0
     var height = 0
     for (icon in icons) {
