@@ -909,7 +909,7 @@ object Utils {
       cancelAllUpdates("'$place' invoked")
       val promise = newPromise<T>(place)
       val parentIndicator = ProgressIndicatorProvider.getGlobalProgressIndicator()
-      ourBeforePerformedExecutor.execute {
+      beforePerformedExecutor.execute {
         try {
           var ref: T? = null
           val computable = ThrowableComputable<Void?, RuntimeException> {

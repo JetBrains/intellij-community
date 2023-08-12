@@ -161,7 +161,7 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
     if (myCachedData.isEmpty()) return null;
 
     boolean isEDT = EDT.isCurrentThreadEdt();
-    boolean noRulesSection = isEDT && ActionUpdater.isNoRulesInEDTSection();
+    boolean noRulesSection = isEDT && ActionUpdater.Companion.isNoRulesInEDTSection();
     boolean rulesSuppressed = isEDT && Registry.is("actionSystem.update.actions.suppress.dataRules.on.edt");
     boolean rulesAllowed = myMissedKeysIfFrozen == null && !CommonDataKeys.PROJECT.is(dataId) && !rulesSuppressed && !noRulesSection;
     Object answer = getDataInner(dataId, rulesAllowed, !noRulesSection);
@@ -242,8 +242,8 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
   private static void reportValueProvidedByRulesUsage(@NotNull String dataId, boolean error) {
     if (!Registry.is("actionSystem.update.actions.warn.dataRules.on.edt")) return;
     if (EDT.isCurrentThreadEdt() && SlowOperations.isInSection(SlowOperations.ACTION_UPDATE) &&
-        ActionUpdater.currentInEDTOperationName() != null && !SlowOperations.isAlwaysAllowed()) {
-      String message = "'" + dataId + "' is requested on EDT by " + ActionUpdater.currentInEDTOperationName() + ". See ActionUpdateThread javadoc.";
+        ActionUpdater.Companion.currentInEDTOperationName() != null && !SlowOperations.isAlwaysAllowed()) {
+      String message = "'" + dataId + "' is requested on EDT by " + ActionUpdater.Companion.currentInEDTOperationName() + ". See ActionUpdateThread javadoc.";
       if (!Strings.areSameInstance(message, ourEDTWarnsInterner.intern(message))) return;
       Throwable th = error ? new Throwable(message) : null;
       AppExecutorUtil.getAppExecutorService().execute(() -> {
