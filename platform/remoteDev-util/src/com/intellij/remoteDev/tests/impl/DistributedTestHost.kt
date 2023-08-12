@@ -98,6 +98,7 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
   }
 
   private fun Application.flushQueueFromAnyThread() {
+    LOG.info("Flush queue...")
     if (isDispatchThread) {
       // Flush all events to process pending protocol events and other things
       //   before actual test method execution
