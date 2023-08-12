@@ -50,7 +50,6 @@ open class RowIcon : JBCachingScalableIcon<RowIcon>, com.intellij.ui.icons.RowIc
 
   constructor(vararg icons: Icon?) : this(icons.size) {
     System.arraycopy(icons, 0, this.icons, 0, icons.size)
-    updateSize()
   }
 
   protected constructor(icon: RowIcon) : super(icon) {
@@ -125,11 +124,17 @@ open class RowIcon : JBCachingScalableIcon<RowIcon>, com.intellij.ui.icons.RowIc
 
   override fun getIconWidth(): Int {
     scaleContext.update()
+    if (width <= 1) {
+      updateSize()
+    }
     return ceil(scaleVal(width.toDouble(), ScaleType.OBJ_SCALE)).toInt()
   }
 
   override fun getIconHeight(): Int {
     scaleContext.update()
+    if (height <= 1) {
+      updateSize()
+    }
     return ceil(scaleVal(height.toDouble(), ScaleType.OBJ_SCALE)).toInt()
   }
 
