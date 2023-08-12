@@ -38,6 +38,7 @@ import org.jetbrains.kotlin.idea.caches.trackers.inBlockModifications
 import org.jetbrains.kotlin.idea.caches.trackers.removeInBlockModifications
 import org.jetbrains.kotlin.idea.compiler.IdeMainFunctionDetectorFactory
 import org.jetbrains.kotlin.idea.compiler.IdeSealedClassInheritorsProvider
+import org.jetbrains.kotlin.idea.core.util.CodeFragmentUtils
 import org.jetbrains.kotlin.idea.project.IdeaAbsentDescriptorHandler
 import org.jetbrains.kotlin.idea.project.IdeaModuleStructureOracle
 import org.jetbrains.kotlin.idea.stubindex.resolve.PluginDeclarationProviderFactory
@@ -113,6 +114,12 @@ internal class PerFileAnalysisCache(val file: KtFile, componentProvider: Compone
         }
 
         return guardLock.guarded {
+
+            // It is necessary to ignore the codeFragment used in the evaluator for compilation
+            // because caching can lead to data consistency bugs (see KTIJ-22496). However, the code fragments that come from the evaluator,
+            // which are not intended for compilation (e.g., for highlighting), should be cached in order to maintain the current performance of the evaluator.
+            if (analyzableParent.isUsedForCompilationInEvaluator()) return@guarded performAnalyze(element, callback)
+
             // step 1: perform incremental analysis IF it is applicable
             getIncrementalAnalysisResult(callback)?.let {
                 return@guarded handleResult(it, callback)
@@ -126,30 +133,36 @@ internal class PerFileAnalysisCache(val file: KtFile, componentProvider: Compone
                 return@guarded handleResult(it, callback)
             }
 
-            val localDiagnostics = mutableSetOf<Diagnostic>()
-            val localCallback = if (callback != null) { d: Diagnostic ->
-                localDiagnostics.add(d)
-                callback.callback(d)
-            } else null
-
             // step 3: perform analyze of analyzableParent as nothing has been cached yet
-            val result = try {
-              analyze(analyzableParent, null, localCallback)
-            } catch (e: Throwable) {
-                e.throwAsInvalidModuleException {
-                    ProcessCanceledException(it)
-                }
-                throw e
-            }
+            val result = performAnalyze(analyzableParent, callback)
 
-            // some diagnostics could be not handled with a callback - send out the rest
-            callback?.let { c ->
-                result.bindingContext.diagnostics.filterNot { it in localDiagnostics }.forEach(c::callback)
-            }
             cache[analyzableParent] = result
 
             return@guarded result
         }
+    }
+
+    private fun performAnalyze(element: KtElement, callback: DiagnosticSink.DiagnosticsCallback? = null): AnalysisResult {
+        val localDiagnostics = mutableSetOf<Diagnostic>()
+        val localCallback = if (callback != null) { d: Diagnostic ->
+            localDiagnostics.add(d)
+            callback.callback(d)
+        } else null
+
+        val result = try {
+            analyze(element, null, localCallback)
+        } catch (e: Throwable) {
+            e.throwAsInvalidModuleException {
+                ProcessCanceledException(it)
+            }
+            throw e
+        }
+
+        // some diagnostics could be not handled with a callback - send out the rest
+        callback?.let { c ->
+            result.bindingContext.diagnostics.filterNot { it in localDiagnostics }.forEach(c::callback)
+        }
+        return result
     }
 
     private fun getIncrementalAnalysisResult(callback: DiagnosticSink.DiagnosticsCallback?): AnalysisResult? {
@@ -319,6 +332,9 @@ internal class PerFileAnalysisCache(val file: KtFile, componentProvider: Compone
         file.clearInBlockModifications()
         fileResult = null
     }
+
+    private fun KtElement.isUsedForCompilationInEvaluator(): Boolean =
+        containingFile is KtCodeFragment && containingFile.getCopyableUserData(CodeFragmentUtils.USED_FOR_COMPILATION_IN_IR_EVALUATOR) ?: false
 }
 
 private fun Throwable.asInvalidModuleException(): InvalidModuleException? {

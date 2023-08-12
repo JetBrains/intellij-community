@@ -291,6 +291,15 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
 
     private fun compiledCodeFragmentDataK1(context: ExecutionContext): CompiledCodeFragmentData {
         val debugProcess = context.debugProcess
+
+        // TODO remove this registry key?
+        val compilerStrategy = if (CodeFragmentCompiler.useIRFragmentCompiler()) {
+            IRCodeFragmentCompilingStrategy(codeFragment)
+        } else {
+            OldCodeFragmentCompilingStrategy(codeFragment)
+        }
+
+        compilerStrategy.beforeAnalyzingCodeFragment()
         var analysisResult = analyze(codeFragment, debugProcess)
         val codeFragmentWasEdited = KotlinCodeFragmentEditor(codeFragment)
             .withToStringWrapper(analysisResult.bindingContext)
@@ -310,12 +319,6 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
             evaluationException(DefaultErrorMessages.render(it))
         }
 
-        // TODO remove this registry key?
-        val compilerStrategy = if (CodeFragmentCompiler.useIRFragmentCompiler()) {
-            IRCodeFragmentCompilingStrategy(codeFragment)
-        } else {
-            OldCodeFragmentCompilingStrategy(codeFragment)
-        }
         val compilerHandler = CodeFragmentCompilerHandler(compilerStrategy)
 
         val result =

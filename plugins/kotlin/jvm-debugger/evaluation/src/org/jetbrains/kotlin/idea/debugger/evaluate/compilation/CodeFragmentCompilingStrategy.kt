@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.debugger.evaluate.compilation
 
 import com.intellij.openapi.util.registry.Registry
+import org.jetbrains.kotlin.idea.core.util.CodeFragmentUtils
 import org.jetbrains.kotlin.idea.core.util.analyzeInlinedFunctions
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.ExecutionContext
 import org.jetbrains.kotlin.idea.debugger.evaluate.*
@@ -24,6 +25,7 @@ abstract class CodeFragmentCompilingStrategy(val codeFragment: KtCodeFragment) {
     abstract fun processError(e: CodeFragmentCodegenException, codeFragment: KtCodeFragment, executionContext: ExecutionContext)
     abstract fun getFallbackStrategy(): CodeFragmentCompilingStrategy?
     abstract fun beforeRunningFallback()
+    abstract fun beforeAnalyzingCodeFragment()
 }
 
 class OldCodeFragmentCompilingStrategy(codeFragment: KtCodeFragment) : CodeFragmentCompilingStrategy(codeFragment) {
@@ -60,6 +62,9 @@ class OldCodeFragmentCompilingStrategy(codeFragment: KtCodeFragment) : CodeFragm
     override fun getFallbackStrategy(): CodeFragmentCompilingStrategy? = null
 
     override fun beforeRunningFallback() {
+    }
+
+    override fun beforeAnalyzingCodeFragment() {
     }
 }
 
@@ -140,5 +145,9 @@ class IRCodeFragmentCompilingStrategy(codeFragment: KtCodeFragment) : CodeFragme
 
     private fun isFallbackDisabled(): Boolean {
         return Registry.`is`("debugger.kotlin.evaluator.disable.fallback.to.old.backend")
+    }
+
+    override fun beforeAnalyzingCodeFragment() {
+        codeFragment.putCopyableUserData(CodeFragmentUtils.USED_FOR_COMPILATION_IN_IR_EVALUATOR, true)
     }
 }
