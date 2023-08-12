@@ -54,7 +54,7 @@ public class AttributesStorageOnTheTopOfBlobStorage_PropertyBasedTest {
   public static List<Object[]> storagesToTest() {
     final ArrayList<Object[]> storages = new ArrayList<>();
     storages.add(new Object[]{false});
-    if (PageCacheUtils.LOCK_FREE_VFS_ENABLED) {
+    if (PageCacheUtils.LOCK_FREE_PAGE_CACHE_ENABLED) {
       storages.add(new Object[]{true});
     }
     return storages;

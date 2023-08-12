@@ -571,7 +571,7 @@ public final class PersistentFSLoader {
       //avg record size is ~60b, hence I've chosen minCapacity=64 bytes, and defaultCapacity= 2*minCapacity
       final SpaceAllocationStrategy allocationStrategy = new SpaceAllocationStrategy.DataLengthPlusFixedPercentStrategy(128, 64, 30);
       final StreamlinedBlobStorage blobStorage;
-      if (PageCacheUtils.LOCK_FREE_VFS_ENABLED) {
+      if (PageCacheUtils.LOCK_FREE_PAGE_CACHE_ENABLED) {
         blobStorage = new StreamlinedBlobStorageOverLockFreePagesStorage(
           new PagedFileStorageWithRWLockedPageContent(
             attributesFile,
@@ -639,7 +639,7 @@ public final class PersistentFSLoader {
 
   private static @NotNull RefCountingContentStorage createContentStorage_makeStorage(@NotNull Path contentsFile) throws IOException {
     // sources usually zipped with 4x ratio
-    if (PageCacheUtils.LOCK_FREE_VFS_ENABLED) {
+    if (PageCacheUtils.LOCK_FREE_PAGE_CACHE_ENABLED) {
       return new RefCountingContentStorageImplLF(
         contentsFile,
         CapacityAllocationPolicy.FIVE_PERCENT_FOR_GROWTH,

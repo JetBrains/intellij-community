@@ -22,7 +22,8 @@ import static com.intellij.util.io.PageCacheUtils.*;
 public final class StorageLockContext {
 
   private static final FilePageCache DEFAULT_FILE_PAGE_CACHE = new FilePageCache(FILE_PAGE_CACHE_OLD_CAPACITY_BYTES);
-  private static final @Nullable FilePageCacheLockFree DEFAULT_FILE_PAGE_CACHE_NEW = LOCK_FREE_VFS_ENABLED ?
+  private static final @Nullable FilePageCacheLockFree DEFAULT_FILE_PAGE_CACHE_NEW = LOCK_FREE_PAGE_CACHE_ENABLED
+                                                                                     ?
                                                                                      new FilePageCacheLockFree(FILE_PAGE_CACHE_NEW_CAPACITY_BYTES) :
                                                                                      null;
 
@@ -32,7 +33,7 @@ public final class StorageLockContext {
 
   private final @NotNull FilePageCache myFilePageCache;
 
-  /** In general, null if {@link PageCacheUtils#LOCK_FREE_VFS_ENABLED} is false */
+  /** In general, null if {@link PageCacheUtils#LOCK_FREE_PAGE_CACHE_ENABLED} is false */
   private final @Nullable FilePageCacheLockFree myFilePageCacheLockFree;
   private final PageContentLockingStrategy.SharedLockLockingStrategy pageContentLockingStrategy = new PageContentLockingStrategy.SharedLockLockingStrategy(myLock);
 
@@ -163,7 +164,7 @@ public final class StorageLockContext {
   @ApiStatus.Internal
   public @NotNull FilePageCacheLockFree pageCache() {
     if (myFilePageCacheLockFree == null) {
-      if (LOCK_FREE_VFS_ENABLED) {
+      if (LOCK_FREE_PAGE_CACHE_ENABLED) {
         throw new UnsupportedOperationException(
           "lock-free FilePageCache is not available in this storageLockContext."
         );

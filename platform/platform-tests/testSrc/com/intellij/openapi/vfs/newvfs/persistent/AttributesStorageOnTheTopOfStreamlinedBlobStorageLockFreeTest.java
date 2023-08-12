@@ -34,7 +34,7 @@ public class AttributesStorageOnTheTopOfStreamlinedBlobStorageLockFreeTest
   public static void checkLockFreePageCacheIsEnabled() throws Exception {
     assumeTrue(
       "PageCacheUtils.LOCK_FREE_VFS_ENABLED=false: the FilePageCacheLockFree must be enabled for this test",
-      PageCacheUtils.LOCK_FREE_VFS_ENABLED
+      PageCacheUtils.LOCK_FREE_PAGE_CACHE_ENABLED
     );
   }
 

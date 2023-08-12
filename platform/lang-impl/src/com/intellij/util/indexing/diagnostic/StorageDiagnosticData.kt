@@ -266,7 +266,7 @@ object StorageDiagnosticData {
 
     setupFilePageCacheReporting(otelMeter)
 
-    if (PageCacheUtils.LOCK_FREE_VFS_ENABLED) {
+    if (PageCacheUtils.LOCK_FREE_PAGE_CACHE_ENABLED) {
       setupFilePageCacheLockFreeReporting(otelMeter)
     }
   }

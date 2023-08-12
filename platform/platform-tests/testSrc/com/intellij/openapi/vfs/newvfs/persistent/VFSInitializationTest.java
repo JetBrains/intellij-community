@@ -210,7 +210,7 @@ public class VFSInitializationTest {
 
     //skip IN_MEMORY impl, since it is not really persistent
     //skip OVER_LOCK_FREE_FILE_CACHE impl if !LOCK_FREE_VFS_ENABLED (fails otherwise)
-    List<RecordsStorageKind> allStorageKinds = PageCacheUtils.LOCK_FREE_VFS_ENABLED ?
+    List<RecordsStorageKind> allStorageKinds = PageCacheUtils.LOCK_FREE_PAGE_CACHE_ENABLED ?
                                                List.of(REGULAR, OVER_LOCK_FREE_FILE_CACHE, OVER_MMAPPED_FILE) :
                                                List.of(REGULAR, OVER_MMAPPED_FILE);
 
@@ -279,7 +279,7 @@ public class VFSInitializationTest {
   public void VFS_isRebuilt_OnlyIf_ImplementationVersionChanged() throws Exception {
     //skip IN_MEMORY impl, since it is not really persistent
     //skip OVER_LOCK_FREE_FILE_CACHE impl if !LOCK_FREE_VFS_ENABLED (will fail)
-    final List<RecordsStorageKind> allKinds = PageCacheUtils.LOCK_FREE_VFS_ENABLED ?
+    final List<RecordsStorageKind> allKinds = PageCacheUtils.LOCK_FREE_PAGE_CACHE_ENABLED ?
                                               List.of(REGULAR, OVER_LOCK_FREE_FILE_CACHE, OVER_MMAPPED_FILE) :
                                               List.of(REGULAR, OVER_MMAPPED_FILE);
 

@@ -113,7 +113,7 @@ object PersistentFSRecordsStorageFactory {
     val recordLength = PersistentFSRecordsOverLockFreePagedStorage.RECORD_SIZE_IN_BYTES
     val pageSize = PageCacheUtils.DEFAULT_PAGE_SIZE
 
-    if (!PageCacheUtils.LOCK_FREE_VFS_ENABLED) {
+    if (!PageCacheUtils.LOCK_FREE_PAGE_CACHE_ENABLED) {
       throw AssertionError(
         "Bug: PageCacheUtils.LOCK_FREE_VFS_ENABLED=false " +
         "=> can't create PersistentFSRecordsOverLockFreePagedStorage if FilePageCacheLockFree is disabled")

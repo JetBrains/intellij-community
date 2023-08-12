@@ -24,11 +24,11 @@ public final class PageCacheUtils {
   public static final int DEFAULT_PAGE_SIZE = Math.max(1, getIntProperty("idea.paged.storage.page.size", 10)) * MiB;
 
   /**
-   * Enables new (brand-name: 'lock-free') implementations for various VFS components.
-   * So far they co-exist with the legacy implementations
-   * TODO rename to LOCK_FREE_PAGE_CACHE_ENABLED ('cos it is not only about VFS)
+   * Enables new {@link FilePageCacheLockFree file cache} to be used implementations for various VFS components.
+   * So far both new and {@link FilePageCache legacy} file caches co-exist: storages are incrementally migrated
+   * to new cache
    */
-  public static final boolean LOCK_FREE_VFS_ENABLED = getBooleanProperty("vfs.lock-free-impl.enable", true);
+  public static final boolean LOCK_FREE_PAGE_CACHE_ENABLED = getBooleanProperty("vfs.lock-free-impl.enable", true);
 
   /**
    * How much direct memory new (code name 'lock-free') FilePageCache impl allowed to utilize:
@@ -117,7 +117,7 @@ public final class PageCacheUtils {
     );
   }
 
-  public static final long FILE_PAGE_CACHE_NEW_CAPACITY_BYTES = LOCK_FREE_VFS_ENABLED ?
+  public static final long FILE_PAGE_CACHE_NEW_CAPACITY_BYTES = LOCK_FREE_PAGE_CACHE_ENABLED ?
                                                                 (long)(NEW_PAGE_CACHE_MEMORY_FRACTION * FILE_PAGE_CACHES_TOTAL_CAPACITY_BYTES) :
                                                                 0;
 
@@ -140,7 +140,7 @@ public final class PageCacheUtils {
   static {
     LOG.info("File page caching params:");
     LOG.info("\tDEFAULT_PAGE_SIZE:" + DEFAULT_PAGE_SIZE);
-    if (LOCK_FREE_VFS_ENABLED) {
+    if (LOCK_FREE_PAGE_CACHE_ENABLED) {
       LOG.info("\tFilePageCache: regular + lock-free (LOCK_FREE_VFS_ENABLED:true)");
       LOG.info("\tNEW_PAGE_CACHE_MEMORY_FRACTION: " + NEW_PAGE_CACHE_MEMORY_FRACTION);
       LOG.info("\tRegular FilePageCache: " + FILE_PAGE_CACHE_OLD_CAPACITY_BYTES + " bytes");
