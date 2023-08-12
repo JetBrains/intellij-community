@@ -353,6 +353,16 @@ public class K2LocalInspectionAndGeneralHighlightingTestGenerated extends Abstra
         runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/usedEnumFunction15.kt");
     }
 
+    @TestMetadata("usedEnumFunction16.kt")
+    public void testUsedEnumFunction16() throws Exception {
+        runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/usedEnumFunction16.kt");
+    }
+
+    @TestMetadata("usedEnumFunction17.kt")
+    public void testUsedEnumFunction17() throws Exception {
+        runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/usedEnumFunction17.kt");
+    }
+
     @TestMetadata("usedEnumFunction2.kt")
     public void testUsedEnumFunction2() throws Exception {
         runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/usedEnumFunction2.kt");
