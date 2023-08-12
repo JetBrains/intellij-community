@@ -169,7 +169,7 @@ class CoreIconManager : IconManager, CoreAwareIconManager {
 
   override fun colorize(g: Graphics2D, source: Icon, color: Color): Icon = IconUtil.colorize(g, source, color)
 
-  override fun createLayered(vararg icons: Icon): Icon = LayeredIcon(*icons)
+  override fun createLayered(vararg icons: Icon): Icon = LayeredIcon.layeredIcon(icons)
 
   override fun getIcon(file: VirtualFile, flags: Int, project: Project?): Icon = IconUtil.getIcon(file, flags, project)
 

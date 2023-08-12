@@ -71,7 +71,7 @@ open class LayeredIcon : JBCachingScalableIcon<LayeredIcon>, DarkIconProvider, C
     updateSize(arrayOfNulls)
   }
 
-  private constructor(icons: Supplier<Array<Icon>>) {
+  private constructor(icons: Supplier<Array<out Icon>>) {
     iconListSupplier = SynchronizedClearableLazy {
       @Suppress("UNCHECKED_CAST")
       val result = icons.get() as Array<Icon?>
@@ -99,11 +99,11 @@ open class LayeredIcon : JBCachingScalableIcon<LayeredIcon>, DarkIconProvider, C
     val GEAR_WITH_DROPDOWN: Icon = LayeredIcon(Supplier { arrayOf(AllIcons.General.GearPlain, AllIcons.General.Dropdown) })
 
     @JvmStatic
-    fun layeredIcon(icons: Supplier<Array<Icon>>): LayeredIcon = LayeredIcon(icons)
+    fun layeredIcon(icons: Supplier<Array<out Icon>>): LayeredIcon = LayeredIcon(icons)
 
     @Suppress("DEPRECATION")
     @JvmStatic
-    fun layeredIcon(icons: Array<Icon>): LayeredIcon = LayeredIcon(*icons)
+    fun layeredIcon(icons: Array<out Icon>): LayeredIcon = LayeredIcon(*icons)
 
     @JvmStatic
     fun create(backgroundIcon: Icon?, foregroundIcon: Icon?): Icon {

@@ -1,4 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("LeakingThis")
+
 package com.intellij.ui
 
 import com.intellij.openapi.util.IconLoader.getDarkIcon
@@ -28,15 +30,14 @@ open class RowIcon : JBCachingScalableIcon<RowIcon>, com.intellij.ui.icons.RowIc
   }
 
   companion object {
-    fun scaleIcons(icons: Array<Icon?>, scale: Float): Array<Icon?> {
-      if (scale == 1f) return icons
-      val scaledIcons = arrayOfNulls<Icon>(icons.size)
-      for (i in icons.indices) {
-        if (icons[i] != null) {
-          scaledIcons[i] = scale(icons[i]!!, null, scale)
-        }
+    internal fun scaleIcons(icons: Array<Icon?>, scale: Float): Array<Icon?> {
+      if (scale == 1f) {
+        return icons
       }
-      return scaledIcons
+
+      return Array(icons.size) { index ->
+        icons[index]?.let { scale(icon = it, ancestor = null, scale = scale) }
+      }
     }
   }
 
@@ -89,24 +90,19 @@ open class RowIcon : JBCachingScalableIcon<RowIcon>, com.intellij.ui.icons.RowIc
 
   override fun hashCode() = icons.firstOrNull()?.hashCode() ?: 0
 
-  override fun equals(other: Any?): Boolean {
-    return other === this || other is RowIcon && other.icons.contentEquals(icons)
-  }
+  override fun equals(other: Any?) = other === this || other is RowIcon && other.icons.contentEquals(icons)
 
-  override fun getIconCount(): Int {
-    return icons.size
-  }
+  override fun getIconCount() = icons.size
 
-  override fun setIcon(icon: Icon, layer: Int) {
+  override fun setIcon(icon: Icon?, layer: Int) {
     icons[layer] = icon
     myScaledIcons = null
     updateSize()
   }
 
-  override fun getIcon(index: Int): Icon? {
-    return icons[index]
-  }
+  override fun getIcon(index: Int) = icons[index]
 
+  @Suppress("LocalVariableName")
   override fun paintIcon(c: Component, g: Graphics, x: Int, y: Int) {
     scaleContext.update()
     var _x = x
