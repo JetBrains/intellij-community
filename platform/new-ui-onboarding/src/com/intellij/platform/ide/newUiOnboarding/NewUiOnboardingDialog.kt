@@ -4,17 +4,20 @@ package com.intellij.platform.ide.newUiOnboarding
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.*
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.dsl.gridLayout.UnscaledGapsY
+import com.intellij.ui.jcef.JBCefBrowser
 import com.intellij.ui.scale.JBUIScale
+import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import java.awt.Font
+import java.util.*
 import javax.swing.JComponent
 import javax.swing.JRootPane
 import javax.swing.border.Border
@@ -38,15 +41,21 @@ class NewUiOnboardingDialog(project: Project)
   }
 
   override fun createCenterPanel(): JComponent {
-    // todo: replace with separate banner when it will be ready
-    val banner = IconLoader.getIcon("newUiOnboarding/banner.png", NewUiOnboardingDialog::class.java.classLoader)
+    val videoSize = JBDimension(384, 242)
     val contentGaps = UnscaledGaps(28, 32, 22, 32)
 
     val panel = panel {
       row {
-        icon(banner)
+        val videoBase64 = readVideoAsBase64()
+        val browser = JBCefBrowser.createBuilder().setMouseWheelEventEnable(false).build()
+        val pageHtml = createVideoHtmlPage(videoBase64)
+        browser.loadHTML(pageHtml)
+        cell(browser.component)
           .customize(UnscaledGaps.EMPTY)
-          .applyToComponent { WindowMoveListener(this).installTo(this) }
+          .applyToComponent {
+            WindowMoveListener(this).installTo(components?.firstOrNull() ?: this)
+            preferredSize = videoSize
+          }
       }
       panel {
         row {
@@ -57,7 +66,7 @@ class NewUiOnboardingDialog(project: Project)
             }
         }
         row {
-          val maxWidth = banner.iconWidth - JBUI.scale(contentGaps.width)
+          val maxWidth = videoSize.width - JBUI.scale(contentGaps.width)
           val charWidth = window.getFontMetrics(JBFont.label()).charWidth('0')
           val maxLineLength = maxWidth / charWidth
           text(NewUiOnboardingBundle.message("dialog.text"), maxLineLength)
@@ -87,4 +96,35 @@ class NewUiOnboardingDialog(project: Project)
   }
 
   override fun createContentPaneBorder(): Border? = null
+
+  private fun createVideoHtmlPage(videoBase64: String): String {
+    val componentId = "video"
+    val head = HtmlChunk.head().child(LottieUtils.getSingleContentCssStyles(Gray._32, componentId))
+
+    val videoTag = HtmlChunk.tag("video")
+      .attr("id", componentId)
+      .attr("autoplay")
+      .attr("loop")
+      .attr("muted")
+      .child(HtmlChunk.tag("source")
+               .attr("type", "video/webm")
+               .attr("src", "data:video/webm;base64,$videoBase64"))
+    val body = HtmlChunk.body().child(videoTag)
+
+    return HtmlChunk.html()
+      .child(head)
+      .child(body)
+      .toString()
+  }
+
+  private fun readVideoAsBase64(): String {
+    val url = NewUiOnboardingDialog::class.java.classLoader.getResource(VIDEO_PATH)
+              ?: error("Failed to find file by path: $VIDEO_PATH")
+    val videoBytes = url.readBytes()
+    return Base64.getEncoder().encodeToString(videoBytes)
+  }
+
+  companion object {
+    private const val VIDEO_PATH: String = "newUiOnboarding/DialogVideo.webm"
+  }
 }
