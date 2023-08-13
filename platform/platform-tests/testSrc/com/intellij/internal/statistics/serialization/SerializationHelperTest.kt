@@ -71,14 +71,14 @@ internal class SerializationHelperTest : BasePlatformTestCase() {
     val groupDescriptor = GroupDescriptor("testId", "counter", 1, setOf(eventSchemeDescriptor, eventSchemeDescriptor),
                                           "classNameTest", "recorderTest", "pluginIdTest")
     val serializationText = SerializationHelper.serialize(groupDescriptor)
-    val realText = File(getTestDataRoot()+ "SerializationGroupDescriptor.json").readText(Charsets.UTF_8)
+    val realText = File(getTestDataRoot() + "SerializationGroupDescriptor.json").readText(Charsets.UTF_8)
 
     Assertions.assertEquals(realText, serializationText)
   }
 
   @org.junit.Test
   fun testDeserializationGroupDescriptor() {
-    val groupDescriptor = File(getTestDataRoot()+ "SerializationGroupDescriptor.json").readText(Charsets.UTF_8)
+    val groupDescriptor = File(getTestDataRoot() + "SerializationGroupDescriptor.json").readText(Charsets.UTF_8)
 
     val deserializationObject = SerializationHelper.deserialize(groupDescriptor, GroupDescriptor::class.java)
     val serializationText = SerializationHelper.serialize(deserializationObject)
@@ -90,14 +90,15 @@ internal class SerializationHelperTest : BasePlatformTestCase() {
   fun testSerializationFeatureUsageData() {
     val data = FeatureUsageData("FUS")
     data.addData("durationMs", 1)
-    data.addData("version","unknown")
+    data.addData("version", "unknown")
     data.addData("file_path", "testData/Serialization.json")
 
     val serializationText = SerializationHelper.serializeToSingleLine(data.build())
-    val realText = File(getTestDataRoot()+ "SerializationFeatureUsageData.json").readText(Charsets.UTF_8)
+    val realText = File(getTestDataRoot() + "SerializationFeatureUsageData.json").readText(Charsets.UTF_8)
 
     Assertions.assertEquals(realText, serializationText)
   }
+
   @Test
   fun testSerializationEventLogExternalSettings() {
     val eventLogMajorVersionBorders = EventLogMajorVersionBorders()
@@ -164,7 +165,7 @@ internal class SerializationHelperTest : BasePlatformTestCase() {
     eventGroupRemoteDescriptor.versions?.add(EventGroupRemoteDescriptors.GroupVersionRange("1", "2"))
     eventGroupRemoteDescriptors.groups.add(eventGroupRemoteDescriptor)
 
-    val  serializationText = StringWriter(1024)
+    val serializationText = StringWriter(1024)
     SerializationHelper.serialize(serializationText, eventGroupRemoteDescriptors)
     val realText = File(getTestDataRoot() + "SerializationEventGroupRemoteDescriptors.json").readText(Charsets.UTF_8)
 
@@ -247,6 +248,7 @@ internal class SerializationHelperTest : BasePlatformTestCase() {
 
     Assertions.assertEquals(eventsScheme, serializationText)
   }
+
   @Test
   fun testSerializationEventsSchemeArray() {
     val filedDescriptor = FieldDescriptor("plugin", setOf("{util#class_name}", "{util#plugin}"), FieldDataType.ARRAY)
