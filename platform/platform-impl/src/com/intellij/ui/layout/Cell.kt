@@ -220,10 +220,6 @@ interface CellBuilder<out T : JComponent> {
   @ApiStatus.ScheduledForRemoval
   @Deprecated("Use Kotlin UI DSL Version 2")
   fun withLeftGap(): CellBuilder<T>
-
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
-  fun withLeftGap(gapLeft: Int): CellBuilder<T>
 }
 
 @ApiStatus.ScheduledForRemoval
@@ -761,7 +757,3 @@ fun <T> listCellRenderer(renderer: SimpleListCellRenderer<T?>.(value: T, index: 
     }
   }
 }
-
-@ApiStatus.ScheduledForRemoval
-@Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
-fun UINumericRange.asRange(): IntRange = min..max

@@ -17,12 +17,6 @@ interface BaseBuilder {
   @ApiStatus.ScheduledForRemoval
   @Deprecated("Use Kotlin UI DSL Version 2")
   fun withButtonGroup(title: @NlsContexts.BorderTitle String?, buttonGroup: ButtonGroup, body: () -> Unit)
-
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
-  fun buttonGroup(init: () -> Unit) {
-    withButtonGroup(null, ButtonGroup(), init)
-  }
 }
 
 @JvmDefaultWithCompatibility
