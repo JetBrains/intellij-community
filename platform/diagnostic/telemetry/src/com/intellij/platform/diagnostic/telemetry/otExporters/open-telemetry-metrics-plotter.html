@@ -467,13 +467,38 @@ as an example
       if (typeof (yaxis) !== 'undefined') {
         layout.yaxis = yaxis
       }
-      domElement.plot = Plotly.newPlot(
+      const plot = Plotly.newPlot(
         domElement,
         plotlyTrace,
         layout,
         PLOTLY_CONFIG
       )
-      document.plots.push(domElement)
+      //'synchronize' plots x-axes so that all plots show the same datetime range:
+      domElement.on('plotly_relayout', (eventData) => {
+        const from = eventData['xaxis.range[0]']
+        const to = eventData['xaxis.range[1]']
+        $(document.body).css('cursor', 'progress')
+        try {
+          if (from && to) {
+            console.log(`${plot.id}: x-axis range: [${from}, ${to}]`)
+            for (otherPlot of document.plots) {
+              if (otherPlot !== plot) {
+                console.log(`\treLayout: ${otherPlot.id}`)
+                Plotly.relayout(otherPlot, {'xaxis.range': [from, to]})
+              }
+            }
+          }
+        }
+        finally {
+          $(document.body).css('cursor', 'default')
+        }
+      })
+
+      domElement.plot = plot
+      if(!document.plots.includes(domElement)) {
+        document.plots.push(domElement)
+      }
+
       return domElement
     }
 
@@ -1004,7 +1029,7 @@ as an example
         'Page count: requested, allocated, reclaimed...',
         $("#filePageCacheLockFree_PageCounts"),
         [
-          {name: 'Pages requested by app', color: 'green', series: totalPagesRequested},
+          {name: 'Pages requested by app', color: 'green', series: totalPagesRequested, visible: 'legendonly'},
           {name: 'Pages allocated', color: 'red', series: totalPagesAllocated},
           {name: 'Pages reclaimed', color: 'blue', series: totalPagesReclaimed},
           {name: 'Pages reused immediately', color: 'cyan', series: totalPagesHandedOver},
@@ -1036,7 +1061,7 @@ as an example
         $("#filePageCacheLockFree_PageBytes"),
         [
           {name: 'Total bytes requested by app', color: 'blue', series: totalBytesRequested.mulScalar(1e-6),
-            visible: false},//usually not representative
+            visible: 'legendonly'},//usually not representative
           {name: 'Total bytes read', color: 'green', series: totalBytesRead.mulScalar(1e-6)},
           {name: 'Total bytes written', color: 'red', series: totalBytesWritten.mulScalar(1e-6)}
         ],
@@ -1046,12 +1071,31 @@ as an example
         }
       )
 
+      //MAYBE RC: read/write _speeds_ feel to be more representative (i.e. to detect slow storage). But
+      //          in practice numbers are quite irregular -- likely because since OS-level caching plays
+      //          too big role.
+      // plotTimeSeries(
+      //   'Data flows',
+      //   $("#filePageCacheLockFree_PageBytes"),
+      //   [
+      //     {name: 'Requested by app', color: 'blue',
+      //       series: totalBytesRequested.mulScalar(1e-6).div(totalPagesRequestsMs.mulScalar(1e-3)),
+      //       visible: 'legendonly'},//usually not representative
+      //     {name: 'Read', color: 'green', series: totalBytesRead.mulScalar(1e-6).div(totalPagesReadMs.mulScalar(1e-3))},
+      //     {name: 'Written', color: 'red', series: totalBytesWritten.mulScalar(1e-6).div(totalPagesWriteMs.mulScalar(1e-3))}
+      //   ],
+      //   /*yaxis: */ {
+      //     title: 'Mb/sec',
+      //     autorange: true
+      //   }
+      // )
+
       plotTimeSeries(
         'Memory used by page buffers: Heap vs Off-heap (Native)',
         $("#filePageCacheLockFree_HeapVsNativeMemoryUsed"),
         [
-          {name: 'Heap memory in use', color: 'red', series: heapBytesInUse.mulScalar(1e-6)},
-          {name: 'Off-heap memory in use', color: 'blue', series: nativeBytesInUse.mulScalar(1e-6)}
+          {name: 'Off-heap memory in use', color: 'blue', series: nativeBytesInUse.mulScalar(1e-6)},
+          {name: 'Heap memory in use', color: 'red', series: heapBytesInUse.mulScalar(1e-6)}
         ],
         /*yaxis: */ {
           title: 'Mb',
@@ -1059,13 +1103,12 @@ as an example
         }
       )
 
-      //MAYBE RC: monitor total _time_ spent by housekeeper thread?
       plotTimeSeries(
         'Housekeeper thread activity',
         $("#filePageCacheLockFree_Housekeeper"),
         [
           {name: 'Turns done', color: 'green', series: housekeeperTurnsDone},
-          {name: 'Turns skipped', color: 'blue', series: housekeeperTurnsSkipped}
+          {name: 'Turns skipped', color: 'blue', series: housekeeperTurnsSkipped, visible: 'legendonly'}
         ],
         /*yaxis: */ {
           title: '',
@@ -1088,7 +1131,7 @@ as an example
 
     //====== 'Custom' plot: =================
 
-    /**namesOfSeriesToPlot: array of strings, names of time series in a document.loadedAndParsedData.parsedCSV */
+    /** namesOfSeriesToPlot: array of strings, names of time series in a document.loadedAndParsedData.parsedCSV */
     function extractAndPlotCustomTimeSeries(namesOfSeriesToPlot) {
       if (!document.loadedAndParsedData.parsedCSV) {
         console.log("Error: .loadedAndParsedData is not loaded")
@@ -1244,32 +1287,6 @@ as an example
       loadingChain.then(() => {
         document.progressBar.update(80)
         document.progressBar.hide()
-      })
-
-      //'connect' plots x-axes so that all plots show the same datetime range:
-      loadingChain.then(() => {
-        for (const plot of document.plots) {
-          //FIXME RC: 'reset axis' doesn't issue plotly_relayout?
-          plot.on('plotly_relayout', (eventData) => {
-            const from = eventData['xaxis.range[0]']
-            const to = eventData['xaxis.range[1]']
-            $(document.body).css('cursor', 'progress')
-            try {
-              if (from && to) {
-                console.log(`${plot.id}: x-axis range: [${from}, ${to}]`)
-                for (otherPlot of document.plots) {
-                  if (otherPlot !== plot) {
-                    console.log(`\treLayout: ${otherPlot.id}`)
-                    Plotly.relayout(otherPlot, {'xaxis.range': [from, to]})
-                  }
-                }
-              }
-            }
-            finally {
-              $(document.body).css('cursor', 'default')
-            }
-          })
-        }
       })
     }
 
