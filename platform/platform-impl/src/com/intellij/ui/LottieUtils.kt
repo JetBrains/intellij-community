@@ -16,26 +16,10 @@ import java.awt.Dimension
 object LottieUtils {
   @Suppress("HardCodedStringLiteral")
   fun createLottieAnimationPage(lottieJson: String, lottieScript: String? = null, background: Color): String {
-    val head = HtmlBuilder().append(
-      HtmlChunk.tag("style").addRaw("""
-          body {
-              background-color: #${ColorUtil.toHex(background)};
-              margin: 0;
-              height: 100%;
-              overflow: hidden;
-          }
-          #lottie {
-              background-color: #${ColorUtil.toHex(background)};
-              width: 100%;
-              height: 100%;
-              display: block;
-              overflow: hidden;
-              transform: translate3d(0,0,0);
-              text-align: center;
-              opacity: 1;
-          }
-          """.trimIndent())
-    ).wrapWith(HtmlChunk.head())
+    val componentId = "lottie"
+    val head = HtmlBuilder()
+      .append(getSingleContentCssStyles(background, componentId))
+      .wrapWith(HtmlChunk.head())
 
     val script = if (lottieScript != null) {
       HtmlChunk.tag("script").addRaw(lottieScript)
@@ -44,7 +28,7 @@ object LottieUtils {
 
     val body = HtmlBuilder()
       .append(script)
-      .append(HtmlChunk.div().attr("id", "lottie").addRaw(""))
+      .append(HtmlChunk.div().attr("id", componentId).addRaw(""))
       .append(HtmlChunk.tag("script").addRaw("""
            const animationData = $lottieJson;
            const params = {
@@ -63,6 +47,28 @@ object LottieUtils {
       .append(body)
       .wrapWith(HtmlChunk.html())
       .toString()
+  }
+
+  @Suppress("HardCodedStringLiteral")
+  fun getSingleContentCssStyles(background: Color, componentId: String): HtmlChunk {
+    return HtmlChunk.tag("style").addRaw("""
+          body {
+              background-color: #${ColorUtil.toHex(background)};
+              margin: 0;
+              height: 100%;
+              overflow: hidden;
+          }
+          #${componentId} {
+              background-color: #${ColorUtil.toHex(background)};
+              width: 100%;
+              height: 100%;
+              display: block;
+              overflow: hidden;
+              transform: translate3d(0,0,0);
+              text-align: center;
+              opacity: 1;
+          }
+          """.trimIndent())
   }
 
   @Throws(SerializationException::class)
