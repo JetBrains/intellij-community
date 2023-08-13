@@ -155,6 +155,9 @@ public class GradleSettings extends AbstractExternalSystemSettings<GradleSetting
     if (!Objects.equals(old.getGradleHome(), current.getGradleHome())) {
       getPublisher().onGradleHomeChange(old.getGradleHome(), current.getGradleHome(), current.getExternalProjectPath());
     }
+    if (!Objects.equals(old.getGradleJvm(), current.getGradleJvm())) {
+      getPublisher().onGradleJvmChange(old.getGradleJvm(), current.getGradleJvm(), current.getExternalProjectPath());
+    }
     if (old.getDistributionType() != current.getDistributionType()) {
       getPublisher().onGradleDistributionTypeChange(current.getDistributionType(), current.getExternalProjectPath());
     }
