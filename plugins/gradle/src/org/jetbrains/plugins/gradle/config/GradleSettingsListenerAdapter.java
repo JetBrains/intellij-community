@@ -24,6 +24,10 @@ public abstract class GradleSettingsListenerAdapter implements ExternalSystemSet
   }
 
   @Override
+  public void onGradleJvmChange(@Nullable String oldGradleJvm, @Nullable String newGradleJvm, @NotNull String linkedProjectPath) {
+  }
+
+  @Override
   public void onGradleVmOptionsChange(@Nullable String oldOptions, @Nullable String newOptions) {
   }
 

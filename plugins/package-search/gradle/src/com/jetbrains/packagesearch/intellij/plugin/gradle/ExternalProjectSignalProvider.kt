@@ -73,6 +73,10 @@ internal class GradleModuleLinkSignalProvider : FlowModuleChangesSignalProvider 
                     trySend()
                 }
 
+                override fun onGradleJvmChange(oldGradleJvm: String?, newGradleJvm: String?, linkedProjectPath: String) {
+                    trySend()
+                }
+
                 override fun onGradleVmOptionsChange(oldOptions: String?, newOptions: String?) {
                     trySend()
                 }
