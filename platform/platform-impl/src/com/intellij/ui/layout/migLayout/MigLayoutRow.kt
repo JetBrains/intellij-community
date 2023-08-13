@@ -96,16 +96,6 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
   private var isTrailingSeparator = false
   private var isComment = false
 
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2")
-  override fun withButtonGroup(title: String?, buttonGroup: ButtonGroup, body: () -> Unit) {
-    if (title != null) {
-      label(title)
-      gapAfter = "${spacing.radioGroupTitleVerticalGap}px!"
-    }
-    builder.withButtonGroup(buttonGroup, body)
-  }
-
   override var enabled: Boolean = true
     set(value) {
       if (field == value) {
@@ -342,10 +332,6 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
 
     if (labeled && components.size == 2 && component.border is LineBorder) {
       builder.componentConstraints.get(components.first())?.vertical?.gapBefore = builder.defaultComponentConstraintCreator.vertical1pxGap
-    }
-
-    if (component is JRadioButton) {
-      builder.topButtonGroup?.add(component)
     }
 
     builder.defaultComponentConstraintCreator.addGrowIfNeeded(cc, component, spacing)

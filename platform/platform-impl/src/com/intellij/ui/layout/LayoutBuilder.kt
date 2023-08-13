@@ -7,20 +7,12 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.fileChooser.FileChooser
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.ui.components.JBRadioButton
 import org.jetbrains.annotations.ApiStatus
-import javax.swing.ButtonGroup
 
 @ApiStatus.ScheduledForRemoval
 @Deprecated("Use Kotlin UI DSL Version 2")
-open class LayoutBuilder @PublishedApi internal constructor(@PublishedApi internal val builder: LayoutBuilderImpl) : RowBuilder by builder.rootRow {
+open class LayoutBuilder @PublishedApi internal constructor(@PublishedApi internal val builder: LayoutBuilderImpl) : RowBuilder by builder.rootRow
 
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2")
-  override fun withButtonGroup(title: String?, buttonGroup: ButtonGroup, body: () -> Unit) {
-    builder.withButtonGroup(buttonGroup, body)
-  }
-}
 
 @ApiStatus.ScheduledForRemoval
 @Deprecated("Use Kotlin UI DSL Version 2")
@@ -30,12 +22,6 @@ class RowBuilderWithButtonGroupProperty<T : Any>
 @Deprecated("Use Kotlin UI DSL Version 2")
 internal constructor(private val builder: RowBuilder, private val prop: PropertyBinding<T>) : RowBuilder by builder
 
-@Deprecated("Use Kotlin UI DSL Version 2")
-private fun <T> CellBuilder<JBRadioButton>.bindValueToProperty(prop: PropertyBinding<T>, value: T): CellBuilder<JBRadioButton> = apply {
-  onApply { if (component.isSelected) prop.set(value) }
-  onReset { component.isSelected = prop.get() == value }
-  onIsModified { component.isSelected != (prop.get() == value) }
-}
 
 fun FileChooserDescriptor.chooseFile(event: AnActionEvent, fileChosen: (chosenFile: VirtualFile) -> Unit) {
   FileChooser.chooseFile(this, event.getData(PlatformDataKeys.PROJECT), event.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT), null,
