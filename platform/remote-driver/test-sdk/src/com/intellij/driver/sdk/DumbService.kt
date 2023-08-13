@@ -2,6 +2,7 @@ package com.intellij.driver.sdk
 
 import com.intellij.driver.client.Driver
 import com.intellij.driver.client.Remote
+import com.intellij.driver.client.service
 import java.time.Duration
 
 @Remote("com.intellij.openapi.project.DumbService")
@@ -10,7 +11,7 @@ interface DumbService {
 }
 
 fun Driver.waitForSmartMode(project: Project, timeout: Duration = Duration.ofMinutes(1)) {
-  val dumbService = service(DumbService::class, project)
+  val dumbService = service<DumbService>(project)
 
   waitFor(timeout, errorMessage = "Failed to wait ${timeout.seconds}s for smart mode") {
     !dumbService.isDumb()

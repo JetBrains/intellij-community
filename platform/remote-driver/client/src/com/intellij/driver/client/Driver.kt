@@ -50,3 +50,11 @@ interface Driver : AutoCloseable {
     }
   }
 }
+
+inline fun <reified T : Any> Driver.service(): T {
+  return service(T::class)
+}
+
+inline fun <reified T : Any> Driver.service(project: ProjectRef): T {
+  return service(T::class, project)
+}
