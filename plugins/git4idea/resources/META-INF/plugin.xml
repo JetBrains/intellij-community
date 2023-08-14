@@ -782,6 +782,13 @@
     <toolbarQuickAction implementationClass="git4idea.ui.toolbar.DiffQuickAction" listGroupID="MainToolbarQuickActions.VCS" />
     <toolbarQuickAction implementationClass="git4idea.ui.toolbar.HistoryQuickAction" listGroupID="MainToolbarQuickActions.VCS" />
     <toolbarQuickAction implementationClass="git4idea.ui.toolbar.RollbackQuickAction" listGroupID="MainToolbarQuickActions.VCS" />
+
+    <changesViewContent tabName="Git Conflicts"
+                        className="git4idea.conflicts.GitConflictsToolWindowManager$ContentProvider"
+                        predicateClassName="git4idea.conflicts.GitConflictsToolWindowManager$ContentPredicate"
+                        preloaderClassName="git4idea.conflicts.GitConflictsToolWindowManager$ContentPreloader"
+                        displayNameSupplierClassName="git4idea.conflicts.GitConflictsToolWindowManager$DisplayNameSupplier"
+                        isInCommitToolWindow="true"/>
   </extensions>
 
   <extensionPoints>

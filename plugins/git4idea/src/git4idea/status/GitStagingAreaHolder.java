@@ -57,6 +57,12 @@ public class GitStagingAreaHolder {
     }
   }
 
+  public boolean hasConflicts() {
+    synchronized (LOCK) {
+      return ContainerUtil.exists(myRecords, record -> GitIndexStatusUtilKt.isConflicted(record.getIndex(), record.getWorkTree()));
+    }
+  }
+
   @NotNull
   public List<GitConflict> getAllConflicts() {
     synchronized (LOCK) {
