@@ -42,7 +42,7 @@ import kotlin.math.max
 class DocumentTracker(
   document1: Document,
   document2: Document,
-  private val LOCK: Lock
+  private val LOCK: Lock = Lock()
 ) : Disposable {
 
   private val handlers: MutableList<Handler> = mutableListOf()
@@ -519,6 +519,10 @@ class DocumentTracker(
   }
 
 
+  /**
+   * Would be better to implement this with a proper RW-lock, but it's challenging fue to absence of lock upgrade in [java.util.concurrent.locks.ReentrantReadWriteLock].
+   * Fine to leave it as is for now because it is not that contested.
+   */
   @ApiStatus.Internal
   class Lock {
     val myLock = ReentrantLock()
