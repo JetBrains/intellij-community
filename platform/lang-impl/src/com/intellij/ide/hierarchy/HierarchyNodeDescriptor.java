@@ -5,6 +5,8 @@ package com.intellij.ide.hierarchy;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.projectView.impl.ProjectViewTree;
+import com.intellij.ide.tags.TagManager;
+import com.intellij.ide.tags.TagManager.TagIconAndText;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.SmartElementDescriptor;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -27,6 +29,7 @@ public abstract class HierarchyNodeDescriptor extends SmartElementDescriptor {
   private Object[] myCachedChildren;
   protected final boolean myIsBase;
   private Color myBackgroundColor;
+  private @NotNull TagIconAndText myTagIconAndText = TagIconAndText.EMPTY;
 
   protected HierarchyNodeDescriptor(@NotNull Project project,
                                     @Nullable NodeDescriptor parentDescriptor,
@@ -66,9 +69,18 @@ public abstract class HierarchyNodeDescriptor extends SmartElementDescriptor {
     return myBackgroundColor;
   }
 
+  public @NotNull TagIconAndText getTagIconAndTextCached() {
+    return myTagIconAndText;
+  }
+
   @Override
   public boolean update() {
     boolean changed = super.update();
+    TagIconAndText newTagIconAndText = TagManager.isEnabled() ? TagManager.getTagIconAndText(getPsiElement()) : TagIconAndText.EMPTY;
+    if (!newTagIconAndText.equals(myTagIconAndText)) {
+      myTagIconAndText = newTagIconAndText;
+      changed = true;
+    }
     myBackgroundColor = ProjectViewTree.getColorForElement(getContainingFile());
     return changed;
   }

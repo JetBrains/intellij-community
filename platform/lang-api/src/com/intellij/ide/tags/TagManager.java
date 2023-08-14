@@ -33,8 +33,12 @@ public abstract class TagManager {
   public static boolean isEnabled() {
     return Registry.is("ide.element.tags.enabled");
   }
+  
+  public record TagIconAndText(@Nullable Icon icon, @NotNull ColoredText coloredText) {
+    public static final TagIconAndText EMPTY = new TagIconAndText(null, ColoredText.empty());
+  }
 
-  public static Pair<@Nullable Icon, @NotNull ColoredText> getTagIconAndText(@Nullable PsiElement element) {
+  public static @NotNull TagIconAndText getTagIconAndText(@Nullable PsiElement element) {
     Collection<TagManager.Tag> tags = getElementTags(element);
     ColoredText.Builder ct = ColoredText.builder();
     Icon tagIcon = null;
@@ -46,7 +50,7 @@ public abstract class TagManager {
         SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES.derive(SimpleTextAttributes.STYLE_BOLD, tag.color, null, null)
       );
     }
-    return Pair.create(tagIcon, ct.build());
+    return new TagIconAndText(tagIcon, ct.build());
   }
 
   public static @NotNull Collection<Tag> getElementTags(@Nullable PsiElement element) {

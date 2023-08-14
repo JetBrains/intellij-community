@@ -187,8 +187,8 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
       }
       else {
         var tagIconAndText = TagManager.getTagIconAndText(value);
-        tagIcon = tagIconAndText.first;
-        tagText = tagIconAndText.second;
+        tagIcon = tagIconAndText.icon();
+        tagText = tagIconAndText.coloredText();
       }
       data.setIcon(withIconMarker(icon, tagIcon));
       data.setPresentableText(myName);

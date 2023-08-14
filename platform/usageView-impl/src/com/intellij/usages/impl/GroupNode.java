@@ -412,9 +412,9 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
     FileStatus fileStatus = group.getFileStatus();
     Color foregroundColor = fileStatus != null ? fileStatus.getColor() : null;
     var tagIconAndText = TagManager.getTagIconAndText(element);
-    Icon icon = IconUtil.rowIcon(tagIconAndText.first, group.getIcon());
+    Icon icon = IconUtil.rowIcon(tagIconAndText.icon(), group.getIcon());
     List<TextChunk> chunks = new ArrayList<>();
-    for (ColoredText.Fragment fragment : tagIconAndText.second.fragments()) {
+    for (ColoredText.Fragment fragment : tagIconAndText.coloredText().fragments()) {
       chunks.add(new TextChunk(fragment.fragmentAttributes().toTextAttributes(), fragment.fragmentText()));
     }
     TextAttributes attributes = SimpleTextAttributes.REGULAR_ATTRIBUTES.toTextAttributes();
