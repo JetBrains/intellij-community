@@ -95,11 +95,8 @@ private fun generateMappings() {
 }
 
 private class Mapping(val product: String, val set: String, val path: String) : Comparable<Mapping> {
-  init {
-    val absolutePath = context.iconRepoDir.resolve(path)
-    check(absolutePath.exists()) {
-      "$absolutePath is missing for $set of $product"
-    }
+  fun exists(): Boolean {
+    return context.iconRepoDir.resolve(path).exists()
   }
 
   override fun toString(): String {
@@ -132,10 +129,11 @@ private fun loadIdeaGeneratedIcons(): Sequence<Mapping> {
       .flatMap { info ->
         val icons = info.images.asSequence()
           .filter { it.basicFile?.let(::Icon)?.isValid == true }
-          .filter { Exclusions.match(requireNotNull(it.basicFile)) }
+          .filter { Exclusions.match(checkNotNull(it.basicFile)) }
           .map { Paths.get(JpsPathUtil.urlToPath(it.sourceRoot.url)) }
           .distinct()
           .map { Mapping("idea", info.className, "idea/${home.relativize(it)}") }
+          .filter { it.exists() }
           .toList()
         check(icons.size < 2) {
           "Expected single source root for ${info.className} mapping but found: ${icons.joinToString()}"
