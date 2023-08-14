@@ -1052,7 +1052,7 @@ public class AttributesStorageOverBlobStorage implements AbstractAttributesStora
     }
     catch (RecordAlreadyDeletedException ex) {
       if (IGNORE_ALREADY_DELETED_ERRORS) {
-        LOG.warn("Record [" + attributesRecordId + "] is already deleted -> likely");
+        LOG.warn("Record [" + attributesRecordId + "] is already deleted -> likely improper app shutdown?");
       }
       else {
         throw ex;
@@ -1069,7 +1069,7 @@ public class AttributesStorageOverBlobStorage implements AbstractAttributesStora
     }
     catch (RecordAlreadyDeletedException ex) {
       if (IGNORE_ALREADY_DELETED_ERRORS) {
-        LOG.warn("Record [" + recordId + "] is already deleted -> likely");
+        LOG.warn("Record [" + recordId + "] is already deleted -> likely improper app shutdown?");
         return false;
       }
       else {

@@ -269,7 +269,7 @@ public abstract class AttributesStorageOnTheTopOfBlobStorageTestBase {
   }
 
   @Test
-  public void singleAttributeInserted_CouldBeAndDeletedTwice() throws IOException {
+  public void singleAttributeInserted_CouldBeDeletedTwice_If_IGNORE_ALREADY_DELETED_ERRORS_Enabled() throws IOException {
     final AttributeRecord record = newAttributeRecord(ARBITRARY_FILE_ID, ARBITRARY_ATTRIBUTE_ID)
       .withRandomAttributeBytes(INLINE_ATTRIBUTE_SMALLER_THAN + 1);
 
@@ -301,7 +301,7 @@ public abstract class AttributesStorageOnTheTopOfBlobStorageTestBase {
         fail("IGNORE_ALREADY_DELETED_ERRORS=false => must throw error on second attempt to delete already deleted record");
       }
       catch (RecordAlreadyDeletedException e) {
-        //OK, it is expected get error if IGNORE_ALREADY_DELETED_ERRORS=false
+        //OK, it is expected to get an error if IGNORE_ALREADY_DELETED_ERRORS=false
       }
     }
   }
