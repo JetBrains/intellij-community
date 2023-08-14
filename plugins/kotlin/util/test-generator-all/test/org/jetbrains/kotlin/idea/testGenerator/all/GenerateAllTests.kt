@@ -2,9 +2,7 @@
 package org.jetbrains.kotlin.idea.testGenerator.all
 
 import org.jetbrains.kotlin.fe10.testGenerator.generateK1Tests
-import org.jetbrains.kotlin.fir.testGenerator.generateK2Tests
 
 fun main() {
-    generateK2Tests()
     generateK1Tests()
 }
