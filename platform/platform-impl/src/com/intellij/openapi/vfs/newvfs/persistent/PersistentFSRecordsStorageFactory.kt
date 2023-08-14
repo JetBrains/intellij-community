@@ -115,7 +115,7 @@ object PersistentFSRecordsStorageFactory {
 
     if (!PageCacheUtils.LOCK_FREE_PAGE_CACHE_ENABLED) {
       throw AssertionError(
-        "Bug: PageCacheUtils.LOCK_FREE_VFS_ENABLED=false " +
+        "Bug: PageCacheUtils.LOCK_FREE_PAGE_CACHE_ENABLED=false " +
         "=> can't create PersistentFSRecordsOverLockFreePagedStorage if FilePageCacheLockFree is disabled")
     }
 

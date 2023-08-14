@@ -36,7 +36,7 @@ public class IntToIntBtreeLockFreeTest {
   @BeforeClass
   public static void beforeClass() throws Exception {
     assumeTrue(
-      "PageCacheUtils.LOCK_FREE_VFS_ENABLED must be true to test IntToIntBtree over lock-free cache",
+      "PageCacheUtils.LOCK_FREE_PAGE_CACHE_ENABLED must be true to test IntToIntBtree over lock-free cache",
       PageCacheUtils.LOCK_FREE_PAGE_CACHE_ENABLED
     );
     IndexDebugProperties.DEBUG = true;

@@ -29,7 +29,7 @@ public class StreamlinedBlobStorageOverLockFreePagesStorageTest
   @BeforeClass
   public static void beforeClass() throws Exception {
     assumeTrue(
-      "PageCacheUtils.LOCK_FREE_VFS_ENABLED must be true for this test to run",
+      "PageCacheUtils.LOCK_FREE_PAGE_CACHE_ENABLED must be true for this test to run",
       PageCacheUtils.LOCK_FREE_PAGE_CACHE_ENABLED
     );
   }

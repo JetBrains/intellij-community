@@ -24,7 +24,7 @@ public class AppendableObjectStorageBackedPagedStorageTest extends AppendableObj
 
   @BeforeClass
   public static void checkLockFreeEnabled() {
-    assumeTrue("Can't test lock-free storage if LOCK_FREE_VFS_ENABLED=false",
+    assumeTrue("Can't test lock-free storage if LOCK_FREE_PAGE_CACHE_ENABLED=false",
                PageCacheUtils.LOCK_FREE_PAGE_CACHE_ENABLED);
   }
 

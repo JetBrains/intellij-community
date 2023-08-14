@@ -101,7 +101,7 @@ public final class DirectByteBufferAllocator {
   private final AtomicInteger disposed = new AtomicInteger();
 
   public static final DirectByteBufferAllocator ALLOCATOR = new DirectByteBufferAllocator(
-    USE_POOLED_ALLOCATOR ? PageCacheUtils.ALLOCATOR_SIZE : 0
+    USE_POOLED_ALLOCATOR ? PageCacheUtils.MAX_DIRECT_BUFFERS_POOL_BYTES : 0
   );
 
   /**
