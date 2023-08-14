@@ -24,7 +24,15 @@ public final class MRUFileNameCache implements FileNameCache {
   private static final boolean TRACK_STATS = getBooleanProperty("vfs.name-cache.track-stats", true);
 
   //TODO RC: cache size is better be ctor parameter
-  private static final int MRU_CACHE_SIZE = 1024 * 64;
+  private static final int MRU_CACHE_SIZE = 1024 * 72;
+
+  //The cache utilizes a rare case of 'benign data race' in JMM. Basically, if you have an array of
+  // primitives or immutable types, then reads & writes to that array never produces corrupted data.
+  // I.e. each value thread reads from the array cell is the value that some thread has written to the
+  // array cell at some (maybe later!) moment of program life. If code is ready to process any of
+  // possible values -- code is correct, regardless of the fact that there is a data race.
+  // We piggyback on this property: mruCache[i] could be null (initial value), or any entry such that
+  // entry.nameId is hashed to i -- and code in .valueOf() method is ready to any such value.
 
   private final CacheEntryNameWithId[] mruCache = new CacheEntryNameWithId[MRU_CACHE_SIZE];
 
@@ -33,7 +41,7 @@ public final class MRUFileNameCache implements FileNameCache {
   private final boolean checkFileNamesSanity;
 
   //=========== monitoring: =======================================================
-  private final AtomicInteger requestsCount = new AtomicInteger();
+  private final AtomicInteger cacheHitsCount = new AtomicInteger();
   private final AtomicInteger cacheMissesCount = new AtomicInteger();
   private final @Nullable BatchCallback otelHandlerToClose;
 
@@ -75,7 +83,7 @@ public final class MRUFileNameCache implements FileNameCache {
 
   private void cacheData(int nameId,
                          @Nullable String name) {
-    int mruCacheEntryIndex = nameId % MRU_CACHE_SIZE;
+    int mruCacheEntryIndex = toIndex(nameId);
     CacheEntryNameWithId entry = mruCache[mruCacheEntryIndex];
     if (entry != null && entry.nameId == nameId) {
       return;//already cached
@@ -87,13 +95,12 @@ public final class MRUFileNameCache implements FileNameCache {
   public @NotNull String valueOf(int nameId) throws IOException {
     assert nameId > 0 : nameId;
 
-    if (TRACK_STATS) {
-      requestsCount.incrementAndGet();
-    }
-
-    int mruCacheEntryIndex = nameId % MRU_CACHE_SIZE;
+    int mruCacheEntryIndex = toIndex(nameId);
     CacheEntryNameWithId entry = mruCache[mruCacheEntryIndex];
     if (entry != null && entry.nameId == nameId) {
+      if (TRACK_STATS) {
+        cacheHitsCount.incrementAndGet();
+      }
       return entry.name;
     }
 
@@ -110,6 +117,11 @@ public final class MRUFileNameCache implements FileNameCache {
     return name;
   }
 
+  private static int toIndex(int nameId) {
+    int hash = Math.abs(nameId * 0x9E3779B9);//fibbonacci hash
+    return hash % MRU_CACHE_SIZE;
+  }
+
   @Override
   public void close() throws Exception {
     if (otelHandlerToClose != null) {
@@ -124,8 +136,10 @@ public final class MRUFileNameCache implements FileNameCache {
     var totalMissesCounter = meter.counterBuilder("FileNameCache.totalMisses").buildObserver();
 
     return meter.batchCallback(() -> {
-      queriesCounter.record(requestsCount.longValue());
-      totalMissesCounter.record(cacheMissesCount.longValue());
+      long cacheMisses = cacheMissesCount.longValue();
+      long totalCacheRequestsServed = cacheHitsCount.longValue() + cacheMisses;
+      queriesCounter.record(totalCacheRequestsServed);
+      totalMissesCounter.record(cacheMisses);
     }, queriesCounter, totalMissesCounter);
   }
 
