@@ -33,7 +33,7 @@ import java.util.function.BiPredicate
 class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
 
   companion object {
-    private val INHERITED_PLUGINS = IDEA_BUNDLED_PLUGINS + "intellij.javaFX.community"
+    private val INHERITED_PLUGINS = IDEA_BUNDLED_PLUGINS
 
     private val EXTRA_PLUGINS = listOf(
       // Android Studio: package CIDR plugins. This list is based on what we have been shipping in Android Studio
@@ -61,7 +61,6 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
       "intellij.grazie",
       "intellij.java.byteCodeViewer",
       "intellij.java.guiForms.designer",
-      "intellij.javaFX.community",
       "intellij.maven",
       "intellij.platform.tracing.ide",
       "intellij.searchEverywhereMl",
