@@ -58,18 +58,29 @@ class JoinDeclarationAndAssignmentIntention : SelfTargetingRangeIntention<KtProp
         }
 
         val assignment = findAssignment(element) ?: return null
-        val assignmentRight = assignment.right ?: return null
+        val initializer = assignment.right ?: return null
         val context = assignment.analyze()
         val propertyDescriptor = context[BindingContext.DECLARATION_TO_DESCRIPTOR, element]
-        if (assignmentRight.anyDescendantOfType<KtNameReferenceExpression> {
-                context[BindingContext.REFERENCE_TARGET, it] == propertyDescriptor
-            }) return null
-        if (!assignmentRight.let {
-                hasNoLocalDependencies(it, element) && ((element.isVar && !element.isLocal) ||
-                        equalNullableTypes(it.getType(context), context[BindingContext.TYPE, element.typeReference]))
-            }) return null
 
-        return TextRange((element.modifierList ?: element.valOrVarKeyword).startOffset, (element.typeReference ?: element).endOffset)
+        val isUsedInInitializer = initializer.anyDescendantOfType<KtNameReferenceExpression> {
+            context[BindingContext.REFERENCE_TARGET, it] == propertyDescriptor
+        }
+
+        if (isUsedInInitializer) return null
+        if (hasLocalDependencies(initializer, element)) return null
+
+        val isNonLocalVar = element.isVar && !element.isLocal
+        val typesAreEqual = lazy {
+            val initializerType = initializer.getType(context)
+            val propertyType = context[BindingContext.TYPE, element.typeReference]
+            equalNullableTypes(initializerType, propertyType)
+        }
+
+        if (!isNonLocalVar && !typesAreEqual.value) return null
+
+        val startOffset = (element.modifierList ?: element.valOrVarKeyword).startOffset
+        val endOffset = (element.typeReference ?: element).endOffset
+        return TextRange(startOffset, endOffset)
     }
 
     override fun applyTo(element: KtProperty, editor: Editor?) {
@@ -112,7 +123,7 @@ class JoinDeclarationAndAssignmentIntention : SelfTargetingRangeIntention<KtProp
 
     private fun findAssignment(property: KtProperty): KtBinaryExpression? {
         val propertyContainer = property.parent as? KtElement ?: return null
-        property.typeReference ?: return null
+        if (property.typeReference == null) return null
 
         val assignments = mutableListOf<KtBinaryExpression>()
         fun process(binaryExpr: KtBinaryExpression) {
@@ -128,9 +139,9 @@ class JoinDeclarationAndAssignmentIntention : SelfTargetingRangeIntention<KtProp
             if (leftReference.getReferencedName() != property.name) return
             assignments += binaryExpr
         }
-        propertyContainer.forEachDescendantOfType(::process)
+        propertyContainer.forEachDescendantOfType<KtBinaryExpression>(::process)
 
-        fun PsiElement?.invalidParent(): Boolean {
+        fun PsiElement?.isInvalidParent(): Boolean {
             when {
                 this == null -> return true
                 this === propertyContainer -> return false
@@ -142,21 +153,24 @@ class JoinDeclarationAndAssignmentIntention : SelfTargetingRangeIntention<KtProp
             }
         }
 
-        if (assignments.any { it.parent.invalidParent() }) return null
+        if (assignments.any { it.parent.isInvalidParent() }) return null
 
         val firstAssignment = assignments.firstOrNull() ?: return null
-        if (assignments.any {
-            it !== firstAssignment && it.parents.match(KtBlockExpression::class, last = KtSecondaryConstructor::class) != null
-            }) return null
+        val hasOtherAssignmentsInSecondaryConstructors = assignments.drop(1).any {
+            it.parents.match(KtBlockExpression::class, last = KtSecondaryConstructor::class) != null
+        }
+        if (hasOtherAssignmentsInSecondaryConstructors) return null
 
         val context = firstAssignment.analyze()
-        if (!property.isLocal &&
-            firstAssignment.parent != propertyContainer &&
-            firstAssignment.right?.anyDescendantOfType<KtNameReferenceExpression> {
+
+        if (!property.isLocal && firstAssignment.parent != propertyContainer) {
+            val isAssignedConstructorParameter = firstAssignment.right?.anyDescendantOfType<KtNameReferenceExpression> {
                 val descriptor = context[BindingContext.REFERENCE_TARGET, it]
                 descriptor is ValueParameterDescriptor && descriptor.containingDeclaration is ClassConstructorDescriptor
             } == true
-        ) return null
+
+            if (isAssignedConstructorParameter) return null
+        }
 
         val propertyDescriptor = context[BindingContext.DECLARATION_TO_DESCRIPTOR, property] ?: return null
         val assignedDescriptor = firstAssignment.left.getResolvedCall(context)?.candidateDescriptor ?: return null
@@ -171,10 +185,10 @@ class JoinDeclarationAndAssignmentIntention : SelfTargetingRangeIntention<KtProp
     // a block that only contains comments is not empty
     private fun KtBlockExpression.isEmpty() = contentRange().isEmpty
 
-    private fun hasNoLocalDependencies(element: KtElement, property: KtProperty): Boolean {
+    private fun hasLocalDependencies(initializer: KtElement, property: KtProperty): Boolean {
         val localContext = property.parent
         val nextSiblings = property.siblings(forward = true, withItself = false)
-        return !element.anyDescendantOfType<PsiElement> { child ->
+        return initializer.anyDescendantOfType<PsiElement> { child ->
             child.resolveAllReferences().any { it != null && PsiTreeUtil.isAncestor(localContext, it, false) && it in nextSiblings }
         }
     }
