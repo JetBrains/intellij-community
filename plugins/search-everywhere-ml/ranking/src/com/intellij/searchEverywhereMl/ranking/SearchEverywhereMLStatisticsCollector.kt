@@ -14,7 +14,6 @@ import com.intellij.searchEverywhereMl.SE_TABS
 import com.intellij.searchEverywhereMl.log.MLSE_RECORDER_ID
 import com.intellij.searchEverywhereMl.ranking.features.*
 import com.intellij.searchEverywhereMl.ranking.id.SearchEverywhereMlItemIdProvider
-import com.intellij.util.concurrency.NonUrgentExecutor
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 
@@ -125,11 +124,10 @@ class SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
                              elements: List<SearchEverywhereFoundElementInfoWithMl>,
                              elementIdProvider: SearchEverywhereMlItemIdProvider,
                              additionalEvents: List<EventPair<*>>) {
-    NonUrgentExecutor.getInstance().execute {
-      val eventData = mutableListOf<EventPair<*>>()
-      eventData.addAll(additionalEvents)
+    eventId.log(project) {
+      addAll(additionalEvents)
 
-      eventData.addAll(
+      addAll(
         getCommonTypeLevelEvents(seSessionId = seSessionId,
                                  tabId = cache.tabId,
                                  elementsSize = elements.size,
@@ -145,9 +143,7 @@ class SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
                                  experimentGroup = cache.experimentGroup)
       )
 
-      eventData.addAll(getElementsEvents(project, shouldLogFeatures, elements, mixedListInfo, elementIdProvider))
-
-      eventId.log(eventData)
+      addAll(getElementsEvents(project, shouldLogFeatures, elements, mixedListInfo, elementIdProvider))
     }
   }
 
