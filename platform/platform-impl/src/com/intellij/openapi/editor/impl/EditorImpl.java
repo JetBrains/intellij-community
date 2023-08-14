@@ -1105,29 +1105,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myEditorComponent.setAutoscrolls(false); // we have our own auto-scrolling code
 
     if (mayShowToolbar()) {
-      JLayeredPane layeredPane = new JBLayeredPane() {
-        @Override
-        public void doLayout() {
-          final Component[] components = getComponents();
-          final Rectangle r = getBounds();
-          for (Component c : components) {
-            if (c instanceof JScrollPane) {
-              c.setBounds(0, 0, r.width, r.height);
-            }
-            else {
-              final Dimension d = c.getPreferredSize();
-              int rightInsets = getVerticalScrollBar().getWidth() + (isMirrored() ? myGutterComponent.getWidth() : 0);
-              c.setBounds(r.width - d.width - rightInsets - 20, 20, d.width, d.height);
-            }
-          }
-        }
-
-        @Override
-        public Dimension getPreferredSize() {
-          return myScrollPane.getPreferredSize();
-        }
-      };
-
+      JLayeredPane layeredPane = new PanelWithFloatingToolbar();
       layeredPane.add(myScrollPane, JLayeredPane.DEFAULT_LAYER);
       UiNotifyConnector.doWhenFirstShown(
         myPanel, () -> layeredPane.add(new EditorFloatingToolbar(this), JLayeredPane.POPUP_LAYER), getDisposable());
@@ -5418,5 +5396,28 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     @Override
     public void setColorScheme(@NotNull EditorColorsScheme scheme) { }
+  }
+
+  private class PanelWithFloatingToolbar extends JBLayeredPane {
+    @Override
+    public void doLayout() {
+      final Component[] components = getComponents();
+      final Rectangle r = getBounds();
+      for (Component c : components) {
+        if (c instanceof JScrollPane) {
+          c.setBounds(0, 0, r.width, r.height);
+        }
+        else {
+          final Dimension d = c.getPreferredSize();
+          int rightInsets = getVerticalScrollBar().getWidth() + (isMirrored() ? myGutterComponent.getWidth() : 0);
+          c.setBounds(r.width - d.width - rightInsets - 20, 20, d.width, d.height);
+        }
+      }
+    }
+
+    @Override
+    public Dimension getPreferredSize() {
+      return myScrollPane.getPreferredSize();
+    }
   }
 }
