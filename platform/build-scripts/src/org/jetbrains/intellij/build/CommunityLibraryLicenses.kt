@@ -151,7 +151,10 @@ object CommunityLibraryLicenses {
                    url = "https://hc.apache.org/httpclient-3.x").apache(),
     LibraryLicense(name = "Apache Commons Imaging (JetBrains's fork)", libraryName = "commons-imaging",
                    url = "https://github.com/JetBrains/intellij-deps-commons-imaging")
-      .apache("https://github.com/JetBrains/intellij-deps-commons-imaging/blob/master/LICENSE.txt"),
+      .apache("https://github.com/JetBrains/intellij-deps-commons-imaging/blob/master/LICENSE.txt")
+      .forkedFrom(sourceCodeUrl = "https://github.com/apache/commons-imaging",
+                  groupId = "org.apache.commons", artifactId = "commons-imaging",
+                  revision = "fa201df06edefd329610d210d67caba6802b1211"),
     LibraryLicense(name = "Apache Commons IO", libraryName = "commons-io",
                    url = "https://commons.apache.org/proper/commons-io/")
       .apache("https://gitbox.apache.org/repos/asf?p=commons-io.git;a=blob_plain;f=LICENSE.txt;hb=HEAD"),
@@ -192,8 +195,12 @@ object CommunityLibraryLicenses {
       .apache("https://github.com/apache/incubator-tuweni/blob/main/LICENSE"),
     LibraryLicense(name = "ASM (JetBrains's fork)", libraryName = "ASM",
                    url = "https://github.com/JetBrains/intellij-deps-asm")
-      .newBsd("https://github.com/JetBrains/intellij-deps-asm/blob/master/LICENSE.txt"),
-    LibraryLicense(name = "ASM Tools", libraryName = "asm-tools", url = "https://asm.ow2.io", )
+      .newBsd("https://github.com/JetBrains/intellij-deps-asm/blob/master/LICENSE.txt")
+      .forkedFrom(sourceCodeUrl = "https://gitlab.ow2.org/asm/asm",
+                  mavenRepositoryUrl = "https://repo1.maven.org/maven2",
+                  groupId = "org.ow2.asm", artifactId = "asm",
+                  version = "9.5"),
+    LibraryLicense(name = "ASM Tools", libraryName = "asm-tools", url = "https://asm.ow2.io")
       .newBsd("https://asm.ow2.io/license.html"),
     LibraryLicense(name = "AssertJ fluent assertions", libraryName = "assertJ",
                    url = "https://github.com/assertj/assertj-core")
@@ -416,7 +423,11 @@ object CommunityLibraryLicenses {
       .newBsd("https://github.com/unitsofmeasurement/indriya/blob/master/LICENSE"),
     LibraryLicense(name = "ini4j (JetBrains's fork)", libraryName = "ini4j",
                    url = "https://github.com/JetBrains/intellij-deps-ini4j")
-      .apache("https://github.com/JetBrains/intellij-deps-ini4j/blob/master/LICENSE.txt"),
+      .apache("https://github.com/JetBrains/intellij-deps-ini4j/blob/master/LICENSE.txt")
+      .forkedFrom(sourceCodeUrl = "https://sourceforge.net/projects/ini4j",
+                  mavenRepositoryUrl = "https://repo1.maven.org/maven2",
+                  groupId = "org.ini4j", artifactId = "ini4j",
+                  version = "0.5.4"),
     androidDependency(name = "Instant run protos", libraryName = "deploy_java_proto"),
     androidDependency(name = "Instant run version", libraryName = "libjava_version"),
     LibraryLicense(name = "intellij-markdown", libraryName = "jetbrains.markdown",
@@ -497,8 +508,12 @@ object CommunityLibraryLicenses {
                    url = "https://github.com/jruby/jcodings")
       .mit("https://github.com/jruby/jcodings/blob/master/LICENSE.txt"),
     LibraryLicense(name = "JDOM (JetBrains's fork)", version = "2", attachedTo = "intellij.platform.util.jdom",
-                   url = "http://jdom.org/",
-                   licenseUrl = "https://github.com/JetBrains/intellij-deps-jdom/blob/master/LICENSE.txt"),
+                   url = "https://github.com/JetBrains/intellij-deps-jdom/",
+                   licenseUrl = "https://github.com/JetBrains/intellij-deps-jdom/blob/master/LICENSE.txt")
+      .forkedFrom(sourceCodeUrl = "https://github.com/hunterhacker/jdom",
+                  mavenRepositoryUrl = "https://repo1.maven.org/maven2",
+                  groupId = "org.jdom", artifactId = "jdom2",
+                  version = "2.0.6"),
     LibraryLicense(libraryName = "jediterm-core", license = "LGPL 3",
                    url = "https://github.com/JetBrains/jediterm",
                    licenseUrl = "https://github.com/JetBrains/jediterm/blob/master/LICENSE-LGPLv3.txt"),
@@ -853,7 +868,11 @@ object CommunityLibraryLicenses {
     androidDependency(name = "SQLite Inspector Proto", libraryName = "sqlite-inspector-proto"),
     LibraryLicense(name = "ssh-nio-fs", libraryName = "ssh-nio-fs",
                    url = "https://github.com/JetBrains/intellij-deps-ssh-nio-fs")
-      .mit("https://github.com/JetBrains/intellij-deps-ssh-nio-fs/blob/master/LICENSE"),
+      .mit("https://github.com/JetBrains/intellij-deps-ssh-nio-fs/blob/master/LICENSE")
+      .forkedFrom(sourceCodeUrl = "https://github.com/lucastheisen/jsch-nio",
+                  mavenRepositoryUrl = "https://repo1.maven.org/maven2",
+                  groupId = "com.pastdev", artifactId = "jsch-nio",
+                  version = "1.0.14"),
     LibraryLicense(name = "StreamEx", libraryName = "StreamEx",
                    url = "https://github.com/amaembo/streamex")
       .apache("https://github.com/amaembo/streamex/blob/master/LICENSE"),
@@ -883,8 +902,8 @@ object CommunityLibraryLicenses {
 
     LibraryLicense(name = "Trove4j (JetBrains's fork)", libraryName = "trove", license = "LGPL",
                    url = "https://github.com/JetBrains/intellij-deps-trove4j",
-                   licenseUrl = "https://github.com/JetBrains/intellij-deps-trove4j/blob/master/LICENSE.txt"),
-
+                   licenseUrl = "https://github.com/JetBrains/intellij-deps-trove4j/blob/master/LICENSE.txt")
+      .forkedFrom(sourceCodeUrl = "https://sourceforge.net/p/trove4j/cvs", groupId = "net.sf.trove4j", artifactId = "trove4j"),
     LibraryLicense(name = "Typeshed", attachedTo = "intellij.python", version = LibraryLicense.CUSTOM_REVISION,
                    url = "https://github.com/python/typeshed")
       .apache("https://github.com/python/typeshed/blob/master/LICENSE"),
@@ -947,7 +966,11 @@ object CommunityLibraryLicenses {
       .simplifiedBsd("https://github.com/luben/zstd-jni/blob/master/LICENSE"),
     LibraryLicense(name = "zstd-jni-windows-aarch64", libraryName = "zstd-jni-windows-aarch64",
                    url = "https://github.com/VladRassokhin/zstd-jni")
-      .simplifiedBsd("https://github.com/luben/zstd-jni/blob/master/LICENSE"),
+      .simplifiedBsd("https://github.com/luben/zstd-jni/blob/master/LICENSE")
+      .forkedFrom(sourceCodeUrl = "https://github.com/luben/zstd-jni",
+                  mavenRepositoryUrl = "https://repo1.maven.org/maven2",
+                  groupId = "com.github.luben", artifactId = "zstd-jni",
+                  version = "1.5.2-5"),
     jetbrainsLibrary("change-reminder-prediction-model"),
     jetbrainsLibrary("cloud-config-client"),
     jetbrainsLibrary("completion-log-events"),

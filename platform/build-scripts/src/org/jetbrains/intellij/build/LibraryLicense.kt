@@ -3,6 +3,8 @@
 
 package org.jetbrains.intellij.build
 
+import org.jetbrains.annotations.ApiStatus.Internal
+
 /**
  * Describes a library which is included into distribution of an IntelliJ-based IDE. This information is used to show list of Third-party
  * software in About popup and on the product download page.
@@ -190,5 +192,28 @@ data class LibraryLicense(
       licenseUrl = licenseUrl
                    ?: (if (v == 1) "https://www.eclipse.org/org/documents/epl-v10.html" else "https://www.eclipse.org/legal/epl-2.0")
     )
+  }
+
+  internal var forkedFrom: LibraryUpstream? = null
+
+  @Internal
+  fun forkedFrom(groupId: String, artifactId: String,
+                 version: String? = null, revision: String? = null,
+                 mavenRepositoryUrl: String? = null,
+                 sourceCodeUrl: String? = null): LibraryLicense {
+    return copy().apply {
+      forkedFrom = LibraryUpstream(
+        mavenRepositoryUrl = mavenRepositoryUrl,
+        sourceCodeUrl = sourceCodeUrl,
+        groupId = groupId, artifactId = artifactId,
+        version = version, revision = revision,
+        LibraryLicense(
+          libraryName = "$groupId:$artifactId",
+          version = version, url = sourceCodeUrl,
+          licenseUrl = this.licenseUrl,
+          license = this.license,
+        )
+      )
+    }
   }
 }

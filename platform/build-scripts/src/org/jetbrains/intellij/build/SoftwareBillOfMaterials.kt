@@ -498,18 +498,67 @@ class SoftwareBillOfMaterials internal constructor(
 
   private fun SpdxDocument.spdxPackage(library: MavenLibrary): SpdxPackage {
     val document = this
+    val upstreamPackage = spdxPackageUpstream(library.license.forkedFrom)
     val libPackage = spdxPackage("${library.coordinates.groupId}:${library.coordinates.artifactId}", library.license(this)) {
       setVersionInfo(checkNotNull(library.coordinates.version) {
         "Missing version for ${library.coordinates}"
       })
       setDownloadLocation(library.downloadUrl ?: SpdxConstants.NOASSERTION_VALUE)
       setSupplier(library.supplier ?: SpdxConstants.NOASSERTION_VALUE)
+      setOrigin(library, upstreamPackage)
       addChecksum(createChecksum(ChecksumAlgorithm.SHA256, library.sha256Checksum))
       if (library.repositoryUrl != null) {
         addExternalRef(library.coordinates.externalRef(document, library.repositoryUrl))
       }
     }
+    if (upstreamPackage != null) {
+      libPackage.relatesTo(upstreamPackage, RelationshipType.VARIANT_OF)
+    }
     return libPackage
+  }
+
+  private fun SpdxDocument.spdxPackageUpstream(upstream: LibraryUpstream?): SpdxPackage? {
+    if (upstream?.version == null || upstream.mavenRepositoryUrl == null) {
+      return null
+    }
+    return spdxPackage("${upstream.groupId}:${upstream.artifactId}") {
+      setVersionInfo(upstream.version)
+      setSupplier(upstream.license.supplier ?: SpdxConstants.NOASSERTION_VALUE)
+      val coordinates = MavenCoordinates(
+        groupId = upstream.groupId,
+        artifactId = upstream.artifactId,
+        version = checkNotNull(upstream.version) {
+          "Missing version for ${upstream.groupId}:${upstream.artifactId}"
+        }
+      )
+      val repositoryUrl = checkNotNull(upstream.mavenRepositoryUrl) {
+        "Missing Maven repository url for ${upstream.groupId}:${upstream.artifactId}"
+      }.removeSuffix("/")
+      val jarName = coordinates.getFileName(packaging = "jar", classifier = "")
+      setDownloadLocation("$repositoryUrl/${coordinates.directoryPath}/$jarName")
+      addExternalRef(coordinates.externalRef(this@spdxPackageUpstream, repositoryUrl))
+    }
+  }
+
+  private fun SpdxPackageBuilder.setOrigin(library: MavenLibrary, upstreamPackage: SpdxPackage?) {
+    val upstream = library.license.forkedFrom
+    when {
+      library.supplier == null -> {
+        check(upstream == null && upstreamPackage == null) {
+          "Missing supplier for ${library.coordinates} which is a fork of ${upstream?.groupId}:${upstream?.artifactId}"
+        }
+        if (library.pomXmlUrl != null) {
+          setSourceInfo("Supplier information is not available in ${library.pomXmlUrl}")
+        }
+      }
+      upstreamPackage != null -> setOriginator(upstreamPackage.supplier.get())
+      upstream?.revision != null && upstream.sourceCodeUrl != null -> {
+        setSourceInfo("Forked from a revision ${upstream.revision} of ${upstream.sourceCodeUrl}")
+      }
+      upstream?.sourceCodeUrl != null -> {
+        setSourceInfo("Forked from ${upstream.sourceCodeUrl}, exact revision is not available")
+      }
+    }
   }
 
   private fun SpdxDocument.spdxPackage(name: String,
