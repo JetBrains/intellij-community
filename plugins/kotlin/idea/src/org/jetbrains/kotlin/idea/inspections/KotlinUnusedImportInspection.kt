@@ -26,83 +26,25 @@ import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.PsiEditorUtil
 import com.intellij.util.DocumentUtil
 import com.intellij.util.ThreeState
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinOptimizeImportsFacility
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.codeInsight.KotlinCodeInsightWorkspaceSettings
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
-import org.jetbrains.kotlin.idea.core.targetDescriptors
 import org.jetbrains.kotlin.idea.imports.KotlinImportOptimizer
-import org.jetbrains.kotlin.idea.imports.OptimizedImportsBuilder
-import org.jetbrains.kotlin.idea.imports.importableFqName
-import org.jetbrains.kotlin.idea.references.KtInvokeFunctionReference
-import org.jetbrains.kotlin.idea.references.mainReference
-import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
-import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.siblings
 import org.jetbrains.kotlin.resolve.ImportPath
 
 class KotlinUnusedImportInspection : AbstractKotlinInspection() {
-    class ImportData(val unusedImports: List<KtImportDirective>, val optimizerData: OptimizedImportsBuilder.InputData)
-
     companion object {
-        fun analyzeImports(file: KtFile): ImportData? {
+        fun analyzeImports(file: KtFile): KotlinOptimizeImportsFacility.ImportData? {
             if (file is KtCodeFragment) return null
             if (!RootKindFilter.projectSources.copy(includeScriptsOutsideSourceRoots = true).matches(file)) return null
-            if (file.importDirectives.isEmpty()) return null
 
-            val optimizerData = KotlinImportOptimizer.collectDescriptorsToImport(file)
-
-            val directives = file.importDirectives
-            val explicitlyImportedFqNames = directives
-                .asSequence()
-                .mapNotNull { it.importPath }
-                .filter { !it.isAllUnder && !it.hasAlias() }
-                .map { it.fqName }
-                .toSet()
-
-            val fqNames = optimizerData.namesToImport
-            val parentFqNames = HashSet<FqName>()
-            for ((_, fqName) in optimizerData.descriptorsToImport) {
-                // we don't add parents of explicitly imported fq-names because such imports are not needed
-                if (fqName in explicitlyImportedFqNames) continue
-                val parentFqName = fqName.parent()
-                if (!parentFqName.isRoot) {
-                    parentFqNames.add(parentFqName)
-                }
-            }
-
-            val invokeFunctionCallFqNames = optimizerData.references.mapNotNull {
-                val reference = (it.element as? KtCallExpression)?.mainReference as? KtInvokeFunctionReference ?: return@mapNotNull null
-                (reference.resolve() as? KtNamedFunction)?.descriptor?.importableFqName
-            }
-
-            val importPaths = HashSet<ImportPath>(directives.size)
-            val unusedImports = ArrayList<KtImportDirective>()
-
-            val resolutionFacade = file.getResolutionFacade()
-            for (directive in directives) {
-                val importPath = directive.importPath ?: continue
-
-                val isUsed = when {
-                    importPath.importedName in optimizerData.unresolvedNames -> true
-                    !importPaths.add(importPath) -> false
-                    importPath.isAllUnder -> optimizerData.unresolvedNames.isNotEmpty() || importPath.fqName in parentFqNames
-                    importPath.fqName in fqNames -> importPath.importedName?.let { it in fqNames.getValue(importPath.fqName) } ?: false
-                    importPath.fqName in invokeFunctionCallFqNames -> true
-                    // case for type alias
-                    else -> directive.targetDescriptors(resolutionFacade).firstOrNull()?.let { it.importableFqName in fqNames } ?: false
-                }
-
-                if (!isUsed) {
-                    unusedImports += directive
-                }
-            }
-
-            return ImportData(unusedImports, optimizerData)
+            return KotlinOptimizeImportsFacility.getInstance().analyzeImports(file)
         }
     }
 
@@ -127,15 +69,15 @@ class KotlinUnusedImportInspection : AbstractKotlinInspection() {
         }
 
         if (isOnTheFly && !isUnitTestMode()) {
-            scheduleOptimizeImportsOnTheFly(file, data.optimizerData)
+            scheduleOptimizeImportsOnTheFly(file, data)
         }
 
         return problems.toTypedArray()
     }
 
-    private fun scheduleOptimizeImportsOnTheFly(file: KtFile, data: OptimizedImportsBuilder.InputData) {
+    private fun scheduleOptimizeImportsOnTheFly(file: KtFile, data: KotlinOptimizeImportsFacility.ImportData) {
         if (!KotlinCodeInsightWorkspaceSettings.getInstance(file.project).optimizeImportsOnTheFly) return
-        val optimizedImports = KotlinImportOptimizer.prepareOptimizedImports(file, data) ?: return // return if already optimized
+        val optimizedImports = KotlinOptimizeImportsFacility.getInstance().prepareOptimizedImports(file, data) ?: return // return if already optimized
         val project = file.project
         val modificationTracker = OuterModelsModificationTrackerManager.getInstance(project).tracker
         val modificationCount = modificationTracker.modificationCount
