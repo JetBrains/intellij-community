@@ -220,26 +220,24 @@ public final class GuessManagerImpl extends GuessManager {
         protected DfaInstructionState @NotNull [] acceptInstruction(@NotNull DfaInstructionState instructionState) {
           Instruction instruction = instructionState.getInstruction();
           DfaMemoryState memState = instructionState.getMemoryState();
-          if (instruction instanceof TypeCastInstruction) {
+          if (instruction instanceof TypeCastInstruction typeCast) {
             DfaValue value = memState.pop();
-            memState.push(adjustValue(value, ((TypeCastInstruction)instruction).getCasted()));
+            memState.push(adjustValue(value, typeCast.getCasted()));
           }
-          else if (instruction instanceof InstanceofInstruction) {
+          else if (instruction instanceof InstanceofInstruction instanceOf) {
             DfaValue dfaRight = memState.pop();
             DfaValue dfaLeft = memState.pop();
-            memState.push(adjustValue(dfaLeft, getInstanceOfOperand(((InstanceofInstruction)instruction))));
+            memState.push(adjustValue(dfaLeft, getInstanceOfOperand(instanceOf)));
             memState.push(dfaRight);
           }
           return super.acceptInstruction(instructionState);
         }
 
         @Nullable
-        private PsiExpression getInstanceOfOperand(InstanceofInstruction instruction) {
-          if (instruction.getDfaAnchor() instanceof JavaExpressionAnchor) {
-            PsiExpression expression = ((JavaExpressionAnchor)instruction.getDfaAnchor()).getExpression();
-            if (expression instanceof PsiInstanceOfExpression) {
-              return ((PsiInstanceOfExpression)expression).getOperand();
-            }
+        private static PsiExpression getInstanceOfOperand(InstanceofInstruction instruction) {
+          if (instruction.getDfaAnchor() instanceof JavaExpressionAnchor anchor &&
+              anchor.getExpression() instanceof PsiInstanceOfExpression instanceOf) {
+            return instanceOf.getOperand();
           }
           return null;
         }
@@ -253,7 +251,7 @@ public final class GuessManagerImpl extends GuessManager {
 
         private boolean isInteresting(@NotNull DfaValue value, @NotNull PsiExpression expression) {
           if (myPlace == null) return true;
-          return (!(value instanceof DfaVariableValue) || ((DfaVariableValue)value).isFlushableByCalls()) &&
+          return (!(value instanceof DfaVariableValue var) || var.isFlushableByCalls()) &&
                  ExpressionVariableDescriptor.EXPRESSION_HASHING_STRATEGY.equals(expression, myPlace);
         }
       };
@@ -437,8 +435,8 @@ public final class GuessManagerImpl extends GuessManager {
     }
     if (result == null) {
       PsiType psiType = getTypeFromDataflow(expr, honorAssignments);
-      if (psiType instanceof PsiIntersectionType) {
-        result = ContainerUtil.mapNotNull(((PsiIntersectionType)psiType).getConjuncts(), type -> DfaPsiUtil.tryGenerify(expr, type));
+      if (psiType instanceof PsiIntersectionType intersection) {
+        result = ContainerUtil.mapNotNull(intersection.getConjuncts(), type -> DfaPsiUtil.tryGenerify(expr, type));
       }
       else if (psiType != null) {
         result = Collections.singletonList(DfaPsiUtil.tryGenerify(expr, psiType));

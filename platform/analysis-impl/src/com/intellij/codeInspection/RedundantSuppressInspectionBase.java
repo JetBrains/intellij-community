@@ -255,11 +255,11 @@ public abstract class RedundantSuppressInspectionBase extends GlobalSimpleInspec
     for (InspectionToolWrapper<?, ?> toolWrapper : toolWrappers) {
       String toolWrapperShortName = toolWrapper.getShortName();
       String alternativeID = toolWrapper.getTool().getAlternativeID();
-      if (toolWrapper instanceof LocalInspectionToolWrapper &&
-          (((LocalInspectionToolWrapper)toolWrapper).getTool().getID().equals(suppressedId) ||
+      if (toolWrapper instanceof LocalInspectionToolWrapper wrapper &&
+          (wrapper.getTool().getID().equals(suppressedId) ||
            suppressedId.equals(alternativeID) ||
            toolWrapperShortName.equals(mergedToolName))) {
-        if (!((LocalInspectionToolWrapper)toolWrapper).isUnfair() && toolWrapper.isApplicable(language)) {
+        if (!wrapper.isUnfair() && toolWrapper.isApplicable(language)) {
           if (wrappers.isEmpty()) wrappers = new ArrayList<>();
           wrappers.add(toolWrapper);
         }
@@ -269,7 +269,7 @@ public abstract class RedundantSuppressInspectionBase extends GlobalSimpleInspec
                suppressedId.equals(alternativeID)) {
         //ignore global unused as it won't be checked anyway
         if (toolWrapper instanceof LocalInspectionToolWrapper ||
-            toolWrapper instanceof GlobalInspectionToolWrapper && !((GlobalInspectionToolWrapper)toolWrapper).getTool().isGraphNeeded()) {
+            toolWrapper instanceof GlobalInspectionToolWrapper wrapper && !wrapper.getTool().isGraphNeeded()) {
           if (wrappers.isEmpty()) wrappers = new ArrayList<>();
           wrappers.add(toolWrapper);
         }

@@ -617,9 +617,8 @@ public final class DfaPsiUtil {
     }
     PsiClass psiClass = classType.resolve();
     if (psiClass == null) return classType;
-    PsiType expressionType = expression.getType();
-    if (!(expressionType instanceof PsiClassType)) return classType;
-    PsiClassType result = GenericsUtil.getExpectedGenericType(expression, psiClass, (PsiClassType)expressionType);
+    if (!(expression.getType() instanceof PsiClassType expressionType)) return classType;
+    PsiClassType result = GenericsUtil.getExpectedGenericType(expression, psiClass, expressionType);
     if (result.isRaw()) {
       PsiClass aClass = result.resolve();
       if (aClass != null) {
