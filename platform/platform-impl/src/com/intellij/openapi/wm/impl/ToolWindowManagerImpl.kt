@@ -549,18 +549,13 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
       return
     }
 
-    // Always add to the default tool window pane
-    val toolWindowPane = getDefaultToolWindowPaneIfInitialized()
-    val anchor = getToolWindowAnchor(factory, bean)
-
-    @Suppress("DEPRECATION")
-    val sideTool = bean.secondary || bean.side
-    val entry = withContext(Dispatchers.EDT) {
-      registerToolWindow(RegisterToolWindowTask(
+    withContext(Dispatchers.EDT) {
+      // always add to the default tool window pane
+      val task = RegisterToolWindowTask(
         id = bean.id,
         icon = findIconFromBean(bean, factory, plugin),
-        anchor = anchor,
-        sideTool = sideTool,
+        anchor = getToolWindowAnchor(factory, bean),
+        sideTool = bean.secondary || bean.side,
         canCloseContent = bean.canCloseContents,
         canWorkInDumbMode = DumbService.isDumbAware(factory),
         shouldBeAvailable = factory.shouldBeAvailable(project),
@@ -568,13 +563,16 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
         stripeTitle = getStripeTitleSupplier(bean.id, project, plugin)
       ).apply {
         pluginDescriptor = plugin
-      }, toolWindowPane.buttonManager)
-    }
-    project.messageBus.syncPublisher(ToolWindowManagerListener.TOPIC).toolWindowsRegistered(listOf(entry.id), this)
+      }
 
-    toolWindowPane.buttonManager.getStripeFor(anchor, sideTool).revalidate()
-    toolWindowPane.validate()
-    toolWindowPane.repaint()
+      val toolWindowPane = getDefaultToolWindowPaneIfInitialized()
+      registerToolWindow(task, toolWindowPane.buttonManager)
+
+      toolWindowPane.buttonManager.getStripeFor(task.anchor, task.sideTool).revalidate()
+      toolWindowPane.validate()
+      toolWindowPane.repaint()
+    }
+    project.messageBus.syncPublisher(ToolWindowManagerListener.TOPIC).toolWindowsRegistered(listOf(bean.id), this)
   }
 
   private fun getDefaultToolWindowPaneIfInitialized(): ToolWindowPane {
