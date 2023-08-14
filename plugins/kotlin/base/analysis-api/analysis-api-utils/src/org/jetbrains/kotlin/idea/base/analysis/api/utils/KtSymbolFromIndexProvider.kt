@@ -253,7 +253,7 @@ class KtSymbolFromIndexProvider private constructor(private val project: Project
     context(KtAnalysisSession)
     private fun findAllNamesForType(type: KtType): Set<String> = buildSet {
         if (type is KtFlexibleType) {
-            addAll(findAllNamesForType(type.lowerBound))
+            return findAllNamesForType(type.lowerBound)
         }
         if (type !is KtNonErrorClassType) return@buildSet
 
