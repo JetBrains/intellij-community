@@ -326,13 +326,6 @@ public class Invoker implements InvokerMBean {
       .toList();
 
     if (targetMethods.isEmpty()) {
-      // try to find protected/private ones
-      targetMethods = Arrays.stream(clazz.getDeclaredMethods())
-        .filter(m -> m.getName().equals(call.getMethodName()) && argCount == m.getParameterCount())
-        .toList();
-    }
-
-    if (targetMethods.isEmpty()) {
       throw new IllegalStateException(
         "No method " + call.getMethodName() +
         " with parameter count " + argCount +
