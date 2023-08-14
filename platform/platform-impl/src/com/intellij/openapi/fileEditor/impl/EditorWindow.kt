@@ -554,30 +554,23 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
 
   @JvmOverloads
   fun closeFile(file: VirtualFile, disposeIfNeeded: Boolean = true) {
-    closeFile(file = file, composite = getComposite(file), disposeIfNeeded = disposeIfNeeded)
+    val composite = getComposite(file) ?: return
+    closeFile(file = file, composite = composite, disposeIfNeeded = disposeIfNeeded)
   }
 
-  internal fun closeFile(file: VirtualFile, composite: EditorComposite?, disposeIfNeeded: Boolean = true) {
+  internal fun closeFile(file: VirtualFile, composite: EditorComposite, disposeIfNeeded: Boolean = true) {
     runBulkTabChange(owner) {
       val fileEditorManager = manager
       try {
         fileEditorManager.project.messageBus.syncPublisher(FileEditorManagerListener.Before.FILE_EDITOR_MANAGER)
           .beforeFileClosed(fileEditorManager, file)
-        if (composite == null) {
-          (component.parent as? Splitter)?.getOtherComponent(component)?.let { otherComponent ->
-            IdeFocusManager.findInstance().requestFocus(otherComponent, true)
-          }
-          component.removeAll()
-        }
-        else {
-          val componentIndex = findComponentIndex(composite.component)
-          // composite could close itself on decomposition
-          if (componentIndex >= 0) {
-            val indexToSelect = computeIndexToSelect(fileBeingClosed = file, fileIndex = componentIndex)
-            removedTabs.push(Pair(file.url, FileEditorOpenOptions(index = componentIndex, pin = composite.isPinned)))
-            tabbedPane.removeTabAt(componentIndex, indexToSelect)
-            fileEditorManager.disposeComposite(composite)
-          }
+        val componentIndex = findComponentIndex(composite.component)
+        // composite could close itself on decomposition
+        if (componentIndex >= 0) {
+          val indexToSelect = computeIndexToSelect(fileBeingClosed = file, fileIndex = componentIndex)
+          removedTabs.push(Pair(file.url, FileEditorOpenOptions(index = componentIndex, pin = composite.isPinned)))
+          tabbedPane.removeTabAt(componentIndex, indexToSelect)
+          fileEditorManager.disposeComposite(composite)
         }
         if (disposeIfNeeded && tabCount == 0) {
           removeFromSplitter()
