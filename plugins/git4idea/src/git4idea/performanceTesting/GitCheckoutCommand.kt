@@ -2,7 +2,10 @@
 package git4idea.performanceTesting
 
 import com.intellij.ide.DataManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.ui.playback.commands.AbstractCommand
@@ -17,8 +20,8 @@ import git4idea.commands.GitCommandResult
 import git4idea.commands.GitLineHandler
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
 import org.jetbrains.concurrency.Promise
+import org.jetbrains.concurrency.await
 import org.jetbrains.concurrency.toPromise
 
 /**
@@ -33,17 +36,43 @@ class GitCheckoutCommand(text: String, line: Int) : AbstractCommand(text, line, 
     private val LOG = Logger.getInstance(GitCheckoutCommand::class.java)
   }
 
-  override fun _execute(context: PlaybackContext): Promise<Any?> {
+  // For the simplified com.intellij.driver call
+  @Suppress("UNUSED")
+  constructor() : this(text = "", line = 0)
+
+  fun checkout(branchName: String): Boolean {
+    val promise: Promise<Any?> = runBlocking(Dispatchers.EDT) {
+      checkout(project = ProjectManager.getInstance().openProjects.first(), branchName = branchName)
+    }
+
+    runBlocking(Dispatchers.IO) { promise.await() }
+
+    return promise.isSucceeded
+  }
+
+  fun checkout(project: Project,
+               branchName: String): Promise<Any?> {
     LOG.info("GitCheckoutCommand starts its execution")
     val actionCallback: ActionCallback = ActionCallbackProfilerStopper()
-    val branchName = extractCommandArgument(PREFIX).replace("\"".toRegex(), "")
-    val brancher: GitBrancher = GitBrancher.getInstance(context.project)
-    val focusedComponent = IdeFocusManager.findInstance().focusOwner
-    val dataContext = DataManager.getInstance().getDataContext(focusedComponent)
-    val gitRepository = GitBranchUtil.guessRepositoryForOperation(context.project, dataContext)
-    brancher.checkoutNewBranchStartingFrom(branchName, branchName, true, mutableListOf(gitRepository),
-                                           Runnable { actionCallback.setDone() })
+
+    try {
+      val brancher: GitBrancher = GitBrancher.getInstance(project)
+      val focusedComponent = IdeFocusManager.findInstance().focusOwner
+      val dataContext = DataManager.getInstance().getDataContext(focusedComponent)
+      val gitRepository = GitBranchUtil.guessRepositoryForOperation(project, dataContext)
+      brancher.checkoutNewBranchStartingFrom(branchName, branchName, true, mutableListOf(gitRepository),
+                                             Runnable { actionCallback.setDone() })
+    }
+    catch (e: Throwable) {
+      actionCallback.reject(e.message)
+    }
+
     return actionCallback.toPromise()
+  }
+
+  override fun _execute(context: PlaybackContext): Promise<Any?> {
+    val branchName = extractCommandArgument(PREFIX).replace("\"".toRegex(), "")
+    return checkout(project = context.project, branchName = branchName)
   }
 
   private fun hardReset(context: PlaybackContext): GitCommandResult {
