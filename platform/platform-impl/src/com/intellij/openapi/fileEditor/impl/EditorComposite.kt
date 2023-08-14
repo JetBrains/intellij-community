@@ -458,7 +458,7 @@ open class EditorComposite internal constructor(
 
 private class EditorCompositePanel(realComponent: JComponent,
                                    private val composite: EditorComposite,
-                                   var focusComponent: () -> JComponent?) : JPanel(BorderLayout()), DataProvider {
+                                   @JvmField var focusComponent: () -> JComponent?) : JPanel(BorderLayout()), DataProvider {
   init {
     isFocusable = false
     add(realComponent, BorderLayout.CENTER)

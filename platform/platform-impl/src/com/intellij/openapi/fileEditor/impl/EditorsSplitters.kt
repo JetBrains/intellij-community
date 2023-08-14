@@ -548,7 +548,7 @@ open class EditorsSplitters internal constructor(
   }
 
   val isEmptyVisible: Boolean
-    get() = getWindows().all { it.isEmptyVisible }
+    get() = getWindowSequence().all { it.isEmptyVisible }
 
   private fun findNextFile(file: VirtualFile): VirtualFile? {
     for (window in windows) {
@@ -599,7 +599,7 @@ open class EditorsSplitters internal constructor(
           continue
         }
         if (window.tabCount == 0) {
-          window.unsplit(false)
+          window.unsplit(setCurrent = false)
         }
       }
     }
@@ -1115,11 +1115,11 @@ private fun decorateFileIcon(composite: EditorComposite, baseIcon: Icon): Icon? 
   val settings = UISettings.getInstance()
   val showAsterisk = settings.markModifiedTabsWithAsterisk && composite.isModified
   val showFileIconInTabs = settings.showFileIconInTabs
-  if (ExperimentalUI.isNewUI() || !showAsterisk) {
+  if (!showAsterisk || ExperimentalUI.isNewUI()) {
     return if (showFileIconInTabs) baseIcon else null
   }
 
-  val modifiedIcon = IconUtil.cropIcon(AllIcons.General.Modified, JBRectangle(3, 3, 7, 7))
+  val modifiedIcon = IconUtil.cropIcon(icon = AllIcons.General.Modified, area = JBRectangle(3, 3, 7, 7))
   val result = LayeredIcon(2)
   if (showFileIconInTabs) {
     result.setIcon(baseIcon, 0)

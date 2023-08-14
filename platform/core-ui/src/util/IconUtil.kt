@@ -122,7 +122,7 @@ object IconUtil {
 
   @JvmStatic
   fun cropIcon(icon: Icon, area: Rectangle): Icon {
-    return if (!Rectangle(icon.iconWidth, icon.iconHeight).contains(area)) icon else CropIcon(icon, area)
+    return if (Rectangle(icon.iconWidth, icon.iconHeight).contains(area)) CropIcon(icon, area) else icon
   }
 
   @JvmStatic
@@ -603,7 +603,7 @@ private class IconSizeWrapper(private val icon: Icon?, private val width: Int, p
   override fun getIconHeight(): Int = height
 }
 
-class CropIcon internal constructor(val mySrc: Icon, val crop: Rectangle) : Icon {
+class CropIcon internal constructor(val sourceIcon: Icon, val crop: Rectangle) : Icon {
   override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {
     val customG = g.create()
     try {
@@ -613,18 +613,18 @@ class CropIcon internal constructor(val mySrc: Icon, val crop: Rectangle) : Icon
         Rectangle2D.intersect(iconClip, gClip, iconClip)
       }
       customG.clip = iconClip
-      mySrc.paintIcon(c, customG, x - crop.x, y - crop.y)
+      sourceIcon.paintIcon(c, customG, x - crop.x, y - crop.y)
     }
     finally {
       customG.dispose()
     }
   }
 
-  override fun toString(): String = "${javaClass.simpleName} ($mySrc -> $crop)"
+  override fun toString(): String = "${javaClass.simpleName} ($sourceIcon -> $crop)"
   override fun getIconWidth(): Int = crop.width
   override fun getIconHeight(): Int = crop.height
-  override fun equals(other: Any?): Boolean = this === other || other is CropIcon && mySrc == other.mySrc && crop == other.crop
-  override fun hashCode(): Int = Objects.hash(mySrc, crop)
+  override fun equals(other: Any?): Boolean = this === other || other is CropIcon && sourceIcon == other.sourceIcon && crop == other.crop
+  override fun hashCode(): Int = Objects.hash(sourceIcon, crop)
 }
 
 private class ColorFilter(color: Color, private val keepGray: Boolean) : RGBImageFilter() {
