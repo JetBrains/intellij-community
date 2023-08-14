@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.orde
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.workspace.GeneralWorkspaceChecks
 import org.jetbrains.kotlin.gradle.multiplatformTests.workspace.checkWorkspaceModel
 import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradlePluginVersions.V_1_7_21
-import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradlePluginVersions.V_1_8_0
+import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradlePluginVersions.V_1_8_22
 import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
 import org.jetbrains.plugins.gradle.tooling.util.VersionMatcher
 import org.junit.Rule
@@ -109,7 +109,7 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
 
             if (!IS_UNDER_SAFE_PUSH) {
                 addVersions("7.4.2", V_1_7_21)
-                addVersions("7.6", V_1_8_0)
+                addVersions("7.6", V_1_8_22)
             }
 
             addVersions(
