@@ -806,7 +806,7 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
         PsiCaseLabelElement[] elements = labelElementList.getElements();
         for (PsiCaseLabelElement element : elements) {
           if (element instanceof PsiPatternGuard ||
-              element instanceof PsiPattern && (!java20plus || JavaPsiPatternUtil.containsPatternVariable(element))) {
+              element instanceof PsiPattern && (!java20plus || JavaPsiPatternUtil.containsNamedPatternVariable(element))) {
             return false;
           }
         }

@@ -1,0 +1,61 @@
+class Test {
+  enum X{A, B}
+  
+  record R(int x, int y) {}
+  record R1(int z) {}
+
+  void test(Object obj) {
+    switch (obj) {
+      case Integer _, String _ -> System.out.println("string or int");
+      case R(_, _), R1 _ -> System.out.println("R or R1");
+      default -> System.out.println("other");
+    }
+  }
+
+  void testRepeat(Object obj) {
+    switch (obj) {
+      case Integer _, String _ -> System.out.println("string or int");
+      case Double _, <error descr="Label is dominated by a preceding case label 'Integer _'">Integer _</error> -> System.out.println("double or int");
+      default -> System.out.println("other");
+    }
+  }
+
+  void testEnum(Object obj) {
+    switch (obj) {
+      case X.A, <error descr="Invalid case label combination: a case label must consist of either a list of case constants or a single case pattern">String _</error> -> System.out.println("string or int");
+      case Integer _, <error descr="Invalid case label combination: a case label must consist of either a list of case constants or a single case pattern">X.B</error> -> System.out.println("string or int");
+      default -> System.out.println("other");
+    }
+  }
+
+  void test2(Object obj) {
+    switch (obj) {
+      case Integer x, <error descr="Invalid case label combination: Multiple patterns are allowed only if none of them declare any pattern variables">String _</error> -> System.out.println("string or int");
+      case R(_, var i), <error descr="Invalid case label combination: Multiple patterns are allowed only if none of them declare any pattern variables">R1 _</error> -> System.out.println("R or R1");
+      default -> System.out.println("other");
+    }
+  }
+  
+  void testGuards(Object obj) {
+    switch (obj) {
+      case Integer _ when <error descr="Guard expression is allowed only after the last label element">((Integer)obj) > 0</error>,
+           String _ when !((String)obj).isEmpty() -> System.out.println("Positive integer or non-empty string");
+      default -> System.out.println("other");
+    }
+  }
+
+  void testFallthrough(Object obj) {
+    switch (obj) {
+      case Integer _:
+      case String _:
+        System.out.println("Number or string");
+        break;
+      case Double _:
+      case <error descr="Multiple switch labels are permitted for a switch labeled statement group only if none of them declare any pattern variables">Float f</error>:
+        System.out.println("double or float");
+        break;
+      default:
+        System.out.println("other");
+    }
+  }
+}

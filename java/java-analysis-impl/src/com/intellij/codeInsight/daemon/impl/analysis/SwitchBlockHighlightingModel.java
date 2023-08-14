@@ -943,18 +943,30 @@ public class SwitchBlockHighlightingModel {
           if (problem != null) {
             addIllegalFallThroughError(problem.element(), problem.message(), holder, alreadyFallThroughElements);
           }
-          else if (JavaPsiPatternUtil.containsPatternVariable(first)) {
-            PsiElement nextNotLabel = PsiTreeUtil.skipSiblingsForward(switchLabelElement, PsiWhiteSpace.class, PsiComment.class,
-                                                                 PsiSwitchLabelStatement.class);
-            //there is no statement, it is allowed to go through (14.11.1 JEP 440-441)
-            if (!(nextNotLabel instanceof PsiStatement)) {
-              continue;
+          else {
+            if (elements.length > 1) {
+              for (int i = 0; i < elements.length - 1; i++) {
+                if (elements[i] instanceof PsiPatternGuard guard) {
+                  PsiExpression expression = guard.getGuardingExpression();
+                  if (expression != null) {
+                    holder.add(createError(expression, "Guard expression is allowed only after the last label element").create());
+                  }
+                }
+              }
             }
-            if (PsiTreeUtil.skipWhitespacesAndCommentsForward(switchLabelElement) instanceof PsiSwitchLabelStatement) {
-              addIllegalFallThroughError(first, "multiple.switch.labels", holder, alreadyFallThroughElements);
-            }
-            else if (PsiTreeUtil.skipWhitespacesAndCommentsBackward(switchLabelElement) instanceof PsiSwitchLabelStatement) {
-              addIllegalFallThroughError(first, "multiple.switch.labels", holder, alreadyFallThroughElements);
+            if (JavaPsiPatternUtil.containsNamedPatternVariable(first)) {
+              PsiElement nextNotLabel = PsiTreeUtil.skipSiblingsForward(switchLabelElement, PsiWhiteSpace.class, PsiComment.class,
+                                                                        PsiSwitchLabelStatement.class);
+              //there is no statement, it is allowed to go through (14.11.1 JEP 440-441)
+              if (!(nextNotLabel instanceof PsiStatement)) {
+                continue;
+              }
+              if (PsiTreeUtil.skipWhitespacesAndCommentsForward(switchLabelElement) instanceof PsiSwitchLabelStatement) {
+                addIllegalFallThroughError(first, "multiple.switch.labels", holder, alreadyFallThroughElements);
+              }
+              else if (PsiTreeUtil.skipWhitespacesAndCommentsBackward(switchLabelElement) instanceof PsiSwitchLabelStatement) {
+                addIllegalFallThroughError(first, "multiple.switch.labels", holder, alreadyFallThroughElements);
+              }
             }
           }
         }
@@ -1015,9 +1027,15 @@ public class SwitchBlockHighlightingModel {
       }
       else if (firstElement instanceof PsiPattern || firstElement instanceof PsiPatternGuard) {
         if (elements[1] instanceof PsiPattern || elements[1] instanceof PsiPatternGuard) {
-          return new CaseLabelCombinationProblem(elements[1], "invalid.case.label.combination.several.patterns");
+          if (ContainerUtil.exists(elements, JavaPsiPatternUtil::containsNamedPatternVariable)) {
+            String messageKey = HighlightingFeature.UNNAMED_PATTERNS_AND_VARIABLES.isAvailable(firstElement)
+                             ? "invalid.case.label.combination.several.patterns.unnamed"
+                             : "invalid.case.label.combination.several.patterns";
+            return new CaseLabelCombinationProblem(elements[1], messageKey);
+          }
+        } else {
+          return new CaseLabelCombinationProblem(elements[1], "invalid.case.label.combination.constants.and.patterns");
         }
-        return new CaseLabelCombinationProblem(elements[1], "invalid.case.label.combination.constants.and.patterns");
       }
       return null;
     }
@@ -1044,7 +1062,7 @@ public class SwitchBlockHighlightingModel {
           PsiCaseLabelElementList labelElementList = switchLabel.getCaseLabelElementList();
           if (labelElementList == null) continue;
           List<PsiCaseLabelElement> patternElements = ContainerUtil.filter(labelElementList.getElements(),
-                                                                           labelElement -> JavaPsiPatternUtil.containsPatternVariable(labelElement));
+                                                                           labelElement -> JavaPsiPatternUtil.containsNamedPatternVariable(labelElement));
           if (patternElements.isEmpty()) continue;
           PsiStatement prevStatement = PsiTreeUtil.getPrevSiblingOfType(firstSwitchLabelInGroup, PsiStatement.class);
           if (prevStatement == null) continue;
