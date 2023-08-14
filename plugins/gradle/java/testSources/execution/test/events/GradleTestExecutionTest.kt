@@ -7,6 +7,7 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.use
 import org.gradle.tooling.LongRunningOperation
 import org.gradle.tooling.events.ProgressListener
+import org.gradle.tooling.model.build.BuildEnvironment
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.service.project.GradleOperationHelperExtension
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
@@ -603,7 +604,8 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
       override fun prepareForSync(operation: LongRunningOperation, resolverCtx: ProjectResolverContext) = Unit
       override fun prepareForExecution(id: ExternalSystemTaskId,
                                        operation: LongRunningOperation,
-                                       gradleExecutionSettings: GradleExecutionSettings) {
+                                       gradleExecutionSettings: GradleExecutionSettings,
+                                       buildEnvironment: BuildEnvironment?) {
         operation.addProgressListener(ProgressListener {})
       }
     }

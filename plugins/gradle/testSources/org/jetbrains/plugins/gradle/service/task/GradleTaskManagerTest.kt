@@ -14,6 +14,7 @@ import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import org.gradle.tooling.LongRunningOperation
+import org.gradle.tooling.model.build.BuildEnvironment
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilder
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
@@ -172,7 +173,8 @@ class TestOperationHelperExtension(val prepareSync: () -> Unit = {},
 
   override fun prepareForExecution(id: ExternalSystemTaskId,
                                    operation: LongRunningOperation,
-                                   gradleExecutionSettings: GradleExecutionSettings) {
+                                   gradleExecutionSettings: GradleExecutionSettings,
+                                   buildEnvironment: BuildEnvironment?) {
     prepareExec()
   }
 }

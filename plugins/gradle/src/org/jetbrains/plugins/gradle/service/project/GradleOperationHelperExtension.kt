@@ -31,14 +31,6 @@ interface GradleOperationHelperExtension {
    */
   fun prepareForExecution(id: ExternalSystemTaskId,
                           operation: LongRunningOperation,
-                          gradleExecutionSettings: GradleExecutionSettings) {
-  }
-
-  /**
-   * Prepare an operation call before Gradle task execution
-   */
-  fun prepareForExecution(id: ExternalSystemTaskId,
-                          operation: LongRunningOperation,
                           gradleExecutionSettings: GradleExecutionSettings,
-                          buildEnvironment: BuildEnvironment?) = prepareForExecution(id, operation, gradleExecutionSettings)
+                          buildEnvironment: BuildEnvironment?)
 }
