@@ -1078,13 +1078,21 @@ public final class JBUI {
       }
 
       public static @Nullable Insets verticalToolbarInsets() {
-        return isNewUI() ? insets("ToolBar.verticalToolbarInsets", insets(7, 4)) :
-               UIManager.getInsets("ToolBar.verticalToolbarInsets");
+        return isNewUI() ? insets(verticalInsetsKey(), insets(7, 4)) :
+               UIManager.getInsets(verticalInsetsKey());
+      }
+
+      public static @NotNull String verticalInsetsKey() {
+        return "ToolBar.verticalToolbarInsets";
       }
 
       public static @Nullable Insets horizontalToolbarInsets() {
-        return isNewUI() ? insets("ToolBar.horizontalToolbarInsets", insets(4, 7)) :
-               UIManager.getInsets("ToolBar.horizontalToolbarInsets");
+        return isNewUI() ? insets(horizontalInsetsKey(), insets(4, 7)) :
+               UIManager.getInsets(horizontalInsetsKey());
+      }
+
+      public static @NotNull String horizontalInsetsKey() {
+        return "ToolBar.horizontalToolbarInsets";
       }
 
       public static Insets mainToolbarButtonInsets() {
