@@ -179,6 +179,19 @@
     <target name="patch" description="Apply MPS patches to IDEA Community sources">
         <echo message="Applying MPS patches to IDEA Community sources..."/>
 
+        <property name="patchDisableInteractiveCourses"
+                  value="${basedir}/patches/DisableInteractiveCourses.patch"/>
+        <echo message="Applying ${patchDisableInteractiveCourses}"/>
+        <exec executable="git" dir="${community.folder}" failonerror="true">
+            <arg value="apply"/>
+            <arg value="&#45;-check"/>
+            <arg value="${patchDisableInteractiveCourses}"/>
+        </exec>
+        <exec executable="git" dir="${community.folder}">
+            <arg value="apply"/>
+            <arg value="${patchDisableInteractiveCourses}"/>
+        </exec>
+
         <property name="patchFileApplicationNamesInfo"
                   value="${basedir}/patches/ApplicationNamesInfo.patch"/>
         <echo message="Applying ${patchFileApplicationNamesInfo}"/>
