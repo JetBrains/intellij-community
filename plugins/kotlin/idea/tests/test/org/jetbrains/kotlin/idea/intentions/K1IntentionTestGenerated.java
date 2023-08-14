@@ -12501,6 +12501,16 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/joinDeclarationAndAssignment/propertyReassignment.kt");
         }
 
+        @TestMetadata("qualifiedName.kt")
+        public void testQualifiedName() throws Exception {
+            runTest("testData/intentions/joinDeclarationAndAssignment/qualifiedName.kt");
+        }
+
+        @TestMetadata("qualifiedName2.kt")
+        public void testQualifiedName2() throws Exception {
+            runTest("testData/intentions/joinDeclarationAndAssignment/qualifiedName2.kt");
+        }
+
         @TestMetadata("simple.kt")
         public void testSimple() throws Exception {
             runTest("testData/intentions/joinDeclarationAndAssignment/simple.kt");
