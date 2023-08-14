@@ -935,7 +935,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
       return new PluginResolutionResponse(mavenPluginId, false, artifacts);
     } finally {
       long totalTime = System.currentTimeMillis() - startTime;
-      MavenServerGlobals.getLogger().print("Resolved plugin " + mavenPluginId + " in " + totalTime + " ms");
+      MavenServerGlobals.getLogger().debug("Resolved plugin " + mavenPluginId + " in " + totalTime + " ms");
     }
   }
 

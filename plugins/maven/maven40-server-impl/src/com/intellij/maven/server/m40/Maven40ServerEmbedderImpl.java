@@ -736,7 +736,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
       return new PluginResolutionResponse(mavenPluginId, false, artifacts);
     } finally {
       long totalTime = System.currentTimeMillis() - startTime;
-      MavenServerGlobals.getLogger().print("Resolved plugin " + mavenPluginId + " in " + totalTime + " ms");
+      MavenServerGlobals.getLogger().debug("Resolved plugin " + mavenPluginId + " in " + totalTime + " ms");
     }
   }
 

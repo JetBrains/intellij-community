@@ -156,6 +156,7 @@ public class MavenServerConnectorImpl extends MavenServerConnectorBase {
           List<ServerLogEvent> logEvents = logger.pull();
           for (ServerLogEvent e : logEvents) {
             switch (e.getType()) {
+              case DEBUG -> MavenLog.LOG.debug(e.getMessage());
               case PRINT, INFO -> MavenLog.LOG.info(e.getMessage());
               case WARN, ERROR -> MavenLog.LOG.warn(e.getMessage());
             }
