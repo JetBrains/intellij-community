@@ -1,5 +1,5 @@
 // "Import property 'localStorage'" "true"
-// JS
+// JS_WITH_DOM_API_COMPAT
 
 package test
 
