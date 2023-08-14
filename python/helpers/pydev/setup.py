@@ -56,7 +56,7 @@ def add_directory_to_datafiles(datafiles, dir):
 
 def accept_extension(f):
     f = f.lower()
-    for ext in '.pyd .so'.split():
+    for ext in '.pyd .so .c'.split():
         if f.endswith(ext):
             return True
     return False
@@ -184,14 +184,11 @@ if sys.platform not in ('darwin', 'win32'):
     if (3, 6) <= sys.version_info <= (3, 10):
         from setup_cython import get_frame_eval_extension_name
         frame_eval_extension_name = get_frame_eval_extension_name()
-        args_with_binaries.update(dict(
-            distclass=BinaryDistribution,
-            ext_modules=[
-                # In this setup, don't even try to compile with cython, just go with the .c file which should've
-                # been properly generated from a tested version.
-                Extension('_pydevd_frame_eval.pydevd_frame_evaluator', ['_pydevd_frame_eval/%s.c' % frame_eval_extension_name,])
-            ]
-        ))
+        args_with_binaries["ext_modules"].append(
+            # In this setup, don't even try to compile with cython, just go with the .c file which should've
+            # been properly generated from a tested version.
+            Extension('_pydevd_frame_eval.pydevd_frame_evaluator', ['_pydevd_frame_eval/%s.c' % frame_eval_extension_name,])
+        )
 
 try:
     setup(**args_with_binaries)
