@@ -171,6 +171,7 @@ val SUPPORTED_DISTRIBUTIONS: PersistentList<SupportedDistribution> = persistentL
   SupportedDistribution(os = OsFamily.MACOS, arch = JvmArchitecture.x64),
   SupportedDistribution(os = OsFamily.MACOS, arch = JvmArchitecture.aarch64),
   SupportedDistribution(os = OsFamily.WINDOWS, arch = JvmArchitecture.x64),
+  SupportedDistribution(os = OsFamily.WINDOWS, arch = JvmArchitecture.aarch64),
   SupportedDistribution(os = OsFamily.LINUX, arch = JvmArchitecture.x64),
   SupportedDistribution(os = OsFamily.LINUX, arch = JvmArchitecture.aarch64),
 )
