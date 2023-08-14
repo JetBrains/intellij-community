@@ -181,7 +181,9 @@ public final class SdkConfigurationUtil {
       // setupSdkPaths() method invocation
       sdkModificator.setSdkAdditionalData(additionalData);
     }
-
+    if (sdkModificator.getVersionString() == null && !homePath.isEmpty()) {
+      sdkModificator.setVersionString(sdkType.getVersionString(homePath));
+    }
     sdkModificator.setHomePath(homePath);
     ApplicationManager.getApplication().runWriteAction(() -> {
       sdkModificator.commitChanges();
