@@ -19,7 +19,6 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.ui.configuration.SdkTestCase
 import com.intellij.openapi.roots.ui.configuration.SdkTestCase.Companion.assertSdk
-import com.intellij.openapi.roots.ui.configuration.SdkTestCase.TestSdk
 import com.intellij.openapi.roots.ui.configuration.SdkTestCase.TestSdkGenerator
 import com.intellij.testFramework.replaceService
 import org.jetbrains.plugins.gradle.service.project.open.linkAndRefreshGradleProject
@@ -64,7 +63,7 @@ abstract class GradleProjectResolverTestCase : GradleImportingTestCase() {
     }
   }
 
-  fun resolveRealTestSdk(): TestSdk {
+  fun resolveRealTestSdk(): Sdk {
     val homePath = GradleJvmResolver.resolveGradleJvmHomePath(currentGradleVersion)
     val sdkInfo = createSdkInfo(JavaSdk.getInstance(), homePath)
     return TestSdkGenerator.createTestSdk(sdkInfo)
@@ -76,19 +75,19 @@ abstract class GradleProjectResolverTestCase : GradleImportingTestCase() {
     return TestSdkGenerator.SdkInfo(name, versionString, homePath)
   }
 
-  fun assertSdks(sdk: TestSdk?, vararg moduleNames: String, isAssertSdkName: Boolean = true) {
+  fun assertSdks(sdk: Sdk?, vararg moduleNames: String, isAssertSdkName: Boolean = true) {
     assertProjectSdk(sdk, isAssertSdkName)
     for (moduleName in moduleNames) {
       assertModuleSdk(moduleName, sdk, isAssertSdkName)
     }
   }
 
-  private fun assertProjectSdk(sdk: TestSdk?, isAssertSdkName: Boolean) {
+  private fun assertProjectSdk(sdk: Sdk?, isAssertSdkName: Boolean) {
     val projectSdk = getSdkForProject()
     assertSdk(sdk, projectSdk, isAssertSdkName)
   }
 
-  private fun assertModuleSdk(moduleName: String, sdk: TestSdk?, isAssertSdkName: Boolean) {
+  private fun assertModuleSdk(moduleName: String, sdk: Sdk?, isAssertSdkName: Boolean) {
     val moduleSdk = getSdkForModule(moduleName)
     assertSdk(sdk, moduleSdk, isAssertSdkName)
   }
@@ -110,7 +109,7 @@ abstract class GradleProjectResolverTestCase : GradleImportingTestCase() {
     }
   }
 
-  fun withProjectSdk(sdk: TestSdk, action: () -> Unit) {
+  fun withProjectSdk(sdk: Sdk, action: () -> Unit) {
     val projectRootManager = ProjectRootManager.getInstance(myProject)
     val projectSdk = projectRootManager.projectSdk
     setProjectSdk(sdk)

@@ -107,7 +107,7 @@ abstract class SdkComboBoxTestCase : SdkTestCase() {
       }
     }
 
-    private fun setupSdk(newJdk: TestSdk, callback: com.intellij.util.Consumer<in Sdk>?) {
+    private fun setupSdk(newJdk: Sdk, callback: com.intellij.util.Consumer<in Sdk>?) {
       val sdkType = newJdk.sdkType as SdkType
       if (!sdkType.setupSdkPaths(newJdk, this)) return
       doAdd(newJdk, callback)
@@ -130,7 +130,7 @@ abstract class SdkComboBoxTestCase : SdkTestCase() {
   }
 
   companion object {
-    fun assertSdkItem(expected: TestSdk, item: SdkListItem.SdkItem) {
+    fun assertSdkItem(expected: Sdk, item: SdkListItem.SdkItem) {
       assertSdk(expected, item.sdk)
     }
 
@@ -164,14 +164,14 @@ abstract class SdkComboBoxTestCase : SdkTestCase() {
         }
       }
 
-    fun SdkComboBox.touchDownloadAction(): TestSdk {
+    fun SdkComboBox.touchDownloadAction(): Sdk {
       selectedItem = itemSequence
         .filterIsInstance<SdkListItem.ActionItem>()
         .first { it.role == SdkListItem.ActionRole.DOWNLOAD }
       return TestSdkGenerator.getCurrentSdk()
     }
 
-    fun SdkComboBox.touchAddAction(): TestSdk {
+    fun SdkComboBox.touchAddAction(): Sdk {
       CanarySdk.replaceByTestSdk {
         selectedItem = itemSequence
           .filterIsInstance<SdkListItem.ActionItem>()
