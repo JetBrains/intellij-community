@@ -498,8 +498,8 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
                      reopeningEditorJob: Job,
                      taskListDeferred: Deferred<List<RegisterToolWindowTask>>?) {
     withContext(ModalityState.any().asContextElement()) {
+      val frameHelper = frameHelperDeferred.await()
       launch(Dispatchers.EDT) {
-        val frameHelper = frameHelperDeferred.await()
         this@ToolWindowManagerImpl.frameHelper = frameHelper
 
         // Make sure we haven't already created the root tool window pane.
@@ -1705,7 +1705,8 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
                           layoutState: DesktopLayout?) {
     if (isNewUi && currentInfo != null) {
       entry.removeStripeButton(currentInfo.anchor, currentInfo.isSplit)
-    } else {
+    }
+    else {
       entry.removeStripeButton()
     }
 
@@ -1806,8 +1807,12 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
 
   protected open fun fireStateChanged(changeType: ToolWindowManagerEventType, toolWindow: ToolWindow? = null) {
     val topic = project.messageBus.syncPublisher(ToolWindowManagerListener.TOPIC)
-    if (toolWindow != null) topic.stateChanged(this, toolWindow, changeType)
-    else topic.stateChanged(this, changeType)
+    if (toolWindow != null) {
+      topic.stateChanged(this, toolWindow, changeType)
+    }
+    else {
+      topic.stateChanged(this, changeType)
+    }
   }
 
   private fun fireToolWindowShown(toolWindow: ToolWindow) {
@@ -1815,7 +1820,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
   }
 
   internal fun setToolWindowAutoHide(id: String, autoHide: Boolean) {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    EDT.assertIsEdt()
 
     val info = getRegisteredMutableInfoOrLogError(id)
     if (info.isAutoHide == autoHide) {
