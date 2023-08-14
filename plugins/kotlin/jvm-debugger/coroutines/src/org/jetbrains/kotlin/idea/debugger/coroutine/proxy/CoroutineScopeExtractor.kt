@@ -1,31 +1,27 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.debugger.coroutine.proxy
 
-import com.intellij.debugger.engine.DebugProcess
 import com.intellij.debugger.engine.DebuggerUtils
 import com.intellij.debugger.engine.evaluation.EvaluationContext
+import com.intellij.openapi.util.Key
 import com.sun.jdi.Method
 import com.sun.jdi.ObjectReference
 import com.sun.jdi.ReferenceType
 import com.sun.jdi.Value
 import org.jetbrains.kotlin.idea.debugger.coroutine.util.isCoroutineScope
 
-object CoroutineScopeExtractor {
-    private var debugProcess: DebugProcess? = null
-    private var getContextMethod: Method? = null
-    private var getMethod: Method? = null
-    private var jobKey: Value? = null
+class CoroutineScopeExtractor(
+    private val getContextMethod: Method?,
+    private val getMethod: Method?,
+    private val jobKey: Value?,
+) {
 
-    /*
+    /**
      * This method extracts coroutine scope from a continuation by evaluating:
      * kotlin.coroutines.coroutineContext[Job]!! as CoroutineScope
      */
     fun extractCoroutineScope(continuation: ObjectReference, evaluationContext: EvaluationContext): ObjectReference? {
         try {
-            if (debugProcess != evaluationContext.debugProcess) {
-                init(evaluationContext)
-            }
-
             val coroutineContext = continuation.getCoroutineContext(evaluationContext) ?: return null
             val coroutineScope = coroutineContext.getCoroutineScopeByJobKey(evaluationContext) ?: return null
             if (coroutineScope.referenceType().isCoroutineScope()) {
@@ -36,28 +32,38 @@ object CoroutineScopeExtractor {
         return null
     }
 
-    private fun init(evaluationContext: EvaluationContext) {
-        debugProcess = evaluationContext.debugProcess
-        val jobType = evaluationContext.findClass("kotlinx.coroutines.Job")
-        val jobKeyField = jobType?.fieldByName("Key")
-        if (jobType != null && jobKeyField != null) {
-            jobKey = jobType.getValue(jobKeyField)
-        } else {
-            jobKey = null
-        }
+    companion object {
+        val KEY = Key.create<CoroutineScopeExtractor>("CoroutineScopeExtractor")
 
-        val continuationType = evaluationContext.findClass("kotlin.coroutines.Continuation")
-        val coroutineContextType = evaluationContext.findClass("kotlin.coroutines.CoroutineContext")
-        getContextMethod = continuationType.findMethod("getContext", "()Lkotlin/coroutines/CoroutineContext;")
-        getMethod = coroutineContextType.findMethod(
-            "get",
-            "(Lkotlin/coroutines/CoroutineContext\$Key;)Lkotlin/coroutines/CoroutineContext\$Element;"
-        )
+        fun create(evaluationContext: EvaluationContext): CoroutineScopeExtractor {
+            try {
+                val jobType = evaluationContext.findClass("kotlinx.coroutines.Job")
+                val jobKeyField = jobType?.fieldByName("Key")
+                val jobKey: Value?
+                if (jobType != null && jobKeyField != null) {
+                    jobKey = jobType.getValue(jobKeyField)
+                } else {
+                    jobKey = null
+                }
+
+                val continuationType = evaluationContext.findClass("kotlin.coroutines.Continuation")
+                val coroutineContextType = evaluationContext.findClass("kotlin.coroutines.CoroutineContext")
+                val getContextMethod = continuationType.findMethod("getContext", "()Lkotlin/coroutines/CoroutineContext;")
+                val getMethod = coroutineContextType.findMethod(
+                    "get",
+                    "(Lkotlin/coroutines/CoroutineContext\$Key;)Lkotlin/coroutines/CoroutineContext\$Element;"
+                )
+                return CoroutineScopeExtractor(getContextMethod, getMethod, jobKey)
+            } catch (ex: Exception) {
+            }
+
+            return CoroutineScopeExtractor(null, null, null)
+        }
     }
 
     private fun ObjectReference.getCoroutineScopeByJobKey(evaluationContext: EvaluationContext): ObjectReference? {
-        val jobKey = CoroutineScopeExtractor.jobKey ?: return null
-        val getMethod = CoroutineScopeExtractor.getMethod ?: return null
+        val jobKey = jobKey ?: return null
+        val getMethod = getMethod ?: return null
         val coroutineScope = evaluationContext.debugProcess.invokeMethod(
             evaluationContext,
             this,
@@ -68,7 +74,7 @@ object CoroutineScopeExtractor {
     }
 
     private fun ObjectReference.getCoroutineContext(evaluationContext: EvaluationContext): ObjectReference? {
-        val getContextMethod = CoroutineScopeExtractor.getContextMethod ?: return null
+        val getContextMethod = getContextMethod ?: return null
         val coroutineContext = evaluationContext.debugProcess.invokeMethod(
             evaluationContext,
             this,
@@ -77,14 +83,16 @@ object CoroutineScopeExtractor {
         )
         return coroutineContext as? ObjectReference
     }
+}
 
-    private fun EvaluationContext.findClass(name: String) =
-        debugProcess.findClass(this, name, null)
+private fun EvaluationContext.findClass(name: String): ReferenceType? {
+    return debugProcess.findClass(this, name, null)
+}
 
-    private fun ReferenceType?.findMethod(name: String, signature: String) =
-        if (this == null) {
-            null
-        } else {
-            DebuggerUtils.findMethod(this, name, signature)
-        }
+private fun ReferenceType?.findMethod(name: String, signature: String): Method? {
+    if (this == null) {
+        return null
+    } else {
+        return DebuggerUtils.findMethod(this, name, signature)
+    }
 }
