@@ -262,6 +262,8 @@ class BuildOptions(
         add(MAC_SIGN_STEP)
         add(MAC_NOTARIZE_STEP)
       }
+      // skipped until IDEA-223423 is implemented
+      add(SoftwareBillOfMaterials.STEP_ID)
     }
 
   /**
