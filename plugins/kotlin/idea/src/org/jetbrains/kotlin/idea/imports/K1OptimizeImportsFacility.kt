@@ -83,4 +83,8 @@ internal class K1OptimizeImportsFacility : KotlinOptimizeImportsFacility {
 
         return KotlinImportOptimizer.prepareOptimizedImports(file, data.optimizerData)
     }
+
+    override fun replaceImports(file: KtFile, imports: Iterable<ImportPath>) {
+        KotlinImportOptimizer.replaceImports(file, imports)
+    }
 }

@@ -32,7 +32,6 @@ import org.jetbrains.kotlin.idea.base.projectStructure.matches
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeInsight.KotlinCodeInsightWorkspaceSettings
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
-import org.jetbrains.kotlin.idea.imports.KotlinImportOptimizer
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.siblings
@@ -158,7 +157,7 @@ class KotlinUnusedImportInspection : AbstractKotlinInspection() {
         val doc = documentManager.getDocument(file) ?: editor.document
         documentManager.commitDocument(doc)
         DocumentUtil.writeInRunUndoTransparentAction {
-            KotlinImportOptimizer.replaceImports(file, optimizedImports)
+            KotlinOptimizeImportsFacility.getInstance().replaceImports(file, optimizedImports)
             PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(doc)
         }
     }

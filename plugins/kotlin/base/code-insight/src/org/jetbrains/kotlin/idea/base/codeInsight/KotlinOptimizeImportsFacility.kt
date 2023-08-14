@@ -21,6 +21,8 @@ interface KotlinOptimizeImportsFacility {
      */
     fun prepareOptimizedImports(file: KtFile, data: ImportData): List<ImportPath>?
 
+    fun replaceImports(file: KtFile, imports: Iterable<ImportPath>)
+
     companion object {
         fun getInstance(): KotlinOptimizeImportsFacility = service()
     }
