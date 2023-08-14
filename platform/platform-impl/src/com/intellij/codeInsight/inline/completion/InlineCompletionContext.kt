@@ -14,7 +14,7 @@ import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicBoolean
 
 @ApiStatus.Experimental
-class InlineCompletionContext private constructor(val editor: Editor) : Disposable {
+class InlineCompletionContext private constructor(val editor: Editor, private var hasPlaceholder: Boolean = false) : Disposable {
   private val keyListener = InlineCompletionKeyListener(editor)
   private val isSelecting = AtomicBoolean(false)
   private val inlay = InlineCompletion.forEditor(editor)
@@ -23,7 +23,7 @@ class InlineCompletionContext private constructor(val editor: Editor) : Disposab
   private var selectedIndex = -1
 
   val isCurrentlyDisplayingInlays: Boolean
-    get() = !inlay.isEmpty
+    get() = !inlay.isEmpty && !hasPlaceholder
 
   val startOffset: Int?
     get() = inlay.offset
@@ -84,6 +84,12 @@ class InlineCompletionContext private constructor(val editor: Editor) : Disposab
       }
     }
 
+    fun Editor.initOrGetInlineCompletionContextWithPlaceholder(): InlineCompletionContext {
+      return getUserData(INLINE_COMPLETION_CONTEXT) ?: InlineCompletionContext(this, true).also {
+        putUserData(INLINE_COMPLETION_CONTEXT, it)
+      }
+    }
+
     fun Editor.getInlineCompletionContextOrNull(): InlineCompletionContext? = getUserData(INLINE_COMPLETION_CONTEXT)
     fun Editor.removeInlineCompletionContext(): Unit = putUserData(INLINE_COMPLETION_CONTEXT, null)
     fun Editor.resetInlineCompletionContext(): Unit? = getInlineCompletionContextOrNull()?.let {
@@ -92,6 +98,5 @@ class InlineCompletionContext private constructor(val editor: Editor) : Disposab
         Disposer.dispose(it)
       }
     }
-
   }
 }

@@ -4,6 +4,7 @@ package com.intellij.codeInsight.inline.completion
 import com.intellij.codeInsight.CodeInsightActionHandler
 import com.intellij.codeInsight.inline.completion.InlineCompletionContext.Companion.getInlineCompletionContextOrNull
 import com.intellij.codeInsight.inline.completion.InlineCompletionContext.Companion.initOrGetInlineCompletionContext
+import com.intellij.codeInsight.inline.completion.InlineCompletionContext.Companion.initOrGetInlineCompletionContextWithPlaceholder
 import com.intellij.codeInsight.inline.completion.InlineState.Companion.getInlineCompletionState
 import com.intellij.codeInsight.inline.completion.InlineState.Companion.initOrGetInlineCompletionState
 import com.intellij.codeInsight.lookup.LookupEvent
@@ -14,11 +15,10 @@ import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiFile
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectIndexed
-import kotlinx.coroutines.flow.transformWhile
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -41,6 +41,8 @@ class InlineCompletionHandler(private val scope: CoroutineScope) : CodeInsightAc
   fun invoke(event: LookupEvent) = invoke(InlineCompletionEvent.LookupChange(event))
   fun invoke(editor: Editor, file: PsiFile, caret: Caret) = invoke(InlineCompletionEvent.DirectCall(editor, file, caret))
 
+  private fun shouldShowPlaceholder(): Boolean = Registry.`is`("inline.completion.show.placeholder")
+
   private fun invoke(event: InlineCompletionEvent) {
     if (isMuted.get()) {
       return
@@ -62,7 +64,10 @@ class InlineCompletionHandler(private val scope: CoroutineScope) : CodeInsightAc
       val inlineState = editor.initOrGetInlineCompletionState()
 
       withContext(Dispatchers.EDT) {
+        showPlaceholder(editor, offset)
+
         resultFlow.collectIndexed { index, value ->
+          disposePlaceholder(editor)
           if (index == 0 && modificationStamp != request.document.modificationStamp) {
             cancel()
             return@collectIndexed
@@ -85,6 +90,19 @@ class InlineCompletionHandler(private val scope: CoroutineScope) : CodeInsightAc
     }
   }
 
+  private fun showPlaceholder(editor: Editor, startOffset: Int, placeholder: String = "...") {
+    if (!shouldShowPlaceholder()) return
+
+    val ctx = editor.initOrGetInlineCompletionContextWithPlaceholder()
+    ctx.update(listOf(InlineCompletionElement(placeholder)), 0, startOffset)
+  }
+
+  private fun disposePlaceholder(editor: Editor) {
+    if (!shouldShowPlaceholder()) return
+
+    editor.initOrGetInlineCompletionContext()
+  }
+
   private fun showInlineSuggestion(editor: Editor, inlineContext: InlineState, startOffset: Int) {
     val suggestions = inlineContext.suggestions
     if (suggestions.isEmpty()) {
@@ -105,17 +123,6 @@ class InlineCompletionHandler(private val scope: CoroutineScope) : CodeInsightAc
     inlineContext.lastStartOffset = startOffset
     inlineContext.lastModificationStamp = editor.document.modificationStamp
   }
-
-  private fun Flow<InlineCompletionElement>.takeFirstLine() = takeWhileInclusive {
-    it.text.contains("\n")
-  }
-
-  private fun <T> Flow<T>.takeWhileInclusive(predicate: (T) -> Boolean) = transformWhile { value ->
-    emit(value) // the first not matching value will also be emitted
-
-    predicate(value)
-  }
-
 
   companion object {
     val KEY = Key.create<InlineCompletionHandler>("inline.completion.handler")
