@@ -698,6 +698,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
                                                  List<Dependency> pluginDependencies,
                                                  List<RemoteRepository> remoteRepos,
                                                  RepositorySystemSession session) {
+    long startTime = System.currentTimeMillis();
     List<MavenArtifact> artifacts = new ArrayList<>();
     if (task.isCanceled()) return new PluginResolutionResponse(mavenPluginId, false, artifacts);
 
@@ -733,6 +734,9 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
     catch (Exception e) {
       MavenServerGlobals.getLogger().warn(e);
       return new PluginResolutionResponse(mavenPluginId, false, artifacts);
+    } finally {
+      long totalTime = System.currentTimeMillis() - startTime;
+      MavenServerGlobals.getLogger().print("Resolved plugin " + mavenPluginId + " in " + totalTime + " ms");
     }
   }
 
