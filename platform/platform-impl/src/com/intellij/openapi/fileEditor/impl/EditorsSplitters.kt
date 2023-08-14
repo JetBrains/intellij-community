@@ -710,34 +710,27 @@ open class EditorsSplitters internal constructor(
 
   internal fun getWindowSequence(): Sequence<EditorWindow> = windows.asSequence()
 
-  // Collector for windows in tree ordering:
-  // get a root component and traverse splitters tree:
+  // collector for windows in tree ordering: get a root component and traverse splitters tree
   internal fun getOrderedWindows(): MutableList<EditorWindow> {
     val result = ArrayList<EditorWindow>()
 
-    // Collector for windows in tree ordering:
-    class WindowCollector {
-      fun collect(panel: JPanel) {
-        val component = panel.getComponent(0)
-        if (component is Splitter) {
-          collect(component.firstComponent as JPanel)
-          collect(component.secondComponent as JPanel)
-        }
-        else if (component is JPanel || component is JBTabs) {
-          findWindowWith(component)?.let {
-            result.add(it)
-          }
+    fun collectWindow(component: JComponent) {
+      if (component is Splitter) {
+        collectWindow(component.firstComponent)
+        collectWindow(component.secondComponent)
+      }
+      else if (component is JPanel || component is JBTabs) {
+        findWindowWith(component)?.let {
+          result.add(it)
         }
       }
     }
 
-    // get root component and traverse splitters tree:
+    // get root component and traverse splitters tree
     if (componentCount != 0) {
-      val comp = getComponent(0)
-      LOG.assertTrue(comp is JPanel)
-      val panel = comp as JPanel
-      if (panel.componentCount != 0) {
-        WindowCollector().collect(panel)
+      val component = getComponent(0) as JComponent
+      if (component.componentCount != 0) {
+        collectWindow(component)
       }
     }
     LOG.assertTrue(result.size == windows.size)
