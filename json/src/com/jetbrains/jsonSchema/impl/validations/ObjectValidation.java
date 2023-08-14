@@ -194,7 +194,7 @@ public class ObjectValidation implements JsonSchemaValidation {
     List<Object> enumValues = propertySchema.getEnum();
     if (enumValues != null) {
       enumCount.set(enumValues.size());
-      if (enumValues.size() == 1) {
+      if (!enumValues.isEmpty()) {
         Object defaultObject = enumValues.get(0);
         return defaultObject instanceof String ? StringUtil.unquoteString((String)defaultObject) : defaultObject;
       }
