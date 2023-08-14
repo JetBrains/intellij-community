@@ -75,6 +75,7 @@
 
     <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.sdk.configuration.PySdkConfigurationCollector"/>
     <defaultToolWindowLayout implementation="com.jetbrains.python.PyToolWindowLayoutProvider" order="last"/>
+    <newUIConfigurable implementation="com.jetbrains.python.configuration.PyExperimentalUIConfigurable"/>
   </extensions>
 
   <extensions defaultExtensionNs="Pythonid">
