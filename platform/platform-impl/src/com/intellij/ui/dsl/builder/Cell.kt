@@ -137,7 +137,7 @@ interface Cell<out T : JComponent> : CellBase<Cell<T>> {
    */
   fun <V> bind(componentGet: (T) -> V, componentSet: (T, V) -> Unit, prop: MutableProperty<V>): Cell<T>
 
-  @Deprecated("Use overloaded method")
+  @Deprecated("Use overloaded method", level = DeprecationLevel.HIDDEN)
   @ApiStatus.ScheduledForRemoval
   fun <V> bind(componentGet: (T) -> V, componentSet: (T, V) -> Unit, binding: PropertyBinding<V>): Cell<T>
 
@@ -159,7 +159,7 @@ interface Cell<out T : JComponent> : CellBase<Cell<T>> {
    */
   fun validationRequestor(validationRequestor: DialogValidationRequestor.WithParameter<T>): Cell<T>
 
-  @Deprecated("Use identical temporary validationInfo method, validation method is reserved for new API")
+  @Deprecated("Use identical temporary validationInfo method, validation method is reserved for new API", level = DeprecationLevel.HIDDEN)
   @ApiStatus.ScheduledForRemoval
   fun validation(validation: ValidationInfoBuilder.(T) -> ValidationInfo?): Cell<T>
 

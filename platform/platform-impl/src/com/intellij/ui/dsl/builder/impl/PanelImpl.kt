@@ -11,7 +11,6 @@ import com.intellij.ui.dsl.UiDslException
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.gridLayout.*
 import com.intellij.ui.layout.ComponentPredicate
-import com.intellij.ui.layout.PropertyBinding
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
 import javax.swing.JComponent
@@ -133,11 +132,6 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
     }.layout(RowLayout.PARENT_GRID)
   }
 
-  @Suppress("OVERRIDE_DEPRECATION")
-  override fun separator(@NlsContexts.Separator title: String?, background: Color?): Row {
-    return createSeparatorRow(title)
-  }
-
   override fun separator(background: Color?): Row {
     return createSeparatorRow(null, background)
   }
@@ -183,28 +177,6 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
     return result
   }
 
-  @Suppress("OVERRIDE_DEPRECATION")
-  override fun group(@NlsContexts.BorderTitle title: String?, indent: Boolean, topGroupGap: Boolean?, bottomGroupGap: Boolean?, init: Panel.() -> Unit): Panel {
-    lateinit var result: Panel
-    val row = row {
-      result = panel {
-        createSeparatorRow(title)
-      }
-    }
-
-    if (indent) {
-      result.indent(init)
-    }
-    else {
-      result.init()
-    }
-
-    setTopGroupGap(row, topGroupGap)
-    setBottomGroupGap(row, bottomGroupGap)
-
-    return result
-  }
-
   override fun groupRowsRange(title: String?, indent: Boolean, topGroupGap: Boolean?, bottomGroupGap: Boolean?,
                               init: Panel.() -> Unit): RowsRangeImpl {
     val result = createRowRange()
@@ -239,14 +211,6 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
     _rows.add(result)
 
     return result
-  }
-
-  @Deprecated("Use buttonsGroup(...) instead")
-  @ApiStatus.ScheduledForRemoval
-  override fun <T> buttonGroup(binding: PropertyBinding<T>, type: Class<T>, @NlsContexts.BorderTitle title: String?,
-                               indent: Boolean, init: Panel.() -> Unit) {
-    buttonsGroup(title, indent, init)
-      .bind(MutableProperty(binding.get, binding.set), type)
   }
 
   override fun buttonsGroup(@NlsContexts.BorderTitle title: String?, indent: Boolean, init: Panel.() -> Unit): ButtonsGroupImpl {

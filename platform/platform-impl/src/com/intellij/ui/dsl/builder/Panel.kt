@@ -9,7 +9,6 @@ import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.layout.ComponentPredicate
-import com.intellij.ui.layout.PropertyBinding
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.Color
@@ -18,7 +17,7 @@ import javax.swing.JLabel
 /**
  * Empty label parameter for [Panel.row] method in case label is omitted.
  */
-@Deprecated("Use \"\" instead of this constant")
+@Deprecated("Use \"\" instead of this constant", level = DeprecationLevel.HIDDEN)
 @ApiStatus.ScheduledForRemoval
 val EMPTY_LABEL: String = ""
 
@@ -85,10 +84,6 @@ interface Panel : CellBase<Panel> {
    */
   fun threeColumnsRow(column1: (Row.() -> Unit)?, column2: (Row.() -> Unit)? = null, column3: (Row.() -> Unit)? = null): Row
 
-  @Deprecated(message = "Use overloaded method or group/groupRowsRange instead", level = DeprecationLevel.HIDDEN)
-  @ApiStatus.ScheduledForRemoval
-  fun separator(@NlsContexts.Separator title: String? = null, background: Color? = null): Row
-
   /**
    * Adds horizontal line separator. Use [group] or [groupRowsRange] if you need a separator with title
    */
@@ -123,14 +118,6 @@ interface Panel : CellBase<Panel> {
    */
   fun group(title: JBLabel, indent: Boolean = true, init: Panel.() -> Unit): Row
 
-  @Deprecated("Use overloaded group(...) instead", level = DeprecationLevel.HIDDEN)
-  @ApiStatus.ScheduledForRemoval
-  fun group(@NlsContexts.BorderTitle title: String? = null,
-            indent: Boolean = true,
-            topGroupGap: Boolean? = null,
-            bottomGroupGap: Boolean? = null,
-            init: Panel.() -> Unit): Panel
-
   /**
    * Similar to [Panel.group] but uses the same grid as the parent.
    *
@@ -152,11 +139,6 @@ interface Panel : CellBase<Panel> {
   fun collapsibleGroup(@NlsContexts.BorderTitle title: String,
                        indent: Boolean = true,
                        init: Panel.() -> Unit): CollapsibleRow
-
-  @Deprecated("Use buttonsGroup(...) instead", level = DeprecationLevel.HIDDEN)
-  @ApiStatus.ScheduledForRemoval
-  fun <T> buttonGroup(binding: PropertyBinding<T>, type: Class<T>, @NlsContexts.BorderTitle title: String? = null,
-                      indent: Boolean = title != null, init: Panel.() -> Unit)
 
   /**
    * Unions [Row.radioButton] in one group. Must be also used for [Row.checkBox] if they are grouped with some title.

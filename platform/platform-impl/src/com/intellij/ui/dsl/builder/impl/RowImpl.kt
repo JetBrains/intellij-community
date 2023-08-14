@@ -96,10 +96,6 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
     return this
   }
 
-  override fun <T : JComponent> cell(component: T, viewComponent: JComponent): CellImpl<T> {
-    return cellImpl(component, viewComponent)
-  }
-
   override fun <T : JComponent> cell(component: T): CellImpl<T> {
     return cellImpl(component, component)
   }
@@ -426,10 +422,6 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
 
   override fun <T> comboBox(items: Collection<T>, renderer: ListCellRenderer<in T?>?): Cell<ComboBox<T>> {
     return comboBox(DefaultComboBoxModel(Vector(items)), renderer)
-  }
-
-  override fun <T> comboBox(items: Array<T>, renderer: ListCellRenderer<T?>?): Cell<ComboBox<T>> {
-    return comboBox(items.toList(), renderer)
   }
 
   override fun customize(customRowGaps: VerticalGaps): Row {
