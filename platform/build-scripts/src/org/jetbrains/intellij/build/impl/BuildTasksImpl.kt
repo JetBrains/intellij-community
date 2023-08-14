@@ -317,9 +317,9 @@ private fun downloadMissingLibrarySources(
     }
 }
 
-private class DistributionForOsTaskResult(@JvmField val builder: OsSpecificDistributionBuilder,
-                                          @JvmField val arch: JvmArchitecture,
-                                          @JvmField val outDir: Path)
+internal class DistributionForOsTaskResult(@JvmField val builder: OsSpecificDistributionBuilder,
+                                           @JvmField val arch: JvmArchitecture,
+                                           @JvmField val outDir: Path)
 
 private suspend fun buildOsSpecificDistributions(context: BuildContext): List<DistributionForOsTaskResult> {
   if (context.isStepSkipped(BuildOptions.OS_SPECIFIC_DISTRIBUTIONS_STEP)) {
@@ -633,22 +633,24 @@ suspend fun buildDistributions(context: BuildContext): Unit = spanBuilder("build
   coroutineScope {
     createMavenArtifactJob(context, distributionState)
 
-    spanBuilder("build platform and plugin JARs").useWithScope2<Unit> {
+    val distEntries = spanBuilder("build platform and plugin JARs").useWithScope2 {
       if (context.shouldBuildDistributions()) {
         val entries = buildDistribution(state = distributionState, context)
         if (context.productProperties.buildSourcesArchive) {
           buildSourcesArchive(entries, context)
         }
+        entries
       }
       else {
         Span.current().addEvent("skip building product distributions because " +
-                                "\"intellij.build.target.os\" property is set to \"${BuildOptions.OS_NONE}\"")
+                                "'intellij.build.target.os' property is set to '${BuildOptions.OS_NONE}'")
         buildSearchableOptions(distributionState.platform, context)
         buildNonBundledPlugins(pluginsToPublish = pluginsToPublish,
                                compressPluginArchive = context.options.compressZipFiles,
                                buildPlatformLibJob = null,
                                state = distributionState,
                                context = context)
+        emptyList()
       }
     }
 
@@ -658,6 +660,11 @@ suspend fun buildDistributions(context: BuildContext): Unit = spanBuilder("build
 
     layoutShared(context)
     val distDirs = buildOsSpecificDistributions(context)
+    launch(Dispatchers.IO) {
+      context.executeStep(spanBuilder("generate software bill of materials"), SoftwareBillOfMaterials.STEP_ID) {
+        SoftwareBillOfMaterials(context, distDirs, distEntries).generate()
+      }
+    }
     @Suppress("SpellCheckingInspection")
     if (java.lang.Boolean.getBoolean("intellij.build.toolbox.litegen")) {
       @Suppress("SENSELESS_COMPARISON")

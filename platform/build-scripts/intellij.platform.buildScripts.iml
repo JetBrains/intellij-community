@@ -265,5 +265,78 @@
     <orderEntry type="library" scope="RUNTIME" name="javax.activation" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="jsoup" level="project" />
     <orderEntry type="library" name="ASM" level="project" />
+    <orderEntry type="module-library">
+      <library name="spdx.tools.java" type="repository">
+        <properties jar-repository-id="central-proxy" maven-id="org.spdx:tools-java:1.1.7">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/spdx/tools-java/1.1.7/tools-java-1.1.7.jar">
+              <sha256sum>4cf3ef5db8c8466224b436a1242e7d13c469a2582dd7a055ec65130c89a82ae8</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/spdx/java-spdx-library/1.1.6/java-spdx-library-1.1.6.jar">
+              <sha256sum>a16f0e6ec5915ed7b0f63b51f91d2fc8208dbed0d9abc38f8307e5594eb14acd</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/spdx/spdx-jackson-store/1.1.6/spdx-jackson-store-1.1.6.jar">
+              <sha256sum>c0707395e4e63f67ea3533388ec6b5f403055b7a701449a35468a1c4966ac7af</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/fasterxml/jackson/dataformat/jackson-dataformat-xml/2.15.0/jackson-dataformat-xml-2.15.0.jar">
+              <sha256sum>e3137c89b08d0c3d9f7dfeae11d5b941b310f5f7bfdea90063f29c0b3b1f6807</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/fasterxml/jackson/dataformat/jackson-dataformat-yaml/2.15.0/jackson-dataformat-yaml-2.15.0.jar">
+              <sha256sum>691a0a605de15ea610180317331957fe6f7e91f45471ee45cbf9832d74291c31</sha256sum>
+            </artifact>
+          </verification>
+          <exclude>
+            <dependency maven-id="org.spdx:spdx-rdf-store" />
+            <dependency maven-id="org.spdx:spdx-spreadsheet-store" />
+            <dependency maven-id="org.spdx:spdx-tagvalue-store" />
+            <dependency maven-id="org.apache.logging.log4j:log4j-slf4j18-impl" />
+            <dependency maven-id="org.apache.commons:commons-lang3" />
+            <dependency maven-id="org.jsoup:jsoup" />
+            <dependency maven-id="com.google.code.gson:gson" />
+            <dependency maven-id="com.google.code.findbugs:jsr305" />
+            <dependency maven-id="org.apache.jena:jena-core" />
+            <dependency maven-id="org.apache.jena:jena-arq" />
+            <dependency maven-id="org.apache.jena:jena-base" />
+            <dependency maven-id="com.fasterxml.jackson.core:jackson-databind" />
+            <dependency maven-id="com.fasterxml.jackson.core:jackson-core" />
+            <dependency maven-id="com.fasterxml.jackson.core:jackson-annotations" />
+            <dependency maven-id="org.codehaus.woodstox:stax2-api" />
+            <dependency maven-id="com.fasterxml.woodstox:woodstox-core" />
+            <dependency maven-id="org.yaml:snakeyaml" />
+            <dependency maven-id="org.apache.poi:poi" />
+            <dependency maven-id="com.opencsv:opencsv" />
+            <dependency maven-id="org.apache.poi:poi-ooxml" />
+            <dependency maven-id="org.apache.ws.xmlschema:xmlschema-core" />
+            <dependency maven-id="com.google.guava:guava" />
+            <dependency maven-id="com.github.java-json-tools:jackson-coreutils-equivalence" />
+            <dependency maven-id="com.github.java-json-tools:jackson-coreutils" />
+            <dependency maven-id="com.github.java-json-tools:uri-template" />
+            <dependency maven-id="com.github.java-json-tools:json-schema-validator" />
+            <dependency maven-id="com.github.java-json-tools:json-schema-core" />
+            <dependency maven-id="org.mozilla:rhino" />
+            <dependency maven-id="org.json:json" />
+            <dependency maven-id="com.sun.mail:mailapi" />
+            <dependency maven-id="joda-time:joda-time" />
+            <dependency maven-id="com.googlecode.libphonenumber:libphonenumber" />
+            <dependency maven-id="net.sf.jopt-simple:jopt-simple" />
+          </exclude>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/spdx/tools-java/1.1.7/tools-java-1.1.7.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/spdx/java-spdx-library/1.1.6/java-spdx-library-1.1.6.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/spdx/spdx-jackson-store/1.1.6/spdx-jackson-store-1.1.6.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/dataformat/jackson-dataformat-xml/2.15.0/jackson-dataformat-xml-2.15.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/dataformat/jackson-dataformat-yaml/2.15.0/jackson-dataformat-yaml-2.15.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/spdx/tools-java/1.1.7/tools-java-1.1.7-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/spdx/java-spdx-library/1.1.6/java-spdx-library-1.1.6-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/spdx/spdx-jackson-store/1.1.6/spdx-jackson-store-1.1.6-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/dataformat/jackson-dataformat-xml/2.15.0/jackson-dataformat-xml-2.15.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/dataformat/jackson-dataformat-yaml/2.15.0/jackson-dataformat-yaml-2.15.0-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
   </component>
 </module>
