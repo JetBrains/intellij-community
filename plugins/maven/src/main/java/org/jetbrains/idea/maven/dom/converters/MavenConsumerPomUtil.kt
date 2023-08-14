@@ -15,7 +15,7 @@ import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel
 object MavenConsumerPomUtil {
 
   @JvmStatic
-  fun isAutomaticVersionFeatureEnabled(file: VirtualFile, project: Project): Boolean {
+  fun isAutomaticVersionFeatureEnabled(file: VirtualFile?, project: Project): Boolean {
     //https://issues.apache.org/jira/browse/MNG-624
     return StringUtil.compareVersionNumbers(MavenDomUtil.getMavenVersion(file, project), "4") >= 0;
   }
