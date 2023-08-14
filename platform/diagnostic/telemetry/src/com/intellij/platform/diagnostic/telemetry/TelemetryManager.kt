@@ -8,6 +8,7 @@ import io.opentelemetry.api.metrics.Meter
 import kotlinx.coroutines.CoroutineName
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.TestOnly
 import java.util.*
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
@@ -55,6 +56,13 @@ interface TelemetryManager {
   fun getMeter(scope: Scope): Meter
 
   fun addMetricsExporters(exporters: List<MetricsExporterEntry>)
+
+  /**
+   * Force measurement collection and metrics flushing to appropriate files (.json for spans and .csv for meters)
+   * Looks like it is bad idea to use this method in production
+   **/
+  @TestOnly
+  fun forceFlushMetrics(): Unit
 }
 
 private val instance = SynchronizedClearableLazy {
@@ -94,6 +102,11 @@ internal class NoopTelemetryManager : TelemetryManager {
   override fun getMeter(scope: Scope): Meter = OpenTelemetry.noop().getMeter(scope.toString())
 
   override fun addMetricsExporters(exporters: List<MetricsExporterEntry>) {
+    System.err.println("Noop telemetry manager is in use. No metrics exporters are defined.")
+  }
+
+  override fun forceFlushMetrics() {
+    System.err.println("Cannot force flushing metrics for Noop telemetry manager")
   }
 }
 

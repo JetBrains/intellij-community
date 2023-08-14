@@ -20,12 +20,15 @@ import io.opentelemetry.api.metrics.Meter
 import io.opentelemetry.api.trace.propagation.W3CTraceContextPropagator
 import io.opentelemetry.context.propagation.ContextPropagators
 import io.opentelemetry.sdk.OpenTelemetrySdk
+import io.opentelemetry.sdk.metrics.SdkMeterProvider
 import io.opentelemetry.sdk.resources.Resource
+import io.opentelemetry.sdk.trace.SdkTracerProvider
 import io.opentelemetry.semconv.resource.attributes.ResourceAttributes
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
+import java.util.concurrent.TimeUnit
 import kotlin.coroutines.CoroutineContext
 
 /**
@@ -81,6 +84,19 @@ class TelemetryManagerImpl(app: Application) : TelemetryManager {
 
   override fun getSimpleTracer(scope: Scope): IntelliJTracer {
     return if (hasSpanExporters) IntelliJTracerImpl(scope, otlpService) else NoopIntelliJTracer
+  }
+
+  override fun forceFlushMetrics() {
+    logger<TelemetryManagerImpl>().info("Forcing metrics flushing ...")
+
+    listOf(
+      (sdk.meterProvider as SdkMeterProvider).forceFlush(),
+      (sdk.tracerProvider as SdkTracerProvider).forceFlush()
+    ).forEach { it.join(10, TimeUnit.SECONDS) }
+
+    aggregatedMetricExporter.flush().join(10, TimeUnit.SECONDS)
+
+    logger<TelemetryManagerImpl>().info("Metrics are flushed")
   }
 }
 
