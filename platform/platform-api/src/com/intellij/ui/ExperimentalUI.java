@@ -130,6 +130,11 @@ public abstract class ExperimentalUI {
         this.icon = icon;
         this.originalPath = originalPath;
       }
+
+      @Override
+      public String toString() {
+        return originalPath;
+      }
     }
 
     public static @NotNull List<IconModel> getData() {
