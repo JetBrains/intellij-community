@@ -1104,16 +1104,16 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myEditorComponent.setTransferHandler(new MyTransferHandler());
     myEditorComponent.setAutoscrolls(false); // we have our own auto-scrolling code
 
-    if (mayShowToolbar()) {
-      JLayeredPane layeredPane = new PanelWithFloatingToolbar();
-      layeredPane.add(myScrollPane, JLayeredPane.DEFAULT_LAYER);
-      UiNotifyConnector.doWhenFirstShown(
-        myPanel, () -> layeredPane.add(new EditorFloatingToolbar(this), JLayeredPane.POPUP_LAYER), getDisposable());
-      myPanel.add(layeredPane);
-    }
-    else {
-      myPanel.add(myScrollPane);
-    }
+    myPanel.add(myScrollPane, BorderLayout.CENTER);
+    UiNotifyConnector.doWhenFirstShown(myPanel, () -> {
+      if (mayShowToolbar()) {
+        myPanel.remove(myScrollPane);
+        JLayeredPane layeredPane = new PanelWithFloatingToolbar();
+        layeredPane.add(myScrollPane, JLayeredPane.DEFAULT_LAYER);
+        layeredPane.add(new EditorFloatingToolbar(this), JLayeredPane.POPUP_LAYER);
+        myPanel.add(layeredPane, BorderLayout.CENTER);
+      }
+    }, getDisposable());
 
     myEditorComponent.addKeyListener(new KeyListener() {
       @Override
