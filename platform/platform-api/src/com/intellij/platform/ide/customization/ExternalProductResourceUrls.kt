@@ -2,6 +2,7 @@
 package com.intellij.platform.ide.customization
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.util.Url
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -31,4 +32,17 @@ interface ExternalProductResourceUrls {
    * resulting URL will be used to download the patch file when user initiates update.
    */
   val basePatchDownloadUrl: String?
+
+  /**
+   * Returns a function which computes URL for bug reporting.
+   * `description` parameter will contain automatically generated information about the current IDE and the environment, it may be added
+   * to the template of the issue report.
+   * In order to include custom data in the description, you may use [FeedbackDescriptionProvider][com.intellij.ide.FeedbackDescriptionProvider]
+   * extension point.
+   *
+   * The computed URL will be opened in browser when a user invokes the "Submit a Bug Report" action. If this function returns `null`,
+   * the action won't be available.
+   */
+  val bugReportUrl: ((description: String) -> Url)?
+    get() = null
 }
