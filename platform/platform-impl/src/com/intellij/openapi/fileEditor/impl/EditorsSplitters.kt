@@ -17,7 +17,6 @@ import com.intellij.openapi.application.*
 import com.intellij.openapi.client.ClientSessionsManager
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.components.serviceOrNull
-import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.colors.CodeInsightColors
 import com.intellij.openapi.editor.colors.EditorColorsManager
@@ -219,15 +218,17 @@ open class EditorsSplitters internal constructor(
   }
 
   fun writeExternal(element: Element) {
+    val componentCount = componentCount
     if (componentCount == 0) {
       return
     }
 
-    val panel = getComponent(0) as JPanel
-    if (panel.componentCount != 0) {
-      runCatching {
-        element.addContent(writePanel(panel.getComponent(0)))
-      }.getOrLogException(LOG)
+    val component = getComponent(0)
+    try {
+      element.addContent(writePanel(component))
+    }
+    catch (e: Throwable) {
+      LOG.error(e)
     }
   }
 
@@ -238,9 +239,9 @@ open class EditorsSplitters internal constructor(
         result.setAttribute("split-orientation", if (component.orientation) "vertical" else "horizontal")
         result.setAttribute("split-proportion", component.proportion.toString())
         val first = Element("split-first")
-        first.addContent(writePanel(component.firstComponent.getComponent(0)))
+        first.addContent(writePanel(component.firstComponent))
         val second = Element("split-second")
-        second.addContent(writePanel(component.secondComponent.getComponent(0)))
+        second.addContent(writePanel(component.secondComponent))
         result.addContent(first)
         result.addContent(second)
         result
@@ -528,7 +529,7 @@ open class EditorsSplitters internal constructor(
   }
 
   internal val splitCount: Int
-    get() = if (componentCount > 0) getSplitCount(getComponent(0) as JPanel) else 0
+    get() = if (componentCount > 0) getSplitCount(getComponent(0) as JComponent) else 0
 
   internal open fun afterFileClosed(file: VirtualFile) {}
 
@@ -646,7 +647,7 @@ open class EditorsSplitters internal constructor(
   internal fun createCurrentWindow() {
     LOG.assertTrue(currentWindow == null)
     val window = EditorWindow(owner = this, coroutineScope.childScope(CoroutineName("EditorWindow")))
-    add(window.panel, BorderLayout.CENTER)
+    add(window.component, BorderLayout.CENTER)
     setCurrentWindowAndComposite(window)
   }
 
@@ -779,12 +780,12 @@ open class EditorsSplitters internal constructor(
   @JvmOverloads
   fun openInRightSplit(file: VirtualFile, requestFocus: Boolean = true): EditorWindow? {
     val window = currentWindow ?: return null
-    val parent = window.panel.parent
+    val parent = window.component.parent
     if (parent is Splitter) {
       val component = parent.secondComponent
-      if (component !== window.panel) {
+      if (component !== window.component) {
         // reuse
-        windows.find { SwingUtilities.isDescendingFrom(component, it.panel) }?.let { rightSplitWindow ->
+        windows.find { SwingUtilities.isDescendingFrom(component, it.component) }?.let { rightSplitWindow ->
           manager.openFile(file = file, window = rightSplitWindow, options = FileEditorOpenOptions(requestFocus = requestFocus))
           return rightSplitWindow
         }
@@ -887,7 +888,7 @@ class EditorSplitterState(element: Element) {
 }
 
 private class UiBuilder(private val splitters: EditorsSplitters) {
-  suspend fun process(state: EditorSplitterState, addChild: (child: JPanel) -> Unit) {
+  suspend fun process(state: EditorSplitterState, addChild: (child: JComponent) -> Unit) {
     val splitState = state.splitters
     if (splitState == null) {
       val leaf = state.leaf
@@ -913,7 +914,7 @@ private class UiBuilder(private val splitters: EditorsSplitters) {
     }
     else {
       val splitter = withContext(Dispatchers.EDT) {
-        val splitter = createSplitter(orientation = splitState.isVertical,
+        val splitter = createSplitter(isVertical = splitState.isVertical,
                                       proportion = splitState.proportion,
                                       minProp = 0.1f,
                                       maxProp = 0.9f)
@@ -929,15 +930,15 @@ private class UiBuilder(private val splitters: EditorsSplitters) {
 
   private suspend fun processFiles(fileEntries: List<EditorSplitterStateLeaf.FileEntry>,
                                    tabSizeLimit: Int,
-                                   addChild: (child: JPanel) -> Unit) {
+                                   addChild: (child: JComponent) -> Unit) {
     coroutineScope {
       val windowDeferred = async(Dispatchers.EDT) {
         val editorWindow = EditorWindow(owner = splitters, splitters.coroutineScope.childScope(CoroutineName("EditorWindow")))
-        editorWindow.panel.isFocusable = false
+        editorWindow.component.isFocusable = false
         if (tabSizeLimit != 1) {
           editorWindow.tabbedPane.component.putClientProperty(JBTabsImpl.SIDE_TABS_SIZE_LIMIT_KEY, tabSizeLimit)
         }
-        addChild(editorWindow.panel)
+        addChild(editorWindow.component)
         editorWindow
       }
 
@@ -1055,7 +1056,7 @@ private fun getSplitCount(component: JComponent): Int {
     return 0
   }
 
-  val firstChild = component.getComponent(0) as JComponent
+  val firstChild = component.getComponent(0)
   if (firstChild is Splitter) {
     return getSplitCount(firstChild.firstComponent) + getSplitCount(firstChild.secondComponent)
   }
@@ -1073,7 +1074,7 @@ private fun getSplittersToFocus(suggestedProject: Project?): EditorsSplitters? {
     if (project == null) {
       project = lastFocusedFrame?.project
     }
-    return getSplittersForProject(activeWindow, project)
+    return getSplittersForProject(activeWindow = activeWindow, project = project)
   }
   if (activeWindow is IdeFrame.Child) {
     return getLastFocusedSplittersForProject(activeWindow, project ?: (activeWindow as IdeFrame).project)
@@ -1081,7 +1082,7 @@ private fun getSplittersToFocus(suggestedProject: Project?): EditorsSplitters? {
 
   val frame = FocusManagerImpl.getInstance().lastFocusedFrame
   if (frame is IdeFrameImpl && frame.isActive) {
-    return getLastFocusedSplittersForProject(activeWindow, frame.getProject())
+    return activeWindow?.let { getLastFocusedSplittersForProject(activeWindow = it, project = frame.getProject()) }
   }
 
   // getSplitters is not implemented in unit test mode
@@ -1091,21 +1092,19 @@ private fun getSplittersToFocus(suggestedProject: Project?): EditorsSplitters? {
   return null
 }
 
-private fun getSplittersForProject(activeWindow: Window?, project: Project?): EditorsSplitters? {
-  val fileEditorManager = (if (project == null || project.isDisposed) null else FileEditorManagerEx.getInstanceEx(project))
-                          ?: return null
-  val splitters = if (activeWindow == null) null else fileEditorManager.getSplittersFor(activeWindow)
-  return splitters ?: fileEditorManager.splitters
+private fun getSplittersForProject(activeWindow: Window, project: Project?): EditorsSplitters? {
+  val fileEditorManager = (if (project == null || project.isDisposed) null else FileEditorManagerEx.getInstanceEx(project)) ?: return null
+  return fileEditorManager.getSplittersFor(activeWindow) ?: fileEditorManager.splitters
 }
 
-private fun getLastFocusedSplittersForProject(activeWindow: Window?, project: Project?): EditorsSplitters? {
+private fun getLastFocusedSplittersForProject(activeWindow: Window, project: Project?): EditorsSplitters? {
   val fileEditorManager = (if (project == null || project.isDisposed) null else FileEditorManagerEx.getInstanceEx(project))
                           ?: return null
   return (fileEditorManager as? FileEditorManagerImpl)?.getLastFocusedSplitters() ?: getSplittersForProject(activeWindow, project)
 }
 
-internal fun createSplitter(orientation: Boolean, proportion: Float, minProp: Float, maxProp: Float): Splitter {
-  return object : Splitter(orientation, proportion, minProp, maxProp) {
+internal fun createSplitter(isVertical: Boolean, proportion: Float, minProp: Float, maxProp: Float): Splitter {
+  return object : Splitter(isVertical, proportion, minProp, maxProp) {
     init {
       setDividerWidth(1)
       setFocusable(false)
