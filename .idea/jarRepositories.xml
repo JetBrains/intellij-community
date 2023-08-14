@@ -4,12 +4,12 @@
     <remote-repository>
       <option name="id" value="central-proxy" />
       <option name="name" value="Maven Central repository" />
-      <option name="url" value="https://cache-redirector.jetbrains.com/maven-central" />
+      <option name="url" value="https://cache-redirector.jetbrains.com/repo1.maven.org/maven2" />
     </remote-repository>
     <remote-repository>
       <option name="id" value="intellij-dependencies" />
       <option name="name" value="IntelliJ Dependencies" />
-      <option name="url" value="https://cache-redirector.jetbrains.com/intellij-dependencies" />
+      <option name="url" value="https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies" />
     </remote-repository>
     <remote-repository>
       <option name="id" value="3e981f81-9991-429f-bed8-5e9b000571d9" />
@@ -44,7 +44,7 @@
     <remote-repository>
       <option name="id" value="download-pgp-verifier" />
       <option name="name" value="download-pgp-verifier" />
-      <option name="url" value="https://cache-redirector.jetbrains.com/download-pgp-verifier" />
+      <option name="url" value="https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/dpgpv/maven" />
     </remote-repository>
     <remote-repository>
       <option name="id" value="ea2d1ec7-ac51-47bd-8cff-265a321ccb16" />

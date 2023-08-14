@@ -338,7 +338,7 @@ class SoftwareBillOfMaterials internal constructor(
     }
     val repositoryUrl = repositories
       .firstOrNull { it.id == mavenDescriptor.jarRepositoryId }
-      ?.url
+      ?.let { translateRepositoryUrl(it.url) }
       ?.removeSuffix("/")
     checkNotNull(repositoryUrl) {
       "Unknown jar repository ID: ${mavenDescriptor.jarRepositoryId}"
@@ -435,6 +435,10 @@ class SoftwareBillOfMaterials internal constructor(
       "Google" -> "Google LLC"
       else -> supplier
     }
+  }
+
+  private fun translateRepositoryUrl(url: String): String {
+    return url.replace("https://cache-redirector.jetbrains.com/", "https://")
   }
 
   private inner class MavenLibrary(
