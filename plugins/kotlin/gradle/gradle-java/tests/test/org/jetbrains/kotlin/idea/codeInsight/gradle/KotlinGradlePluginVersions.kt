@@ -8,5 +8,5 @@ object KotlinGradlePluginVersions {
     val V_1_8_22 = KotlinToolingVersion(1, 8, 22, null)
     val latest = KotlinToolingVersion("1.9.30-dev-269")
     val latestBootstrap = KotlinToolingVersion("1.9.20-dev-6845")
-    val lastStable = V_1_8_22
+    val latestStable = V_1_8_22
 }

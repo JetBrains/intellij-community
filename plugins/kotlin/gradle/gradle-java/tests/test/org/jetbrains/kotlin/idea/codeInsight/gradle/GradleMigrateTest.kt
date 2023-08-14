@@ -19,7 +19,7 @@ class GradleMigrateTest : MultiplePluginVersionGradleImportingTestCase() {
     @Test
     @TargetVersions("6.9+")
     fun testMigrateStdlib() {
-        if (kotlinPluginVersion != KotlinGradlePluginVersions.lastStable) {
+        if (kotlinPluginVersion != KotlinGradlePluginVersions.latestStable) {
             if (IS_UNDER_TEAMCITY) return else throw AssumptionViolatedException("Ignored KGP version $kotlinPluginVersion")
         }
 
