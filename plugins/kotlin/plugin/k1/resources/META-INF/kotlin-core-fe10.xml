@@ -53,6 +53,8 @@
 
     <projectService serviceImplementation="org.jetbrains.kotlin.idea.migration.KotlinMigrationProjectService"/>
 
+    <applicationService serviceImplementation="org.jetbrains.kotlin.idea.imports.K1OptimizeImportsFacility"
+                        serviceInterface="org.jetbrains.kotlin.idea.base.codeInsight.KotlinOptimizeImportsFacility"/>
     <lang.importOptimizer
             language="kotlin"
             implementationClass="org.jetbrains.kotlin.idea.imports.KotlinImportOptimizer"/>
