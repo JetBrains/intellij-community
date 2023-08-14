@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.ScrollType
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReferenceService
+import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.descriptors.ClassConstructorDescriptor
 import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
@@ -95,14 +96,14 @@ class JoinDeclarationAndAssignmentIntention : SelfTargetingRangeIntention<KtProp
         val initializerBlock = grandParent as? KtAnonymousInitializer
         val secondaryConstructor = grandParent as? KtSecondaryConstructor
         val newProperty = if (!element.isLocal && (initializerBlock != null || secondaryConstructor != null)) {
-            assignment.delete()
-            if ((initializerBlock?.body as? KtBlockExpression)?.isEmpty() == true) initializerBlock.delete()
+            assignment.deleteWithPreviousWhitespace()
+            if ((initializerBlock?.body as? KtBlockExpression)?.isEmpty() == true) initializerBlock.deleteWithPreviousWhitespace()
             val secondaryConstructorBlock = secondaryConstructor?.bodyBlockExpression
-            if (secondaryConstructorBlock?.isEmpty() == true) secondaryConstructorBlock.delete()
+            if (secondaryConstructorBlock?.isEmpty() == true) secondaryConstructorBlock.deleteWithPreviousWhitespace()
             element
         } else {
             assignment.replaced(element).also {
-                element.delete()
+                element.deleteWithPreviousWhitespace()
             }
         }
         val newInitializer = newProperty.initializer!!
@@ -191,6 +192,11 @@ class JoinDeclarationAndAssignmentIntention : SelfTargetingRangeIntention<KtProp
             child.resolveAllReferences().any { it != null && PsiTreeUtil.isAncestor(localContext, it, false) && it in nextSiblings }
         }
     }
+}
+
+private fun KtElement.deleteWithPreviousWhitespace() {
+    val first = prevSibling as? PsiWhiteSpace ?: this
+    parent?.deleteChildRange(first, /* last = */ this)
 }
 
 private fun PsiElement.resolveAllReferences(): Sequence<PsiElement?> =
