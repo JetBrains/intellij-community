@@ -488,6 +488,7 @@ public abstract class GitHandler {
     }
     executionEnvironment.putAll(VcsLocaleHelper.getDefaultLocaleEnvironmentVars("git"));
     executionEnvironment.putAll(myCustomEnv);
+    executionEnvironment.put(GitCommand.IJ_HANDLER_MARKER_ENV, "true");
 
     // customizers take read locks, which could not be acquired under potemkin progress
     if (!(ProgressManager.getInstance().getProgressIndicator() instanceof PotemkinProgress)) {
