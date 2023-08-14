@@ -19,7 +19,7 @@ data class LibraryLicense(
   val url: String? = null,
 
   /**
-   * Version of the library. If [libraryName] points to a Maven library version is taken from the library configuration so it must
+   * Version of the library. If [libraryName] points to a Maven library version is taken from the library configuration, so it must
    * not be specified explicitly.
    */
   val version: String? = null,
@@ -51,7 +51,7 @@ data class LibraryLicense(
   val transitiveDependency: Boolean = false,
 
   /**
-   * Type of a license (e.g. `"Apache 2.0"`)
+   * Type of license (e.g. `"Apache 2.0"`)
    */
   val license: String? = null,
 
@@ -78,7 +78,7 @@ data class LibraryLicense(
     const val CUSTOM_REVISION = "custom revision"
 
     /**
-     * Use this method only for JetBrains's own libraries which are available as part of IntelliJ-based IDEs only so there is no way to
+     * Use this method only for JetBrains own libraries which are available as part of IntelliJ-based IDEs only so there is no way to
      * give link to their sites. For other libraries please fill all necessary fields of [LibraryLicense] instead of using this method.
      */
     @JvmStatic

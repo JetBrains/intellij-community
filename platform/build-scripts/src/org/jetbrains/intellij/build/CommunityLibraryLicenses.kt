@@ -260,8 +260,8 @@ object CommunityLibraryLicenses {
                    licenseUrl = "https://github.com/hypfvieh/dbus-java/blob/dbus-java-3.0/LICENSE"),
     LibraryLicense(name = "DecentXML", libraryName = "decentxml",
                    url = "https://code.google.com/p/decentxml").newBsd(),
-    LibraryLicense(name = "docutils", attachedTo = "intellij.python", version = "0.12", license = "BSD",
-                   url = "https://docutils.sourceforge.io/"),
+    LibraryLicense(name = "docutils", attachedTo = "intellij.python", version = "0.12",
+                   url = "https://docutils.sourceforge.io/").simplifiedBsd(),
     LibraryLicense(name = "dotenv-kotlin", libraryName = "io.github.cdimascio.dotenv.kotlin",
                    url = "https://github.com/cdimascio/dotenv-kotlin")
       .apache("https://github.com/cdimascio/dotenv-kotlin/blob/master/LICENSE"),
@@ -595,10 +595,31 @@ object CommunityLibraryLicenses {
     LibraryLicense(name = "Kryo5", libraryName = "Kryo5",
                    url = "https://github.com/EsotericSoftware/kryo")
       .newBsd("https://github.com/EsotericSoftware/kryo/blob/master/LICENSE.md"),
+    LibraryLicense(libraryName = "ktor-client-auth",
+                   url = "https://github.com/ktorio/ktor")
+      .apache("https://github.com/ktorio/ktor/blob/main/LICENSE"),
+    LibraryLicense(libraryName = "ktor-client-cio",
+                   url = "https://github.com/ktorio/ktor")
+      .apache("https://github.com/ktorio/ktor/blob/main/LICENSE"),
+    LibraryLicense(libraryName = "ktor-client-content-negotiation",
+                   url = "https://github.com/ktorio/ktor")
+      .apache("https://github.com/ktorio/ktor/blob/main/LICENSE"),
+    LibraryLicense(libraryName = "ktor-client-encoding",
+                   url = "https://github.com/ktorio/ktor")
+      .apache("https://github.com/ktorio/ktor/blob/main/LICENSE"),
+    LibraryLicense(libraryName = "ktor-client-jvm",
+                   url = "https://github.com/ktorio/ktor")
+      .apache("https://github.com/ktorio/ktor/blob/main/LICENSE"),
+    LibraryLicense(libraryName = "ktor-client-logging",
+                   url = "https://github.com/ktorio/ktor")
+      .apache("https://github.com/ktorio/ktor/blob/main/LICENSE"),
+    LibraryLicense(libraryName = "ktor-serialization-kotlinx-json",
+                   url = "https://github.com/ktorio/ktor")
+      .apache("https://github.com/ktorio/ktor/blob/main/LICENSE"),
     LibraryLicense(name = "ktor.io TLS", libraryName = "ktor-network-tls",
                    url = "https://github.com/ktorio/ktor")
       .apache("https://github.com/ktorio/ktor/blob/main/LICENSE"),
-    LibraryLicense(name = "kXML2", libraryName = "kxml2", license = "BSD", url = "https://sourceforge.net/projects/kxml/"),
+    LibraryLicense(name = "kXML2", libraryName = "kxml2", url = "https://sourceforge.net/projects/kxml/").simplifiedBsd(),
     LibraryLicense(name = "Language Tool", libraryName = "org.languagetool:languagetool-core",
                    url = "https://github.com/languagetool-org/languagetool",
                    license = "LGPL 2.1",
