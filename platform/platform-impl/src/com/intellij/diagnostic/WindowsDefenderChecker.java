@@ -108,6 +108,7 @@ public class WindowsDefenderChecker {
       return Boolean.TRUE.equals(rtProtection);
     }
     catch (COMException e) {
+      // reference: https://learn.microsoft.com/en-us/windows/win32/wmisdk/wmi-error-constants
       if (e.matchesErrorCode(Wbemcli.WBEM_E_INVALID_NAMESPACE)) return false;  // Microsoft Defender not installed
       var message = "WMI Microsoft Defender check failed";
       var hresult = e.getHresult();
