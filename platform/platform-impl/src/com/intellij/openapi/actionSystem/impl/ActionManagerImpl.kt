@@ -558,19 +558,18 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
       registerOrReplaceActionInner(element = element, id = id, action = group, plugin = module)
 
       val presentation = group.templatePresentation
-      val finalId: String = id
-
-      // text
-      val text = Supplier {
-        computeActionText(bundle = bundle,
-                          id = finalId,
-                          elementType = GROUP_ELEMENT_NAME,
-                          textValue = element.attributes.get(TEXT_ATTR_NAME),
-                          classLoader = classLoader)
-      }
       // don't override value which was set in API with empty value from xml descriptor
-      if (!presentation.hasText() || !text.get().isNullOrEmpty()) {
-        presentation.setText(text)
+      if (!presentation.hasText()) {
+        val text = Supplier {
+          computeActionText(bundle = bundle,
+                            id = id,
+                            elementType = GROUP_ELEMENT_NAME,
+                            textValue = element.attributes.get(TEXT_ATTR_NAME),
+                            classLoader = classLoader)
+        }
+        if (!text.get().isNullOrEmpty()) {
+          presentation.setText(text)
+        }
       }
 
       // description
@@ -584,7 +583,7 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
       else {
         val descriptionSupplier = Supplier {
           computeDescription(bundle = bundle,
-                             id = finalId,
+                             id = id,
                              elementType = GROUP_ELEMENT_NAME,
                              descriptionValue = description,
                              classLoader = classLoader)
@@ -651,7 +650,7 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
               reportActionError(module, "ID of the group cannot be an empty string")
             }
             else {
-              val action = processGroupElement(className = childClassName!!,
+              val action = processGroupElement(className = childClassName,
                                                id = childId,
                                                element = child,
                                                module = module,
