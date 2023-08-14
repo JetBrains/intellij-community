@@ -34,7 +34,6 @@ import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
-import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.util.ExceptionUtil
 import com.intellij.workspaceModel.ide.getInstance
@@ -352,7 +351,7 @@ internal class WorkspaceProjectImporter(
       .filter { it.contentRoots.isEmpty() }
       .forEach { currentStorage.removeEntity(it) }
 
-    retainPreviouslyExcludedFolders(currentStorage, newStorage)
+    LegacyToWorkspaceImportUtil.retainLegacyImportEntities(myProject, currentStorage, newStorage)
 
     currentStorage.replaceBySource({ isMavenEntity(it) }, newStorage)
 
@@ -398,33 +397,6 @@ internal class WorkspaceProjectImporter(
           currentStorage.removeEntity(from)
         }
       }
-  }
-
-  // if a folder was excluded in legacy import, keep it excluded in workspace import as well
-  private fun retainPreviouslyExcludedFolders(currentStorage: MutableEntityStorage, newStorage: MutableEntityStorage) {
-    val previouslyExcludedUrls = currentStorage.entities(ExcludeUrlEntity::class.java)
-    val newExcludedUrlMap = newStorage.entities(ExcludeUrlEntity::class.java).associateBy({ it.url }, { it })
-    val newContentRootMap = newStorage.entities(ContentRootEntity::class.java).associateBy({ it.url }, { it })
-    for (previouslyExcludedUrl in previouslyExcludedUrls) {
-      val url = previouslyExcludedUrl.url
-      if (!newExcludedUrlMap.containsKey(url)) {
-        var parentUrl: VirtualFileUrl? = url
-        while (parentUrl != null) {
-          val newContentRoot = newContentRootMap[parentUrl]
-          if (newContentRoot != null) {
-            if (!newContentRoot.excludedUrls.map { it.url }.contains(url)) {
-              newStorage.modifyEntity(newContentRoot) {
-                val excludedUrls = this.excludedUrls.toMutableList()
-                excludedUrls.add(ExcludeUrlEntity(url, previouslyExcludedUrl.entitySource))
-                this.excludedUrls = excludedUrls
-              }
-            }
-            break
-          }
-          parentUrl = virtualFileUrlManager.getParentVirtualUrl(parentUrl)
-        }
-      }
-    }
   }
 
   private fun mapEntitiesToModulesAndRunAfterModelApplied(appliedStorage: EntityStorage,
