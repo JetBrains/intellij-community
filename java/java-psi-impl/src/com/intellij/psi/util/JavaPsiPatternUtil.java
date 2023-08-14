@@ -165,21 +165,22 @@ public final class JavaPsiPatternUtil {
    * @return {@code true} if the pattern declares one or more pattern variables, {@code false} otherwise.
    */
   @Contract(value = "null -> false", pure = true)
-  public static boolean containsPatternVariable(@Nullable PsiCaseLabelElement pattern) {
+  public static boolean containsNamedPatternVariable(@Nullable PsiCaseLabelElement pattern) {
     if (pattern instanceof PsiPatternGuard) {
-      return containsPatternVariable(((PsiPatternGuard)pattern).getPattern());
+      return containsNamedPatternVariable(((PsiPatternGuard)pattern).getPattern());
     }
     else if (pattern instanceof PsiTypeTestPattern) {
-      return ((PsiTypeTestPattern)pattern).getPatternVariable() != null;
+      PsiPatternVariable variable = ((PsiTypeTestPattern)pattern).getPatternVariable();
+      return variable != null && !variable.isUnnamed();
     }
     else if (pattern instanceof PsiParenthesizedPattern) {
-      return containsPatternVariable(((PsiParenthesizedPattern)pattern).getPattern());
+      return containsNamedPatternVariable(((PsiParenthesizedPattern)pattern).getPattern());
     }
     else if (pattern instanceof PsiDeconstructionPattern) {
       PsiDeconstructionPattern deconstructionPattern = (PsiDeconstructionPattern)pattern;
       return deconstructionPattern.getPatternVariable() != null ||
              ContainerUtil.exists(deconstructionPattern.getDeconstructionList().getDeconstructionComponents(),
-                                  component -> containsPatternVariable(component));
+                                  component -> containsNamedPatternVariable(component));
     }
     return false;
   }
