@@ -31,12 +31,12 @@ public final class PageCacheUtils {
   public static final long MAX_DIRECT_MEMORY_TO_USE_BYTES = maxDirectMemory() - 2L * DEFAULT_PAGE_SIZE;
 
   /**
-   * Total size of the cache(s), bytes -- usually ~500 Mb.
-   * We use default 500Mb (200Mb on 32bit platforms), and try to fit that into
+   * Total size of the cache(s), bytes -- usually ~600 Mb.
+   * We start with default size 600Mb (200Mb on 32bit platforms), and try to fit that into
    * [min: 100Mb, max: direct memory available in JVM).
    */
   public static final long FILE_PAGE_CACHES_TOTAL_CAPACITY_BYTES = MathUtil.clamp(
-    getLongProperty("file-page-cache.cache-capacity-mb", CpuArch.is32Bit() ? 200 : 500) * MiB,
+    getLongProperty("file-page-cache.cache-capacity-mb", CpuArch.is32Bit() ? 200 : 600) * MiB,
     Math.min(100 * MiB, MAX_DIRECT_MEMORY_TO_USE_BYTES),
     MAX_DIRECT_MEMORY_TO_USE_BYTES
   );
