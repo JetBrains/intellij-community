@@ -2,20 +2,11 @@
 package org.jetbrains.kotlin.idea.codeInsight.gradle
 
 import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
-import org.jetbrains.kotlin.tooling.core.isStable
 
 object KotlinGradlePluginVersions {
     val V_1_7_21 = KotlinToolingVersion(1, 7, 21, null)
     val V_1_8_22 = KotlinToolingVersion(1, 8, 22, null)
     val latest = KotlinToolingVersion("1.9.30-dev-269")
-
-    val all = listOf(
-        V_1_7_21,
-        V_1_8_22,
-        latest
-    )
-
-    val allStable = all.filter { it.isStable }
-
-    val lastStable = allStable.max()
+    val latestBootstrap = KotlinToolingVersion("1.9.20-dev-6845")
+    val lastStable = V_1_8_22
 }

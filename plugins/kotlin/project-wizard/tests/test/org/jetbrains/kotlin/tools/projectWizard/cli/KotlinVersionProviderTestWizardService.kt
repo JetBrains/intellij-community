@@ -29,7 +29,7 @@ class KotlinVersionProviderTestWizardService : KotlinVersionProviderService(), T
 
     companion object {
         val TEST_KOTLIN_VERSION by lazy {
-            Version(KotlinGradlePluginVersions.latest.toString())
+            Version(KotlinGradlePluginVersions.latestBootstrap.toString())
         }
     }
 }
