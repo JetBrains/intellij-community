@@ -33,9 +33,17 @@ fun Project.forEachClient(kind: ClientKind, action: (ClientProjectSession) -> Un
   }
 }
 
-val currentSession: ClientAppSession get() = ClientSessionsManager.getAppSession()!!
+val currentSessionOrNull: ClientAppSession?
+  get() = ClientSessionsManager.getAppSession()
 
-val Project.currentSession: ClientProjectSession get() = ClientSessionsManager.getProjectSession(this)!!
+val currentSession: ClientAppSession
+  get() = currentSessionOrNull ?: error("Application-level session is not set")
+
+val Project.currentSessionOrNull: ClientProjectSession?
+  get() = ClientSessionsManager.getProjectSession(this)
+
+val Project.currentSession: ClientProjectSession
+  get() = currentSessionOrNull ?: error("Project-level session is not set")
 
 // region Deprecated
 @ApiStatus.ScheduledForRemoval
