@@ -46,7 +46,6 @@ class ToolWindowSetInitializer(private val project: Project, private val manager
   private var isInitialized = false
 
   private val pendingLayout = AtomicReference<DesktopLayout?>()
-
   private val pendingTasks = ConcurrentLinkedQueue<Runnable>()
 
   fun addToPendingTasksIfNotInitialized(task: Runnable): Boolean {
@@ -140,7 +139,10 @@ class ToolWindowSetInitializer(private val project: Project, private val manager
       reopeningEditorJob.join()
       postEntryProcessing(withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
         span("secondary frames toolwindow creation") {
-          registerToolWindows(list, manager, manager.getLayout()) { it != WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID }
+          registerToolWindows(registerTasks = list,
+                              manager = manager,
+                              layout = manager.getLayout(),
+                              shouldRegister = { it != WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID })
         }
       }, suffix = " (secondary)")
     }
@@ -215,7 +217,7 @@ private suspend fun addExtraTasks(tasks: List<RegisterToolWindowTask>,
     }
 
     for (bean in withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) { provider.getTasks(project) }) {
-      beanToTask(project, bean, bean.pluginDescriptor)?.let(result::add)
+      beanToTask(project = project, bean = bean, plugin = bean.pluginDescriptor)?.let(result::add)
     }
   }
   return result
@@ -227,7 +229,7 @@ internal fun getToolWindowAnchor(factory: ToolWindowFactory?, bean: ToolWindowEP
 
 private suspend fun beanToTask(project: Project, bean: ToolWindowEP, plugin: PluginDescriptor): RegisterToolWindowTask? {
   val factory = bean.getToolWindowFactory(plugin)
-  return if (factory.isApplicableAsync(project)) beanToTask(project, bean, plugin, factory) else null
+  return if (factory.isApplicableAsync(project)) beanToTask(project = project, bean = bean, plugin = plugin, factory = factory) else null
 }
 
 private fun beanToTask(project: Project,
@@ -243,7 +245,7 @@ private fun beanToTask(project: Project,
     canWorkInDumbMode = DumbService.isDumbAware(factory),
     shouldBeAvailable = factory.shouldBeAvailable(project),
     contentFactory = factory,
-    stripeTitle = getStripeTitleSupplier(bean.id, project, plugin),
+    stripeTitle = getStripeTitleSupplier(id = bean.id, project = project, pluginDescriptor = plugin),
   )
   task.pluginDescriptor = plugin
   return task
@@ -258,7 +260,7 @@ internal suspend fun computeToolWindowBeans(project: Project): List<RegisterTool
           val bean = item.instance ?: return@async null
           val condition = bean.getCondition(item.pluginDescriptor)
           if (condition == null || condition.value(project)) {
-            beanToTask(project, bean, item.pluginDescriptor)
+            beanToTask(project = project, bean = bean, plugin = item.pluginDescriptor)
           }
           else {
             null
