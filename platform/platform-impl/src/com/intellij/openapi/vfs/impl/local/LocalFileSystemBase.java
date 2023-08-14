@@ -827,13 +827,12 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     return attributes;
   }
 
-  private static String[] listPathChildren(@NotNull Path dir) {
+  private static String[] listPathChildren(Path dir) {
     try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(dir)) {
       return StreamEx.of(dirStream.iterator()).map(it -> it.getFileName().toString()).toArray(String[]::new);
     }
-    catch (IOException e) {
-      LOG.warn("Unable to list children for path: " + dir, e);
-      return null;
-    }
+    catch (AccessDeniedException | NoSuchFileException e) { LOG.debug(e); }
+    catch (IOException | RuntimeException e) { LOG.warn(e); }
+    return null;
   }
 }
