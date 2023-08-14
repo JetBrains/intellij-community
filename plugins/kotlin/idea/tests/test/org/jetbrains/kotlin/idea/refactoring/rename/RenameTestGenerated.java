@@ -1248,6 +1248,11 @@ public class RenameTestGenerated extends AbstractRenameTest {
         runTest("testData/refactoring/rename/renameSynthesizedComponentFunction/synthesizedComponentFunction.test");
     }
 
+    @TestMetadata("renameToGetterName/renameToGetterName.test")
+    public void testRenameToGetterName_RenameToGetterName() throws Exception {
+        runTest("testData/refactoring/rename/renameToGetterName/renameToGetterName.test");
+    }
+
     @TestMetadata("renameUnaryMinus/unaryMinus.test")
     public void testRenameUnaryMinus_UnaryMinus() throws Exception {
         runTest("testData/refactoring/rename/renameUnaryMinus/unaryMinus.test");
