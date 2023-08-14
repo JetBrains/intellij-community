@@ -23,6 +23,7 @@ import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.ApiStatus;
@@ -34,10 +35,8 @@ import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 
 import static java.awt.event.MouseEvent.*;
 
@@ -48,7 +47,7 @@ import static java.awt.event.MouseEvent.*;
  */
 public final class IdeMouseEventDispatcher {
   private final PresentationFactory myPresentationFactory = new PresentationFactory();
-  private final Map<Container, BlockState> myRootPaneToBlockedId = new HashMap<>();
+  private final Map<Container, BlockState> myRootPaneToBlockedId = new WeakHashMap<>();
   private int myLastHorScrolledComponentHash;
   private boolean myPressedModifiersStored;
   @JdkConstants.InputEventMask
