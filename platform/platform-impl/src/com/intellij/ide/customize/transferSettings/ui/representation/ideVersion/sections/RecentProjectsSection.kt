@@ -16,8 +16,8 @@ import org.jetbrains.annotations.Nls
 import javax.swing.JComponent
 import javax.swing.ScrollPaneConstants
 
-class RecentProjectsSection(private val ideVersion: IdeVersion) : IdeRepresentationSection(ideVersion.settings.preferences, SettingsPreferencesKind.RecentProjects, AllIcons.TransferSettings.RecentProjects) {
-  private val recentProjects get() = ideVersion.settings.recentProjects
+class RecentProjectsSection(private val ideVersion: IdeVersion) : IdeRepresentationSection(ideVersion.settingsCache.preferences, SettingsPreferencesKind.RecentProjects, AllIcons.TransferSettings.RecentProjects) {
+  private val recentProjects get() = ideVersion.settingsCache.recentProjects
   override fun getContent(): JComponent {
     if (recentProjects.size > LIMIT) {
       withMoreLabel(IdeBundle.message("transfersettings.projects.and.n.more", recentProjects.size - LIMIT)) {

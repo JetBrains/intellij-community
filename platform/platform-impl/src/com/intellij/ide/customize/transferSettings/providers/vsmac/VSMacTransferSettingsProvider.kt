@@ -30,7 +30,7 @@ class VSMacTransferSettingsProvider : TransferSettingsProvider {
     id = "VSMAC",
     icon = AllIcons.TransferSettings.Vsmac,
     lastUsed = getLastUsed(version),
-    settings = VSMacSettingsProcessor().getProcessedSettings(version),
+    settingsInit = { VSMacSettingsProcessor().getProcessedSettings(version) },
     provider = this
   )
 

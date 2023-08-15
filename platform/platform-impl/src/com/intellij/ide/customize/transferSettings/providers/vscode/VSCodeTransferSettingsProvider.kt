@@ -22,7 +22,7 @@ class VSCodeTransferSettingsProvider : TransferSettingsProvider {
   }
 
   private val cachedIdeVersion by lazy {
-    IdeVersion("VSCode", AllIcons.TransferSettings.Vscode, "Visual Studio Code", settings = processor.getProcessedSettings(),
+    IdeVersion("VSCode", AllIcons.TransferSettings.Vscode, "Visual Studio Code", settingsInit = { processor.getProcessedSettings() },
                provider = this)
   }
 
