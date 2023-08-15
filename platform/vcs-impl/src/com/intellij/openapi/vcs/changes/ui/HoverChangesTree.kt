@@ -86,16 +86,16 @@ abstract class HoverChangesTree(val tree: ChangesTree) {
                                               row: Int,
                                               hasFocus: Boolean): Component {
       val rendererComponent = super.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus)
-      floatingIcon = prepareIcon(tree as ChangesTree, value as ChangesBrowserNode<*>, row, selected, hasFocus)
+      floatingIcon = prepareIcon(tree as ChangesTree, value as ChangesBrowserNode<*>, row, selected)
       return rendererComponent
     }
 
-    fun prepareIcon(tree: ChangesTree, node: ChangesBrowserNode<*>, row: Int, selected: Boolean, hasFocus: Boolean): FloatingIcon? {
+    fun prepareIcon(tree: ChangesTree, node: ChangesBrowserNode<*>, row: Int, selected: Boolean): FloatingIcon? {
       if (tree.expandableItemsHandler.expandedItems.contains(row)) return null
 
       val hoverData = _hoverData
       val hovered = hoverData?.node == node
-      if (!hovered && !(selected && hasFocus)) return null
+      if (!hovered && !(selected && tree.leadSelectionRow == row)) return null
 
       val foreground = when {
         hovered -> hoverData!!.hoverIcon.icon
