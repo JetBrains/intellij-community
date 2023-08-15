@@ -728,10 +728,7 @@ open class EditorsSplitters internal constructor(
 
     // get root component and traverse splitters tree
     if (componentCount != 0) {
-      val component = getComponent(0) as JComponent
-      if (component.componentCount != 0) {
-        collectWindow(component)
-      }
+      collectWindow(getComponent(0) as JComponent)
     }
     LOG.assertTrue(result.size == windows.size)
     return result
