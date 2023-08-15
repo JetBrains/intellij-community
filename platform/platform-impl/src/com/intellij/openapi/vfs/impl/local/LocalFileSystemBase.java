@@ -482,7 +482,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     }
 
     long l = file.getLength();
-    if (l >= FileUtilRt.LARGE_FOR_CONTENT_LOADING) throw new FileTooBigException(file.getPath());
+    if (FileUtilRt.isTooLarge(l)) throw new FileTooBigException(file.getPath());
     int length = (int)l;
     if (length < 0) throw new IOException("Invalid file length: " + length + ", " + file);
     return loadFileContent(path, length);

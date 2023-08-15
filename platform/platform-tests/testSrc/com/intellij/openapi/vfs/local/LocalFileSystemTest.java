@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.local;
 
 import com.intellij.core.CoreBundle;
@@ -12,9 +12,9 @@ import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileAttributes.CaseSensitivity;
 import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
-import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystemMarker;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
 import com.intellij.openapi.vfs.newvfs.*;
@@ -33,7 +33,6 @@ import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.testFramework.rules.TempDirectory;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Before;
@@ -1002,5 +1001,16 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
     assertThat(list1).
       containsExactlyInAnyOrder(expected).
       containsExactlyInAnyOrder(list2);
+  }
+
+  @Test
+  public void testFileContentWithAlmostTooLargeLength() throws IOException {
+    byte[] expectedContent = new byte[FileUtilRt.LARGE_FOR_CONTENT_LOADING];
+    Arrays.fill(expectedContent, (byte) 'a');
+    File file = tempDir.newFile("test.txt");
+    FileUtil.writeToFile(file, expectedContent);
+
+    byte[] actualContent = myFS.refreshAndFindFileByIoFile(file).contentsToByteArray();
+    assertArrayEquals(expectedContent, actualContent);
   }
 }
