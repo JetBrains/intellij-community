@@ -462,14 +462,12 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
                         this,
                     )
                     if (componentNames.isNotEmpty()) {
-                        componentNames.map { componentName -> suggestNameByName(componentName, nameValidator) }
+                        componentNames.map { componentName -> suggestNameByName(componentName, nameValidator).let(::listOf) }
                     } else {
                         with(KotlinNameSuggester()) {
-                            suggestExpressionNames(expression)
-                                .map { name -> suggestNameByName(name, nameValidator) }
-                                .toList()
-                        }
-                    }.let(::listOf)
+                            suggestExpressionNames(expression, nameValidator).toList()
+                        }.let(::listOf)
+                    }
                 }
 
                 val introduceVariableContext = IntroduceVariableContext(
