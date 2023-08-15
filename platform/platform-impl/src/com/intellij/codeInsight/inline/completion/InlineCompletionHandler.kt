@@ -36,9 +36,9 @@ class InlineCompletionHandler(private val scope: CoroutineScope) : CodeInsightAc
     showInlineSuggestion(editor, inlineState, editor.caretModel.offset)
   }
 
-  fun invoke(event: DocumentEvent, editor: Editor) = invoke(InlineCompletionEvent.Document(event, editor))
-  fun invoke(event: EditorMouseEvent) = invoke(InlineCompletionEvent.Caret(event))
-  fun invoke(event: LookupEvent) = invoke(InlineCompletionEvent.Lookup(event))
+  fun invoke(event: DocumentEvent, editor: Editor) = invoke(InlineCompletionEvent.DocumentChange(event, editor))
+  fun invoke(event: EditorMouseEvent) = invoke(InlineCompletionEvent.CaretMove(event))
+  fun invoke(event: LookupEvent) = invoke(InlineCompletionEvent.LookupChange(event))
   fun invoke(editor: Editor, file: PsiFile, caret: Caret) = invoke(InlineCompletionEvent.DirectCall(editor, file, caret))
 
   private fun invoke(event: InlineCompletionEvent) {

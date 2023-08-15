@@ -50,7 +50,7 @@ sealed interface InlineCompletionEvent {
    * Represents a non-dummy not empty document event call in the editor.
    */
   @ApiStatus.Experimental
-  class Document(val event: DocumentEvent, val editor: Editor) : InlineCompletionEvent {
+  class DocumentChange(val event: DocumentEvent, val editor: Editor) : InlineCompletionEvent {
     override fun toRequest(): InlineCompletionRequest? {
       val virtualFile = editor.virtualFile ?: return null
       val project = editor.project ?: return null
@@ -75,7 +75,7 @@ sealed interface InlineCompletionEvent {
    */
   @ApiStatus.Experimental
   @Deprecated("platform caret listener is disabled")
-  class Caret(val event: EditorMouseEvent) : InlineCompletionEvent {
+  class CaretMove(val event: EditorMouseEvent) : InlineCompletionEvent {
     override fun toRequest(): InlineCompletionRequest? {
       val editor = event.editor
       val virtualFile = editor.virtualFile ?: return null
@@ -100,7 +100,7 @@ sealed interface InlineCompletionEvent {
    * @param event The lookup event.
    */
   @ApiStatus.Experimental
-  class Lookup(val event: LookupEvent) : InlineCompletionEvent {
+  class LookupChange(val event: LookupEvent) : InlineCompletionEvent {
     override fun toRequest(): InlineCompletionRequest? {
       val item = event.item ?: return null
       val editor = event.lookup?.editor ?: return null

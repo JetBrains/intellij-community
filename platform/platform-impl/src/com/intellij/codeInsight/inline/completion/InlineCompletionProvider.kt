@@ -14,7 +14,7 @@ import org.jetbrains.annotations.ApiStatus
  * The [isEnabled] method should be implemented to control whether the provider should be called for a particular [InlineCompletionEvent].
  *
  * #### Things to note:
- *   - Currently delay ([Flow.debounce]) for [InlineCompletionEvent.Document] is disabled and might be implemented later.
+ *   - Currently delay ([Flow.debounce]) for [InlineCompletionEvent.DocumentChange] is disabled and might be implemented later.
  *   You may implement it on provider side or use [DebouncedInlineCompletionProvider] as a entrypoint,
  *   otherwise, proposals will be generated/canceled on each typing.
  *   - Any inline completion request will be cancelled if inline is in rendering mode
