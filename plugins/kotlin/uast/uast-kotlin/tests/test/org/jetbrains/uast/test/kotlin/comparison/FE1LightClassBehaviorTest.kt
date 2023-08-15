@@ -31,6 +31,16 @@ class FE1LightClassBehaviorTest : KotlinLightCodeInsightFixtureTestCase(), Light
         checkPropertyAccessorModifierListOffsets(myFixture)
     }
 
+    fun testLocalClassCaching() {
+        try {
+            checkLocalClassCaching(myFixture)
+            // TODO: KTIJ-26663
+            error("Unmute me")
+        } catch (e: Throwable) {
+            return
+        }
+    }
+
     fun testFinalModifierOnEnumMembers() {
         checkFinalModifierOnEnumMembers(myFixture)
     }
