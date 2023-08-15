@@ -1368,6 +1368,21 @@ public abstract class K2JvmBasicCompletionTestGenerated extends AbstractK2JvmBas
                 runTest("../completion/testData/basic/common/namedArguments/AfterVararg.kt");
             }
 
+            @TestMetadata("ArgumentWithDefaultNotExpected.kt")
+            public void testArgumentWithDefaultNotExpected() throws Exception {
+                runTest("../completion/testData/basic/common/namedArguments/ArgumentWithDefaultNotExpected.kt");
+            }
+
+            @TestMetadata("ArgumentWithDefaultNotExpected2.kt")
+            public void testArgumentWithDefaultNotExpected2() throws Exception {
+                runTest("../completion/testData/basic/common/namedArguments/ArgumentWithDefaultNotExpected2.kt");
+            }
+
+            @TestMetadata("ArgumentWithDefaultNotExpected3.kt")
+            public void testArgumentWithDefaultNotExpected3() throws Exception {
+                runTest("../completion/testData/basic/common/namedArguments/ArgumentWithDefaultNotExpected3.kt");
+            }
+
             @TestMetadata("BooleanArgumentExpected.kt")
             public void testBooleanArgumentExpected() throws Exception {
                 runTest("../completion/testData/basic/common/namedArguments/BooleanArgumentExpected.kt");
