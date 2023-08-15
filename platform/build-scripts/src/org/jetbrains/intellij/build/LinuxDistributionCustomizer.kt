@@ -50,7 +50,7 @@ abstract class LinuxDistributionCustomizer {
 
   /**
    * Set both properties if a .snap package should be produced.
-   * "snapName" is the name of the package (e.g. "intellij-idea-ultimate", "pycharm-community").
+   * "snapName" is the name of the package (e.g., "intellij-idea-ultimate" or "pycharm-community").
    * "snapDescription" is the plain text description of the package.
    */
   var snapName: String? = null
