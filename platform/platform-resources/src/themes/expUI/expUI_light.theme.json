@@ -45,7 +45,7 @@
     "Green7": "#89C398",
     "Green8": "#AFDBB8",
     "Green9": "#C5E5CC",
-    "Green10": "#E6F7E9",
+    "Green10": "#E3F7E7",
     "Green11": "#F2FCF3",
 
     "Yellow1": "#A46704",
@@ -56,7 +56,7 @@
     "Yellow6": "#FED277",
     "Yellow7": "#FEE6B1",
     "Yellow8": "#FFF1D1",
-    "Yellow9": "#FFF6DE",
+    "Yellow9": "#FFF5DB",
     "Yellow10": "#FFFAEB",
 
     "Red1": "#AD2B38",
@@ -68,8 +68,9 @@
     "Red7": "#ED99A1",
     "Red8": "#F2B6BB",
     "Red9": "#FAD4D8",
-    "Red10": "#FFF2F3",
-    "Red11": "#FFF7F7",
+    "Red10": "#FFEBEC",
+    "Red11": "#FFF2F3",
+    "Red12": "#FFF7F7",
 
     "Orange1": "#A14916",
     "Orange2": "#B85516",
@@ -78,7 +79,7 @@
     "Orange5": "#EC8F4C",
     "Orange6": "#F2B181",
     "Orange7": "#F9D2B6",
-    "Orange8": "#FCE6D6",
+    "Orange8": "#FFEFE3",
     "Orange9": "#FFF4EB",
 
     "Teal1": "#096A6E",
@@ -99,7 +100,8 @@
     "Purple6": "#BFA1F8",
     "Purple7": "#DCCBFB",
     "Purple8": "#EFE5FF",
-    "Purple9": "#FAF5FF"
+    "Purple9": "#F5EDFF",
+    "Purple10": "#FAF5FF"
   },
 
   "ui": {
@@ -271,7 +273,12 @@
 
     "FileColor": {
       "Yellow": "Yellow9",
-      "Green": "Green10"
+      "Green": "Green10",
+      "Orange": "Orange8",
+      "Rose": "Red10",
+      "Violet": "Purple9",
+      "Blue": "Teal8",
+      "Gray": "#F0F1F5"
     },
 
     "Label.errorForeground": "Red4",
@@ -570,8 +577,8 @@
     },
 
     "ValidationTooltip": {
-      "errorBackground": "Red10",
-      "errorBorderColor": "Red10",
+      "errorBackground": "Red11",
+      "errorBorderColor": "Red11",
       "warningBackground": "Yellow9",
       "warningBorderColor": "Yellow9"
     },
@@ -899,7 +906,7 @@
         "hoverBackground" : "Grey12"
       },
       "HotLine" : {
-        "labelBackground" : "Red10",
+        "labelBackground" : "Red11",
         "foreground" : "Red3",
         "hoverBackground" : "Red9"
       },
@@ -911,7 +918,7 @@
     "HelpBrowser": {
       "AiEditor" : {
         "verticalMarkerColor": "Purple5",
-        "background": "Purple9"
+        "background": "Purple10"
       },
       "titleHighlightForeground": "Blue4",
       "UserMessage": {

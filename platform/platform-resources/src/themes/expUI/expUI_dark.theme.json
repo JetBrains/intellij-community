@@ -85,7 +85,7 @@
     "Orange11": "#FFDFC7",
 
     "Purple1": "#2F2936",
-    "Purple2": "#433358",
+    "Purple2": "#3B3147",
     "Purple3": "#583D7A",
     "Purple4": "#6C469C",
     "Purple5": "#8150BE",
@@ -236,7 +236,12 @@
 
     "FileColor": {
       "Yellow": "Yellow1",
-      "Green": "Green1"
+      "Green": "Green1",
+      "Orange": "Orange1",
+      "Rose": "Red1",
+      "Violet": "Purple2",
+      "Blue": "Teal1",
+      "Gray": "#35363B"
     },
 
     "TextField.background": "Grey2",
