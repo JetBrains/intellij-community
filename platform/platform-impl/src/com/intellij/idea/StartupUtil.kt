@@ -220,7 +220,9 @@ fun CoroutineScope.startApplication(args: List<String>,
         }.getOrLogException(log)
       }
     }
-
+    // Android Studio: b/284516925 PluginManager uses logger
+    // for 2023.3 update check upstream issue to see if this is still required
+    logDeferred.join()
     PluginManagerCore.scheduleDescriptorLoading(asyncScope, zipFilePoolDeferred)
   }
 
