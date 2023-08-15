@@ -5,7 +5,6 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
@@ -25,9 +24,13 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 public class OpenAnotherLogTabAction extends DumbAwareAction {
-  protected OpenAnotherLogTabAction() {
-    super(() -> getText(VcsLogBundle.message("vcs")),
-          () -> getDescription(VcsLogBundle.message("vcs")), AllIcons.Actions.OpenNewTab);
+  private final @NotNull VcsLogTabLocation myLocation;
+
+  protected OpenAnotherLogTabAction(@NotNull VcsLogTabLocation location) {
+    super(AllIcons.Actions.OpenNewTab);
+    getTemplatePresentation().setText(() -> getText(VcsLogBundle.message("vcs")));
+    getTemplatePresentation().setDescription(() -> getDescription(VcsLogBundle.message("vcs")));
+    myLocation = location;
   }
 
   @Override
@@ -53,11 +56,11 @@ public class OpenAnotherLogTabAction extends DumbAwareAction {
     e.getPresentation().setDescription(getDescription(vcsName));
   }
 
-  private static @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String getDescription(@Nls @NotNull String vcsName) {
+  protected @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String getDescription(@Nls @NotNull String vcsName) {
     return VcsLogBundle.message("vcs.log.action.description.open.new.tab.with.log", vcsName);
   }
 
-  private static @NotNull @Nls(capitalization = Nls.Capitalization.Title) String getText(@Nls @NotNull String vcsName) {
+  protected @NotNull @Nls(capitalization = Nls.Capitalization.Title) String getText(@Nls @NotNull String vcsName) {
     return VcsLogBundle.message("vcs.log.action.open.new.tab.with.log", vcsName);
   }
 
@@ -76,16 +79,41 @@ public class OpenAnotherLogTabAction extends DumbAwareAction {
       filters = VcsLogFilterObject.collection();
     }
 
-    VcsLogTabLocation location = VcsLogTabLocation.TOOL_WINDOW;
-    if (e.getData(PlatformDataKeys.TOOL_WINDOW) == null && Registry.is("vcs.log.open.editor.tab")) {
-      location = VcsLogTabLocation.EDITOR;
-    }
-
-    VcsProjectLog.getInstance(project).openLogTab(filters, location);
+    VcsProjectLog.getInstance(project).openLogTab(filters, myLocation);
   }
 
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
     return ActionUpdateThread.BGT;
+  }
+
+  public static class InToolWindow extends OpenAnotherLogTabAction {
+    protected InToolWindow() {
+      super(VcsLogTabLocation.TOOL_WINDOW);
+    }
+  }
+
+  public static class InEditor extends OpenAnotherLogTabAction {
+    protected InEditor() {
+      super(VcsLogTabLocation.EDITOR);
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      super.update(e);
+      if (!Registry.is("vcs.log.open.editor.tab")) {
+        e.getPresentation().setEnabledAndVisible(false);
+      }
+    }
+
+    @Override
+    protected @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String getDescription(@Nls @NotNull String vcsName) {
+      return VcsLogBundle.message("vcs.log.action.description.open.new.tab.with.log.in.editor", vcsName);
+    }
+
+    @Override
+    protected @NotNull @Nls(capitalization = Nls.Capitalization.Title) String getText(@Nls @NotNull String vcsName) {
+      return VcsLogBundle.message("vcs.log.action.open.new.tab.with.log.in.editor", vcsName);
+    }
   }
 }
