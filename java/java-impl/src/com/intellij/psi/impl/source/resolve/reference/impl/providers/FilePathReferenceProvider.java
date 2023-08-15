@@ -89,6 +89,13 @@ public class FilePathReferenceProvider extends PsiReferenceProvider {
   }
 
   @Override
+  public boolean acceptsHints(@NotNull PsiElement element, PsiReferenceService.@NotNull Hints hints) {
+    if (hints == PsiReferenceService.Hints.HIGHLIGHTED_REFERENCES) return false;
+
+    return super.acceptsHints(element, hints);
+  }
+
+  @Override
   public boolean acceptsTarget(@NotNull PsiElement target) {
     return target instanceof PsiFileSystemItem || target instanceof PsiDirectoryContainer;
   }

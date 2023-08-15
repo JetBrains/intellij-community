@@ -16,4 +16,10 @@ internal class UastReferenceProviderAdapter(private val supportedUElementTypes: 
   override fun acceptsTarget(target: PsiElement): Boolean {
     return provider.acceptsTarget(target)
   }
+
+  override fun acceptsHints(element: PsiElement, hints: PsiReferenceService.Hints): Boolean {
+    if (!provider.acceptsHint(hints)) return false
+
+    return super.acceptsHints(element, hints)
+  }
 }

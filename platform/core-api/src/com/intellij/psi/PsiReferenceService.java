@@ -43,6 +43,13 @@ public abstract class PsiReferenceService {
   public static class Hints {
     public static final Hints NO_HINTS = new Hints();
 
+    /**
+     * Passed during highlighting to query only reference providers that may provide references that should be underlined.
+     *
+     * @see com.intellij.codeInsight.highlighting.HighlightedReference
+     */
+    public static final Hints HIGHLIGHTED_REFERENCES = new Hints();
+
     public final @Nullable PsiElement target;
     public final @Nullable Integer offsetInElement;
 

@@ -42,6 +42,13 @@ public class PropertiesUastReferenceContributor extends PsiReferenceContributor 
         }
 
         @Override
+        public boolean acceptsHint(@NotNull PsiReferenceService.Hints hints) {
+          if (hints == PsiReferenceService.Hints.HIGHLIGHTED_REFERENCES) return false;
+
+          return super.acceptsHint(hints);
+        }
+
+        @Override
         public PsiReference @NotNull [] getReferencesForInjectionHost(@NotNull UExpression uExpression,
                                                                       @NotNull PsiLanguageInjectionHost host,
                                                                       @NotNull ProcessingContext context) {
