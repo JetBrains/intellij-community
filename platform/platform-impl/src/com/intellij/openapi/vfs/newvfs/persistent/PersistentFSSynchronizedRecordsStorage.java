@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.util.ThrowableComputable;
@@ -76,13 +76,10 @@ final class PersistentFSSynchronizedRecordsStorage implements PersistentFSRecord
     }
   }
 
-  @NotNull
-  private final ResizeableMappedFile myFile;
+  private final @NotNull ResizeableMappedFile myFile;
   private final ByteBuffer myPooledWriteBuffer = ByteBuffer.allocateDirect(RECORD_SIZE);
-  @NotNull
-  private final AtomicInteger myGlobalModCount;
-  @NotNull
-  private final AtomicInteger myRecordCount;
+  private final @NotNull AtomicInteger myGlobalModCount;
+  private final @NotNull AtomicInteger myRecordCount;
 
   PersistentFSSynchronizedRecordsStorage(@NotNull ResizeableMappedFile file) throws IOException {
     myFile = file;
@@ -194,8 +191,7 @@ final class PersistentFSSynchronizedRecordsStorage implements PersistentFSRecord
   }
 
   @Override
-  @PersistentFS.Attributes
-  public int getFlags(int id) throws IOException {
+  public @PersistentFS.Attributes int getFlags(int id) throws IOException {
     return getRecordInt(id, FLAGS_OFFSET);
   }
 

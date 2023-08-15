@@ -515,7 +515,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     }
   }
 
-  final protected @NotNull JComponent getCustomComponent(@NotNull AnAction action) {
+  protected final @NotNull JComponent getCustomComponent(@NotNull AnAction action) {
     Presentation presentation = myPresentationFactory.getPresentation(action);
     JComponent customComponent = presentation.getClientProperty(CustomComponentAction.COMPONENT_KEY);
     if (customComponent == null) {
@@ -607,7 +607,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     ToolbarActionTracker.followToolbarComponent(presentation, component, getComponent());
   }
 
-  final protected @NotNull ActionButton createToolbarButton(@NotNull AnAction action) {
+  protected final @NotNull ActionButton createToolbarButton(@NotNull AnAction action) {
     return createToolbarButton(
       action,
       getActionButtonLook(),
@@ -615,8 +615,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       myMinimumButtonSizeFunction);
   }
 
-  @Nullable
-  protected ActionButtonLook getActionButtonLook() {
+  protected @Nullable ActionButtonLook getActionButtonLook() {
     if (myCustomButtonLook != null) {
       return myCustomButtonLook;
     }
@@ -1484,8 +1483,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     return result;
   }
 
-  @Nullable
-  private static JComponent getParentLightweightHintComponent(@Nullable JComponent component) {
+  private static @Nullable JComponent getParentLightweightHintComponent(@Nullable JComponent component) {
     Ref<JComponent> result = Ref.create();
     UIUtil.uiParents(component, false).reduce((a, b) -> {
       if (b instanceof JLayeredPane && ((JLayeredPane)b).getLayer(a) == JLayeredPane.POPUP_LAYER) {

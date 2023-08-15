@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.util.Disposer;
@@ -48,8 +48,7 @@ public class AttributesStorageOld implements AbstractAttributesStorage {
    */
   private final boolean inlineAttributes;
 
-  @NotNull
-  private final Storage attributesBlobStorage;
+  private final @NotNull Storage attributesBlobStorage;
 
   private final ReadWriteLock lock = new ReentrantReadWriteLock();
   private final AtomicInteger modCount = new AtomicInteger();
@@ -151,8 +150,7 @@ public class AttributesStorageOld implements AbstractAttributesStorage {
    * Opens given attribute of given file for writing
    */
   @Override
-  @NotNull
-  public AttributeOutputStream writeAttribute(final @NotNull PersistentFSConnection connection,
+  public @NotNull AttributeOutputStream writeAttribute(final @NotNull PersistentFSConnection connection,
                                               final int fileId,
                                               final @NotNull FileAttribute attribute) {
     return new AttributeOutputStreamBase(
@@ -249,8 +247,7 @@ public class AttributesStorageOld implements AbstractAttributesStorage {
 
   private final class AttributeOutputStreamImpl extends DataOutputStream implements RepresentableAsByteArraySequence {
     private final PersistentFSConnection connection;
-    @NotNull
-    private final FileAttribute attribute;
+    private final @NotNull FileAttribute attribute;
     private final int fileId;
 
     private AttributeOutputStreamImpl(final PersistentFSConnection connection,
@@ -432,9 +429,8 @@ public class AttributesStorageOld implements AbstractAttributesStorage {
       }
     }
 
-    @NotNull
     @Override
-    public ByteArraySequence asByteArraySequence() {
+    public @NotNull ByteArraySequence asByteArraySequence() {
       return ((BufferExposingByteArrayOutputStream)out).asByteArraySequence();
     }
   }

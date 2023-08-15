@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -97,8 +97,7 @@ public class LocalCopyPasteManager implements ClientCopyPasteManager {
    * @param content content to store
    * @return content that is either the given one or the one that was assembled from it and already stored one
    */
-  @NotNull
-  private Transferable addNewContentToStack(@NotNull Transferable content) {
+  private @NotNull Transferable addNewContentToStack(@NotNull Transferable content) {
     try {
       String clipString = getStringContent(content);
       if (clipString == null) {
@@ -154,8 +153,7 @@ public class LocalCopyPasteManager implements ClientCopyPasteManager {
    * @throws IOException                as defined by {@link Transferable#getTransferData(DataFlavor)}
    * @throws UnsupportedFlavorException as defined by {@link Transferable#getTransferData(DataFlavor)}
    */
-  @Nullable
-  private static Transferable merge(@NotNull KillRingTransferable newData, @NotNull KillRingTransferable oldData)
+  private static @Nullable Transferable merge(@NotNull KillRingTransferable newData, @NotNull KillRingTransferable oldData)
     throws IOException, UnsupportedFlavorException {
     if (!oldData.isReadyToCombine() || !newData.isReadyToCombine()) {
       return null;
@@ -216,8 +214,7 @@ public class LocalCopyPasteManager implements ClientCopyPasteManager {
   }
 
   @Override
-  @Nullable
-  public <T> T getContents(@NotNull DataFlavor flavor) {
+  public @Nullable <T> T getContents(@NotNull DataFlavor flavor) {
     if (areDataFlavorsAvailable(flavor)) {
       //noinspection unchecked
       return (T)ClipboardSynchronizer.getInstance().getData(flavor);

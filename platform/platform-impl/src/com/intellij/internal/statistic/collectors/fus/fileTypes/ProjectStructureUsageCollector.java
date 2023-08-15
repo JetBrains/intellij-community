@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.collectors.fus.fileTypes;
 
 import com.intellij.execution.wsl.WslPath;
@@ -64,9 +64,8 @@ final class ProjectStructureUsageCollector extends ProjectUsagesCollector {
     return GROUP;
   }
 
-  @NotNull
   @Override
-  public Set<MetricEvent> getMetrics(@NotNull Project project) {
+  public @NotNull Set<MetricEvent> getMetrics(@NotNull Project project) {
     Map<? extends JpsModuleSourceRootType<?>, String> typeNames = JBIterable.from(JpsModelSerializerExtension.getExtensions())
       .filter(o -> PluginInfoDetectorKt.getPluginInfo(o.getClass()).isDevelopedByJetBrains())
       .flatMap(JpsModelSerializerExtension::getModuleSourceRootPropertiesSerializers)

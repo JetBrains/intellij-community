@@ -255,9 +255,8 @@ public final class WindowTabsComponent extends JBTabsImpl {
         }
       });
 
-      @NotNull
       @Override
-      public JBTabPainter getTabPainter() {
+      public @NotNull JBTabPainter getTabPainter() {
         return myTabPainter;
       }
 
@@ -421,8 +420,7 @@ public final class WindowTabsComponent extends JBTabsImpl {
     recalculateIndexes();
   }
 
-  @NotNull
-  private static DefaultActionGroup createTabActions(@NotNull IdeFrameImpl tabFrame) {
+  private static @NotNull DefaultActionGroup createTabActions(@NotNull IdeFrameImpl tabFrame) {
     DumbAwareAction closeAction = new DumbAwareAction(IdeBundle.message("mac.window.tabs.close.title")) {
       @Override
       public @NotNull ActionUpdateThread getActionUpdateThread() {

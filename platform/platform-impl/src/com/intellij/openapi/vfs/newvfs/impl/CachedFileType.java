@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -49,8 +49,7 @@ public final class CachedFileType {
   /**
    * @return result that returns true if no files changed their types since method invocation
    */
-  @NotNull
-  public static Supplier<@NotNull Boolean> getFileTypeChangeChecker() {
+  public static @NotNull Supplier<@NotNull Boolean> getFileTypeChangeChecker() {
     CachedFileType type = ReadAction.compute(() -> forType(PlainTextFileType.INSTANCE));
     return () -> {
       return type.getUpToDateOrNull() != null;

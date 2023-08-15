@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.content;
 
 import com.intellij.openapi.ui.popup.ListPopup;
@@ -87,17 +87,13 @@ public abstract class ContentLayout {
 
   public abstract void showContentPopup(ListPopup listPopup);
 
-  @ActionText
-  public abstract String getCloseActionName();
+  public abstract @ActionText String getCloseActionName();
 
-  @ActionText
-  public abstract String getCloseAllButThisActionName();
+  public abstract @ActionText String getCloseAllButThisActionName();
 
-  @ActionText
-  public abstract String getPreviousContentActionName();
+  public abstract @ActionText String getPreviousContentActionName();
 
-  @ActionText
-  public abstract String getNextContentActionName();
+  public abstract @ActionText String getNextContentActionName();
 
   protected boolean shouldShowId() {
     Component component =

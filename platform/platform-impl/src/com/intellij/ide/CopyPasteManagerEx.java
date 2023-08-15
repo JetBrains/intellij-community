@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
 import com.intellij.openapi.Disposable;
@@ -39,7 +39,7 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
   }
 
   @Override
-  public void addContentChangedListener(@NotNull final ContentChangedListener listener, @NotNull Disposable parentDisposable) {
+  public void addContentChangedListener(final @NotNull ContentChangedListener listener, @NotNull Disposable parentDisposable) {
     myDispatcher.addListener(listener, parentDisposable);
   }
 
@@ -59,7 +59,7 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
   }
 
   @Override
-  public boolean isCutElement(@Nullable final Object element) {
+  public boolean isCutElement(final @Nullable Object element) {
     for (CutElementMarker marker : CutElementMarker.EP_NAME.getExtensionList()) {
       if (marker.isCutElement(element)) return true;
     }

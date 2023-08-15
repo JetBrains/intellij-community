@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.diagnostic.PluginException;
@@ -52,7 +52,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   private static final Logger LOG = Logger.getInstance(ActionButton.class);
 
   // Contains action IDs which descriptions are permitted for displaying in the ActionButton tooltip
-  @NonNls private static final Set<String> WHITE_LIST = Set.of("ExternalSystem.ProjectRefreshAction", "LoadConfigurationAction");
+  private static final @NonNls Set<String> WHITE_LIST = Set.of("ExternalSystem.ProjectRefreshAction", "LoadConfigurationAction");
 
   /**
    * By default, a toolbar button for a popup action group paints additional "drop-down-arrow" mark over its icon.
@@ -165,8 +165,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     return getPopState(isSelected());
   }
 
-  @NotNull
-  public Presentation getPresentation() {
+  public @NotNull Presentation getPresentation() {
     return myPresentation;
   }
 
@@ -199,8 +198,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     performAction(makeClickMouseEvent());
   }
 
-  @NotNull
-  private MouseEvent makeClickMouseEvent() {
+  private @NotNull MouseEvent makeClickMouseEvent() {
     return new MouseEvent(this, MouseEvent.MOUSE_CLICKED, System.currentTimeMillis(), 0, 0, 0, 1, false);
   }
 
@@ -232,7 +230,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     }
   }
 
-  @Nullable private static WizardPopup getPopupContainer(Component c) {
+  private static @Nullable WizardPopup getPopupContainer(Component c) {
     JBPopup popup = PopupUtil.getPopupContainerFor(c);
     return (popup instanceof WizardPopup) ? (WizardPopup)popup : null;
   }
@@ -284,8 +282,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     return new Dimension(contentSize.width, contentSize.height + footerAdvertisementHeight);
   }
 
-  @NotNull
-  private MenuItemPresentationFactory createPresentationFactory() {
+  private @NotNull MenuItemPresentationFactory createPresentationFactory() {
     return new MenuItemPresentationFactory() {
       @Override
       protected void processPresentation(@NotNull Presentation presentation) {
@@ -426,8 +423,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     myIcon = icon;
   }
 
-  @NotNull
-  protected Icon getFallbackIcon(boolean enabled) {
+  protected @NotNull Icon getFallbackIcon(boolean enabled) {
     Presentation p = getAction().getTemplatePresentation();
     Icon icon = Objects.requireNonNullElse(p.getIcon(), AllIcons.Toolbar.Unknown);
     if (enabled) return icon;
@@ -481,8 +477,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     }
   }
 
-  @Nullable
-  protected @NlsSafe String getShortcutText() {
+  protected @Nullable @NlsSafe String getShortcutText() {
     return KeymapUtil.getFirstKeyboardShortcutText(myAction);
   }
 
@@ -505,8 +500,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     return true;
   }
 
-  @NotNull
-  protected final Icon getEnableOrDisable(@NotNull Icon icon) {
+  protected final @NotNull Icon getEnableOrDisable(@NotNull Icon icon) {
     return isEnabled() ? icon : myLook.getDisabledIcon(icon);
   }
 
@@ -635,8 +629,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   // Accessibility
 
   @Override
-  @NotNull
-  public AccessibleContext getAccessibleContext() {
+  public @NotNull AccessibleContext getAccessibleContext() {
     AccessibleContext context = accessibleContext;
     if(context == null) {
       accessibleContext = context = new AccessibleActionButton();

@@ -10,7 +10,7 @@ import javax.swing.*;
  * @author Konstantin Bulenkov
  */
 public final class DarculaLookAndFeelInfo extends UIManager.LookAndFeelInfo {
-  @NonNls public static final String CLASS_NAME = DarculaLaf.class.getName();
+  public static final @NonNls String CLASS_NAME = DarculaLaf.class.getName();
 
   public DarculaLookAndFeelInfo() {
     super(IdeBundle.message("darcula.theme.name"), CLASS_NAME);

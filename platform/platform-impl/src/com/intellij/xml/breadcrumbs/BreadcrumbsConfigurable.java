@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.breadcrumbs;
 
 import com.intellij.ide.ui.UISettings;
@@ -21,9 +21,8 @@ final class BreadcrumbsConfigurable extends CompositeConfigurable<BreadcrumbsCon
 
   private DialogPanel panel;
 
-  @NotNull
   @Override
-  public String getId() {
+  public @NotNull String getId() {
     return "editor.breadcrumbs";
   }
 
@@ -55,9 +54,8 @@ final class BreadcrumbsConfigurable extends CompositeConfigurable<BreadcrumbsCon
     return panel.isModified();
   }
 
-  @NotNull
   @Override
-  protected List<BreadcrumbsProviderConfigurable> createConfigurables() {
+  protected @NotNull List<BreadcrumbsProviderConfigurable> createConfigurables() {
     final List<BreadcrumbsProviderConfigurable> configurables = new SmartList<>();
     for (final BreadcrumbsProvider provider : BreadcrumbsProvider.EP_NAME.getExtensionList()) {
       for (final Language language : provider.getLanguages()) {
@@ -79,7 +77,7 @@ final class BreadcrumbsConfigurable extends CompositeConfigurable<BreadcrumbsCon
     private final BreadcrumbsProvider myProvider;
     private final Language myLanguage;
 
-    private BreadcrumbsProviderConfigurable(@NotNull final BreadcrumbsProvider provider, @NotNull final Language language) {
+    private BreadcrumbsProviderConfigurable(final @NotNull BreadcrumbsProvider provider, final @NotNull Language language) {
       myProvider = provider;
       myLanguage = language;
     }
@@ -98,21 +96,18 @@ final class BreadcrumbsConfigurable extends CompositeConfigurable<BreadcrumbsCon
     public void apply() throws ConfigurationException {
     }
 
-    @NotNull
     @Override
-    public String getId() {
+    public @NotNull String getId() {
       return myLanguage.getID();
     }
 
-    @Nls(capitalization = Nls.Capitalization.Title)
     @Override
-    public String getDisplayName() {
+    public @Nls(capitalization = Nls.Capitalization.Title) String getDisplayName() {
       return myLanguage.getDisplayName();
     }
 
-    @NotNull
     @Override
-    public Class<?> getOriginalClass() {
+    public @NotNull Class<?> getOriginalClass() {
       return myProvider.getClass();
     }
   }

@@ -19,7 +19,7 @@ import java.util.ListIterator;
  * use {@link TreeUIHelper#installListSpeedSearch} or one of the {@link ListSpeedSearch#installOn} static methods
  */
 public class ListSpeedSearch<T> extends SpeedSearchBase<JList<T>> {
-  @Nullable private final Function<? super T, String> myToStringConvertor;
+  private final @Nullable Function<? super T, String> myToStringConvertor;
 
   protected ListSpeedSearch(@NotNull JList<T> list, Void sig, @Nullable Function<? super T, String> convertor) {
     super(list, sig);
@@ -122,8 +122,7 @@ public class ListSpeedSearch<T> extends SpeedSearchBase<JList<T>> {
     return element == null ? null : element.toString();
   }
 
-  @NotNull
-  private IntList findAllFilteredElements(@NotNull String s) {
+  private @NotNull IntList findAllFilteredElements(@NotNull String s) {
     IntList indices = new IntArrayList();
     String trimmed = s.trim();
 
@@ -138,8 +137,8 @@ public class ListSpeedSearch<T> extends SpeedSearchBase<JList<T>> {
   }
 
   private static final class MySelectAllAction<T> extends DumbAwareAction {
-    @NotNull private final JList<T> myList;
-    @NotNull private final ListSpeedSearch<T> mySearch;
+    private final @NotNull JList<T> myList;
+    private final @NotNull ListSpeedSearch<T> mySearch;
 
     MySelectAllAction(@NotNull JList<T> list, @NotNull ListSpeedSearch<T> search) {
       myList = list;

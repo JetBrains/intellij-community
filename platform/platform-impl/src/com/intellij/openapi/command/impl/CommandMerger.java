@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.command.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -31,12 +31,9 @@ public final class CommandMerger {
   private boolean myTransparent;
   private @NlsContexts.Command String myCommandName;
   private boolean myValid = true;
-  @NotNull
-  private List<UndoableAction> myCurrentActions = new ArrayList<>();
-  @NotNull
-  private Set<DocumentReference> myAllAffectedDocuments = new HashSet<>();
-  @NotNull
-  private Set<DocumentReference> myAdditionalAffectedDocuments = new HashSet<>();
+  private @NotNull List<UndoableAction> myCurrentActions = new ArrayList<>();
+  private @NotNull Set<DocumentReference> myAllAffectedDocuments = new HashSet<>();
+  private @NotNull Set<DocumentReference> myAdditionalAffectedDocuments = new HashSet<>();
   private EditorAndState myStateBefore;
   private EditorAndState myStateAfter;
   private UndoConfirmationPolicy myUndoConfirmationPolicy = UndoConfirmationPolicy.DEFAULT;
@@ -310,8 +307,7 @@ public final class CommandMerger {
     }
   }
 
-  @Nullable
-  private UndoRedo createUndoOrRedo(FileEditor editor, boolean isUndo) {
+  private @Nullable UndoRedo createUndoOrRedo(FileEditor editor, boolean isUndo) {
     if (!myManager.isUndoOrRedoAvailable(editor, isUndo)) return null;
     return isUndo ? new Undo(myState, editor) : new Redo(myState, editor);
   }

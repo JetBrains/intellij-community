@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.fileChooser.impl;
 
@@ -44,7 +44,7 @@ public class FileTreeStructure extends AbstractTreeStructure {
   }
 
   @Override
-  public boolean isToBuildChildrenInBackground(@NotNull final Object element) {
+  public boolean isToBuildChildrenInBackground(final @NotNull Object element) {
     return true;
   }
 

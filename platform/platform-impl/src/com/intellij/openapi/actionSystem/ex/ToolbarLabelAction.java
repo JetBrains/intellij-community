@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem.ex;
 
 import com.intellij.ide.HelpTooltip;
@@ -29,9 +29,8 @@ public abstract class ToolbarLabelAction extends DumbAwareAction implements Cust
     //do nothing
   }
 
-  @NotNull
   @Override
-  public JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
+  public @NotNull JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
     JBLabel label = new MyLabel()
       .withFont(JBUI.Fonts.toolbarFont())
       .withBorder(JBUI.Borders.empty(0, 6, 0, 5));

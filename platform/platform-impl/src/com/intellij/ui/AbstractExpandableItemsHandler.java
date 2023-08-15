@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.util.Comparing;
@@ -76,7 +76,7 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     validationParent.remove(parent);
   }
 
-  protected AbstractExpandableItemsHandler(@NotNull final ComponentType component) {
+  protected AbstractExpandableItemsHandler(final @NotNull ComponentType component) {
     myComponent = component;
     myComponent.add(myRendererPane);
     myComponent.validate();
@@ -199,9 +199,8 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     this.borderArc = borderArc;
   }
 
-  @NotNull
   @Override
-  public Collection<KeyType> getExpandedItems() {
+  public @NotNull Collection<KeyType> getExpandedItems() {
     return myKey == null ? Collections.emptyList() : Collections.singleton(myKey);
   }
 
@@ -355,8 +354,7 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     return result instanceof SelectablePanel selectablePanel ? selectablePanel : null;
   }
 
-  @Nullable
-  private Point createToolTipImage(@NotNull KeyType key) {
+  private @Nullable Point createToolTipImage(@NotNull KeyType key) {
     ClientProperty.put(myComponent, EXPANDED_RENDERER, true);
     Pair<Component, Rectangle> rendererAndBounds = getCellRendererAndBounds(key);
     ClientProperty.put(myComponent, EXPANDED_RENDERER, null);
@@ -484,8 +482,7 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     return myComponent.getVisibleRect();
   }
 
-  @Nullable
-  protected abstract Pair<Component, Rectangle> getCellRendererAndBounds(KeyType key);
+  protected abstract @Nullable Pair<Component, Rectangle> getCellRendererAndBounds(KeyType key);
 
   protected abstract KeyType getCellKeyForPoint(Point point);
 

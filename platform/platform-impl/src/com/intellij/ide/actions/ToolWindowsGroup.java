@@ -67,13 +67,11 @@ public final class ToolWindowsGroup extends ActionGroup implements DumbAware {
     return result;
   }
 
-  @NotNull
-  private static Comparator<ActivateToolWindowAction> getActionComparator() {
+  private static @NotNull Comparator<ActivateToolWindowAction> getActionComparator() {
     return comparingMnemonic().thenComparing(it -> it.getToolWindowId(), CASE_INSENSITIVE_ORDER);
   }
 
-  @NotNull
-  private static Comparator<ActivateToolWindowAction> comparingMnemonic() {
+  private static @NotNull Comparator<ActivateToolWindowAction> comparingMnemonic() {
     return comparingInt(it -> {
       int mnemonic = ActivateToolWindowAction.getMnemonicForToolWindow(it.getToolWindowId());
       return mnemonic != -1 ? mnemonic : Integer.MAX_VALUE;

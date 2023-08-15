@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hint;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -188,8 +188,7 @@ public final class EditorFragmentComponent extends JPanel {
   /**
    * @param y {@code y} coordinate in layered pane coordinate system.
    */
-  @Nullable
-  static LightweightHint showEditorFragmentHintAt(Editor editor,
+  static @Nullable LightweightHint showEditorFragmentHintAt(Editor editor,
                                                   TextRange range,
                                                   int y,
                                                   boolean showUpward,
@@ -271,8 +270,7 @@ public final class EditorFragmentComponent extends JPanel {
     return fragmentComponent;
   }
 
-  @Nullable
-  public static LightweightHint showEditorFragmentHint(Editor editor, TextRange range, boolean showFolding, boolean hideByAnyKey){
+  public static @Nullable LightweightHint showEditorFragmentHint(Editor editor, TextRange range, boolean showFolding, boolean hideByAnyKey){
     if (!(editor instanceof EditorEx)) return null;
     JRootPane rootPane = editor.getComponent().getRootPane();
     if (rootPane == null) return null;
@@ -299,8 +297,7 @@ public final class EditorFragmentComponent extends JPanel {
     return color;
   }
 
-  @NotNull
-  public static CompoundBorder createEditorFragmentBorder(@NotNull Editor editor) {
+  public static @NotNull CompoundBorder createEditorFragmentBorder(@NotNull Editor editor) {
     Color borderColor = editor.getColorsScheme().getColor(EditorColors.SELECTED_TEARLINE_COLOR);
     Border outsideBorder = JBUI.Borders.customLine(borderColor, LINE_BORDER_THICKNESS);
     Border insideBorder = JBUI.Borders.empty(EMPTY_BORDER_THICKNESS);

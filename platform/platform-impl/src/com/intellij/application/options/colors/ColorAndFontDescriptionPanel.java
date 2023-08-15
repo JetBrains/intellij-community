@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.colors;
 
 import com.intellij.ide.IdeBundle;
@@ -108,9 +108,8 @@ public class ColorAndFontDescriptionPanel extends JPanel implements OptionsPanel
     myLabelFont.setVisible(false); // hide for now as it doesn't look that good
   }
 
-  @NotNull
   @Override
-  public JComponent getPanel() {
+  public @NotNull JComponent getPanel() {
     return this;
   }
 

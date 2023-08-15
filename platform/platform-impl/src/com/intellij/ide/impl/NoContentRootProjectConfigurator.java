@@ -18,8 +18,8 @@ import org.jetbrains.annotations.NotNull;
 public class NoContentRootProjectConfigurator implements DirectoryProjectConfigurator {
   @Override
   public void configureProject(@NotNull Project project,
-                               @NotNull final VirtualFile baseDir,
-                               @NotNull final Ref<Module> moduleRef,
+                               final @NotNull VirtualFile baseDir,
+                               final @NotNull Ref<Module> moduleRef,
                                boolean isProjectCreatedWithWizard) {
     VirtualFile projectsRoot = LocalFileSystem.getInstance().findFileByPath(ProjectUtil.getProjectPath());
     if (projectsRoot == null || !VfsUtilCore.isAncestor(projectsRoot, baseDir, true)) return;

@@ -219,8 +219,7 @@ public class MergingTaskQueue<T extends MergeableQueueTask<T>> {
     }
   }
 
-  @Nullable
-  public MergingTaskQueue.QueuedTask<T> extractNextTask() {
+  public @Nullable MergingTaskQueue.QueuedTask<T> extractNextTask() {
     List<Disposable> disposeQueue = new ArrayList<>(1);
 
     try {
@@ -309,8 +308,7 @@ public class MergingTaskQueue<T extends MergeableQueueTask<T>> {
       Disposer.dispose(myTask);
     }
 
-    @NotNull
-    public ProgressIndicatorEx getIndicator() {
+    public @NotNull ProgressIndicatorEx getIndicator() {
       return myIndicator;
     }
 

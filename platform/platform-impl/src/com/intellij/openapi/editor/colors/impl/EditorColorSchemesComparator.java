@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.colors.impl;
 
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -14,12 +14,12 @@ import static com.intellij.openapi.editor.colors.EditorColorsScheme.DEFAULT_SCHE
  * Defines the order in which editor color schemes are displayed.
  */
 public final class EditorColorSchemesComparator implements Comparator<EditorColorsScheme> {
-  public final static EditorColorSchemesComparator INSTANCE = new EditorColorSchemesComparator();
+  public static final EditorColorSchemesComparator INSTANCE = new EditorColorSchemesComparator();
 
-  public final static int DEFAULT_SCHEME          = 0;
-  public final static int ONE_OF_DEFAULT_SCHEMES  = DEFAULT_SCHEME + 1;
-  public final static int BUNDLED_SCHEME          = ONE_OF_DEFAULT_SCHEMES + 1;
-  public final static int CUSTOM_SCHEME           = BUNDLED_SCHEME + 1;
+  public static final int DEFAULT_SCHEME          = 0;
+  public static final int ONE_OF_DEFAULT_SCHEMES  = DEFAULT_SCHEME + 1;
+  public static final int BUNDLED_SCHEME          = ONE_OF_DEFAULT_SCHEMES + 1;
+  public static final int CUSTOM_SCHEME           = BUNDLED_SCHEME + 1;
 
   private EditorColorSchemesComparator() {
   }

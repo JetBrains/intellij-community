@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.popup;
 
 import com.intellij.ide.DataManager;
@@ -115,8 +115,7 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
 
   }
 
-  @NotNull
-  protected JComponent createPopupComponent(JComponent content) {
+  protected @NotNull JComponent createPopupComponent(JComponent content) {
     JScrollPane scrollPane = createScrollPane(content);
     scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
     scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
@@ -129,8 +128,7 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
     return scrollPane;
   }
 
-  @NotNull
-  protected JScrollPane createScrollPane(JComponent content) {
+  protected @NotNull JScrollPane createScrollPane(JComponent content) {
     return ScrollPaneFactory.createScrollPane(content);
   }
 
@@ -181,7 +179,7 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
   }
 
   @Override
-  public void show(@NotNull final Component owner, final int aScreenX, final int aScreenY, final boolean considerForcedXY) {
+  public void show(final @NotNull Component owner, final int aScreenX, final int aScreenY, final boolean considerForcedXY) {
     if (UiInterceptors.tryIntercept(this)) return;
 
     LOG.assertTrue (!isDisposed());
@@ -297,8 +295,7 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
   }
 
   @Override
-  @NotNull
-  protected MyContentPanel createContentPanel(final boolean resizable, final @NotNull PopupBorder border, final boolean isToDrawMacCorner) {
+  protected @NotNull MyContentPanel createContentPanel(final boolean resizable, final @NotNull PopupBorder border, final boolean isToDrawMacCorner) {
     return new MyContainer(border);
   }
 

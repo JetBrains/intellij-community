@@ -1997,13 +1997,12 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     incStructuralModificationCount();
   }
 
-  @NotNull
-  private ChildInfo makeChildRecord(@NotNull VirtualFile parentFile,
-                                    int parentId,
-                                    @NotNull CharSequence name,
-                                    @NotNull Pair<@NotNull FileAttributes, String> childData,
-                                    @NotNull NewVirtualFileSystem fs,
-                                    @NotNull ChildInfo @Nullable [] children) {
+  private @NotNull ChildInfo makeChildRecord(@NotNull VirtualFile parentFile,
+                                             int parentId,
+                                             @NotNull CharSequence name,
+                                             @NotNull Pair<@NotNull FileAttributes, String> childData,
+                                             @NotNull NewVirtualFileSystem fs,
+                                             @NotNull ChildInfo @Nullable [] children) {
     FileAttributes attributes = childData.first;
 
     int childId = vfsPeer.createRecord();

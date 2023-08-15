@@ -7,7 +7,6 @@ import com.intellij.concurrency.ContextAwareRunnable;
 import com.intellij.concurrency.SensitiveProgressWrapper;
 import com.intellij.concurrency.ThreadContext;
 import com.intellij.diagnostic.ThreadDumper;
-import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.ide.startup.ServiceNotReadyException;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.AccessToken;
@@ -22,7 +21,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.progress.*;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
@@ -31,6 +33,7 @@ import com.intellij.openapi.util.CheckedDisposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.RunnableCallable;
@@ -130,8 +133,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
     }
   }
 
-  @NotNull
-  private NonBlockingReadActionImpl<T> withConstraint(@NotNull ContextConstraint constraint) {
+  private @NotNull NonBlockingReadActionImpl<T> withConstraint(@NotNull ContextConstraint constraint) {
     return new NonBlockingReadActionImpl<>(myOriginalComputation, myModalityState, myUiThreadAction, ArrayUtil.append(myConstraints, constraint),
                                            myCancellationConditions, myDisposables,
                                            myCoalesceEquality, myProgressIndicator);
@@ -159,9 +161,8 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
                                            myDisposables, myCoalesceEquality, myProgressIndicator);
   }
 
-  @NotNull
   @Override
-  public NonBlockingReadAction<T> expireWith(@NotNull Disposable parentDisposable) {
+  public @NotNull NonBlockingReadAction<T> expireWith(@NotNull Disposable parentDisposable) {
     Set<Disposable> disposables = new HashSet<>(myDisposables);
     disposables.add(parentDisposable);
     return new NonBlockingReadActionImpl<>(myOriginalComputation, myModalityState, myUiThreadAction, myConstraints, myCancellationConditions,
@@ -235,15 +236,15 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
   }
 
   private static final class Submission<T> extends AsyncPromise<T> {
-    @NotNull private final Executor backendExecutor;
-    private @Nullable final String myStartTrace;
+    private final @NotNull Executor backendExecutor;
+    private final @Nullable String myStartTrace;
     private volatile ProgressIndicator currentIndicator;
     private final ModalityState creationModality = ModalityState.defaultModalityState();
-    @Nullable private Submission<?> myReplacement;
-    @Nullable private final ProgressIndicator myProgressIndicator;
-    @NotNull private final NonBlockingReadActionImpl<T> builder;
-    @NotNull private final CoroutineContext myContext;
-    @Nullable private final CompletableJob myJob;
+    private @Nullable Submission<?> myReplacement;
+    private final @Nullable ProgressIndicator myProgressIndicator;
+    private final @NotNull NonBlockingReadActionImpl<T> builder;
+    private final @NotNull CoroutineContext myContext;
+    private final @Nullable CompletableJob myJob;
 
     // a sum composed of: 1 for non-done promise, 1 for each currently running thread,
     // so 0 means that the process is marked completed or canceled, and it has no running not-yet-finished threads
@@ -429,8 +430,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
                 "Please make them more unique.");
     }
 
-    @NotNull
-    private String getComputationOrigin() {
+    private @NotNull String getComputationOrigin() {
       Object computation = builder.myOriginalComputation;
       if (computation instanceof RunnableCallable) {
         computation = ((RunnableCallable)computation).getDelegate();
@@ -531,9 +531,8 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
       ProgressIndicator indicator =
         myProgressIndicator == null ? new EmptyProgressIndicator(creationModality) :
         new SensitiveProgressWrapper(myProgressIndicator) {
-          @NotNull
           @Override
-          public ModalityState getModalityState() {
+          public @NotNull ModalityState getModalityState() {
             return creationModality;
           }
         };
@@ -723,8 +722,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
     }
   }
 
-  @Nullable
-  private ContextConstraint findUnsatisfiedConstraint() {
+  private @Nullable ContextConstraint findUnsatisfiedConstraint() {
     return ContainerUtil.find(myConstraints, t -> !t.isCorrectContext());
   }
 

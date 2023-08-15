@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.application.options.EditorFontsConstants;
@@ -48,8 +48,7 @@ public abstract class ChangeEditorFontSizeAction extends AnAction implements Dum
     }
   }
 
-  @Nullable
-  private static EditorImpl getEditor(@NotNull AnActionEvent e) {
+  private static @Nullable EditorImpl getEditor(@NotNull AnActionEvent e) {
     final Editor editor = e.getData(CommonDataKeys.EDITOR);
     if (editor instanceof EditorImpl) {
       return (EditorImpl)editor;

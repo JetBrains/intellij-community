@@ -671,8 +671,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
       notifyParentOnChildSelection();
     }
 
-    @NotNull
-    private ExtendMode calcExtendMode(int index) {
+    private @NotNull ExtendMode calcExtendMode(int index) {
       ListPopupStep<Object> listStep = getListStep();
       Object selectedValue = myListModel.getElementAt(index);
       if (selectedValue == null || !listStep.hasSubstep(selectedValue)) return ExtendMode.NO_EXTEND;

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -89,8 +89,7 @@ public abstract class EventHandler {
     return action == null ? null : action.getShortcutSet();
   }
 
-  @Nullable
-  public static Runnable addGlobalAction(@NotNull JComponent component, @NotNull Object actionInfo, @NotNull Runnable callback) {
+  public static @Nullable Runnable addGlobalAction(@NotNull JComponent component, @NotNull Object actionInfo, @NotNull Runnable callback) {
     MyAnAction localAction = new MyAnAction() {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
@@ -119,7 +118,7 @@ public abstract class EventHandler {
     return () -> localAction.unregisterCustomShortcutSet(component.getRootPane());
   }
 
-  private static abstract class MyAnAction extends AnAction {
+  private abstract static class MyAnAction extends AnAction {
     @Override
     public void setShortcutSet(@NotNull ShortcutSet shortcutSet) {
       super.setShortcutSet(shortcutSet);

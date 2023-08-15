@@ -139,16 +139,14 @@ public final class EditorActionUtil {
     caret.setSelection(range.getStartOffset(), range.getEndOffset());
   }
 
-  @NotNull
-  public static TextRange getRangeToWordEnd(@NotNull Editor editor, boolean isCamel, boolean handleQuoted) {
+  public static @NotNull TextRange getRangeToWordEnd(@NotNull Editor editor, boolean isCamel, boolean handleQuoted) {
     int startOffset = editor.getCaretModel().getOffset();
     // IDEA-211756 "Delete to word end" is extremely inconvenient on whitespaces
     int endOffset = getNextCaretStopOffset(editor, CaretStopPolicy.BOTH, isCamel, handleQuoted);
     return TextRange.create(startOffset, endOffset);
   }
 
-  @NotNull
-  public static TextRange getRangeToWordStart(@NotNull Editor editor, boolean isCamel, boolean handleQuoted) {
+  public static @NotNull TextRange getRangeToWordStart(@NotNull Editor editor, boolean isCamel, boolean handleQuoted) {
     int endOffset = editor.getCaretModel().getOffset();
     int startOffset = getPreviousCaretStopOffset(editor, CaretStopPolicy.WORD_START, isCamel, handleQuoted);
     return TextRange.create(startOffset, endOffset);
@@ -890,8 +888,7 @@ public final class EditorActionUtil {
     setupSelection(editor, isWithSelection, selectionStart, blockSelectionStart);
   }
 
-  @NotNull
-  private static Rectangle getVisibleArea(@NotNull Editor editor) {
+  private static @NotNull Rectangle getVisibleArea(@NotNull Editor editor) {
     ScrollingModel model = editor.getScrollingModel();
     return EditorCoreUtil.isTrueSmoothScrollingEnabled() ? model.getVisibleAreaOnScrollingFinished() : model.getVisibleArea();
   }
@@ -965,7 +962,7 @@ public final class EditorActionUtil {
   /**
    * This method will make required expansions of collapsed region to make given offset 'visible'.
    */
-  public static void makePositionVisible(@NotNull final Editor editor, final int offset) {
+  public static void makePositionVisible(final @NotNull Editor editor, final int offset) {
     FoldingModel foldingModel = editor.getFoldingModel();
     while (true) {
       FoldRegion region = foldingModel.getCollapsedRegionAtOffset(offset);

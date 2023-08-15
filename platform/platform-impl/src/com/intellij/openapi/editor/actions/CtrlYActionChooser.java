@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.application.options.schemes.SchemeNameGenerator;
@@ -30,14 +30,12 @@ public final class CtrlYActionChooser {
     add(KeymapManager.GNOME_KEYMAP);
   }};
 
-  @Nullable
-  private static Keymap getCurrentKeymap() {
+  private static @Nullable Keymap getCurrentKeymap() {
     KeymapManager keymapManager = KeymapManager.getInstance();
     return keymapManager == null ? null : keymapManager.getActiveKeymap();
   }
 
-  @NotNull
-  private static Keymap getRootKeymap(@NotNull Keymap keymap) {
+  private static @NotNull Keymap getRootKeymap(@NotNull Keymap keymap) {
     while (keymap.canModify()) {
       Keymap parent = keymap.getParent();
       if (parent == null) {

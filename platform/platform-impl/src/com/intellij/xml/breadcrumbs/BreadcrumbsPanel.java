@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.breadcrumbs;
 
 import com.intellij.codeInsight.breadcrumbs.FileBreadcrumbsCollector;
@@ -85,7 +85,7 @@ public abstract class BreadcrumbsPanel extends JComponent implements Disposable 
   private static final Key<BreadcrumbsPanel> BREADCRUMBS_COMPONENT_KEY = new Key<>("BREADCRUMBS_KEY");
   private static final Iterable<? extends Crumb> EMPTY_BREADCRUMBS = Collections.emptyList();
 
-  public BreadcrumbsPanel(@NotNull final Editor editor) {
+  public BreadcrumbsPanel(final @NotNull Editor editor) {
     myEditor = editor;
     putBreadcrumbsComponent(myEditor, this);
     if (editor instanceof EditorEx) {
@@ -106,7 +106,7 @@ public abstract class BreadcrumbsPanel extends JComponent implements Disposable 
 
     final CaretListener caretListener = new CaretListener() {
       @Override
-      public void caretPositionChanged(@NotNull final CaretEvent e) {
+      public void caretPositionChanged(final @NotNull CaretEvent e) {
         if (myUserCaretChange) {
           queueUpdate();
         }
@@ -134,9 +134,8 @@ public abstract class BreadcrumbsPanel extends JComponent implements Disposable 
       }
 
       MouseEventAdapter<EditorGutterComponentEx> mouseListener = new MouseEventAdapter<>(gutterComponent) {
-        @NotNull
         @Override
-        protected MouseEvent convert(@NotNull MouseEvent event) {
+        protected @NotNull MouseEvent convert(@NotNull MouseEvent event) {
           return convert(event, gutterComponent);
         }
 
@@ -266,8 +265,7 @@ public abstract class BreadcrumbsPanel extends JComponent implements Disposable 
     }
   }
 
-  @Nullable
-  protected abstract Iterable<? extends Crumb> computeCrumbs(int offset);
+  protected abstract @Nullable Iterable<? extends Crumb> computeCrumbs(int offset);
 
   protected void navigateToCrumb(Crumb crumb, boolean withSelection) {
     if (crumb instanceof NavigatableCrumb navigatableCrumb) {
@@ -276,8 +274,7 @@ public abstract class BreadcrumbsPanel extends JComponent implements Disposable 
     }
   }
 
-  @Nullable
-  protected CrumbHighlightInfo getHighlightInfo(Crumb crumb) {
+  protected @Nullable CrumbHighlightInfo getHighlightInfo(Crumb crumb) {
     if (crumb instanceof NavigatableCrumb) {
       final TextRange range = ((NavigatableCrumb)crumb).getHighlightRange();
       if (range == null) return null;
@@ -288,8 +285,8 @@ public abstract class BreadcrumbsPanel extends JComponent implements Disposable 
   }
 
   protected static class CrumbHighlightInfo {
-    @NotNull public final TextRange range;
-    @Nullable public final CrumbPresentation presentation;
+    public final @NotNull TextRange range;
+    public final @Nullable CrumbPresentation presentation;
 
     public CrumbHighlightInfo(@NotNull TextRange range, @Nullable CrumbPresentation presentation) {
       this.range = range;
@@ -305,8 +302,7 @@ public abstract class BreadcrumbsPanel extends JComponent implements Disposable 
     editor.putUserData(BREADCRUMBS_COMPONENT_KEY, panel);
   }
 
-  @Nullable
-  public static BreadcrumbsPanel getBreadcrumbsComponent(@NotNull Editor editor) {
+  public static @Nullable BreadcrumbsPanel getBreadcrumbsComponent(@NotNull Editor editor) {
     return editor.getUserData(BREADCRUMBS_COMPONENT_KEY);
   }
 
@@ -334,10 +330,9 @@ public abstract class BreadcrumbsPanel extends JComponent implements Disposable 
                                                            null).getFont();
   }
 
-  @Nullable
-  protected static FileBreadcrumbsCollector findCollectorFor(@NotNull Project project,
-                                                             @Nullable VirtualFile file,
-                                                             @NotNull BreadcrumbsPanel panel) {
+  protected static @Nullable FileBreadcrumbsCollector findCollectorFor(@NotNull Project project,
+                                                                       @Nullable VirtualFile file,
+                                                                       @NotNull BreadcrumbsPanel panel) {
     if (file == null) return null;
     FileBreadcrumbsCollector collector = FileBreadcrumbsCollector.findBreadcrumbsCollector(project, file);
     collector.watchForChanges(file, panel.myEditor, panel, () -> panel.queueUpdate());

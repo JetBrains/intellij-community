@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hint;
 
 import com.intellij.codeWithMe.ClientId;
@@ -131,7 +131,7 @@ public class HintManagerImpl extends HintManager {
                              final int horizontalOffset,
                              @HideFlags final int flags,
                              final int timeout, final boolean reviveOnEditorChange,
-                             @NotNull final HintHint hintInfo) {
+                             final @NotNull HintHint hintInfo) {
     getClientManager(editor).showGutterHint(hint, editor, hintInfo, lineNumber, horizontalOffset,
                                             flags, timeout, reviveOnEditorChange, null);
   }
@@ -155,7 +155,7 @@ public class HintManagerImpl extends HintManager {
   /**
    * @param p                    point in layered pane coordinate system.
    */
-  public void showEditorHint(@NotNull final LightweightHint hint,
+  public void showEditorHint(final @NotNull LightweightHint hint,
                              @NotNull Editor editor,
                              @NotNull Point p,
                              @HideFlags int flags,
@@ -164,7 +164,7 @@ public class HintManagerImpl extends HintManager {
     showEditorHint(hint, editor, p, flags, timeout, reviveOnEditorChange, HintManager.ABOVE);
   }
 
-  public void showEditorHint(@NotNull final LightweightHint hint,
+  public void showEditorHint(final @NotNull LightweightHint hint,
                              @NotNull Editor editor,
                              @NotNull Point p,
                              @HideFlags int flags,
@@ -175,7 +175,7 @@ public class HintManagerImpl extends HintManager {
     showEditorHint(hint, editor, p, flags, timeout, reviveOnEditorChange, hintHint);
   }
 
-  public void showEditorHint(@NotNull final LightweightHint hint,
+  public void showEditorHint(final @NotNull LightweightHint hint,
                              @NotNull Editor editor,
                              @NotNull Point p,
                              @HideFlags int flags,
@@ -187,12 +187,12 @@ public class HintManagerImpl extends HintManager {
   }
 
   @Override
-  public void showHint(@NotNull final JComponent component, @NotNull RelativePoint p, int flags, int timeout) {
+  public void showHint(final @NotNull JComponent component, @NotNull RelativePoint p, int flags, int timeout) {
     showHint(component, p,flags,timeout,null);
   }
 
   @Override
-  public void showHint(@NotNull final JComponent component, @NotNull RelativePoint p, int flags, int timeout, @Nullable Runnable onHintHidden) {
+  public void showHint(final @NotNull JComponent component, @NotNull RelativePoint p, int flags, int timeout, @Nullable Runnable onHintHidden) {
     ClientHintManager.getCurrentInstance().showHint(component, p, flags, timeout, onHintHidden);
   }
 
@@ -217,8 +217,7 @@ public class HintManagerImpl extends HintManager {
     }
   }
 
-  @NotNull
-  private static Point adjustHintPosition(
+  private static @NotNull Point adjustHintPosition(
     Point p,
     boolean updateSize,
     JComponent externalComponent,
@@ -311,11 +310,11 @@ public class HintManagerImpl extends HintManager {
     return ClientHintManager.getCurrentInstance().getHintPosition(hint, editor, constraint);
   }
 
-  static Point getHintPositionRelativeTo(@NotNull final LightweightHint hint,
-                                                 @NotNull final Editor editor,
-                                                 @PositionFlags short constraint,
-                                                 @NotNull final Rectangle lookupBounds,
-                                                 final LogicalPosition pos) {
+  static Point getHintPositionRelativeTo(final @NotNull LightweightHint hint,
+                                         final @NotNull Editor editor,
+                                         @PositionFlags short constraint,
+                                         final @NotNull Rectangle lookupBounds,
+                                         final LogicalPosition pos) {
 
     JComponent externalComponent = getExternalComponent(editor);
 
@@ -423,8 +422,7 @@ public class HintManagerImpl extends HintManager {
     return p;
   }
 
-  @NotNull
-  public static JComponent getExternalComponent(@NotNull Editor editor) {
+  public static @NotNull JComponent getExternalComponent(@NotNull Editor editor) {
     JComponent externalComponent = editor.getComponent();
     JRootPane rootPane = externalComponent.getRootPane();
     if (rootPane == null) return externalComponent;
@@ -544,8 +542,7 @@ public class HintManagerImpl extends HintManager {
     showEditorHint(hint, editor, p, flags, 0, false);
   }
 
-  @NotNull
-  private static ClientHintManager getClientManager(@NotNull Editor editor) {
+  private static @NotNull ClientHintManager getClientManager(@NotNull Editor editor) {
     try (AccessToken ignored = ClientId.withClientId(ClientEditorManager.getClientId(editor))) {
       return ClientHintManager.getCurrentInstance();
     }
@@ -575,11 +572,11 @@ public class HintManagerImpl extends HintManager {
     showQuestionHint(editor, offset1, offset2, hint, action, ABOVE);
   }
 
-  public void showQuestionHint(@NotNull final Editor editor,
+  public void showQuestionHint(final @NotNull Editor editor,
                                final int offset1,
                                final int offset2,
-                               @NotNull final LightweightHint hint,
-                               @NotNull final QuestionAction action,
+                               final @NotNull LightweightHint hint,
+                               final @NotNull QuestionAction action,
                                @PositionFlags short constraint) {
     final VisualPosition pos1 = editor.offsetToVisualPosition(offset1);
     final VisualPosition pos2 = editor.offsetToVisualPosition(offset2);
@@ -588,12 +585,12 @@ public class HintManagerImpl extends HintManager {
   }
 
 
-  public void showQuestionHint(@NotNull final Editor editor,
-                               @NotNull final Point p,
+  public void showQuestionHint(final @NotNull Editor editor,
+                               final @NotNull Point p,
                                final int offset1,
                                final int offset2,
-                               @NotNull final LightweightHint hint,
-                               @NotNull final QuestionAction action,
+                               final @NotNull LightweightHint hint,
+                               final @NotNull QuestionAction action,
                                @PositionFlags short constraint) {
     int flags = HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_TEXT_CHANGE | HintManager.UPDATE_BY_SCROLLING |
                 HintManager.HIDE_IF_OUT_OF_EDITOR | HintManager.DONT_CONSUME_ESCAPE;

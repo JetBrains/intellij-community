@@ -84,8 +84,7 @@ public class GlassPanel extends JComponent {
     }
   }
 
-  @Nullable
-  private Area getComponentArea(final JComponent surfaceComponent, final JComponent lightComponent, int offset) {
+  private @Nullable Area getComponentArea(final JComponent surfaceComponent, final JComponent lightComponent, int offset) {
     if (!lightComponent.isShowing()) return null;
 
     final Point panelPoint = SwingUtilities.convertPoint(lightComponent, new Point(0, 0), surfaceComponent);

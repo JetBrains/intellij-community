@@ -72,9 +72,8 @@ final class ApproximationFragment implements LineFragment {
     throw new UnsupportedOperationException();
   }
 
-  @NotNull
   @Override
-  public LineFragment subFragment(int startOffset, int endOffset) {
+  public @NotNull LineFragment subFragment(int startOffset, int endOffset) {
     throw new UnsupportedOperationException();
   }
 }

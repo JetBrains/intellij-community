@@ -31,7 +31,6 @@ import java.util.Map.Entry;
 import java.util.function.*;
 
 import static java.util.Collections.emptyList;
-import static java.util.Collections.singletonList;
 import static org.jetbrains.concurrency.Promises.rejectedPromise;
 
 public final class AsyncTreeModel extends AbstractTreeModel implements Searchable, TreeVisitor.Acceptor {
@@ -117,22 +116,19 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Searchabl
     model.removeTreeModelListener(listener);
   }
 
-  @NotNull
   @Override
-  public Promise<TreePath> getTreePath(Object object) {
+  public @NotNull Promise<TreePath> getTreePath(Object object) {
     if (disposed) return rejectedPromise();
     return resolve(model instanceof Searchable ? ((Searchable)model).getTreePath(object) : null);
   }
 
-  @NotNull
-  public Promise<TreePath> resolve(TreePath path) {
+  public @NotNull Promise<TreePath> resolve(TreePath path) {
     AsyncPromise<TreePath> async = new AsyncPromise<>();
     onValidThread(() -> resolve(async, path));
     return async;
   }
 
-  @NotNull
-  private Promise<TreePath> resolve(Promise<? extends TreePath> promise) {
+  private @NotNull Promise<TreePath> resolve(Promise<? extends TreePath> promise) {
     if (promise == null && isValidThread()) {
       return rejectedPromise();
     }
@@ -222,8 +218,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Searchabl
    * @return a promise that will be resolved when visiting is finished
    */
   @Override
-  @NotNull
-  public Promise<TreePath> accept(@NotNull TreeVisitor visitor) {
+  public @NotNull Promise<TreePath> accept(@NotNull TreeVisitor visitor) {
     return accept(visitor, true);
   }
 
@@ -234,8 +229,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Searchabl
    * @param allowLoading load all needed children if {@code true}
    * @return a promise that will be resolved when visiting is finished
    */
-  @NotNull
-  public Promise<TreePath> accept(@NotNull TreeVisitor visitor, boolean allowLoading) {
+  public @NotNull Promise<TreePath> accept(@NotNull TreeVisitor visitor, boolean allowLoading) {
     var walker = createWalker(visitor, allowLoading);
     if (allowLoading) {
       // start visiting on the background thread to ensure that root node is already invalidated
@@ -250,26 +244,23 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Searchabl
   private TreeWalkerBase<Node> createWalker(@NotNull TreeVisitor visitor, boolean allowLoading) {
     if (visitor.visitThread() == TreeVisitor.VisitThread.BGT) {
       return new BgtTreeWalker<>(visitor, background, foreground, node -> node.object) {
-        @Nullable
         @Override
-        protected Collection<Node> getChildren(@NotNull AsyncTreeModel.Node node) {
+        protected @Nullable Collection<Node> getChildren(@NotNull AsyncTreeModel.Node node) {
           return getChildrenForWalker(node, this, allowLoading);
         }
       };
     }
     else {
       return new AbstractTreeWalker<>(visitor, node -> node.object) {
-        @Nullable
         @Override
-        protected Collection<Node> getChildren(@NotNull Node node) {
+        protected @Nullable Collection<Node> getChildren(@NotNull Node node) {
           return getChildrenForWalker(node, this, allowLoading);
         }
       };
     }
   }
 
-  @Nullable
-  private Collection<@NotNull Node> getChildrenForWalker(@NotNull Node node, TreeWalkerBase<Node> walker, boolean allowLoading) {
+  private @Nullable Collection<@NotNull Node> getChildrenForWalker(@NotNull Node node, TreeWalkerBase<Node> walker, boolean allowLoading) {
     if (node.leafState == LeafState.ALWAYS || !allowLoading) return node.getChildren();
     promiseChildren(node)
       .onSuccess(parent -> walker.setChildren(parent.getChildren()))
@@ -305,19 +296,16 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Searchabl
     foreground.invoke(runnable);
   }
 
-  @NotNull
-  private <T> Consumer<T> onValidThread(@NotNull Consumer<? super T> consumer) {
+  private @NotNull <T> Consumer<T> onValidThread(@NotNull Consumer<? super T> consumer) {
     return value -> onValidThread(() -> consumer.accept(value));
   }
 
-  @NotNull
-  private Promise<Node> promiseRootEntry() {
+  private @NotNull Promise<Node> promiseRootEntry() {
     if (disposed) return rejectedPromise();
     return tree.queue.promise(this::submit, () -> new CmdGetRoot("Load root", null));
   }
 
-  @NotNull
-  private Promise<Node> promiseChildren(@NotNull Node node) {
+  private @NotNull Promise<Node> promiseChildren(@NotNull Node node) {
     if (disposed) return rejectedPromise();
     return node.queue.promise(this::submit, () -> {
       node.setLoading(!showLoadingNode ? null : new Node(new LoadingNode(), LeafState.ALWAYS));
@@ -329,16 +317,14 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Searchabl
     return disposed || object == null || !isValidThread() ? null : tree.map.get(object);
   }
 
-  @NotNull
-  private List<Node> getEntryChildren(Object object) {
+  private @NotNull List<Node> getEntryChildren(Object object) {
     Node node = getEntry(object);
     if (node == null) return emptyList();
     if (node.isLoadingRequired()) promiseChildren(node);
     return node.getChildren();
   }
 
-  @NotNull
-  private TreeModelEvent createEvent(@NotNull TreePath path, Map<Object, Integer> map) {
+  private @NotNull TreeModelEvent createEvent(@NotNull TreePath path, Map<Object, Integer> map) {
     if (map == null || map.isEmpty()) return new TreeModelEvent(this, path, null, null);
     int i = 0;
     int size = map.size();
@@ -376,8 +362,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Searchabl
     }
   }
 
-  @NotNull
-  private static LinkedHashMap<Object, Integer> getIndices(@NotNull List<Node> children, @Nullable ToIntFunction<? super Node> function) {
+  private static @NotNull LinkedHashMap<Object, Integer> getIndices(@NotNull List<Node> children, @Nullable ToIntFunction<? super Node> function) {
     LinkedHashMap<Object, Integer> map = new LinkedHashMap<>();
     for (int i = 0; i < children.size(); i++) {
       Node child = children.get(i);
@@ -404,8 +389,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Searchabl
     return count;
   }
 
-  @NotNull
-  private static List<Object> getIntersection(@NotNull Map<Object, Integer> indices, @NotNull Iterable<Object> objects) {
+  private static @NotNull List<Object> getIntersection(@NotNull Map<Object, Integer> indices, @NotNull Iterable<Object> objects) {
     List<Object> list = new ArrayList<>(indices.size());
     int last = -1;
     for (Object object : objects) {
@@ -418,8 +402,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Searchabl
     return list;
   }
 
-  @NotNull
-  private static List<Object> getIntersection(@NotNull Map<Object, Integer> removed, @NotNull Map<Object, Integer> inserted) {
+  private static @NotNull List<Object> getIntersection(@NotNull Map<Object, Integer> removed, @NotNull Map<Object, Integer> inserted) {
     if (removed.isEmpty() || inserted.isEmpty()) return emptyList();
     int countOne = getIntersectionCount(removed, inserted.keySet());
     int countTwo = getIntersectionCount(inserted, removed.keySet());
@@ -577,8 +560,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Searchabl
       return loaded;
     }
 
-    @Nullable
-    private List<Node> load(int count, @NotNull IntFunction<?> childGetter) {
+    private @Nullable List<Node> load(int count, @NotNull IntFunction<?> childGetter) {
       if (count < 0) LOG.warn("illegal child count: " + count);
       if (count <= 0) return emptyList();
 
@@ -766,8 +748,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Searchabl
       promises.forEach(promise -> promise.setError("cancel loading"));
     }
 
-    @NotNull
-    private Iterable<AsyncPromise<Node>> getPromises(T command) {
+    private @NotNull Iterable<AsyncPromise<Node>> getPromises(T command) {
       ArrayList<AsyncPromise<Node>> list = new ArrayList<>();
       while (true) {
         T last = deque.pollLast();
@@ -812,8 +793,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Searchabl
     private final Set<TreePath> paths = new SmartHashSet<>();
     private volatile Object object;
     private volatile LeafState leafState;
-    @Nullable
-    private volatile List<Node> children;
+    private volatile @Nullable List<Node> children;
     private volatile Node loading;
 
     private Node(@NotNull Object object, @NotNull LeafState leafState) {
@@ -843,8 +823,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Searchabl
       return leafState != LeafState.ALWAYS && children == null;
     }
 
-    @NotNull
-    private List<Node> getChildren() {
+    private @NotNull List<Node> getChildren() {
       List<Node> list = children;
       return list != null ? list : emptyList();
     }
@@ -911,8 +890,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Searchabl
       }
     }
 
-    @NotNull
-    private static TreePath update(@NotNull TreePath path, @NotNull Object oldObject, @NotNull Object newObject) {
+    private static @NotNull TreePath update(@NotNull TreePath path, @NotNull Object oldObject, @NotNull Object newObject) {
       if (!contains(path, oldObject)) return path;
       if (LOG.isTraceEnabled()) LOG.debug("update path: ", path);
       Object[] objects = TreePathUtil.convertTreePathToArray(path);

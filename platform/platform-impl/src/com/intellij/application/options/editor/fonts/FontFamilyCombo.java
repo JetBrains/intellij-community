@@ -57,9 +57,8 @@ class FontFamilyCombo extends AbstractFontCombo<FontFamilyCombo.MyFontItem> {
         }
       }
 
-      @Nullable
       @Override
-      public ListSeparator separatorFor(MyFontItem value) {
+      public @Nullable ListSeparator separatorFor(MyFontItem value) {
         if (getModel() instanceof MyModel m) {
           if (!m.myItems.isEmpty() && ContainerUtil.find(m.myItems, item -> item.myIsMonospaced) == value)
             return new ListSeparator(ApplicationBundle.message("settings.editor.font.monospaced"));
@@ -74,13 +73,12 @@ class FontFamilyCombo extends AbstractFontCombo<FontFamilyCombo.MyFontItem> {
         return ITEM_WIDTH;
       }
 
-      @NotNull
       @Override
-      public Component getListCellRendererComponent(@Nullable JList<? extends MyFontItem> list,
-                                                    MyFontItem value,
-                                                    int index,
-                                                    boolean isSelected,
-                                                    boolean cellHasFocus) {
+      public @NotNull Component getListCellRendererComponent(@Nullable JList<? extends MyFontItem> list,
+                                                             MyFontItem value,
+                                                             int index,
+                                                             boolean isSelected,
+                                                             boolean cellHasFocus) {
         final var component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
         if (index != -1 || !((MyModel)dataModel).isUpdating()) {
           return component;
@@ -134,7 +132,7 @@ class FontFamilyCombo extends AbstractFontCombo<FontFamilyCombo.MyFontItem> {
 
 
   protected static class MyFontItem {
-    private @NotNull final String myFamilyName;
+    private final @NotNull String myFamilyName;
     private boolean myIsMonospaced;
     private boolean myFontCanDisplayName;
     private @Nullable Font myFont;
@@ -149,8 +147,7 @@ class FontFamilyCombo extends AbstractFontCombo<FontFamilyCombo.MyFontItem> {
       return myFamilyName;
     }
 
-    @NlsSafe
-    public @NotNull String getFamilyName() {
+    public @NlsSafe @NotNull String getFamilyName() {
       return myFamilyName;
     }
 
@@ -178,7 +175,7 @@ class FontFamilyCombo extends AbstractFontCombo<FontFamilyCombo.MyFontItem> {
      * {@link com.intellij.openapi.editor.colors.FontPreferences}.
      * It is used for quick filtering of monospaced fonts before the actual list is shown.
      */
-    private final static String[] KNOWN_MONOSPACED_FAMILIES = {
+    private static final String[] KNOWN_MONOSPACED_FAMILIES = {
       "Consolas",
       "DejaVu Sans Mono",
       "Droid Sans Mono",

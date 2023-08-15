@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.content.impl;
 
 import com.intellij.openapi.Disposable;
@@ -15,7 +15,7 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 
 public class ContentImpl extends UserDataHolderBase implements Content {
-  @NonNls public static final String PROP_CONTENT_MANAGER = "contentManager";
+  public static final @NonNls String PROP_CONTENT_MANAGER = "contentManager";
   private @NlsContexts.TabTitle String myDisplayName;
   private @NlsContexts.Tooltip String myDescription;
   private JComponent myComponent;
@@ -261,8 +261,7 @@ public class ContentImpl extends UserDataHolderBase implements Content {
   }
 
   @Override
-  @NonNls
-  public String toString() {
+  public @NonNls String toString() {
     return "Content name="+getDisplayName()
            + (getDescription() == null ? "" : "; description='"+getDescription()+"'")
            + (getTabName() == null ? "" : "; tab name='"+getTabName()+"'")

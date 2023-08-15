@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.notification.impl;
 
 import com.intellij.notification.*;
@@ -49,8 +49,7 @@ public final class NotificationsConfigurationImpl extends NotificationsConfigura
     }
   }
 
-  @Nullable
-  public String getToolWindowId(@NotNull String groupId) {
+  public @Nullable String getToolWindowId(@NotNull String groupId) {
     NotificationGroup group = NotificationGroup.findRegisteredGroup(groupId);
     return group == null ? null : group.getToolWindowId();
   }
@@ -89,8 +88,7 @@ public final class NotificationsConfigurationImpl extends NotificationsConfigura
     return settings == null ? getDefaultSettings(groupId) : settings;
   }
 
-  @NotNull
-  private static NotificationSettings getDefaultSettings(String groupId) {
+  private static @NotNull NotificationSettings getDefaultSettings(String groupId) {
     NotificationGroup group = NotificationGroup.findRegisteredGroup(groupId);
     if (group != null) {
       return new NotificationSettings(groupId, group.getDisplayType(), group.isLogByDefault(), false);

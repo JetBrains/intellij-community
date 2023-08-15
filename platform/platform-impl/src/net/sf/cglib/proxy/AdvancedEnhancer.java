@@ -359,8 +359,7 @@ public final class AdvancedEnhancer extends AbstractClassGenerator
     return super.create(createKey());
   }
 
-  @NotNull
-  private List<Object> createKey() {
+  private @NotNull List<Object> createKey() {
     List<Object> tuple = new ArrayList<>();
     tuple.add(Arrays.asList(callbackTypes));
     tuple.add((useFactory ? 1 : 0) + (interceptDuringConstruction ? 2 : 0));

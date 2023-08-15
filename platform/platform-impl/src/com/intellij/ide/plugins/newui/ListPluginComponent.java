@@ -87,7 +87,7 @@ public final class ListPluginComponent extends JPanel {
   private ErrorComponent myErrorComponent;
   private ProgressIndicatorEx myIndicator;
   private EventHandler myEventHandler;
-  @NotNull private EventHandler.SelectionType mySelection = EventHandler.SelectionType.NONE;
+  private @NotNull EventHandler.SelectionType mySelection = EventHandler.SelectionType.NONE;
 
   public ListPluginComponent(@NotNull MyPluginModel pluginModel,
                              @NotNull IdeaPluginDescriptor plugin,
@@ -1106,18 +1106,16 @@ public final class ListPluginComponent extends JPanel {
     return new SelectionBasedPluginModelAction.UninstallAction<>(myPluginModel, true, this, selection, function);
   }
 
-  @NotNull
-  static JLabel createRatingLabel(@NotNull JPanel panel, @NotNull @Nls String text, @Nullable Icon icon) {
+  static @NotNull JLabel createRatingLabel(@NotNull JPanel panel, @NotNull @Nls String text, @Nullable Icon icon) {
     return createRatingLabel(panel, null, text, icon, null, true);
   }
 
-  @NotNull
-  static JLabel createRatingLabel(@NotNull JPanel panel,
-                                  @Nullable Object constraints,
-                                  @NotNull @Nls String text,
-                                  @Nullable Icon icon,
-                                  @Nullable Color color,
-                                  boolean tiny) {
+  static @NotNull JLabel createRatingLabel(@NotNull JPanel panel,
+                                           @Nullable Object constraints,
+                                           @NotNull @Nls String text,
+                                           @Nullable Icon icon,
+                                           @Nullable Color color,
+                                           boolean tiny) {
     JLabel label = new JLabel(text, icon, SwingConstants.CENTER);
     label.setOpaque(false);
     label.setIconTextGap(2);

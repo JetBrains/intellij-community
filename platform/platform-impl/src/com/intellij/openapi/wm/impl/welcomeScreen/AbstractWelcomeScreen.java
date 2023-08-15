@@ -19,7 +19,7 @@ import static com.intellij.openapi.wm.impl.welcomeScreen.ActionGroupPanelWrapper
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenComponentFactory.getApplicationTitle;
 
 public abstract class AbstractWelcomeScreen extends JPanel implements WelcomeScreen {
-  @NonNls private static final String ROOT_ID = "root";
+  private static final @NonNls String ROOT_ID = "root";
   protected final JBSlidingPanel slidingPanel = new JBSlidingPanel();
 
   protected AbstractWelcomeScreen() {

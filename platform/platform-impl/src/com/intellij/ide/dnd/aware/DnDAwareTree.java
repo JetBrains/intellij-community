@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.dnd.aware;
 
 import com.intellij.ide.dnd.DnDAware;
@@ -63,28 +63,24 @@ public class DnDAwareTree extends Tree implements DnDAware {
   }
 
   @Override
-  @NotNull
-  public final JComponent getComponent() {
+  public final @NotNull JComponent getComponent() {
     return this;
   }
 
-  @NotNull
-  public static Pair<Image, Point> getDragImage(@NotNull Tree dndAwareTree, @NotNull TreePath path, @NotNull Point dragOrigin) {
+  public static @NotNull Pair<Image, Point> getDragImage(@NotNull Tree dndAwareTree, @NotNull TreePath path, @NotNull Point dragOrigin) {
     int row = dndAwareTree.getRowForPath(path);
     Component comp = dndAwareTree.getCellRenderer().getTreeCellRendererComponent(dndAwareTree, path.getLastPathComponent(), false, true, true, row, false);
     return createDragImage(dndAwareTree, comp, dragOrigin, true);
   }
 
-  @NotNull
-  public static Pair<Image, Point> getDragImage(@NotNull Tree dndAwareTree, @NotNull @Nls String text, @Nullable Point dragOrigin) {
+  public static @NotNull Pair<Image, Point> getDragImage(@NotNull Tree dndAwareTree, @NotNull @Nls String text, @Nullable Point dragOrigin) {
     return createDragImage(dndAwareTree, new JLabel(text), dragOrigin, false);
   }
 
-  @NotNull
-  private static Pair<Image, Point> createDragImage(@NotNull Tree tree,
-                                                    @NotNull Component c,
-                                                    @Nullable Point dragOrigin,
-                                                    boolean adjustToPathUnderDragOrigin) {
+  private static @NotNull Pair<Image, Point> createDragImage(@NotNull Tree tree,
+                                                             @NotNull Component c,
+                                                             @Nullable Point dragOrigin,
+                                                             boolean adjustToPathUnderDragOrigin) {
     if (c instanceof JComponent) {
       ((JComponent)c).setOpaque(true);
     }

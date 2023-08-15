@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.cachedValueProfiler;
 
 import com.google.gson.stream.JsonReader;
@@ -110,15 +110,13 @@ public final class CachedValueProfilerDumpHelper {
     return null;
   }
 
-  @NotNull
-  private static File newFile(boolean tmp) {
+  private static @NotNull File newFile(boolean tmp) {
     String fileName = "caches-" + new SimpleDateFormat("yyyyMMdd-HHmmss").format(new Date(System.currentTimeMillis())) +
                       "." + FILE_EXTENSION + (tmp ? ".tmp" : "");
     return new File(new File(PathManager.getLogPath()), fileName);
   }
 
-  @NotNull
-  private static MyWriter newFileWriter(File file) throws IOException {
+  private static @NotNull MyWriter newFileWriter(File file) throws IOException {
     return new MyWriter(new GZIPOutputStream(new BufferedOutputStream(new FileOutputStream(file))));
   }
 
@@ -428,8 +426,7 @@ public final class CachedValueProfilerDumpHelper {
     }
   }
 
-  @NotNull
-  static CachedValueProfiler.EventPlace eventPlace(@Nullable StackTraceElement place) {
+  static @NotNull CachedValueProfiler.EventPlace eventPlace(@Nullable StackTraceElement place) {
     return new CachedValueProfiler.EventPlace() {
       @Override public StackTraceElement getStackFrame() { return place; }
 

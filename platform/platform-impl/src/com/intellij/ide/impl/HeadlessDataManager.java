@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.impl;
 
 import com.intellij.ide.DataManager;
@@ -97,34 +97,29 @@ public class HeadlessDataManager extends DataManagerImpl {
     manager.myUseProductionDataManager = true;
   }
 
-  @NotNull
   @Override
-  public DataContext getDataContext() {
+  public @NotNull DataContext getDataContext() {
     return new HeadlessContext(myTestDataProvider, productionDataContext(super::getDataContext));
   }
 
-  @NotNull
   @Override
-  public Promise<DataContext> getDataContextFromFocusAsync() {
+  public @NotNull Promise<DataContext> getDataContextFromFocusAsync() {
     AsyncPromise<DataContext> promise = new AsyncPromise<>();
     promise.setResult(getDataContext());
     return promise;
   }
 
-  @NotNull
   @Override
-  public DataContext getDataContext(Component component) {
+  public @NotNull DataContext getDataContext(Component component) {
     return new HeadlessContext(myTestDataProvider, productionDataContext(() -> super.getDataContext(component)));
   }
 
-  @NotNull
   @Override
-  public DataContext getDataContext(@NotNull Component component, int x, int y) {
+  public @NotNull DataContext getDataContext(@NotNull Component component, int x, int y) {
     return new HeadlessContext(myTestDataProvider, productionDataContext(() -> super.getDataContext(component, x, y)));
   }
 
-  @Nullable
-  private DataContext productionDataContext(@NotNull Supplier<? extends @NotNull DataContext> dataContextSupplier) {
+  private @Nullable DataContext productionDataContext(@NotNull Supplier<? extends @NotNull DataContext> dataContextSupplier) {
     return myUseProductionDataManager ? dataContextSupplier.get() : null;
   }
 }

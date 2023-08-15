@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.icons.AllIcons;
@@ -96,9 +96,8 @@ public class ActionButtonWithText extends ActionButton {
     }
   }
 
-  @NotNull
   @Override
-  protected Icon getFallbackIcon(boolean enabled) {
+  protected @NotNull Icon getFallbackIcon(boolean enabled) {
     return EmptyIcon.ICON_0;
   }
 
@@ -226,8 +225,7 @@ public class ActionButtonWithText extends ActionButton {
     }
   }
 
-  @NotNull
-  protected Icon getDownArrowIcon() {
+  protected @NotNull Icon getDownArrowIcon() {
     return AllIcons.General.LinkDropTriangle;
   }
 
@@ -292,9 +290,7 @@ public class ActionButtonWithText extends ActionButton {
     return -1;
   }
 
-  @NotNull
-  @NlsActions.ActionText
-  protected String getText() {
+  protected @NotNull @NlsActions.ActionText String getText() {
     final String text = myPresentation.getText(true);
     return text != null ? text : "";
   }

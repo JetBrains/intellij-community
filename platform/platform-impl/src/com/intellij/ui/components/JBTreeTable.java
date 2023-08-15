@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components;
 
 import com.intellij.openapi.ui.Divider;
@@ -159,13 +159,11 @@ public class JBTreeTable extends JComponent implements TreePathBackgroundSupplie
     setModel(model);
   }
 
-  @NotNull
-  public Tree getTree() {
+  public @NotNull Tree getTree() {
     return myTree;
   }
 
-  @NotNull
-  public JBTable getTable() {
+  public @NotNull JBTable getTable() {
     return myTable;
   }
 
@@ -173,8 +171,7 @@ public class JBTreeTable extends JComponent implements TreePathBackgroundSupplie
     myTable.setDefaultRenderer(columnClass,renderer);
   }
 
-  @NotNull
-  public TableCellRenderer getDefaultRenderer(@NotNull Class<?> columnClass) {
+  public @NotNull TableCellRenderer getDefaultRenderer(@NotNull Class<?> columnClass) {
     return myTable.getDefaultRenderer(columnClass);
   }
 
@@ -227,9 +224,8 @@ public class JBTreeTable extends JComponent implements TreePathBackgroundSupplie
     ref.setRowSorter(sorter);
   }
 
-  @Nullable
   @Override
-  public Color getPathBackground(@NotNull TreePath path, int row) {
+  public @Nullable Color getPathBackground(@NotNull TreePath path, int row) {
     return null;
   }
 
@@ -395,9 +391,8 @@ public class JBTreeTable extends JComponent implements TreePathBackgroundSupplie
       }
     }
 
-    @Nullable
     @Override
-    public Color getPathBackground(@NotNull TreePath path, int row) {
+    public @Nullable Color getPathBackground(@NotNull TreePath path, int row) {
       return JBTreeTable.this.getPathBackground(path, row);
     }
   }

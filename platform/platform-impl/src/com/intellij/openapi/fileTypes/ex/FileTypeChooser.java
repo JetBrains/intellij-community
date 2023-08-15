@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileTypes.ex;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -148,8 +148,7 @@ public final class FileTypeChooser extends DialogWrapper {
    * Otherwise, asks user to select file type and associates it with fileName extension if any selected.
    * @return Known file type or null. Never returns {@link FileTypes#UNKNOWN}.
    */
-  @Nullable
-  public static FileType getKnownFileTypeOrAssociate(@NotNull VirtualFile file, @Nullable Project project) {
+  public static @Nullable FileType getKnownFileTypeOrAssociate(@NotNull VirtualFile file, @Nullable Project project) {
     FileType type = file.getFileType();
     if (type == FileTypes.UNKNOWN) {
       type = getKnownFileTypeOrAssociate(file.getName());
@@ -160,13 +159,11 @@ public final class FileTypeChooser extends DialogWrapper {
   /**
    * Speculates if file with newName had known file type
    */
-  @Nullable
-  public static FileType getKnownFileTypeOrAssociate(@NotNull VirtualFile parent, @NotNull String newName, @Nullable Project project) {
+  public static @Nullable FileType getKnownFileTypeOrAssociate(@NotNull VirtualFile parent, @NotNull String newName, @Nullable Project project) {
     return getKnownFileTypeOrAssociate(new FakeVirtualFile(parent, newName), project);
   }
 
-  @Nullable
-  public static FileType getKnownFileTypeOrAssociate(@NotNull String fileName) {
+  public static @Nullable FileType getKnownFileTypeOrAssociate(@NotNull String fileName) {
     FileTypeManager fileTypeManager = FileTypeManager.getInstance();
     FileType type = fileTypeManager.getFileTypeByFileName(fileName);
     if (type == FileTypes.UNKNOWN) {
@@ -175,8 +172,7 @@ public final class FileTypeChooser extends DialogWrapper {
     return type;
   }
 
-  @Nullable
-  public static FileType associateFileType(@NotNull final String fileName) {
+  public static @Nullable FileType associateFileType(final @NotNull String fileName) {
     final FileTypeChooser chooser = new FileTypeChooser(suggestPatterns(fileName), fileName);
     if (!chooser.showAndGet()) {
       return null;
@@ -193,8 +189,7 @@ public final class FileTypeChooser extends DialogWrapper {
     return (String)myPattern.getSelectedItem();
   }
 
-  @NotNull
-  static List<String> suggestPatterns(@NotNull String fileName) {
+  static @NotNull List<String> suggestPatterns(@NotNull String fileName) {
     List<String> patterns = new LinkedList<>();
 
     int i = -1;

@@ -339,13 +339,11 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
     myPluginUpdatesService = service;
   }
 
-  @Nullable
-  public PluginsGroup getDownloadedGroup() {
+  public @Nullable PluginsGroup getDownloadedGroup() {
     return myDownloaded;
   }
 
-  @NotNull
-  public static Set<IdeaPluginDescriptor> getInstallingPlugins() {
+  public static @NotNull Set<IdeaPluginDescriptor> getInstallingPlugins() {
     return myInstallingPlugins;
   }
 
@@ -682,8 +680,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
     }
   }
 
-  @NotNull
-  static InstallPluginInfo finishInstall(@NotNull IdeaPluginDescriptor descriptor) {
+  static @NotNull InstallPluginInfo finishInstall(@NotNull IdeaPluginDescriptor descriptor) {
     InstallPluginInfo info = myInstallingInfos.remove(descriptor.getPluginId());
     info.close();
     myInstallingWithUpdatesPlugins.remove(descriptor);

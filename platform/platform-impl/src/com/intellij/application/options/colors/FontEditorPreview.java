@@ -218,7 +218,7 @@ public class FontEditorPreview implements PreviewPanel{
     }
   }
 
-  final static class RestorePreviewTextAction extends DumbAwareAction {
+  static final class RestorePreviewTextAction extends DumbAwareAction {
     @Override
     public @NotNull ActionUpdateThread getActionUpdateThread() {
       return ActionUpdateThread.EDT;

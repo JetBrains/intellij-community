@@ -15,9 +15,8 @@ import java.awt.event.MouseMotionListener;
 public abstract class LinkMouseListenerBase<T> extends ClickListener implements MouseMotionListener {
   public static void installSingleTagOn(@NotNull SimpleColoredComponent component) {
     new LinkMouseListenerBase<Object>() {
-      @Nullable
       @Override
-      protected Object getTagAt(@NotNull MouseEvent e) {
+      protected @Nullable Object getTagAt(@NotNull MouseEvent e) {
         return ((SimpleColoredComponent)e.getSource()).getFragmentTagAt(e.getX());
       }
 
@@ -40,8 +39,7 @@ public abstract class LinkMouseListenerBase<T> extends ClickListener implements 
     }.installOn(component);
   }
 
-  @Nullable
-  protected abstract T getTagAt(@NotNull MouseEvent e);
+  protected abstract @Nullable T getTagAt(@NotNull MouseEvent e);
 
   @Override
   public boolean onClick(@NotNull MouseEvent e, int clickCount) {

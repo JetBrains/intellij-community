@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -216,8 +216,7 @@ public final class PersistentFSContentAccessor {
     }
   }
 
-  @NotNull
-  private static MessageDigest getContentHashDigest() {
+  private static @NotNull MessageDigest getContentHashDigest() {
     // MAYBE: consider replace it with sha-256? It is 20%-30% slower than sha1, but more secure.
     //        For now I think this is not really a priority -- but we may consider the move at some point.
 

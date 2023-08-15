@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import org.jetbrains.annotations.NotNull;
@@ -13,12 +13,9 @@ import java.util.function.Consumer;
 public interface JBAccountInfoService {
 
   final class JBAData {
-    @NotNull
-    public final String id;
-    @Nullable
-    public final String loginName;
-    @Nullable
-    public final String email;
+    public final @NotNull String id;
+    public final @Nullable String loginName;
+    public final @Nullable String email;
 
     public JBAData(@NotNull String userId, @Nullable String loginName, @Nullable String email) {
       this.id = userId;
@@ -30,13 +27,11 @@ public interface JBAccountInfoService {
   @Nullable
   JBAccountInfoService.JBAData getUserData();
 
-  @Nullable
-  default String getIdToken() {
+  default @Nullable String getIdToken() {
     return null;
   }
 
-  @NotNull
-  default Future<String> getAccessToken() {
+  default @NotNull Future<String> getAccessToken() {
     return new Future<String>() {
       @Override
       public boolean cancel(boolean mayInterruptIfRunning) {
@@ -67,8 +62,7 @@ public interface JBAccountInfoService {
 
   void invokeJBALogin(@Nullable Consumer<? super String> userIdConsumer, @Nullable Runnable onFailure);
 
-  @Nullable
-  static JBAccountInfoService getInstance() {
+  static @Nullable JBAccountInfoService getInstance() {
     try {
       return ServiceLoader.load(JBAccountInfoService.class).findFirst().orElse(null);
     }

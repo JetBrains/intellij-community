@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.content;
 
 import com.intellij.ide.IdeEventQueue;
@@ -70,9 +70,8 @@ public final class TabbedContentTabLabel extends ContentTabLabel {
     myPopupState.hidePopup();
   }
 
-  @NotNull
   @Override
-  public TabbedContent getContent() {
+  public @NotNull TabbedContent getContent() {
     return (TabbedContent)super.getContent();
   }
 

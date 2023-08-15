@@ -19,8 +19,7 @@ import java.awt.event.MouseEvent;
  * Implementation of {@link EditorPopupHandler} showing a context menu for some {@link ActionGroup} (which can depend on click location).
  */
 public abstract class ContextMenuPopupHandler implements EditorPopupHandler {
-  @Nullable
-  public abstract ActionGroup getActionGroup(@NotNull EditorMouseEvent event);
+  public abstract @Nullable ActionGroup getActionGroup(@NotNull EditorMouseEvent event);
 
   @Override
   public boolean handlePopup(@NotNull EditorMouseEvent event) {
@@ -35,8 +34,7 @@ public abstract class ContextMenuPopupHandler implements EditorPopupHandler {
     return true;
   }
 
-  @Nullable
-  static ActionGroup getGroupForId(@Nullable String groupId) {
+  static @Nullable ActionGroup getGroupForId(@Nullable String groupId) {
     return groupId == null ? null : ObjectUtils.tryCast(CustomActionsSchema.getInstance().getCorrectedAction(groupId), ActionGroup.class);
   }
 
@@ -44,14 +42,12 @@ public abstract class ContextMenuPopupHandler implements EditorPopupHandler {
    * {@link ContextMenuPopupHandler} specification, which uses an action group registered in {@link ActionManager} under given id.
    */
   public abstract static class ById extends ContextMenuPopupHandler {
-    @Nullable
     @Override
-    public ActionGroup getActionGroup(@NotNull EditorMouseEvent event) {
+    public @Nullable ActionGroup getActionGroup(@NotNull EditorMouseEvent event) {
       return ContextMenuPopupHandler.getGroupForId(getActionGroupId(event));
     }
 
-    @Nullable
-    public abstract String getActionGroupId(@NotNull EditorMouseEvent event);
+    public abstract @Nullable String getActionGroupId(@NotNull EditorMouseEvent event);
   }
 
   /**
@@ -68,9 +64,8 @@ public abstract class ContextMenuPopupHandler implements EditorPopupHandler {
       this(ContextMenuPopupHandler.getGroupForId(groupId));
     }
 
-    @Nullable
     @Override
-    public ActionGroup getActionGroup(@NotNull EditorMouseEvent event) {
+    public @Nullable ActionGroup getActionGroup(@NotNull EditorMouseEvent event) {
       return myActionGroup;
     }
   }

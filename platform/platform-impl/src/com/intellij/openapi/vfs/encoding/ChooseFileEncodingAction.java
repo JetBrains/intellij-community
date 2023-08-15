@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.vfs.encoding;
 
@@ -43,7 +43,7 @@ public abstract class ChooseFileEncodingAction extends ComboBoxAction {
   }
 
   @Override
-  public abstract void update(@NotNull final AnActionEvent e);
+  public abstract void update(final @NotNull AnActionEvent e);
 
   private void fillCharsetActions(@NotNull DefaultActionGroup group,
                                   @Nullable VirtualFile virtualFile,
@@ -122,10 +122,9 @@ public abstract class ChooseFileEncodingAction extends ComboBoxAction {
   };
   protected abstract void chosen(@Nullable VirtualFile virtualFile, @NotNull Charset charset);
 
-  @NotNull
-  protected DefaultActionGroup createCharsetsActionGroup(@Nullable @NlsActions.ActionText String clearItemText,
-                                                         @Nullable Charset alreadySelected,
-                                                         @NotNull Function<? super Charset, @NlsActions.ActionDescription String> descriptionSupplier) {
+  protected @NotNull DefaultActionGroup createCharsetsActionGroup(@Nullable @NlsActions.ActionText String clearItemText,
+                                                                  @Nullable Charset alreadySelected,
+                                                                  @NotNull Function<? super Charset, @NlsActions.ActionDescription String> descriptionSupplier) {
     DefaultActionGroup group = new DefaultActionGroup();
     List<Charset> favorites = new ArrayList<>(EncodingManager.getInstance().getFavorites());
     Collections.sort(favorites);

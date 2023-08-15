@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.mac.touchbar;
 
 import com.intellij.execution.ExecutionException;
@@ -29,7 +29,7 @@ import java.util.concurrent.Future;
 public final class Helpers {
   private static final Logger LOG = Logger.getInstance(Helpers.class);
   private static final String MODEL_ID_PREFIX = "Model Identifier:";
-  @NonNls private static final String TB_SERVER_PROCESS = "TouchBarServer";
+  private static final @NonNls String TB_SERVER_PROCESS = "TouchBarServer";
   private static final boolean FORCE_PHYSICAL_ESC = Boolean.getBoolean("touchbar.physical.esc");
   private static Boolean ourIsPhysicalEsc = null;
   private static Future<?> ourIsPhysicalEscFuture = null;

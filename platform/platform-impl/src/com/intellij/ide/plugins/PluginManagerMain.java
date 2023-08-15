@@ -80,7 +80,7 @@ public final class PluginManagerMain {
                                         boolean allowInstallWithoutRestart,
                                         @Nullable Runnable onSuccess,
                                         @NotNull com.intellij.ide.plugins.PluginEnabler pluginEnabler,
-                                        @NotNull final ModalityState modalityState,
+                                        final @NotNull ModalityState modalityState,
                                         @Nullable Consumer<Boolean> function) throws IOException {
     return downloadPluginsImpl(plugins, customPlugins, allowInstallWithoutRestart, onSuccess, pluginEnabler, function, modalityState, true);
   }

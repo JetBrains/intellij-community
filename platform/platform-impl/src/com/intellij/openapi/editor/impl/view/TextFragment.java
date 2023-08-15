@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.view;
 
 import org.jetbrains.annotations.NotNull;
@@ -24,9 +24,8 @@ abstract class TextFragment implements LineFragment {
 
   abstract boolean isRtl();
 
-  @NotNull
   @Override
-  public LineFragment subFragment(int startOffset, int endOffset) {
+  public @NotNull LineFragment subFragment(int startOffset, int endOffset) {
     assert startOffset >= 0;
     assert endOffset <= myCharPositions.length;
     assert startOffset < endOffset;
@@ -146,9 +145,8 @@ abstract class TextFragment implements LineFragment {
       return TextFragment.this.draw(x, y, visualOffsetToParent(startOffset), visualOffsetToParent(endOffset));
     }
 
-    @NotNull
     @Override
-    public LineFragment subFragment(int startOffset, int endOffset) {
+    public @NotNull LineFragment subFragment(int startOffset, int endOffset) {
       return TextFragment.this.subFragment(startOffset + myStartOffset, endOffset + myStartOffset);
     }
   }

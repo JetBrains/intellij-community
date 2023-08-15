@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options.ex;
 
 import com.intellij.BundleBase;
@@ -489,8 +489,7 @@ public final class ConfigurableExtensionPointUtil {
   /**
    * @return path from configurable to Settings/Preferences root as a string of display names separated by '|' e.g., Editor | Inspections
    */
-  @Nls
-  public static String getConfigurablePath(Class<? extends Configurable> configurableClass, Project project) {
+  public static @Nls String getConfigurablePath(Class<? extends Configurable> configurableClass, Project project) {
     List<String> path = new ArrayList<>();
     collectPath(configurableClass, path, getConfigurableGroup(project, true).getConfigurables());
     return StringUtil.join(path, SearchableOptionsRegistrar.SETTINGS_GROUP_SEPARATOR);

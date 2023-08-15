@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.ide.ui.UISettings;
@@ -173,7 +173,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
     return FileEditorManagerEx.Companion.getInstanceExIfCreated(myProject);
   }
 
-  private @NotNull static PersistentHashMap<String, Long> initRecentFilesTimestampMap(@NotNull Project project) {
+  private static @NotNull PersistentHashMap<String, Long> initRecentFilesTimestampMap(@NotNull Project project) {
     Path file = ProjectUtil.getProjectCachePath(project, "recentFilesTimeStamps.dat");
     try {
       return IOUtil.openCleanOrResetBroken(() -> createMap(file), file);

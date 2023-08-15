@@ -121,8 +121,7 @@ public final class ProgressManagerImpl extends CoreProgressManager implements Di
   }
 
   @Override
-  @NotNull
-  protected ProgressIndicator createDefaultAsynchronousProgressIndicator(@NotNull Task.Backgroundable task) {
+  protected @NotNull ProgressIndicator createDefaultAsynchronousProgressIndicator(@NotNull Task.Backgroundable task) {
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
       return shouldKeepTasksAsynchronousInHeadlessMode()
              ? new ProgressIndicatorBase()

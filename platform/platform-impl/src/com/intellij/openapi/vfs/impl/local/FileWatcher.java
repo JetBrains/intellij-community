@@ -3,7 +3,9 @@ package com.intellij.openapi.vfs.impl.local;
 
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.IdeCoreBundle;
-import com.intellij.notification.*;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationListener;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NlsContexts;
@@ -34,7 +36,7 @@ import java.util.function.Supplier;
 public final class FileWatcher implements AppLifecycleListener {
   private static final Logger LOG = Logger.getInstance(FileWatcher.class);
 
-  final static class DirtyPaths {
+  static final class DirtyPaths {
     final Set<String> dirtyPaths = new HashSet<>();
     final Set<String> dirtyPathsRecursive = new HashSet<>();
     final Set<String> dirtyDirectories = new HashSet<>();

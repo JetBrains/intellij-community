@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.ui;
 
 import com.google.common.collect.ImmutableList;
@@ -813,9 +813,8 @@ final class ComponentPanelTestAction extends DumbAwareAction {
           super(items.toArray(new Item[0]));
         }
 
-        @Nullable
         @Override
-        public ListModel<Item> onChosen(Item selectedValue) {
+        public @Nullable ListModel<Item> onChosen(Item selectedValue) {
           if (selectedValue.myChildren.isEmpty()) return null;
           return new Model(selectedValue.myChildren);
         }

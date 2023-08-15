@@ -76,9 +76,8 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
         content.storeState();
       }
 
-      @Nullable
       @Override
-      protected String getDimensionServiceKey() {
+      protected @Nullable String getDimensionServiceKey() {
         return project == null ? null : "UI.Defaults.Dialog";
       }
 
@@ -291,8 +290,7 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
         return newValue != null ? parser.apply(newValue) : null;
       }
 
-      @Nullable
-      private Insets editInsets(String key, String value) {
+      private @Nullable Insets editInsets(String key, String value) {
         String newValue = Messages.showInputDialog(getRootPane(),
                                                    IdeBundle.message("dialog.message.enter.new.value.for.0.in.form.top.left.bottom.right", key),
                                                    IdeBundle.message("dialog.title.insets.editor"), null, value,
@@ -311,8 +309,7 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
         return newValue != null ? parseInsets(newValue) : null;
       }
 
-      @Nullable
-      private static Insets parseInsets(String value) {
+      private static @Nullable Insets parseInsets(String value) {
         String[] parts = value.split(",");
         if(parts.length != 4) {
           return null;
@@ -326,8 +323,7 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
         }
       }
 
-      @Nullable
-      private Dimension editDimension(String key, String value) {
+      private @Nullable Dimension editDimension(String key, String value) {
         String newValue = Messages.showInputDialog(getRootPane(),
                                                    IdeBundle.message("dialog.message.enter.new.value.for.0.in.form.width.height", key),
                                                    IdeBundle.message("dialog.title.dimension.editor"), null, value,
@@ -346,8 +342,7 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
         return newValue != null ? parseDimension(newValue) : null;
       }
 
-      @Nullable
-      private static Dimension parseDimension(String value) {
+      private static @Nullable Dimension parseDimension(String value) {
         String[] parts = value.split(",");
         if(parts.length != 2) {
           return null;
@@ -361,8 +356,7 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
         }
       }
 
-      @Nullable
-      private UIUtil.GrayFilter editGrayFilter(String key, String value) {
+      private @Nullable UIUtil.GrayFilter editGrayFilter(String key, String value) {
         String newValue = Messages.showInputDialog(getRootPane(),
                                                    IdeBundle.message(
                                                      "dialog.message.enter.new.value.for.0.in.form.brightness.contrast.alpha", key),
@@ -382,8 +376,7 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
         return newValue != null ? parseGrayFilter(newValue) : null;
       }
 
-      @Nullable
-      private static UIUtil.GrayFilter parseGrayFilter(String value) {
+      private static @Nullable UIUtil.GrayFilter parseGrayFilter(String value) {
         String[] parts = value.split(",");
         if(parts.length != 3) {
           return null;
@@ -397,8 +390,7 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
         }
       }
 
-      @Nullable
-      private Font editFontSize(String key, Font font) {
+      private @Nullable Font editFontSize(String key, Font font) {
         String newValue = Messages.showInputDialog(getRootPane(),
                                                    IdeBundle.message("label.enter.new.font.size.for.0", key),
                                                    IdeBundle.message("dialog.title.font.size.editor"), null, Integer.toString(font.getSize()),
@@ -417,8 +409,7 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
         return newValue != null ? parseFontSize(font, newValue) : null;
       }
 
-      @Nullable
-      private static Font parseFontSize(Font font, String value) {
+      private static @Nullable Font parseFontSize(Font font, String value) {
         try {
           int newSize = Integer.parseInt(value);
           return (newSize > 0) ? font.deriveFont((float)newSize) : null;
@@ -447,8 +438,7 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
     return data;
   }
 
-  @NotNull
-  static FilteringTableModel<Object> createFilteringModel() {
+  static @NotNull FilteringTableModel<Object> createFilteringModel() {
     DefaultTableModel model = new DefaultTableModel(getUIDefaultsData(), new Object[]{"Name", "Value"}) {
       @Override
       public boolean isCellEditable(int row, int column) {

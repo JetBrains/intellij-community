@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.icons.AllIcons;
@@ -53,17 +53,13 @@ import static com.intellij.openapi.vfs.newvfs.VfsPresentationUtil.getFileBackgro
  */
 public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implements DataProvider, UserDataHolder, Disposable {
 
-  @NotNull
-  private final Project myProject;
+  private final @NotNull Project myProject;
 
-  @Nullable
-  private final String myGroupId;
+  private final @Nullable String myGroupId;
 
-  @Nullable
-  private final FinderRecursivePanel<?> myParent;
+  private final @Nullable FinderRecursivePanel<?> myParent;
 
-  @Nullable
-  private JComponent myChild = null;
+  private @Nullable JComponent myChild = null;
 
   // whether panel should call getListItems() from NonBlockingReadAction
   private boolean myNonBlockingLoad = false;
@@ -154,20 +150,15 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
    *
    * @return Items for list.
    */
-  @NotNull
-  protected abstract List<T> getListItems();
+  protected abstract @NotNull List<T> getListItems();
 
-  @Nls
-  protected String getListEmptyText() {
+  protected @Nls String getListEmptyText() {
     return IdeBundle.message("empty.text.no.entries");
   }
 
-  @NotNull
-  @Nls
-  protected abstract String getItemText(@NotNull T t);
+  protected abstract @NotNull @Nls String getItemText(@NotNull T t);
 
-  @Nullable
-  protected Icon getItemIcon(@NotNull T t) {
+  protected @Nullable Icon getItemIcon(@NotNull T t) {
     return null;
   }
 
@@ -181,8 +172,7 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
    * @param t the list item
    * @return the text to display in a tooltip for the given list item
    */
-  @Nullable
-  protected @NlsContexts.Tooltip String getItemTooltipText(@NotNull T t) {
+  protected @Nullable @NlsContexts.Tooltip String getItemTooltipText(@NotNull T t) {
     return null;
   }
 
@@ -194,8 +184,7 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
    * @param t Current item.
    * @return Containing file.
    */
-  @Nullable
-  protected VirtualFile getContainingFile(@NotNull T t) {
+  protected @Nullable VirtualFile getContainingFile(@NotNull T t) {
     return null;
   }
 
@@ -203,13 +192,11 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
     return getSelectedValue() != null;
   }
 
-  @Nullable
-  protected JComponent createRightComponent(@NotNull T t) {
+  protected @Nullable JComponent createRightComponent(@NotNull T t) {
     return new JPanel();
   }
 
-  @Nullable
-  protected JComponent createDefaultRightComponent() {
+  protected @Nullable JComponent createDefaultRightComponent() {
     return new JBPanelWithEmptyText().withEmptyText(IdeBundle.message("empty.text.nothing.selected"));
   }
 
@@ -388,9 +375,8 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
     return true;
   }
 
-  @Nullable
   @Override
-  public Object getData(@NotNull @NonNls String dataId) {
+  public @Nullable Object getData(@NotNull @NonNls String dataId) {
     Object selectedValue = getSelectedValue();
     if (selectedValue == null) return null;
 
@@ -409,8 +395,7 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
     return null;
   }
 
-  @Nullable
-  private static Object getSlowData(@NotNull String dataId, @NotNull Object selectedValue) {
+  private static @Nullable Object getSlowData(@NotNull String dataId, @NotNull Object selectedValue) {
     if (CommonDataKeys.PSI_ELEMENT.is(dataId) && selectedValue instanceof PsiElement) {
       return selectedValue;
     }
@@ -420,9 +405,8 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
     return null;
   }
 
-  @Nullable
   @Override
-  public <U> U getUserData(@NotNull Key<U> key) {
+  public @Nullable <U> U getUserData(@NotNull Key<U> key) {
     return myUserDataHolder.getUserData(key);
   }
 
@@ -444,8 +428,7 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
     return Disposer.isDisposed(this);
   }
 
-  @Nullable
-  public T getSelectedValue() {
+  public @Nullable T getSelectedValue() {
     return myList.getSelectedValue();
   }
 
@@ -501,18 +484,15 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
     createRightComponent(false);
   }
 
-  @NotNull
-  public Project getProject() {
+  public @NotNull Project getProject() {
     return myProject;
   }
 
-  @Nullable
-  public FinderRecursivePanel<?> getParentPanel() {
+  public @Nullable FinderRecursivePanel<?> getParentPanel() {
     return myParent;
   }
 
-  @Nullable
-  protected String getGroupId() {
+  protected @Nullable String getGroupId() {
     return myGroupId;
   }
 
@@ -686,7 +666,7 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
   }
 
   private class MyListCellRenderer extends ColoredListCellRenderer<T> {
-    @NonNls private static final String ITEM_PROPERTY = "FINDER_RECURSIVE_PANEL_ITEM_PROPERTY";
+    private static final @NonNls String ITEM_PROPERTY = "FINDER_RECURSIVE_PANEL_ITEM_PROPERTY";
 
     @Override
     public String getToolTipText(MouseEvent event) {

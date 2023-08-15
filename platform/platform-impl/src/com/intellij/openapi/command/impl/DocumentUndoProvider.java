@@ -1,9 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.command.impl;
 
 import com.intellij.ide.lightEdit.LightEditUtil;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.undo.*;
+import com.intellij.openapi.command.undo.DocumentReference;
+import com.intellij.openapi.command.undo.DocumentReferenceManager;
+import com.intellij.openapi.command.undo.UndoManager;
+import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
@@ -22,8 +25,7 @@ public final class DocumentUndoProvider implements DocumentListener {
   private DocumentUndoProvider() {
   }
 
-  @NotNull
-  private static UndoManagerImpl getUndoManager(@Nullable Project project) {
+  private static @NotNull UndoManagerImpl getUndoManager(@Nullable Project project) {
     return (UndoManagerImpl)(project == null ? UndoManager.getGlobalInstance() : UndoManager.getInstance(project));
   }
 

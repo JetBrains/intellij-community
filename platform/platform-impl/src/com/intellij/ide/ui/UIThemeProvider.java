@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui;
 
 import com.intellij.diagnostic.PluginException;
@@ -44,9 +44,7 @@ public final class UIThemeProvider implements PluginAware {
   @Attribute("parentTheme")
   public @Nullable String parentTheme;
 
-  @Attribute("targetUi")
-  @NotNull
-  public TargetUIType targetUI = TargetUIType.UNSPECIFIED;
+  @Attribute("targetUi") public @NotNull TargetUIType targetUI = TargetUIType.UNSPECIFIED;
 
   @ApiStatus.Internal
   public byte[] getThemeJson() throws IOException {

@@ -24,8 +24,7 @@ public final class CompoundVFileEvent {
     myFileEvent = event;
   }
 
-  @NotNull
-  public VFileEvent getFileEvent() {
+  public @NotNull VFileEvent getFileEvent() {
     return myFileEvent;
   }
 
@@ -33,14 +32,12 @@ public final class CompoundVFileEvent {
     return myInducedEventsCalculated;
   }
 
-  @NotNull
-  public List<VFileEvent> getInducedEvents() {
+  public @NotNull List<VFileEvent> getInducedEvents() {
     calculateAdditionalEvents();
     return myInducedEvents;
   }
 
-  @NotNull
-  public List<Runnable> getApplyActions() {
+  public @NotNull List<Runnable> getApplyActions() {
     calculateAdditionalEvents();
     return myApplyActions;
   }

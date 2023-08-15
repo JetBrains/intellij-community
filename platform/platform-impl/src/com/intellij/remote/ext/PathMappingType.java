@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.remote.ext;
 
 import com.intellij.icons.AllIcons;
@@ -19,7 +19,7 @@ public final class PathMappingType {
   public static final PathMappingType DEPLOYMENT = new PathMappingType(AllIcons.Ide.Readonly,
                                                                        IdeBundle.messagePointer("tooltip.from.deployment.configuration"));
 
-  @Nullable private final Icon myIcon;
+  private final @Nullable Icon myIcon;
   private final @Nullable Supplier<@NlsContexts.Tooltip @Nullable String> myTooltipPointer;
 
   public PathMappingType(@Nullable Icon icon, @Nullable Supplier<@NlsContexts.Tooltip @Nullable String> tooltipPointer) {
@@ -27,14 +27,11 @@ public final class PathMappingType {
     myTooltipPointer = tooltipPointer;
   }
 
-  @Nullable
-  public Icon getIcon() {
+  public @Nullable Icon getIcon() {
     return myIcon;
   }
 
-  @NlsContexts.Tooltip
-  @Nullable
-  public String getTooltip() {
+  public @NlsContexts.Tooltip @Nullable String getTooltip() {
     return myTooltipPointer == null ? null : myTooltipPointer.get();
   }
 }

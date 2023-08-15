@@ -19,10 +19,8 @@ import static com.intellij.openapi.editor.impl.InlayKeys.OFFSET_BEFORE_DISPOSAL;
 
 abstract class InlayImpl<R extends EditorCustomElementRenderer, T extends InlayImpl<?, ?>> extends RangeMarkerImpl implements Inlay<R> {
 
-  @NotNull
-  final EditorImpl myEditor;
-  @NotNull
-  final R myRenderer;
+  final @NotNull EditorImpl myEditor;
+  final @NotNull R myRenderer;
   private final boolean myRelatedToPrecedingText;
 
   int myWidthInPixels;
@@ -40,9 +38,8 @@ abstract class InlayImpl<R extends EditorCustomElementRenderer, T extends InlayI
 
   abstract RangeMarkerTree<T> getTree();
 
-  @NotNull
   @Override
-  public Editor getEditor() {
+  public @NotNull Editor getEditor() {
     return myEditor;
   }
 
@@ -114,17 +111,15 @@ abstract class InlayImpl<R extends EditorCustomElementRenderer, T extends InlayI
 
   abstract Point getPosition();
 
-  @Nullable
   @Override
-  public Rectangle getBounds() {
+  public @Nullable Rectangle getBounds() {
     if (EditorUtil.isInlayFolded(this)) return null;
     Point pos = getPosition();
     return new Rectangle(pos.x, pos.y, getWidthInPixels(), getHeightInPixels());
   }
 
-  @NotNull
   @Override
-  public R getRenderer() {
+  public @NotNull R getRenderer() {
     return myRenderer;
   }
 
@@ -133,9 +128,8 @@ abstract class InlayImpl<R extends EditorCustomElementRenderer, T extends InlayI
     return myWidthInPixels;
   }
 
-  @Nullable
   @Override
-  public GutterIconRenderer getGutterIconRenderer() {
+  public @Nullable GutterIconRenderer getGutterIconRenderer() {
     return null;
   }
 }

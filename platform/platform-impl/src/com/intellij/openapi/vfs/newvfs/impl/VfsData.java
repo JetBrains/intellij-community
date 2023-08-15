@@ -254,8 +254,7 @@ public final class VfsData {
     // <nameId, flags> pairs, "flags" part containing flags per se and modification stamp
     private final AtomicIntegerArray myIntArray;
 
-    @NotNull
-    final VfsData vfsData;
+    final @NotNull VfsData vfsData;
 
     // the reference is synchronized by read-write lock; clients outside read-action deserve to get outdated result
     @Nullable Segment replacement;
@@ -362,8 +361,7 @@ public final class VfsData {
   static final class DirectoryData {
     private static final AtomicFieldUpdater<DirectoryData, KeyFMap>
       MY_USER_MAP_UPDATER = AtomicFieldUpdater.forFieldOfType(DirectoryData.class, KeyFMap.class);
-    @NotNull
-    volatile KeyFMap myUserMap = KeyFMap.EMPTY_MAP;
+    volatile @NotNull KeyFMap myUserMap = KeyFMap.EMPTY_MAP;
     /**
      * sorted by {@link VfsData#getNameByFileId(int)}
      * assigned under lock(this) only; never modified in-place
@@ -453,8 +451,7 @@ public final class VfsData {
     /**
      * Must be called in synchronized(VfsData)
      */
-    @NotNull
-    private Set<CharSequence> getOrCreateAdoptedNames(boolean caseSensitive) {
+    private @NotNull Set<CharSequence> getOrCreateAdoptedNames(boolean caseSensitive) {
       Set<CharSequence> adopted = myAdoptedNames;
       if (adopted == null) {
         adopted = CollectionFactory.createCharSequenceSet(caseSensitive);
@@ -480,8 +477,7 @@ public final class VfsData {
     }
 
     @Override
-    @NonNls
-    public String toString() {
+    public @NonNls String toString() {
       return "DirectoryData{" +
              "myUserMap=" + myUserMap +
              ", myChildrenIds=" + Arrays.toString(myChildrenIds) +

@@ -50,9 +50,8 @@ public abstract class AbstractTreeWalker<N> extends TreeWalkerBase<N> {
     if (paused) processNextPath();
   }
 
-  @NotNull
   @Override
-  public Promise<TreePath> promise() {
+  public @NotNull Promise<TreePath> promise() {
     return promise;
   }
 

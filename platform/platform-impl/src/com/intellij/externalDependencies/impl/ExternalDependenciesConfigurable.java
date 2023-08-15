@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.externalDependencies.impl;
 
 import com.intellij.externalDependencies.DependencyOnPlugin;
@@ -64,15 +64,13 @@ public class ExternalDependenciesConfigurable implements SearchableConfigurable 
     myDependenciesManager.setAllDependencies(myListModel.getItems());
   }
 
-  @Nls
   @Override
-  public String getDisplayName() {
+  public @Nls String getDisplayName() {
     return IdeBundle.message("configurable.ExternalDependenciesConfigurable.display.name");
   }
 
-  @Nullable
   @Override
-  public JComponent createComponent() {
+  public @Nullable JComponent createComponent() {
     JBList<ProjectExternalDependency> dependenciesList = new JBList<>();
     dependenciesList.setCellRenderer(new ColoredListCellRenderer<>() {
       @Override
@@ -172,14 +170,12 @@ public class ExternalDependenciesConfigurable implements SearchableConfigurable 
     return myPluginNameById;
   }
 
-  @NotNull
   @Override
-  public String getId() {
+  public @NotNull String getId() {
     return "preferences.externalDependencies";
   }
 
-  @Nullable
-  private DependencyOnPlugin editPluginDependency(@NotNull JComponent parent, @NotNull final DependencyOnPlugin original) {
+  private @Nullable DependencyOnPlugin editPluginDependency(@NotNull JComponent parent, final @NotNull DependencyOnPlugin original) {
     List<String> pluginIds = new ArrayList<>(getPluginNameByIdMap().keySet());
     if (!original.getPluginId().isEmpty() && !pluginIds.contains(original.getPluginId())) {
       pluginIds.add(original.getPluginId());
@@ -225,9 +221,8 @@ public class ExternalDependenciesConfigurable implements SearchableConfigurable 
     return null;
   }
 
-  @Nullable
   @Override
-  public String getHelpTopic() {
+  public @Nullable String getHelpTopic() {
     return "Required_Plugin";
   }
 }

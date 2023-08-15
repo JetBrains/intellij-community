@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.command.impl;
 
 import com.intellij.openapi.command.undo.DocumentReference;
@@ -36,8 +36,7 @@ public abstract class UndoRedoStacksHolderBase<E> {
     return r.getFile() != null ? doGetStackForFile(r) : doGetStackForDocument(r);
   }
 
-  @NotNull
-  private LinkedList<E> doGetStackForFile(@NotNull DocumentReference r) {
+  private @NotNull LinkedList<E> doGetStackForFile(@NotNull DocumentReference r) {
     LinkedList<E> result;
     VirtualFile file = r.getFile();
 
@@ -51,8 +50,7 @@ public abstract class UndoRedoStacksHolderBase<E> {
     return result;
   }
 
-  @NotNull
-  private LinkedList<E> doGetStackForDocument(@NotNull DocumentReference r) {
+  private @NotNull LinkedList<E> doGetStackForDocument(@NotNull DocumentReference r) {
     // If document is not associated with file, we have to store its stack in document
     // itself to avoid memory leaks caused by holding stacks of all documents, ever created, here.
     // And to know, what documents do exist now, we have to maintain weak reference list of them.
@@ -60,8 +58,7 @@ public abstract class UndoRedoStacksHolderBase<E> {
     return addWeaklyTrackedEmptyStack(r.getDocument(), myDocumentsWithStacks);
   }
 
-  @NotNull
-  private <T extends UserDataHolder> LinkedList<E> addWeaklyTrackedEmptyStack(@NotNull T holder, @NotNull Collection<? super T> allHolders) {
+  private @NotNull <T extends UserDataHolder> LinkedList<E> addWeaklyTrackedEmptyStack(@NotNull T holder, @NotNull Collection<? super T> allHolders) {
     LinkedList<E> result = holder.getUserData(STACK_IN_DOCUMENT_KEY);
     if (result == null) {
       holder.putUserData(STACK_IN_DOCUMENT_KEY, result = new LinkedList<>());

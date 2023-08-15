@@ -89,24 +89,23 @@ public class BackgroundableProcessIndicator extends ProgressWindow {
    */
   @Deprecated
   public BackgroundableProcessIndicator(@Nullable Project project,
-                                        @NlsContexts.ProgressTitle final String progressTitle,
+                                        final @NlsContexts.ProgressTitle String progressTitle,
                                         @NotNull PerformInBackgroundOption option,
-                                        @Nullable @NlsContexts.Button final String cancelButtonText,
-                                        @NlsContexts.Tooltip final String backgroundStopTooltip,
+                                        final @Nullable @NlsContexts.Button String cancelButtonText,
+                                        final @NlsContexts.Tooltip String backgroundStopTooltip,
                                         final boolean cancellable) {
     this(project, progressTitle, cancelButtonText, backgroundStopTooltip, cancellable);
   }
 
   public BackgroundableProcessIndicator(@Nullable Project project,
-                                        @NlsContexts.ProgressTitle final String progressTitle,
-                                        @Nullable @NlsContexts.Button final String cancelButtonText,
-                                        @NlsContexts.Tooltip final String backgroundStopTooltip,
+                                        final @NlsContexts.ProgressTitle String progressTitle,
+                                        final @Nullable @NlsContexts.Button String cancelButtonText,
+                                        final @NlsContexts.Tooltip String backgroundStopTooltip,
                                         final boolean cancellable) {
     this(project, new TaskInfo() {
 
       @Override
-      @NotNull
-      public String getTitle() {
+      public @NotNull String getTitle() {
         return progressTitle;
       }
 

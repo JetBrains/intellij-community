@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.Disposable;
@@ -32,13 +32,11 @@ public final class EditorEmbeddedComponentManager {
   private EditorEmbeddedComponentManager() {
   }
 
-  @NotNull
-  public static EditorEmbeddedComponentManager getInstance() {
+  public static @NotNull EditorEmbeddedComponentManager getInstance() {
     return ourInstance;
   }
 
-  @Nullable
-  public Inlay<?> addComponent(@NotNull EditorEx editor, @NotNull JComponent component, @NotNull Properties properties) {
+  public @Nullable Inlay<?> addComponent(@NotNull EditorEx editor, @NotNull JComponent component, @NotNull Properties properties) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     ComponentInlays inlays = getComponentInlaysFor(editor);
@@ -47,8 +45,7 @@ public final class EditorEmbeddedComponentManager {
                       properties.priority, properties.offset);
   }
 
-  @NotNull
-  private static ComponentInlays getComponentInlaysFor(@NotNull EditorEx editor) {
+  private static @NotNull ComponentInlays getComponentInlaysFor(@NotNull EditorEx editor) {
     if (!COMPONENT_INLAYS_KEY.isIn(editor)) COMPONENT_INLAYS_KEY.set(editor, new ComponentInlays(editor));
     return COMPONENT_INLAYS_KEY.get(editor);
   }
@@ -74,8 +71,7 @@ public final class EditorEmbeddedComponentManager {
       return ourAny;
     }
 
-    @NotNull
-    public static ResizePolicy none() {
+    public static @NotNull ResizePolicy none() {
       return ourNone;
     }
 
@@ -151,9 +147,8 @@ public final class EditorEmbeddedComponentManager {
       setOpaque(false);
     }
 
-    @Nullable
     @Override
-    public GutterIconRenderer calcGutterIconRenderer(@NotNull Inlay inlay) {
+    public @Nullable GutterIconRenderer calcGutterIconRenderer(@NotNull Inlay inlay) {
       return myRendererFactory == null ? null : myRendererFactory.createRenderer(inlay);
     }
 
@@ -511,8 +506,7 @@ public final class EditorEmbeddedComponentManager {
         if (info == null) myEditor.setCustomCursor(ComponentInlays.this, null);
       }
 
-      @Nullable
-      private ResizeInfo getInfoForResizeUnder(@NotNull Point point) {
+      private @Nullable ResizeInfo getInfoForResizeUnder(@NotNull Point point) {
         return ContainerUtil.getFirstItem(ContainerUtil.mapNotNull(myEditor.getContentComponent().getComponents(), component -> {
           if (!(component instanceof MyRenderer)) return null;
           ResizePolicy policy = ((MyRenderer)component).resizePolicy;

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.DataManager;
@@ -37,7 +37,7 @@ public final class WindowWatcher implements PropertyChangeListener {
    * Contains last focused window for each project.
    */
   private final Set<Window> myFocusedWindows = new HashSet<>();
-  @NonNls private static final String FOCUSED_WINDOW_PROPERTY = "focusedWindow";
+  private static final @NonNls String FOCUSED_WINDOW_PROPERTY = "focusedWindow";
 
   WindowWatcher() {}
 

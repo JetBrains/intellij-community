@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.util.IntRef;
@@ -69,8 +69,7 @@ public class AttributesStorageOverBlobStorage implements AbstractAttributesStora
   //               from directory record)
   //      data[...]: attribute value, size = record.length-header.size(8)
 
-  @NotNull
-  private final StreamlinedBlobStorage storage;
+  private final @NotNull StreamlinedBlobStorage storage;
 
   private final AtomicInteger modCount = new AtomicInteger();
 
@@ -694,10 +693,8 @@ public class AttributesStorageOverBlobStorage implements AbstractAttributesStora
   }
 
   private final class AttributeOutputStreamImpl extends DataOutputStream implements RepresentableAsByteArraySequence {
-    @NotNull
-    private final PersistentFSConnection connection;
-    @NotNull
-    private final FileAttribute attribute;
+    private final @NotNull PersistentFSConnection connection;
+    private final @NotNull FileAttribute attribute;
     private final int fileId;
 
     private AttributeOutputStreamImpl(final @NotNull PersistentFSConnection connection,
@@ -742,9 +739,8 @@ public class AttributesStorageOverBlobStorage implements AbstractAttributesStora
       }
     }
 
-    @NotNull
     @Override
-    public ByteArraySequence asByteArraySequence() {
+    public @NotNull ByteArraySequence asByteArraySequence() {
       return ((BufferExposingByteArrayOutputStream)out).asByteArraySequence();
     }
   }
@@ -1131,8 +1127,7 @@ public class AttributesStorageOverBlobStorage implements AbstractAttributesStora
    * and set position to buffer.position, and limit to requiredLimit. Data from buffer is not copied,
    * use {@link #ensureLimitAndData(ByteBuffer, int)} for that.
    */
-  @NotNull
-  private static ByteBuffer ensureLimit(final ByteBuffer buffer,
+  private static @NotNull ByteBuffer ensureLimit(final ByteBuffer buffer,
                                         final int requiredLimit) {
     if (buffer.capacity() >= requiredLimit) {
       return buffer.limit(Math.max(buffer.limit(), requiredLimit));

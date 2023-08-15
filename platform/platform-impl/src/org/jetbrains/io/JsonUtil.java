@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.io;
 
 import com.google.gson.stream.JsonToken;
@@ -98,8 +98,7 @@ public final class JsonUtil {
     buffer.writeByte('"');
   }
 
-  @NotNull
-  public static <T> List<T> nextList(@NotNull JsonReaderEx reader) {
+  public static @NotNull <T> List<T> nextList(@NotNull JsonReaderEx reader) {
     reader.beginArray();
     if (!reader.hasNext()) {
       reader.endArray();
@@ -112,8 +111,7 @@ public final class JsonUtil {
     return list;
   }
 
-  @NotNull
-  public static List<String> nextStringList(@NotNull JsonReaderEx reader) {
+  public static @NotNull List<String> nextStringList(@NotNull JsonReaderEx reader) {
     reader.beginArray();
     if (!reader.hasNext()) {
       reader.endArray();
@@ -130,8 +128,7 @@ public final class JsonUtil {
     return list;
   }
 
-  @Nullable
-  public static String nextStringOrSkip(@NotNull JsonReaderEx reader) {
+  public static @Nullable String nextStringOrSkip(@NotNull JsonReaderEx reader) {
     JsonToken token = reader.peek();
     if (token == JsonToken.STRING) {
       return reader.nextString();
@@ -140,8 +137,7 @@ public final class JsonUtil {
     return null;
   }
 
-  @NotNull
-  public static Map<String, Object> nextObject(@NotNull JsonReaderEx reader) {
+  public static @NotNull Map<String, Object> nextObject(@NotNull JsonReaderEx reader) {
     Map<String, Object> map = new HashMap<>();
     reader.beginObject();
     while (reader.hasNext()) {
@@ -151,8 +147,7 @@ public final class JsonUtil {
     return map;
   }
 
-  @Nullable
-  public static Object nextAny(JsonReaderEx reader)  {
+  public static @Nullable Object nextAny(JsonReaderEx reader)  {
     return switch (reader.peek()) {
       case BEGIN_ARRAY -> nextList(reader);
       case BEGIN_OBJECT -> nextObject(reader);

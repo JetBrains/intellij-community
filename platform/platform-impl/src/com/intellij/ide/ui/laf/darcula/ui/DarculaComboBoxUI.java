@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.icons.AllIcons;
@@ -227,8 +227,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
     return JBUI.CurrentTheme.Arrow.backgroundColor(comboBox.isEnabled(), comboBox.isEditable());
   }
 
-  @NotNull
-  static Dimension getArrowButtonPreferredSize(@Nullable JComboBox comboBox) {
+  static @NotNull Dimension getArrowButtonPreferredSize(@Nullable JComboBox comboBox) {
     Insets i = comboBox != null ? comboBox.getInsets() : getDefaultComboBoxInsets();
     int height = (isCompact(comboBox) ? COMPACT_HEIGHT.get() : MINIMUM_HEIGHT.get()) + i.top + i.bottom;
     return new Dimension(ARROW_BUTTON_WIDTH.get() + i.left, height);
@@ -252,8 +251,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
     return path;
   }
 
-  @NotNull
-  private static JBInsets getDefaultComboBoxInsets() {
+  private static @NotNull JBInsets getDefaultComboBoxInsets() {
     return JBUI.insets(3);
   }
 

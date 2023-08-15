@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.content.impl;
 
 import com.intellij.openapi.util.Disposer;
@@ -25,10 +25,8 @@ import java.util.List;
  * @author Konstantin Bulenkov
  */
 public final class TabbedContentImpl extends ContentImpl implements TabbedContent {
-  @NotNull
-  private final List<TabDescriptor> myTabs = new ArrayList<>();
-  @NotNull
-  private final TabGroupId myId;
+  private final @NotNull List<TabDescriptor> myTabs = new ArrayList<>();
+  private final @NotNull TabGroupId myId;
 
   /**
    * @deprecated use {@link TabbedContentImpl#TabbedContentImpl(TabGroupId, TabDescriptor, boolean)} instead
@@ -46,8 +44,7 @@ public final class TabbedContentImpl extends ContentImpl implements TabbedConten
     Disposer.register(this, tab);
   }
 
-  @Nullable
-  private TabDescriptor findTab(@NotNull JComponent c) {
+  private @Nullable TabDescriptor findTab(@NotNull JComponent c) {
     for (TabDescriptor tab : myTabs) {
       if (tab.getComponent() == c) {
         return tab;
@@ -56,8 +53,7 @@ public final class TabbedContentImpl extends ContentImpl implements TabbedConten
     return null;
   }
 
-  @Nullable
-  private TabDescriptor selectedTab() {
+  private @Nullable TabDescriptor selectedTab() {
     return findTab(getComponent());
   }
 
@@ -89,16 +85,13 @@ public final class TabbedContentImpl extends ContentImpl implements TabbedConten
     }
   }
 
-  @NotNull
   @Override
-  public TabGroupId getId() {
+  public @NotNull TabGroupId getId() {
     return myId;
   }
 
-  @Nls
-  @NotNull
   @Override
-  public String getTitlePrefix() {
+  public @Nls @NotNull String getTitlePrefix() {
     return myId.getDisplayName();
   }
 
@@ -126,9 +119,8 @@ public final class TabbedContentImpl extends ContentImpl implements TabbedConten
     }
   }
 
-  @Nls
   @Override
-  public String getDisplayName() {
+  public @Nls String getDisplayName() {
     TabDescriptor selectedTab = selectedTab();
     if (selectedTab == null) return myId.getDisplayName();
     return myId.getDisplayName(selectedTab);
@@ -158,9 +150,8 @@ public final class TabbedContentImpl extends ContentImpl implements TabbedConten
     return getDisplayName();
   }
 
-  @NotNull
   @Override
-  public List<Pair<String, JComponent>> getTabs() {
+  public @NotNull List<Pair<String, JComponent>> getTabs() {
     return ContainerUtil.map(myTabs, tab -> Pair.create(tab.getDisplayName(), tab.getComponent()));
   }
 

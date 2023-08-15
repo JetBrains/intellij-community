@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.openapi.actionSystem.TimerListener;
@@ -150,8 +150,7 @@ public abstract class ToolbarUpdater implements Activatable {
   private static final class MyUpdateRunnable implements Runnable {
     private final boolean myForced;
 
-    @NotNull
-    private final WeakReference<ToolbarUpdater> myUpdaterRef;
+    private final @NotNull WeakReference<ToolbarUpdater> myUpdaterRef;
     private final boolean myIncludeInvisible;
     private final int myHash;
 

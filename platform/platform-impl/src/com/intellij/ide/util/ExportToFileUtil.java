@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util;
 
 import com.intellij.CommonBundle;
@@ -108,9 +108,8 @@ public final class ExportToFileUtil {
 
       myTfFile = new TextFieldWithBrowseButton();
       myTfFile.addBrowseFolderListener(new TextBrowseFolderListener(FileChooserDescriptorFactory.createSingleFileOrFolderDescriptor(), myProject) {
-        @NotNull
         @Override
-        protected String chosenFileToResultingText(@NotNull VirtualFile chosenFile) {
+        protected @NotNull String chosenFileToResultingText(@NotNull VirtualFile chosenFile) {
           String res = super.chosenFileToResultingText(chosenFile);
           if (chosenFile.isDirectory()) {
             res += File.separator + PathUtil.getFileName(myExporter.getDefaultFilePath());

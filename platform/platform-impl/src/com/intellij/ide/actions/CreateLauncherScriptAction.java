@@ -72,7 +72,7 @@ final class CreateLauncherScriptAction extends DumbAwareAction implements Action
     Messages.showInfoMessage(project, message, ApplicationBundle.message("cli.launcher.message.title"));
   }
 
-  final static class ObsoleteScriptLookupTask implements AppLifecycleListener {
+  static final class ObsoleteScriptLookupTask implements AppLifecycleListener {
     private static final String MARKER1 = "{0} [-l|--line line] [project_dir|--temp-project] [-w|--wait] file[:line]";
     private static final String MARKER2 = "def try_activate_instance(args):";
 

@@ -61,11 +61,11 @@ import java.util.function.Predicate;
 
 public final class ToolWindowContentUi implements ContentUI, DataProvider {
   // when client property is put in toolwindow component, hides toolwindow label
-  @NonNls public static final String HIDE_ID_LABEL = "HideIdLabel";
-  @NonNls public static final Key<Boolean> ALLOW_DND_FOR_TABS = Key.create("AllowDragAndDropForTabs");
+  public static final @NonNls String HIDE_ID_LABEL = "HideIdLabel";
+  public static final @NonNls Key<Boolean> ALLOW_DND_FOR_TABS = Key.create("AllowDragAndDropForTabs");
   // when client property is set to true in toolwindow component, the toolbar is always visible in the tool window header
-  @NonNls public static final Key<Boolean> DONT_HIDE_TOOLBAR_IN_HEADER = Key.create("DontHideToolbarInHeader");
-  @NonNls private static final String TOOLWINDOW_UI_INSTALLED = "ToolWindowUiInstalled";
+  public static final @NonNls Key<Boolean> DONT_HIDE_TOOLBAR_IN_HEADER = Key.create("DontHideToolbarInHeader");
+  private static final @NonNls String TOOLWINDOW_UI_INSTALLED = "ToolWindowUiInstalled";
   public static final DataKey<BaseLabel> SELECTED_CONTENT_TAB_LABEL = DataKey.create("SELECTED_CONTENT_TAB_LABEL");
   @ApiStatus.Internal public static final Key<Boolean> SHOW_BETA_LABEL = Key.create("ShowBetaLabel");
 
@@ -100,8 +100,7 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
 
   private final JPanel tabComponent = new TabPanel();
 
-  @NotNull
-  public JPanel getTabComponent() {
+  public @NotNull JPanel getTabComponent() {
     return tabComponent;
   }
 
@@ -230,13 +229,11 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
     showContent = new ShowContentAction(window, contentComponent, contentManager);
   }
 
-  @NotNull
-  public String getToolWindowId() {
+  public @NotNull String getToolWindowId() {
     return window.getId();
   }
 
-  @NotNull
-  public ToolWindow getWindow() {
+  public @NotNull ToolWindow getWindow() {
     return window;
   }
 
@@ -283,8 +280,7 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
     rebuild();
   }
 
-  @NotNull
-   public ContentLayout getCurrentLayout() {
+  public @NotNull ContentLayout getCurrentLayout() {
     if (type == ToolWindowContentUiType.TABBED) {
       return tabsLayout;
     }
@@ -371,27 +367,23 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
     return true;
   }
 
-  @NotNull
   @Override
-  public String getCloseActionName() {
+  public @NotNull String getCloseActionName() {
     return getCurrentLayout().getCloseActionName();
   }
 
-  @NotNull
   @Override
-  public String getCloseAllButThisActionName() {
+  public @NotNull String getCloseAllButThisActionName() {
     return getCurrentLayout().getCloseAllButThisActionName();
   }
 
-  @NotNull
   @Override
-  public String getPreviousContentActionName() {
+  public @NotNull String getPreviousContentActionName() {
     return getCurrentLayout().getPreviousContentActionName();
   }
 
-  @NotNull
   @Override
-  public String getNextContentActionName() {
+  public @NotNull String getNextContentActionName() {
     return getCurrentLayout().getNextContentActionName();
   }
 
@@ -647,8 +639,7 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
     popupMenu.getComponent().show(comp, x, y);
   }
 
-  @NotNull
-  private static AnAction createSplitTabsAction(@NotNull TabbedContent content) {
+  private static @NotNull AnAction createSplitTabsAction(@NotNull TabbedContent content) {
     return new DumbAwareAction(IdeBundle.message("action.text.split.group", content.getTitlePrefix())) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
@@ -657,8 +648,7 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
     };
   }
 
-  @NotNull
-  private static AnAction createMergeTabsAction(@NotNull ContentManager manager, @NotNull TabGroupId groupId) {
+  private static @NotNull AnAction createMergeTabsAction(@NotNull ContentManager manager, @NotNull TabGroupId groupId) {
     return new DumbAwareAction(IdeBundle.message("action.text.merge.tabs.to.group", groupId.getDisplayName())) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
@@ -700,8 +690,7 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
   }
 
   @Override
-  @Nullable
-  public Object getData(@NotNull @NonNls String dataId) {
+  public @Nullable Object getData(@NotNull @NonNls String dataId) {
     if (PlatformDataKeys.TOOL_WINDOW.is(dataId)) {
       return window;
     }
@@ -724,8 +713,7 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
     return null;
   }
 
-  @NotNull
-  private CloseAction.CloseTarget computeCloseTarget() {
+  private @NotNull CloseAction.CloseTarget computeCloseTarget() {
     if (contentManager.canCloseContents()) {
       Content selected = contentManager.getSelectedContent();
       if (selected != null && selected.isCloseable()) {

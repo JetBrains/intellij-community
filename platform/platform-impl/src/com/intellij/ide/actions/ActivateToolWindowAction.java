@@ -179,8 +179,7 @@ public class ActivateToolWindowAction extends DumbAwareAction implements MainMen
    *
    * @param id {@code id} of tool window to be activated.
    */
-  @NonNls
-  public static @NotNull String getActionIdForToolWindow(@NotNull String id) {
+  public static @NonNls @NotNull String getActionIdForToolWindow(@NotNull String id) {
     return "Activate" + id.replaceAll(" ", "") + "ToolWindow";
   }
 

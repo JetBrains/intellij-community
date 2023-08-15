@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
 import com.intellij.ide.plugins.DynamicPluginListener;
@@ -31,15 +31,13 @@ public final class TypePresentationServiceImpl extends TypePresentationService {
   private static final ExtensionPointName<PresentationProvider<?>> PROVIDER_EP = new ExtensionPointName<>("com.intellij.presentationProvider");
   private static final ClassExtension<PresentationProvider<?>> PROVIDERS = new ClassExtension<>(PROVIDER_EP.getName());
 
-  @Nullable
   @Override
-  public Icon getIcon(@NotNull Object o) {
+  public @Nullable Icon getIcon(@NotNull Object o) {
     return getIcon(o.getClass(), o);
   }
 
-  @Nullable
   @Override
-  public Icon getTypeIcon(Class type) {
+  public @Nullable Icon getTypeIcon(Class type) {
     return getIcon(type, null);
   }
 
@@ -53,20 +51,17 @@ public final class TypePresentationServiceImpl extends TypePresentationService {
     return typeName != null ? typeName : getDefaultTypeName(type);
   }
 
-  @Nullable
   @Override
-  public String getTypeName(@NotNull Object o) {
+  public @Nullable String getTypeName(@NotNull Object o) {
     return findFirst(o.getClass(), template -> template.getTypeName(o));
   }
 
-  @Nullable
   @Override
-  public String getObjectName(@NotNull Object o) {
+  public @Nullable String getObjectName(@NotNull Object o) {
     return findFirst(o.getClass(), template -> template.getName(o));
   }
 
-  @Nullable
-  private <T> T findFirst(Class<?> clazz, @NotNull Function<? super PresentationTemplate, ? extends T> f) {
+  private @Nullable <T> T findFirst(Class<?> clazz, @NotNull Function<? super PresentationTemplate, ? extends T> f) {
     Set<PresentationTemplate> templates = mySuperClasses.get(clazz);
     for (PresentationTemplate template : templates) {
       T result = f.apply(template);
@@ -134,27 +129,23 @@ public final class TypePresentationServiceImpl extends TypePresentationService {
     }
 
     return new PresentationTemplate() {
-      @Nullable
       @Override
-      public Icon getIcon(Object o, int flags) {
+      public @Nullable Icon getIcon(Object o, int flags) {
         return icon == null ? null : icon.getValue();
       }
 
-      @Nullable
       @Override
-      public String getName(Object o) {
+      public @Nullable String getName(Object o) {
         return null;
       }
 
-      @Nullable
       @Override
-      public String getTypeName() {
+      public @Nullable String getTypeName() {
         return typeName == null ? null : typeName.getValue();
       }
 
-      @Nullable
       @Override
-      public String getTypeName(Object o) {
+      public @Nullable String getTypeName(Object o) {
         return getTypeName();
       }
     };
@@ -190,29 +181,25 @@ public final class TypePresentationServiceImpl extends TypePresentationService {
       myProvider = provider;
     }
 
-    @Nullable
     @Override
-    public Icon getIcon(Object o, int flags) {
+    public @Nullable Icon getIcon(Object o, int flags) {
       //noinspection unchecked
       return myProvider instanceof PresentationTemplate ? ((PresentationTemplate)myProvider).getIcon(o, flags) : myProvider.getIcon(o);
     }
 
-    @Nullable
     @Override
-    public String getName(Object o) {
+    public @Nullable String getName(Object o) {
       //noinspection unchecked
       return myProvider.getName(o);
     }
 
-    @Nullable
     @Override
-    public String getTypeName() {
+    public @Nullable String getTypeName() {
       return myProvider instanceof PresentationTemplate ? ((PresentationTemplate)myProvider).getTypeName() : null;
     }
 
-    @Nullable
     @Override
-    public String getTypeName(Object o) {
+    public @Nullable String getTypeName(Object o) {
       //noinspection unchecked
       return myProvider.getTypeName(o);
     }
@@ -235,15 +222,13 @@ public final class TypePresentationServiceImpl extends TypePresentationService {
       myClass = aClass;
     }
 
-    @Nullable
     @Override
-    public Icon getIcon(Object o) {
+    public @Nullable Icon getIcon(Object o) {
       return getIcon(o, 0);
     }
 
-    @Nullable
     @Override
-    public Icon getIcon(Object o, int flags) {
+    public @Nullable Icon getIcon(Object o, int flags) {
       if (o == null) {
         return myIcon.getValue();
       }
@@ -257,15 +242,13 @@ public final class TypePresentationServiceImpl extends TypePresentationService {
       }
     }
 
-    @Nullable
     @Override
-    public String getTypeName() {
+    public @Nullable String getTypeName() {
       return StringUtil.isEmpty(myPresentation.typeName()) ? null : myPresentation.typeName();
     }
 
-    @Nullable
     @Override
-    public String getTypeName(Object o) {
+    public @Nullable String getTypeName(Object o) {
       PresentationProvider provider = myPresentationProvider.getValue();
       if (provider != null) {
         String typeName = provider.getTypeName(o);
@@ -275,9 +258,8 @@ public final class TypePresentationServiceImpl extends TypePresentationService {
       return getTypeName();
     }
 
-    @Nullable
     @Override
-    public String getName(Object o) {
+    public @Nullable String getName(Object o) {
       PresentationProvider namer = myPresentationProvider.getValue();
       return namer == null ? null : namer.getName(o);
     }

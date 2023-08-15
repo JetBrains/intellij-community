@@ -53,9 +53,9 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
   private static final Rectangle h = new Rectangle();
   private static final Rectangle l = new Rectangle();
   private static final Rectangle f = new Rectangle(32767, 32767);
-  @NonNls public static final String PLAY_SOUND_METHOD = "playSound";
-  @NonNls public static final String AQUA_LOOK_AND_FEEL_CLASS_NAME = "apple.laf.AquaLookAndFeel";
-  @NonNls public static final String GET_KEY_MODIFIERS_TEXT = "getKeyModifiersText";
+  public static final @NonNls String PLAY_SOUND_METHOD = "playSound";
+  public static final @NonNls String AQUA_LOOK_AND_FEEL_CLASS_NAME = "apple.laf.AquaLookAndFeel";
+  public static final @NonNls String GET_KEY_MODIFIERS_TEXT = "getKeyModifiersText";
 
   /** invoked by reflection */
   public static ComponentUI createUI(JComponent component) {
@@ -236,8 +236,7 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
            : getKeyStrokeText(item.getAccelerator());
   }
 
-  @NlsSafe
-  private static String getKeyStrokeText(KeyStroke keystroke) {
+  private static @NlsSafe String getKeyStrokeText(KeyStroke keystroke) {
     String s1 = "";
     if (keystroke != null){
       int j1 = keystroke.getModifiers();

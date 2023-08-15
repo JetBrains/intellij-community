@@ -41,8 +41,7 @@ public abstract class TabbedContentAction extends AnAction implements DumbAware 
   }
 
   public abstract static class ForContent extends TabbedContentAction {
-    @NotNull
-    protected final Content myContent;
+    protected final @NotNull Content myContent;
 
     public ForContent(@NotNull Content content, @NotNull AnAction shortcutTemplate, final @NlsActions.ActionText String text) {
       super(content.getManager(), shortcutTemplate, text, content);
@@ -57,7 +56,7 @@ public abstract class TabbedContentAction extends AnAction implements DumbAware 
     }
 
     @Override
-    public void update(@NotNull final AnActionEvent e) {
+    public void update(final @NotNull AnActionEvent e) {
       super.update(e);
       e.getPresentation().setEnabled(myManager.getIndexOfContent(myContent) >= 0);
     }

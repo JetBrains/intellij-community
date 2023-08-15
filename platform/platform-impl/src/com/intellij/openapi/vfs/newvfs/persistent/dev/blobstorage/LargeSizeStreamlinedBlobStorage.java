@@ -134,14 +134,12 @@ public class LargeSizeStreamlinedBlobStorage implements StreamlinedBlobStorage {
   /* ============== instance fields: ====================================================================== */
 
 
-  @NotNull
-  private final PagedFileStorage pagedStorage;
+  private final @NotNull PagedFileStorage pagedStorage;
 
   /** To avoid write file header to already closed storage */
   private final AtomicBoolean closed = new AtomicBoolean(false);
 
-  @NotNull
-  private final SpaceAllocationStrategy allocationStrategy;
+  private final @NotNull SpaceAllocationStrategy allocationStrategy;
 
   /**
    * Since records are page-aligned, record (with header) can't be larger than pageSize.
@@ -1029,8 +1027,7 @@ public class LargeSizeStreamlinedBlobStorage implements StreamlinedBlobStorage {
   }
 
 
-  @NotNull
-  private ByteBuffer acquireTemporaryBuffer(final int expectedRecordSizeHint) {
+  private @NotNull ByteBuffer acquireTemporaryBuffer(final int expectedRecordSizeHint) {
     final ByteBuffer temp = threadLocalBuffer.get();
     if (temp != null && temp.capacity() >= expectedRecordSizeHint) {
       threadLocalBuffer.set(null);
@@ -1138,8 +1135,7 @@ public class LargeSizeStreamlinedBlobStorage implements StreamlinedBlobStorage {
     return 0 <= length && length <= MAX_CAPACITY;
   }
 
-  @NotNull
-  private BatchCallback setupReportingToOpenTelemetry(final Path fileName) {
+  private @NotNull BatchCallback setupReportingToOpenTelemetry(final Path fileName) {
     final Meter meter = TelemetryManager.getInstance().getMeter(Storage);
 
     final var recordsAllocated = meter.counterBuilder("StreamlinedBlobStorage.recordsAllocated").buildObserver();

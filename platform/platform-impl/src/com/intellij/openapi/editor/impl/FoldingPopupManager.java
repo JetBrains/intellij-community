@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.codeInsight.hint.DocumentFragmentTooltipRenderer;
@@ -66,8 +66,7 @@ public class FoldingPopupManager implements EditorMouseListener, EditorMouseMoti
     }
   }
 
-  @NotNull
-  private static DocumentFragment createDocumentFragment(@NotNull FoldRegion fold) {
+  private static @NotNull DocumentFragment createDocumentFragment(@NotNull FoldRegion fold) {
     EditorImpl editor = (EditorImpl)fold.getEditor();
     Document document = editor.getDocument();
     FoldingGroup group = fold.getGroup();

@@ -355,7 +355,7 @@ public final class ToolbarComboWidgetUI extends ComponentUI implements PropertyC
     return !widget.getPressListeners().isEmpty() && widget.isExpandable();
   }
 
-  private static abstract class MyMouseTracker extends MouseAdapter implements PropertyChangeListener {
+  private abstract static class MyMouseTracker extends MouseAdapter implements PropertyChangeListener {
     protected ToolbarComboWidget comp;
 
     public void installTo(ToolbarComboWidget c) {
@@ -473,9 +473,8 @@ public final class ToolbarComboWidgetUI extends ComponentUI implements PropertyC
 
     private static final int MIN_TEXT_LENGTH = 5;
 
-    @NotNull
     @Override
-    public String calcShownText(@NotNull String text, @NotNull FontMetrics metrics, int maxWidth) {
+    public @NotNull String calcShownText(@NotNull String text, @NotNull FontMetrics metrics, int maxWidth) {
       int width = metrics.stringWidth(text);
       if (width <= maxWidth) return text;
 

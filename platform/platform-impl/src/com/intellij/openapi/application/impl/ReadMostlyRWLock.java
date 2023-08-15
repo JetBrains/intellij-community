@@ -40,7 +40,7 @@ final class ReadMostlyRWLock {
   private static final byte WRITE_REQUESTED = 1; // this writer is requesting or obtained the write access
   private static final byte WRITE_ACQUIRED = 2; // this writer obtained the write lock
 
-  @NotNull final Thread writeThread;
+  final @NotNull Thread writeThread;
   private final AtomicBoolean writeIntent = new AtomicBoolean(!StartupUtil.isImplicitReadOnEDTDisabled());
   // All reader threads are registered here. Dead readers are garbage collected in writeUnlock().
   private final ConcurrentList<Reader> readers = ContainerUtil.createConcurrentList();
@@ -63,7 +63,7 @@ final class ReadMostlyRWLock {
 
   // Each reader thread has instance of this struct in its thread local. it's also added to global "readers" list.
   static final class Reader {
-    @NotNull private final Thread thread;   // its thread
+    private final @NotNull Thread thread;   // its thread
     volatile boolean readRequested; // this reader is requesting or obtained read access. Written by reader thread only, read by writer.
     private volatile boolean blocked;       // this reader is blocked waiting for the writer thread to release write lock. Written by reader thread only, read by writer.
     private boolean impatientReads; // true if should throw PCE on contented read lock
@@ -72,8 +72,7 @@ final class ReadMostlyRWLock {
     }
 
     @Override
-    @NonNls
-    public String toString() {
+    public @NonNls String toString() {
       return "Reader{" +
              "thread=" + thread +
              ", readRequested=" + readRequested +

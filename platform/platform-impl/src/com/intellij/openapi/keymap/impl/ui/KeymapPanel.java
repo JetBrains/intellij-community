@@ -120,7 +120,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     add(keymapPanel, BorderLayout.CENTER);
     addPropertyChangeListener(new PropertyChangeListener() {
       @Override
-      public void propertyChange(@NotNull final PropertyChangeEvent evt) {
+      public void propertyChange(final @NotNull PropertyChangeEvent evt) {
         if (evt.getPropertyName().equals("ancestor") && evt.getNewValue() != null && evt.getOldValue() == null && myQuickListsModified) {
           currentKeymapChanged();
           myQuickListsModified = false;
@@ -189,9 +189,8 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
       .br().append(IdeBundle.message("assign.custom.shortcuts.or.change.the.macos.system.settings"));
 
     JBLabel jbLabel = new JBLabel(createWarningHtmlText(builder.toString())) {
-      @NotNull
       @Override
-      protected HyperlinkListener createHyperlinkListener() {
+      protected @NotNull HyperlinkListener createHyperlinkListener() {
         return new HyperlinkListener() {
           @Override
           public void hyperlinkUpdate(HyperlinkEvent e) {
@@ -239,7 +238,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
   }
 
   @Override
-  public void quickListRenamed(@NotNull final QuickList oldQuickList, @NotNull final QuickList newQuickList) {
+  public void quickListRenamed(final @NotNull QuickList oldQuickList, final @NotNull QuickList newQuickList) {
     myManager.visitMutableKeymaps(keymap -> {
       String actionId = oldQuickList.getActionId();
       Shortcut[] shortcuts = keymap.getShortcuts(actionId);
@@ -539,8 +538,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
   }
 
   @Override
-  @NotNull
-  public String getId() {
+  public @NotNull String getId() {
     return "preferences.keymap";
   }
 
@@ -572,8 +570,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
   }
 
   @Override
-  @Nls
-  public String getDisplayName() {
+  public @Nls String getDisplayName() {
     return KeyMapBundle.message("keymap.display.name");
   }
 
@@ -642,8 +639,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     }
   }
 
-  @NotNull
-  private DefaultActionGroup createEditActionGroup(@NotNull String actionId, Keymap selectedKeymap) {
+  private @NotNull DefaultActionGroup createEditActionGroup(@NotNull String actionId, Keymap selectedKeymap) {
     DefaultActionGroup group = new DefaultActionGroup();
     final ShortcutRestrictions restrictions = ActionShortcutRestrictions.getInstance().getForActionId(actionId);
     if (restrictions.allowKeyboardShortcut) {
@@ -903,7 +899,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
   }
 
   private class AddKeyboardShortcutAction extends DumbAwareAction {
-    private @NotNull final String myActionId;
+    private final @NotNull String myActionId;
     private final ShortcutRestrictions myRestrictions;
     private final Keymap mySelectedKeymap;
 
@@ -922,7 +918,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
   }
 
   private class AddMouseShortcutAction extends DumbAwareAction {
-    private @NotNull final String myActionId;
+    private final @NotNull String myActionId;
     private final ShortcutRestrictions myRestrictions;
     private final Keymap mySelectedKeymap;
 
@@ -941,7 +937,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
   }
 
   private class AddAbbreviationAction extends DumbAwareAction {
-    private @NotNull final String myActionId;
+    private final @NotNull String myActionId;
 
     private AddAbbreviationAction(@NotNull String actionId) {
       super(IdeBundle.messagePointer("action.Anonymous.text.add.abbreviation"));
@@ -962,7 +958,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
   private class RemoveShortcutAction extends DumbAwareAction {
     private final Shortcut myShortcut;
     private final Keymap mySelectedKeymap;
-    private @NotNull final String myActionId;
+    private final @NotNull String myActionId;
 
     private RemoveShortcutAction(Shortcut shortcut, Keymap selectedKeymap, @NotNull String actionId) {
       super(IdeBundle.message("action.text.remove.0", KeymapUtil.getShortcutText(shortcut)));
@@ -984,7 +980,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
 
   private class RemoveAbbreviationAction extends DumbAwareAction {
     private final String myAbbreviation;
-    private @NotNull final String myActionId;
+    private final @NotNull String myActionId;
 
     private RemoveAbbreviationAction(String abbreviation, @NotNull String actionId) {
       super(IdeBundle.message("action.text.remove.abbreviation.0", abbreviation));
@@ -1001,7 +997,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
 
   private class ResetShortcutsAction extends DumbAwareAction {
     private final Keymap mySelectedKeymap;
-    private @NotNull final String myActionId;
+    private final @NotNull String myActionId;
 
     private ResetShortcutsAction(Keymap selectedKeymap, @NotNull String actionId) {
       super(IdeBundle.messagePointer("action.Anonymous.text.reset.shortcuts"));

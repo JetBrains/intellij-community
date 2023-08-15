@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -55,7 +55,7 @@ final class PersistentFSConnector {
       @Override public boolean tryLock() { return true; }
       @Override public boolean tryLock(long time, @NotNull TimeUnit unit) throws InterruptedException { return true; }
       @Override public void unlock() { }
-      @NotNull @Override public Condition newCondition() { throw new UnsupportedOperationException(); }
+      @Override public @NotNull Condition newCondition() { throw new UnsupportedOperationException(); }
     };
   }
   //@formatter:on

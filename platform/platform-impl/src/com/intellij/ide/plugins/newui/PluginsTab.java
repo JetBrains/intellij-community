@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.ide.IdeBundle;
@@ -67,8 +67,7 @@ public abstract class PluginsTab {
     }
   };
 
-  @NotNull
-  public JComponent createPanel() {
+  public @NotNull JComponent createPanel() {
     createSearchTextField(100);
 
     myCardPanel = new MultiPanel() {
@@ -223,19 +222,15 @@ public abstract class PluginsTab {
     emptyText.appendText(text, new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, ListPluginComponent.GRAY_COLOR));
   }
 
-  @NotNull
-  protected abstract PluginDetailsPageComponent createDetailsPanel(@NotNull LinkListener<Object> searchListener);
+  protected abstract @NotNull PluginDetailsPageComponent createDetailsPanel(@NotNull LinkListener<Object> searchListener);
 
-  @NotNull
-  protected abstract JComponent createPluginsPanel(@NotNull Consumer<? super PluginsGroupComponent> selectionListener);
+  protected abstract @NotNull JComponent createPluginsPanel(@NotNull Consumer<? super PluginsGroupComponent> selectionListener);
 
   protected abstract void updateMainSelection(@NotNull Consumer<? super PluginsGroupComponent> selectionListener);
 
-  @NotNull
-  protected abstract SearchResultPanel createSearchPanel(@NotNull Consumer<? super PluginsGroupComponent> selectionListener);
+  protected abstract @NotNull SearchResultPanel createSearchPanel(@NotNull Consumer<? super PluginsGroupComponent> selectionListener);
 
-  @Nullable
-  public String getSearchQuery() {
+  public @Nullable String getSearchQuery() {
     if (mySearchPanel == null || mySearchPanel.isEmpty()) {
       return null;
     }

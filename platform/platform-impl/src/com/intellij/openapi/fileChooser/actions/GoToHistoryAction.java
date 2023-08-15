@@ -27,7 +27,7 @@ abstract sealed class GoToHistoryAction extends FileChooserAction {
   @Override
   protected void actionPerformed(@NotNull FileSystemTree fileChooser, @NotNull AnActionEvent e) { }
 
-  final static class Backward extends GoToHistoryAction { }
+  static final class Backward extends GoToHistoryAction { }
 
-  final static class Forward extends GoToHistoryAction { }
+  static final class Forward extends GoToHistoryAction { }
 }

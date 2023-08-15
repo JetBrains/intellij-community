@@ -104,8 +104,7 @@ public class CustomFileTypeEditor extends SettingsEditor<AbstractFileType> {
   }
 
   @Override
-  @NotNull
-  public JComponent createEditor() {
+  public @NotNull JComponent createEditor() {
     JPanel panel = new JPanel(new BorderLayout());
 
     JPanel fileTypePanel = new JPanel(new BorderLayout());
@@ -170,8 +169,7 @@ public class CustomFileTypeEditor extends SettingsEditor<AbstractFileType> {
     return panel;
   }
 
-  @NotNull
-  public SyntaxTable getSyntaxTable() {
+  public @NotNull SyntaxTable getSyntaxTable() {
     SyntaxTable syntaxTable = new SyntaxTable();
     syntaxTable.setLineComment(myLineComment.getText());
     syntaxTable.setStartComment(myBlockCommentStart.getText());

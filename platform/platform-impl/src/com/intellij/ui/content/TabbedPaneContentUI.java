@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.content;
 
 import com.intellij.ide.IdeBundle;
@@ -29,7 +29,7 @@ import java.util.List;
  * @author Eugene Belyaev
  */
 public final class TabbedPaneContentUI implements ContentUI, PropertyChangeListener {
-  @NonNls public static final String POPUP_PLACE = "TabbedPanePopup";
+  public static final @NonNls String POPUP_PLACE = "TabbedPanePopup";
 
   private ContentManager myManager;
   private final TabbedPaneWrapper myTabbedPaneWrapper;
@@ -333,27 +333,23 @@ public final class TabbedPaneContentUI implements ContentUI, PropertyChangeListe
     return true;
   }
 
-  @NotNull
   @Override
-  public String getCloseActionName() {
+  public @NotNull String getCloseActionName() {
     return UIBundle.message("tabbed.pane.close.tab.action.name");
   }
 
-  @NotNull
   @Override
-  public String getCloseAllButThisActionName() {
+  public @NotNull String getCloseAllButThisActionName() {
     return UIBundle.message("tabbed.pane.close.all.tabs.but.this.action.name");
   }
 
-  @NotNull
   @Override
-  public String getPreviousContentActionName() {
+  public @NotNull String getPreviousContentActionName() {
     return IdeBundle.message("action.text.select.previous.tab");
   }
 
-  @NotNull
   @Override
-  public String getNextContentActionName() {
+  public @NotNull String getNextContentActionName() {
     return IdeBundle.message("action.text.select.next.tab");
   }
 

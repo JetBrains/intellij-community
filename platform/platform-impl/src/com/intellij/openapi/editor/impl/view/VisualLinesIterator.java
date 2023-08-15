@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.view;
 
 import com.intellij.openapi.editor.*;
@@ -29,8 +29,7 @@ public final class VisualLinesIterator {
   private final List<Inlay<?>> myInlaysBelow = new ArrayList<>();
   private boolean myInlaysSet;
 
-  @NotNull
-  private Location myLocation;
+  private @NotNull Location myLocation;
   private Location myNextLocation;
   private int y = UNSET; // y coordinate of visual line's top
 

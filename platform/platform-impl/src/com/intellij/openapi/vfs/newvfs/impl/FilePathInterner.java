@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.impl;
 
 import com.intellij.openapi.util.SystemInfo;
@@ -32,9 +32,8 @@ public final class FilePathInterner extends WeakInterner<CharSequence> {
     this.vfs = vfs;
   }
 
-  @NotNull
   @Override
-  public CharSequence intern(@NotNull CharSequence path) {
+  public @NotNull CharSequence intern(@NotNull CharSequence path) {
     List<String> names = StringUtil.split(path.toString(), "/");
     int[] nameIds = names.stream().mapToInt(name -> vfs.getNameId(name)).toArray();
     return nameIds.length == 0 ? "" : super.intern(new FileSeparatedCharSequence(vfs, nameIds));
@@ -84,9 +83,8 @@ public final class FilePathInterner extends WeakInterner<CharSequence> {
       return toString().substring(start, end);
     }
 
-    @NotNull
     @Override
-    public String toString() {
+    public @NotNull String toString() {
       StringBuilder b = new StringBuilder(length() + nameIds.length - 1);
       for (int n = 0; n < nameIds.length; n++) {
         if (n > 0 || !SystemInfo.isWindows) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -16,7 +16,7 @@ import java.util.*;
 
 abstract class FoldRegionsTree {
   private final RangeMarkerTree<FoldRegionImpl> myMarkerTree;
-  @NotNull private volatile CachedData myCachedData = new CachedData();
+  private volatile @NotNull CachedData myCachedData = new CachedData();
 
   private static final Comparator<FoldRegion> BY_END_OFFSET = Comparator.comparingInt(RangeMarker::getEndOffset);
   private static final Comparator<? super FoldRegion> BY_END_OFFSET_REVERSE = Collections.reverseOrder(BY_END_OFFSET);

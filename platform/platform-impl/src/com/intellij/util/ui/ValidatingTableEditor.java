@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -36,7 +36,7 @@ public abstract class ValidatingTableEditor<Item> implements ComponentWithEmptyT
 
   private static final Icon WARNING_ICON = UIUtil.getBalloonWarningIcon();
   private static final Icon EMPTY_ICON = IconManager.getInstance().createEmptyIcon(WARNING_ICON);
-  @NonNls private static final String REMOVE_KEY = "REMOVE_SELECTED";
+  private static final @NonNls String REMOVE_KEY = "REMOVE_SELECTED";
 
   public interface RowHeightProvider {
     int getRowHeight();
@@ -102,8 +102,7 @@ public abstract class ValidatingTableEditor<Item> implements ComponentWithEmptyT
 
   protected abstract Item cloneOf(Item item);
 
-  @Nullable
-  protected Pair<String, Fix> validate(List<? extends Item> current, List<? super String> warnings) {
+  protected @Nullable Pair<String, Fix> validate(List<? extends Item> current, List<? super String> warnings) {
     String error = null;
     for (int i = 0; i < current.size(); i++) {
       Item item = current.get(i);
@@ -116,13 +115,11 @@ public abstract class ValidatingTableEditor<Item> implements ComponentWithEmptyT
     return error != null ? Pair.create(error, (Fix)null) : null;
   }
 
-  @Nullable
-  protected String validate(Item item) {
+  protected @Nullable String validate(Item item) {
     return null;
   }
 
-  @Nullable
-  protected abstract Item createItem();
+  protected abstract @Nullable Item createItem();
 
   private class IconColumn extends ColumnInfo<Item, Object> implements RowHeightProvider {
     IconColumn() {
@@ -150,9 +147,8 @@ public abstract class ValidatingTableEditor<Item> implements ComponentWithEmptyT
     }
   }
 
-  @NotNull
   @Override
-  public StatusText getEmptyText() {
+  public @NotNull StatusText getEmptyText() {
     return myTable.getEmptyText();
   }
 
@@ -243,8 +239,7 @@ public abstract class ValidatingTableEditor<Item> implements ComponentWithEmptyT
     this(null);
   }
 
-  @Nullable
-  public List<Item> getSelectedItems() {
+  public @Nullable List<Item> getSelectedItems() {
     return myTable.getSelectedObjects();
   }
 

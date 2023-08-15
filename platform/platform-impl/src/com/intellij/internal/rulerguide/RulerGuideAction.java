@@ -15,7 +15,7 @@ import java.awt.*;
 
 final class RulerGuideAction extends ToggleAction implements DumbAware {
 
-  private final static int QUERY_DELAY = 40;
+  private static final int QUERY_DELAY = 40;
 
   private final SimpleTimer timer = SimpleTimer.newInstance("ruler-guide-action");
   private final RulerGuidePainter painter;

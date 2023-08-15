@@ -230,8 +230,7 @@ public abstract class PropertyTable extends JBTable {
 
   protected abstract boolean doRestoreDefault(ThrowableRunnable<Exception> runnable);
 
-  @Nullable
-  public ErrorInfo getErrorInfoForRow(int row) {
+  public @Nullable ErrorInfo getErrorInfoForRow(int row) {
     if (myContainers.size() != 1) {
       return null;
     }
@@ -275,8 +274,7 @@ public abstract class PropertyTable extends JBTable {
   //
   //////////////////////////////////////////////////////////////////////////////////////////
 
-  @Nullable
-  protected PropertyContext getPropertyContext() {
+  protected @Nullable PropertyContext getPropertyContext() {
     return null;
   }
 
@@ -350,13 +348,11 @@ public abstract class PropertyTable extends JBTable {
     }
   }
 
-  @NotNull
-  protected Comparator<String> getGroupComparator() {
+  protected @NotNull Comparator<String> getGroupComparator() {
     return GROUP_COMPARATOR;
   }
 
-  @NotNull
-  protected Comparator<Property> getPropertyComparator() {
+  protected @NotNull Comparator<Property> getPropertyComparator() {
     return PROPERTY_COMPARATOR;
   }
 
@@ -497,8 +493,7 @@ public abstract class PropertyTable extends JBTable {
     return true;
   }
 
-  @Nullable
-  public static Property findProperty(List<? extends Property> properties, String name) {
+  public static @Nullable Property findProperty(List<? extends Property> properties, String name) {
     for (Property property : properties) {
       if (name.equals(property.getName())) {
         return property;
@@ -559,8 +554,7 @@ public abstract class PropertyTable extends JBTable {
     }
   }
 
-  @Nullable
-  public static Property extractProperty(List<? extends Property> properties, String name) {
+  public static @Nullable Property extractProperty(List<? extends Property> properties, String name) {
     int size = properties.size();
     for (int i = 0; i < size; i++) {
       if (name.equals(properties.get(i).getName())) {
@@ -570,8 +564,7 @@ public abstract class PropertyTable extends JBTable {
     return null;
   }
 
-  @Nullable
-  public Property getSelectionProperty() {
+  public @Nullable Property getSelectionProperty() {
     int selectedRow = getSelectedRow();
     if (selectedRow >= 0 && selectedRow < myProperties.size()) {
       return myProperties.get(selectedRow);
@@ -579,8 +572,7 @@ public abstract class PropertyTable extends JBTable {
     return null;
   }
 
-  @Nullable
-  private PropertiesContainer getCurrentComponent() {
+  private @Nullable PropertiesContainer getCurrentComponent() {
     return myContainers.size() == 1 ? myContainers.get(0) : null;
   }
 
@@ -608,8 +600,7 @@ public abstract class PropertyTable extends JBTable {
     return true;
   }
 
-  @Nullable
-  protected final Object getValue(Property property) throws Exception {
+  protected final @Nullable Object getValue(Property property) throws Exception {
     int size = myContainers.size();
     if (size == 0) {
       return null;
@@ -1065,8 +1056,7 @@ public abstract class PropertyTable extends JBTable {
     return result;
   }
 
-  @NotNull
-  private static Couple<Integer> getBeforeIconAndAfterIndents(@NotNull Property property, @NotNull Icon icon) {
+  private static @NotNull Couple<Integer> getBeforeIconAndAfterIndents(@NotNull Property property, @NotNull Icon icon) {
     int nodeIndent = UIUtil.getTreeLeftChildIndent() + UIUtil.getTreeRightChildIndent();
     int beforeIcon = nodeIndent * getDepth(property);
 
@@ -1170,8 +1160,7 @@ public abstract class PropertyTable extends JBTable {
     }
   }
 
-  @NotNull
-  protected abstract TextAttributesKey getErrorAttributes(@NotNull HighlightSeverity severity);
+  protected abstract @NotNull TextAttributesKey getErrorAttributes(@NotNull HighlightSeverity severity);
 
   private final class PropertyCellRenderer implements TableCellRenderer {
     private final ColoredTableCellRenderer myCellRenderer;
@@ -1325,9 +1314,8 @@ public abstract class PropertyTable extends JBTable {
       super(null, StringUtil.notNullize(name));
     }
 
-    @NotNull
     @Override
-    public PropertyRenderer getRenderer() {
+    public @NotNull PropertyRenderer getRenderer() {
       return new LabelPropertyRenderer(null);
     }
 

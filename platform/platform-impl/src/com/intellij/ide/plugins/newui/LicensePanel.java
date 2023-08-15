@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.icons.AllIcons;
@@ -56,9 +56,7 @@ public class LicensePanel extends NonOpaquePanel {
     return myMessage.getIcon() != null || myMessage.isForegroundSet();
   }
 
-  @Nullable
-  @NlsSafe
-  public String getMessage() {
+  public @Nullable @NlsSafe String getMessage() {
     String text = myMessage.getText();
     if (mySubMessage.isVisible()) {
       return mySubMessage.getText() + "\n" + text;

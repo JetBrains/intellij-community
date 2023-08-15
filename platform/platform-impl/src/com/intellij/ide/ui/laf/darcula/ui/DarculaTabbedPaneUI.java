@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.icons.AllIcons;
@@ -472,8 +472,7 @@ public class DarculaTabbedPaneUI extends BasicTabbedPaneUI {
     }
   }
 
-  @Nullable
-  private JViewport getScrollableTabViewport() {
+  private @Nullable JViewport getScrollableTabViewport() {
     Optional<JViewport> optional = UIUtil.findComponentsOfType(tabPane, JViewport.class).stream().filter(
       viewport -> "TabbedPane.scrollableViewport".equals(viewport.getName())).findFirst();
     return optional.orElse(null);

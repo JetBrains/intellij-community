@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.keymap.impl;
 
 import com.intellij.execution.ExecutionException;
@@ -44,23 +44,21 @@ public final class SystemShortcuts {
   private static final @NotNull NotificationGroup GROUP = NotificationGroupManager.getInstance().getNotificationGroup("System shortcuts conflicts");
   private static final @NotNull String ourUnknownSysAction = "Unknown action";
 
-  private @NotNull final Map<KeyStroke, AWTKeyStroke> myKeyStroke2SysShortcut = new HashMap<>();
-  private @NotNull final Map<KeyStroke, String> myKeyStrokeCustomDescription = new HashMap<>();
-  private @NotNull final MuteConflictsSettings myMutedConflicts = new MuteConflictsSettings();
-  private @NotNull final Set<String> myNotifiedActions = new HashSet<>();
+  private final @NotNull Map<KeyStroke, AWTKeyStroke> myKeyStroke2SysShortcut = new HashMap<>();
+  private final @NotNull Map<KeyStroke, String> myKeyStrokeCustomDescription = new HashMap<>();
+  private final @NotNull MuteConflictsSettings myMutedConflicts = new MuteConflictsSettings();
+  private final @NotNull Set<String> myNotifiedActions = new HashSet<>();
   private int myNotifyCount = 0;
 
   private @Nullable Keymap myKeymap;
 
-  @NotNull
-  private final Map<AWTKeyStroke, ConflictItem> myKeymapConflicts = new HashMap<>();
+  private final @NotNull Map<AWTKeyStroke, ConflictItem> myKeymapConflicts = new HashMap<>();
 
   private SystemShortcuts() {
     readSystem();
   }
 
-  @NotNull
-  public static SystemShortcuts getInstance() {
+  public static @NotNull SystemShortcuts getInstance() {
     return ApplicationManager.getApplication().getService(SystemShortcuts.class);
   }
 
@@ -75,11 +73,9 @@ public final class SystemShortcuts {
       myActionIds = actionIds;
     }
 
-    @NotNull
-    public String getSysActionDesc() { return mySysActionDesc; }
+    public @NotNull String getSysActionDesc() { return mySysActionDesc; }
 
-    @NotNull
-    public KeyStroke getSysKeyStroke() { return mySysKeyStroke; }
+    public @NotNull KeyStroke getSysKeyStroke() { return mySysKeyStroke; }
 
     public String @NotNull [] getActionIds() { return myActionIds; }
 
@@ -113,8 +109,7 @@ public final class SystemShortcuts {
     }
   }
 
-  @NotNull
-  public Collection<ConflictItem> getUnmutedKeymapConflicts() {
+  public @NotNull Collection<ConflictItem> getUnmutedKeymapConflicts() {
     List<ConflictItem> result = new ArrayList<>();
     myKeymapConflicts.forEach((ks, ci) -> {
       if (ci.getUnmutedActionId(myMutedConflicts) != null) {
@@ -124,8 +119,7 @@ public final class SystemShortcuts {
     return result;
   }
 
-  @Nullable
-  public Condition<AnAction> createKeymapConflictsActionFilter() {
+  public @Nullable Condition<AnAction> createKeymapConflictsActionFilter() {
     if (myKeyStroke2SysShortcut.isEmpty() || myKeymap == null) {
       return null;
     }

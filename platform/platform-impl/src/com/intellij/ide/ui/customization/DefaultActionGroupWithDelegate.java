@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.customization;
 
 import com.intellij.openapi.actionSystem.ActionGroup;
@@ -21,9 +21,8 @@ public class DefaultActionGroupWithDelegate extends DefaultActionGroup implement
     myDelegate = delegate;
   }
 
-  @NotNull
   @Override
-  public ActionGroup getDelegate() {
+  public @NotNull ActionGroup getDelegate() {
     return myDelegate;
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options;
 
 import com.intellij.ide.ui.search.BooleanOptionDescription;
@@ -14,7 +14,10 @@ import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import kotlin.reflect.KMutableProperty0;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -57,8 +60,7 @@ public abstract class BeanConfigurable<T> implements UnnamedConfigurable, Config
       myValueClass = valueClass;
     }
 
-    @NonNls
-    private String getterName() {
+    private @NonNls String getterName() {
       if (myValueClass.equals(boolean.class)) {
         return "is" + StringUtil.capitalize(myFieldName);
       }
@@ -161,8 +163,7 @@ public abstract class BeanConfigurable<T> implements UnnamedConfigurable, Config
       return myComponent;
     }
 
-    @NotNull
-    abstract T createComponent();
+    abstract @NotNull T createComponent();
 
     boolean isModified(Object instance) {
       final Object componentValue = getComponentValue();
@@ -224,8 +225,7 @@ public abstract class BeanConfigurable<T> implements UnnamedConfigurable, Config
     }
   }
 
-  @Nullable
-  public String getTitle() {
+  public @Nullable String getTitle() {
     return myTitle;
   }
 
@@ -233,8 +233,7 @@ public abstract class BeanConfigurable<T> implements UnnamedConfigurable, Config
     myTitle = title;
   }
 
-  @Nullable
-  protected T getInstance() {
+  protected @Nullable T getInstance() {
     return myInstance;
   }
 
@@ -288,10 +287,9 @@ public abstract class BeanConfigurable<T> implements UnnamedConfigurable, Config
     myFields.add(field);
   }
 
-  @NotNull
   @Override
-  public List<OptionDescription> getOptionDescriptors(@NotNull String configurableId,
-                                                      @NotNull Function<? super String, @Nls String> nameConverter) {
+  public @NotNull List<OptionDescription> getOptionDescriptors(@NotNull String configurableId,
+                                                               @NotNull Function<? super String, @Nls String> nameConverter) {
     List<CheckboxField> boxes = JBIterable.from(myFields).filter(CheckboxField.class).toList();
     Object instance = getInstance();
     return ContainerUtil.map(boxes, box -> new BooleanOptionDescription(nameConverter.apply(box.getTitle()), configurableId) {

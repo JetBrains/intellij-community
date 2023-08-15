@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hint;
 
 import com.intellij.icons.AllIcons;
@@ -273,8 +273,7 @@ public final class HintUtil {
     private SimpleColoredComponent myColored;
     private JLabel myIcon;
 
-    @Nullable
-    private HintHint hintHint;
+    private @Nullable HintHint hintHint;
 
     private HintLabel() {
       setLayout(new BorderLayout());
@@ -331,8 +330,7 @@ public final class HintUtil {
       repaint();
     }
 
-    @Nullable
-    public HintHint getHintHint() {
+    public @Nullable HintHint getHintHint() {
       return hintHint;
     }
 

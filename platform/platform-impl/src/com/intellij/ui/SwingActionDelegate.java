@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -32,8 +32,7 @@ public class SwingActionDelegate extends AnAction implements ActionRemoteBehavio
     mySwingActionId = actionId;
   }
 
-  @Nullable
-  protected JComponent getComponent(AnActionEvent event) {
+  protected @Nullable JComponent getComponent(AnActionEvent event) {
     JComponent component = ComponentUtil.getParentOfType(JComponent.class, event.getData(CONTEXT_COMPONENT));
     Function<? super String, JComponent> function = component == null ? null : ComponentUtil.getClientProperty(component, FUNCTION);
     return function == null ? component : function.apply(mySwingActionId);

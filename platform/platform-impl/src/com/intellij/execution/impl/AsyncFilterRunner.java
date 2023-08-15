@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.impl;
 
 import com.intellij.execution.filters.Filter;
@@ -34,7 +34,7 @@ class AsyncFilterRunner {
   private final EditorHyperlinkSupport myHyperlinks;
   private final Editor myEditor;
   private final Queue<HighlighterJob> myQueue = new ConcurrentLinkedQueue<>();
-  @NotNull private List<FilterResult> myResults = new ArrayList<>();
+  private @NotNull List<FilterResult> myResults = new ArrayList<>();
 
   AsyncFilterRunner(@NotNull EditorHyperlinkSupport hyperlinks, @NotNull Editor editor) {
     myHyperlinks = hyperlinks;
@@ -95,8 +95,7 @@ class AsyncFilterRunner {
     }
   }
 
-  @NotNull
-  private List<FilterResult> takeAvailableResults() {
+  private @NotNull List<FilterResult> takeAvailableResults() {
     synchronized (myQueue) {
       List<FilterResult> results = myResults;
       myResults = new ArrayList<>();
@@ -185,14 +184,12 @@ class AsyncFilterRunner {
   }
 
   private class HighlighterJob {
-    @NotNull private final Project myProject;
+    private final @NotNull Project myProject;
     private final AtomicInteger startLine;
     private final int endLine;
     private final DeltaTracker delta;
-    @NotNull
-    private final Filter filter;
-    @NotNull
-    private final Document snapshot;
+    private final @NotNull Filter filter;
+    private final @NotNull Document snapshot;
 
     HighlighterJob(@NotNull Project project,
                    @NotNull Filter filter,
@@ -213,8 +210,7 @@ class AsyncFilterRunner {
       return !delta.isOutdated() && startLine.get() <= endLine;
     }
 
-    @Nullable
-    private AsyncFilterRunner.FilterResult analyzeNextLine() {
+    private @Nullable AsyncFilterRunner.FilterResult analyzeNextLine() {
       int line = startLine.get();
       Filter.Result result = analyzeLine(line);
       LOG.assertTrue(line == startLine.getAndIncrement());

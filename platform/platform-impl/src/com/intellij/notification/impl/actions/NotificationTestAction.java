@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.notification.impl.actions;
 
 import com.intellij.ide.util.PropertiesComponent;
@@ -289,8 +289,7 @@ public final class NotificationTestAction extends AnAction implements DumbAware 
       return myNotification;
     }
 
-    @Nullable
-    private NotificationListener getListener() {
+    private @Nullable NotificationListener getListener() {
       return myAddListener ? this : null;
     }
 

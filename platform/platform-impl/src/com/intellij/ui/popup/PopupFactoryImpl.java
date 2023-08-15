@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.popup;
 
 import com.intellij.CommonBundle;
@@ -263,18 +263,17 @@ public class PopupFactoryImpl extends JBPopupFactory {
       });
     }
 
-    @NotNull
-    protected static ListPopupStep<ActionItem> createStep(@PopupTitle @Nullable String title,
-                                                          @NotNull ActionGroup actionGroup,
-                                                          @NotNull DataContext dataContext,
-                                                          boolean showNumbers,
-                                                          boolean useAlphaAsNumbers,
-                                                          boolean showDisabledActions,
-                                                          boolean honorActionMnemonics,
-                                                          Condition<? super AnAction> preselectActionCondition,
-                                                          @Nullable String actionPlace,
-                                                          @Nullable PresentationFactory presentationFactory,
-                                                          boolean autoSelection) {
+    protected static @NotNull ListPopupStep<ActionItem> createStep(@PopupTitle @Nullable String title,
+                                                                   @NotNull ActionGroup actionGroup,
+                                                                   @NotNull DataContext dataContext,
+                                                                   boolean showNumbers,
+                                                                   boolean useAlphaAsNumbers,
+                                                                   boolean showDisabledActions,
+                                                                   boolean honorActionMnemonics,
+                                                                   Condition<? super AnAction> preselectActionCondition,
+                                                                   @Nullable String actionPlace,
+                                                                   @Nullable PresentationFactory presentationFactory,
+                                                                   boolean autoSelection) {
       final Component component = PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(dataContext);
 
       List<ActionItem> items = ActionPopupStep.createActionItems(
@@ -778,7 +777,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
     boolean myPrependWithSeparator;
     private @NlsContexts.Separator String mySeparatorText;
 
-    @NotNull private final List<InlineActionItem> myInlineActions;
+    private final @NotNull List<InlineActionItem> myInlineActions;
 
     ActionItem(@NotNull AnAction action,
                @Nullable Character mnemonicChar,

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui.impl;
 
 import com.intellij.openapi.ui.DialogWrapper;
@@ -17,7 +17,7 @@ import java.awt.event.MouseMotionListener;
 * @author Konstantin Bulenkov
 */
 final class HeadlessDialog implements AbstractDialog {
-  @NotNull private final DialogWrapper myWrapper;
+  private final @NotNull DialogWrapper myWrapper;
   private @NlsContexts.DialogTitle String myTitle;
 
   HeadlessDialog(@NotNull DialogWrapper wrapper) {
@@ -139,9 +139,8 @@ final class HeadlessDialog implements AbstractDialog {
   public void setResizable(boolean resizable) {
   }
 
-  @NotNull
   @Override
-  public Point getLocation() {
+  public @NotNull Point getLocation() {
     return new Point(0,0);
   }
 
@@ -172,9 +171,8 @@ final class HeadlessDialog implements AbstractDialog {
     myWrapper.close(DialogWrapper.OK_EXIT_CODE);
   }
 
-  @NotNull
   @Override
-  public IdeFocusManager getFocusManager() {
+  public @NotNull IdeFocusManager getFocusManager() {
     return new IdeFocusManagerHeadless();
   }
 

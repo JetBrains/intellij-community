@@ -591,8 +591,7 @@ public class WSLDistribution implements AbstractWslDistribution {
    *
    * @throws ExecutionException if IP can't be obtained (see logs for more info)
    */
-  @NotNull
-  public final InetAddress getHostIpAddress() throws ExecutionException {
+  public final @NotNull InetAddress getHostIpAddress() throws ExecutionException {
     final var hostIpOrException = getValueWithLogging(myLazyHostIp, "host IP");
     if (hostIpOrException == null) {
       throw new ExecutionException(IdeBundle.message("wsl.error.host.ip.not.obtained.message", getPresentableName()));
@@ -603,8 +602,7 @@ public class WSLDistribution implements AbstractWslDistribution {
   /**
    * Linux IP address. See class doc IP section for more info.
    */
-  @NotNull
-  public final InetAddress getWslIpAddress() {
+  public final @NotNull InetAddress getWslIpAddress() {
     if (Registry.is("wsl.proxy.connect.localhost")) {
       return InetAddress.getLoopbackAddress();
     }
@@ -675,8 +673,7 @@ public class WSLDistribution implements AbstractWslDistribution {
    * @return IP
    * @throws ExecutionException IP can't be parsed
    */
-  @NotNull
-  private String executeAndParseOutput(@NlsContexts.DialogMessage @NotNull String ipType,
+  private @NotNull String executeAndParseOutput(@NlsContexts.DialogMessage @NotNull String ipType,
                                        @NotNull Function<List<@NlsSafe String>, @Nullable String> parser,
                                        @NotNull String @NotNull ... command)
     throws ExecutionException {

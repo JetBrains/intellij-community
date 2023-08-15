@@ -54,7 +54,7 @@ public final class PendingEventDispatcher <T extends EventListener> {
     myAssertDispatchThread = assertDispatchThread;
     InvocationHandler handler = new InvocationHandler() {
       @Override
-      @NonNls public Object invoke(Object proxy, final Method method, final Object[] args) {
+      public @NonNls Object invoke(Object proxy, final Method method, final Object[] args) {
         if (method.getDeclaringClass().getName().equals("java.lang.Object")) {
           @NonNls String methodName = method.getName();
           return switch (methodName) {

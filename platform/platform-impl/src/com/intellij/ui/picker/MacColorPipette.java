@@ -38,9 +38,8 @@ public class MacColorPipette extends ColorPipetteBase {
     super(picker, listener);
   }
 
-  @NotNull
   @Override
-  protected Dialog getOrCreatePickerDialog() {
+  protected @NotNull Dialog getOrCreatePickerDialog() {
     Dialog pickerDialog = getPickerDialog();
     if (pickerDialog == null) {
       pickerDialog = super.getOrCreatePickerDialog();
@@ -172,8 +171,7 @@ public class MacColorPipette extends ColorPipetteBase {
 
   // TODO-ank: Screen capturing looks like self-contained feature and should be placed to separate class. Note that it is also used from
   //  com.android.tools.idea.ui.resourcechooser.colorpicker2.GraphicalColorPipette) to pick a color from any window on the screen
-  @Nullable
-  public static BufferedImage captureScreen(@Nullable Window belowWindow, @NotNull Rectangle rect) {
+  public static @Nullable BufferedImage captureScreen(@Nullable Window belowWindow, @NotNull Rectangle rect) {
     ID pool = Foundation.invoke("NSAutoreleasePool", "new");
     try {
       ID windowId = belowWindow != null ? MacUtil.findWindowFromJavaWindow(belowWindow) : null;

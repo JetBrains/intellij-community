@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.search;
 
 import com.intellij.BundleBase;
@@ -198,8 +198,7 @@ public final class SearchUtil {
   /**
    * This method tries to extract a user-visible text (as opposed to a HTML markup string) from a Swing text component.
    */
-  @Nullable
-  private static String getLabelFromTextView(@NotNull JComponent component) {
+  private static @Nullable String getLabelFromTextView(@NotNull JComponent component) {
     Object view = component.getClientProperty("html");
     if (!(view instanceof View)) return null;
     Document document = ((View)view).getDocument();
@@ -297,8 +296,7 @@ public final class SearchUtil {
     }
   }
 
-  @NotNull
-  private static Pattern getNonWordPattern(boolean i18n) {
+  private static @NotNull Pattern getNonWordPattern(boolean i18n) {
     return Pattern.compile("[" + (i18n ? "^\\pL" : "\\W") + "&&[^\\p{Punct}\\p{Blank}]]");
   }
 
@@ -571,7 +569,7 @@ public final class SearchUtil {
       int idx = 0;
       for (String word : selectedWords) {
         text = text.substring(idx);
-        @NlsSafe final String before = text.substring(0, text.indexOf(word));
+        final @NlsSafe String before = text.substring(0, text.indexOf(word));
         if (before.length() > 0) {
           textRenderer.append(before, new SimpleTextAttributes(background, foreground, null, style));
         }
@@ -581,7 +579,7 @@ public final class SearchUtil {
                                                                                                style |
                                                                                                SimpleTextAttributes.STYLE_SEARCH_MATCH));
       }
-      @NlsSafe final String after = text.substring(idx);
+      final @NlsSafe String after = text.substring(idx);
       if (after.length() > 0) {
         textRenderer.append(after, new SimpleTextAttributes(background, foreground, null, style));
       }
@@ -640,8 +638,7 @@ public final class SearchUtil {
     return withoutQuoted + " " + filter.substring(beg);
   }
 
-  @NotNull
-  public static List<Configurable> expand(ConfigurableGroup @NotNull [] groups) {
+  public static @NotNull List<Configurable> expand(ConfigurableGroup @NotNull [] groups) {
     List<Configurable> result = new ArrayList<>();
     CollectConsumer<Configurable> consumer = new CollectConsumer<>(result);
     for (ConfigurableGroup group : groups) {
@@ -650,8 +647,7 @@ public final class SearchUtil {
     return result;
   }
 
-  @NotNull
-  public static List<Configurable> expandGroup(@NotNull ConfigurableGroup group) {
+  public static @NotNull List<Configurable> expandGroup(@NotNull ConfigurableGroup group) {
     List<Configurable> result = new ArrayList<>();
     processExpandedGroups(group, new CollectConsumer<>(result));
     return result;
@@ -683,32 +679,28 @@ public final class SearchUtil {
     private final SearchableConfigurable myOriginal;
     private final UnnamedConfigurable myDelegate;
 
-    private SearchableConfigurableAdapter(@NotNull final SearchableConfigurable original, @NotNull final UnnamedConfigurable delegate) {
+    private SearchableConfigurableAdapter(final @NotNull SearchableConfigurable original, final @NotNull UnnamedConfigurable delegate) {
       myOriginal = original;
       myDelegate = delegate;
     }
 
-    @NotNull
     @Override
-    public String getId() {
+    public @NotNull String getId() {
       return myOriginal.getId();
     }
 
-    @Nls(capitalization = Nls.Capitalization.Title)
     @Override
-    public String getDisplayName() {
+    public @Nls(capitalization = Nls.Capitalization.Title) String getDisplayName() {
       return myOriginal.getDisplayName();
     }
 
-    @NotNull
     @Override
-    public Class<?> getOriginalClass() {
+    public @NotNull Class<?> getOriginalClass() {
       return myDelegate instanceof SearchableConfigurable ? ((SearchableConfigurable)myDelegate).getOriginalClass() : myDelegate.getClass();
     }
 
-    @Nullable
     @Override
-    public JComponent createComponent() {
+    public @Nullable JComponent createComponent() {
       return null;
     }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.util.NlsContexts;
@@ -10,8 +10,7 @@ import javax.swing.border.Border;
 import java.awt.*;
 
 public final class StaticAnchoredButton extends AnchoredButton {
-  @NotNull
-  private ToolWindowAnchor myToolWindowAnchor;
+  private @NotNull ToolWindowAnchor myToolWindowAnchor;
   private int myMnemonic2;
 
   public StaticAnchoredButton(@NlsContexts.Button String text,

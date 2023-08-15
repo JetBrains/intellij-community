@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.icons.AllIcons;
@@ -43,15 +43,15 @@ import java.util.Objects;
  * @author Konstantin Bulenkov
  */
 public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI implements Condition {
-  @NonNls private static final String DOCUMENT = "document";
-  @NonNls private static final String MONOSPACED = "monospaced";
-  @NonNls private static final String VARIANT = "JTextField.variant";
-  @NonNls private static final String INPLACE_HISTORY = "JTextField.Search.InplaceHistory";
-  @NonNls private static final String ON_CLEAR = "JTextField.Search.CancelAction";
-  @NonNls private static final String SEARCH_ICON = "JTextField.Search.Icon";
-  @NonNls private static final String HISTORY_POPUP_ENABLED = "History.Popup.Enabled";
+  private static final @NonNls String DOCUMENT = "document";
+  private static final @NonNls String MONOSPACED = "monospaced";
+  private static final @NonNls String VARIANT = "JTextField.variant";
+  private static final @NonNls String INPLACE_HISTORY = "JTextField.Search.InplaceHistory";
+  private static final @NonNls String ON_CLEAR = "JTextField.Search.CancelAction";
+  private static final @NonNls String SEARCH_ICON = "JTextField.Search.Icon";
+  private static final @NonNls String HISTORY_POPUP_ENABLED = "History.Popup.Enabled";
 
-  @NonNls private static final String SEARCH_VARIANT_VALUE = "search";
+  private static final @NonNls String SEARCH_VARIANT_VALUE = "search";
 
   private final LinkedHashMap<String, IconHolder> icons = new LinkedHashMap<>();
   private final Handler handler = new Handler();
@@ -231,8 +231,7 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
     return SEARCH_VARIANT_VALUE.equals(variant) || "searchWithJbPopup".equals(variant);
   }
 
-  @Nullable
-  public static AbstractAction getNewLineAction(Component c) {
+  public static @Nullable AbstractAction getNewLineAction(Component c) {
     if (!isSearchField(c)) return null;
     Object action = ((JTextField)c).getClientProperty("JTextField.Search.NewLineAction");
     return action instanceof AbstractAction ? (AbstractAction)action : null;
@@ -243,8 +242,7 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
   }
 
   @TestOnly
-  @NotNull
-  public Point getExtensionIconLocation(@NotNull final String extensionName) {
+  public @NotNull Point getExtensionIconLocation(final @NotNull String extensionName) {
     final IconHolder iconHolder = icons.get(extensionName);
     if (iconHolder == null) {
       throw new IllegalArgumentException("The " + extensionName + " extension does not exist in this text field");
@@ -252,8 +250,7 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
     return iconHolder.bounds.getLocation();
   }
 
-  @NotNull
-  public Rectangle getExtensionIconBounds(@NotNull Extension extension) {
+  public @NotNull Rectangle getExtensionIconBounds(@NotNull Extension extension) {
     for (IconHolder holder : icons.values()) {
       if (holder.extension == extension) {
         return new Rectangle(holder.bounds);
@@ -535,8 +532,7 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
     }
   }
 
-  @Nullable
-  private IconHolder getIconHolder(@NotNull JTextComponent component, int x, int y) {
+  private @Nullable IconHolder getIconHolder(@NotNull JTextComponent component, int x, int y) {
     boolean invalid = false;
     boolean repaint = false;
     IconHolder result = null;
@@ -696,9 +692,7 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
       return (prefix == null) ? null : createTooltip(prefix);
     }
 
-    @NotNull
-    @NlsContexts.Tooltip
-    private static String createTooltip(@Nls @NotNull String prefix) {
+    private static @NotNull @NlsContexts.Tooltip String createTooltip(@Nls @NotNull String prefix) {
       String shortcut = HelpTooltip.getShortcutAsHtml(KeymapUtil.getFirstKeyboardShortcutText("ShowSearchHistory"));
       return XmlStringUtil.wrapInHtml(prefix + shortcut);
     }

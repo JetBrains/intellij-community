@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.ide.ui.AntialiasingType;
@@ -51,7 +51,7 @@ public abstract class MultilineTreeCellRenderer extends JComponent implements Ac
   private String myPrefix;
   private int myTextLength;
   private int myPrefixWidth;
-  @NonNls protected static final String FONT_PROPERTY_NAME = "font";
+  protected static final @NonNls String FONT_PROPERTY_NAME = "font";
   private JTree myTree;
 
 
@@ -451,8 +451,7 @@ public abstract class MultilineTreeCellRenderer extends JComponent implements Ac
     return scrollpane;
   }
 
-  @NotNull
-  public String getText() {
+  public @NotNull String getText() {
     StringBuilder sb = new StringBuilder();
     myWraps.forEach(o -> sb.append(o.toString() + "\n"));
     return sb.toString();

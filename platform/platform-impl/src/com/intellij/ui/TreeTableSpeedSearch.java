@@ -109,9 +109,8 @@ public class TreeTableSpeedSearch extends SpeedSearchBase<TreeTable> {
     return selectionRows == null || selectionRows.length == 0 ? -1 : selectionRows[0];
   }
 
-  @NotNull
   @Override
-  protected final ListIterator<Object> getElementIterator(int startingViewIndex) {
+  protected final @NotNull ListIterator<Object> getElementIterator(int startingViewIndex) {
     return allPaths().addAllTo(new ArrayList<Object>()).listIterator(startingViewIndex);
   }
 
@@ -120,8 +119,7 @@ public class TreeTableSpeedSearch extends SpeedSearchBase<TreeTable> {
     return allPaths().size();
   }
 
-  @NotNull
-  protected JBIterable<TreePath> allPaths() {
+  protected @NotNull JBIterable<TreePath> allPaths() {
     return TreeSpeedSearch.allPaths(getComponent().getTree(), myCanExpand);
   }
 

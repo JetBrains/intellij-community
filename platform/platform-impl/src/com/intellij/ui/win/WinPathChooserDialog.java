@@ -156,8 +156,7 @@ public class WinPathChooserDialog implements PathChooserDialog, FileChooserDialo
     }
   }
 
-  @NotNull
-  private static FileDialog createFileDialogWithoutOwner(String title, int load) {
+  private static @NotNull FileDialog createFileDialogWithoutOwner(String title, int load) {
     // This is bad. But sometimes we do not have any windows at all.
     // On the other hand, it is a bit strange to show a file dialog without an owner
     // Therefore we should minimize usage of this case.

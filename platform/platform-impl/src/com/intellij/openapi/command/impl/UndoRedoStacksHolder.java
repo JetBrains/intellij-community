@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.command.impl;
 
 import com.intellij.openapi.command.undo.DocumentReference;
@@ -165,13 +165,11 @@ final class UndoRedoStacksHolder extends UndoRedoStacksHolderBase<UndoableGroup>
     from.invalidateChangeRanges();
   }
 
-  @NotNull
-  private List<LinkedList<UndoableGroup>> getAffectedStacks(@NotNull UndoableGroup group) {
+  private @NotNull List<LinkedList<UndoableGroup>> getAffectedStacks(@NotNull UndoableGroup group) {
     return getAffectedStacks(group.isGlobal(), group.getAffectedDocuments());
   }
 
-  @NotNull
-  private List<LinkedList<UndoableGroup>> getAffectedStacks(boolean global, @NotNull Collection<? extends DocumentReference> refs) {
+  private @NotNull List<LinkedList<UndoableGroup>> getAffectedStacks(boolean global, @NotNull Collection<? extends DocumentReference> refs) {
     List<LinkedList<UndoableGroup>> result = new ArrayList<>(refs.size() + 1);
     if (global) result.add(myGlobalStack);
     for (DocumentReference ref : refs) {
@@ -208,8 +206,7 @@ final class UndoRedoStacksHolder extends UndoRedoStacksHolderBase<UndoableGroup>
     }
   }
 
-  @NotNull
-  private Set<DocumentReference> getAffectedDocuments() {
+  private @NotNull Set<DocumentReference> getAffectedDocuments() {
     Set<DocumentReference> result = new HashSet<>();
     collectAllAffectedDocuments(result);
     return result;

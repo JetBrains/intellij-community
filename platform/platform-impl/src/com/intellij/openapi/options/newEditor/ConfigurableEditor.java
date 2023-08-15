@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options.newEditor;
 
 import com.intellij.CommonBundle;
@@ -238,8 +238,7 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
     }
   }
 
-  @NotNull
-  final Promise<? super Object> select(final Configurable configurable) {
+  final @NotNull Promise<? super Object> select(final Configurable configurable) {
     assert !myDisposed : "Already disposed";
     long startTime = System.currentTimeMillis();
     final boolean loadedFromCache = myCardPanel.getValue(configurable, false) != null;

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.util.io.StorageLockContext;
@@ -234,8 +234,7 @@ final class CompactRecordsTable extends AbstractRecordsTable {
     };
   }
 
-  @NotNull
-  private BitSet buildIdSetOfExtraRecords() throws IOException {
+  private @NotNull BitSet buildIdSetOfExtraRecords() throws IOException {
     final BitSet extraRecords = new BitSet();
 
     final RecordIdIterator iterator = super.createRecordIdIterator();

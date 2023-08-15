@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.mac.touchbar;
 
 import com.intellij.openapi.actionSystem.ActionGroup;
@@ -30,7 +30,7 @@ final class TouchBarsManager {
 
   private static int ourLastModifiersEx = 0;
 
-  synchronized static void processAWTEvent(AWTEvent e) {
+  static synchronized void processAWTEvent(AWTEvent e) {
     if (e instanceof InputEvent) {
       processInputEvent((InputEvent)e);
       return;
@@ -170,17 +170,17 @@ final class TouchBarsManager {
 
   static int getLastModifiersEx() { return ourLastModifiersEx; }
 
-  synchronized static void register(@NotNull Component component, @NotNull ActionGroup actions, @Nullable Customizer customizations) {
+  static synchronized void register(@NotNull Component component, @NotNull ActionGroup actions, @Nullable Customizer customizations) {
     LOG.debug("register actions '%s' for component %s", actions, component);
     unregister(component); // cleanup for insurance
     ourComp2Actions.put(component, new ComponentActions(component, actions, null, customizations));
   }
 
-  synchronized static void register(@NotNull Component component, @NotNull ActionGroup actions) {
+  static synchronized void register(@NotNull Component component, @NotNull ActionGroup actions) {
     register(component, actions, null);
   }
 
-  synchronized static void register(@NotNull Component component, @NotNull Map<Long, ActionGroup> actions, @Nullable Customizer customizations) {
+  static synchronized void register(@NotNull Component component, @NotNull Map<Long, ActionGroup> actions, @Nullable Customizer customizations) {
     final ActionGroup mainLayout = actions.get(0L);
     if (mainLayout == null) {
       LOG.debug("can't find main layout for component: %s (actions will not be added)", component);
@@ -197,38 +197,38 @@ final class TouchBarsManager {
     ourComp2Actions.put(component, new ComponentActions(component, mainLayout, actions, customizations));
   }
 
-  synchronized static void register(@NotNull Component component, @NotNull Map<Long, ActionGroup> actions) {
+  static synchronized void register(@NotNull Component component, @NotNull Map<Long, ActionGroup> actions) {
     register(component, actions, null);
   }
 
-  synchronized static void registerAndShow(@NotNull Component component, @NotNull ActionGroup actions) {
+  static synchronized void registerAndShow(@NotNull Component component, @NotNull ActionGroup actions) {
     register(component, actions);
     showActionsOfComponent(component);
   }
 
-  synchronized static void registerAndShow(@NotNull Component component, @NotNull Map<Long, ActionGroup> actions) {
+  static synchronized void registerAndShow(@NotNull Component component, @NotNull Map<Long, ActionGroup> actions) {
     register(component, actions);
     showActionsOfComponent(component);
   }
 
-  synchronized static void registerAndShow(@NotNull Component component, @NotNull Map<Long, ActionGroup> actions, @Nullable Customizer customizations) {
+  static synchronized void registerAndShow(@NotNull Component component, @NotNull Map<Long, ActionGroup> actions, @Nullable Customizer customizations) {
     register(component, actions, customizations);
     showActionsOfComponent(component);
   }
 
-  synchronized static void registerAndShow(@NotNull Component component, @NotNull ActionGroup actions, @Nullable Customizer customizations) {
+  static synchronized void registerAndShow(@NotNull Component component, @NotNull ActionGroup actions, @Nullable Customizer customizations) {
     register(component, actions, customizations);
     showActionsOfComponent(component);
   }
 
-  synchronized static void registerAndShow(@NotNull Component component, @NotNull TBPanel tb) {
+  static synchronized void registerAndShow(@NotNull Component component, @NotNull TBPanel tb) {
     LOG.debug("registerAndShow non-action touchbar '%s' for component %s", tb, component);
     unregister(component); // cleanup for insurance
     ourComp2Actions.put(component, new ComponentActions(component, tb));
     showActionsOfComponent(component);
   }
 
-  synchronized static void unregister(@NotNull Component component) {
+  static synchronized void unregister(@NotNull Component component) {
     LOG.debug("UNREGISTER: component %s", component);
 
     final @Nullable ComponentActions componentActions = ourComp2Actions.remove(component);
@@ -240,7 +240,7 @@ final class TouchBarsManager {
     componentActions.clearCachedTouchbars();
   }
 
-  synchronized static void showActionsOfComponent(@NotNull Component component) {
+  static synchronized void showActionsOfComponent(@NotNull Component component) {
     final @Nullable ComponentActions componentActions = ourComp2Actions.get(component);
     if (componentActions == null) {
       LOG.debug("SHOW: can't find actions info for component: %s (nothing to show)", component);
@@ -250,7 +250,7 @@ final class TouchBarsManager {
     showTouchbar(componentActions);
   }
 
-  synchronized static void clearAll() {
+  static synchronized void clearAll() {
     LOG.debug("Clear all actions (disable touchbar suppoprt)");
 
     ourStacks.forEach((w, s) -> {
@@ -303,7 +303,7 @@ final class TouchBarsManager {
     return stack;
   }
 
-  synchronized static void hideTouchbar(@NotNull TBPanel tb) {
+  static synchronized void hideTouchbar(@NotNull TBPanel tb) {
     for (Stack stack: ourStacks.values()) {
       stack.removeTouchbar(tb);
     }

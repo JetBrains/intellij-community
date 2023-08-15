@@ -30,14 +30,12 @@ public class EAPUsageCollector extends ApplicationUsagesCollector {
     return GROUP;
   }
 
-  @NotNull
   @Override
-  public Set<MetricEvent> getMetrics() {
+  public @NotNull Set<MetricEvent> getMetrics() {
     return collectMetrics();
   }
 
-  @NotNull
-  private static Set<MetricEvent> collectMetrics() {
+  private static @NotNull Set<MetricEvent> collectMetrics() {
     try {
       if (!AppMode.isHeadless()) {
         final Set<MetricEvent> result = new HashSet<>();
@@ -66,8 +64,7 @@ public class EAPUsageCollector extends ApplicationUsagesCollector {
     return Collections.emptySet();
   }
 
-  @NotNull
-  private static MetricEvent newLicencingMetric(@NotNull LicenceType value, @NotNull LicensingFacade licensingFacade) {
+  private static @NotNull MetricEvent newLicencingMetric(@NotNull LicenceType value, @NotNull LicensingFacade licensingFacade) {
     List<EventPair<?>> data = new ArrayList<>();
     String licensedToMessage = licensingFacade.getLicensedToMessage();
     if (licensedToMessage != null && licensedToMessage.contains("JetBrains Team")) {

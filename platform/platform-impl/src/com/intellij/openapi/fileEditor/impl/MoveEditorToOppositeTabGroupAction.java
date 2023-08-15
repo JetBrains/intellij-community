@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.openapi.actionSystem.*;
@@ -25,7 +25,7 @@ public class MoveEditorToOppositeTabGroupAction extends AnAction implements Dumb
   }
 
   @Override
-  public void actionPerformed(@NotNull final AnActionEvent event) {
+  public void actionPerformed(final @NotNull AnActionEvent event) {
     final DataContext dataContext = event.getDataContext();
     final VirtualFile vFile = CommonDataKeys.VIRTUAL_FILE.getData(dataContext);
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
@@ -105,8 +105,7 @@ public final class PluginPriceService {
     });
   }
 
-  @Nullable
-  private static Object getPluginPricesJsonObject() throws IOException {
+  private static @Nullable Object getPluginPricesJsonObject() throws IOException {
     ApplicationInfoEx instance = ApplicationInfoImpl.getShadowInstance();
     Url url = Urls.newFromEncoded(instance.getPluginManagerUrl() + "/geo/files/prices");
     return HttpRequests.request(url).throwStatusCodeException(false).productNameAsUserAgent().connect(request -> {
@@ -122,8 +121,7 @@ public final class PluginPriceService {
     });
   }
 
-  @NotNull
-  private static Map<String, String> parsePrices(@NotNull Map<String, Object> jsonObject) {
+  private static @NotNull Map<String, String> parsePrices(@NotNull Map<String, Object> jsonObject) {
     Map<String, String> result = new HashMap<>();
     Object plugins = jsonObject.get("plugins");
 
@@ -146,8 +144,7 @@ public final class PluginPriceService {
     return result;
   }
 
-  @NotNull
-  private static String parseCurrency(@NotNull Map<String, Object> jsonObject) {
+  private static @NotNull String parseCurrency(@NotNull Map<String, Object> jsonObject) {
     Object iso = jsonObject.get("iso");
     if (iso instanceof String) {
       Currency currency = Currency.getInstance((String)iso);
@@ -158,8 +155,7 @@ public final class PluginPriceService {
     return "";
   }
 
-  @Nullable
-  private static Double parsePrice(@NotNull Map<String, Object> plugin) {
+  private static @Nullable Double parsePrice(@NotNull Map<String, Object> plugin) {
     double[] personal = parsePrice(plugin, "personal");
     double[] commercial = parsePrice(plugin, "commercial");
 
@@ -184,8 +180,7 @@ public final class PluginPriceService {
     return null;
   }
 
-  @Nullable
-  private static double[] parsePrice(@NotNull Map<String, Object> jsonObject, @NotNull String key) {
+  private static @Nullable double[] parsePrice(@NotNull Map<String, Object> jsonObject, @NotNull String key) {
     Object value = jsonObject.get(key);
 
     if (value instanceof Map) {

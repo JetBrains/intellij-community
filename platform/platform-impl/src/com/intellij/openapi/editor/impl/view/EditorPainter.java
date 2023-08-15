@@ -648,8 +648,7 @@ public final class EditorPainter implements TextDrawingCallback {
       ComplexTextFragment.flushDrawingCache(myGraphics);
     }
 
-    @Nullable
-    private TextAttributes getInnerHighlighterAttributes(@NotNull FoldRegion region) {
+    private @Nullable TextAttributes getInnerHighlighterAttributes(@NotNull FoldRegion region) {
       if (region.areInnerHighlightersMuted()) return null;
       List<RangeHighlighterEx> innerHighlighters = new ArrayList<>();
       collectVisibleInnerHighlighters(region, myEditorMarkup, innerHighlighters);
@@ -942,8 +941,7 @@ public final class EditorPainter implements TextDrawingCallback {
      *         null otherwise
      */
     @Contract("null -> null")
-    @Nullable
-    private static EffectDescriptor getBorderDescriptor(@Nullable TextAttributes attributes) {
+    private static @Nullable EffectDescriptor getBorderDescriptor(@Nullable TextAttributes attributes) {
       return attributes == null || !attributes.hasEffects()
              ? null
              : TextAttributesEffectsBuilder.create(attributes).getEffectDescriptor(TextAttributesEffectsBuilder.EffectSlot.FRAME_SLOT);
@@ -1244,10 +1242,9 @@ public final class EditorPainter implements TextDrawingCallback {
       return new TextAttributes();
     }
 
-    @NotNull
-    private TextAttributes getBetweenLinesAttributes(int bottomVisualLine,
-                                                     int bottomVisualLineStartOffset,
-                                                     PeekableIterator<? extends Caret> caretIterator) {
+    private @NotNull TextAttributes getBetweenLinesAttributes(int bottomVisualLine,
+                                                              int bottomVisualLineStartOffset,
+                                                              PeekableIterator<? extends Caret> caretIterator) {
       boolean selection = false;
       while (caretIterator.hasNext() && caretIterator.peek().getSelectionEnd() < bottomVisualLineStartOffset) caretIterator.next();
       if (caretIterator.hasNext()) {
@@ -1662,8 +1659,7 @@ public final class EditorPainter implements TextDrawingCallback {
     int marginX(float marginWidth);
     List<Integer> softMarginsX();
 
-    @NotNull
-    static XCorrector create(@NotNull EditorView view, @NotNull Insets insets) {
+    static @NotNull XCorrector create(@NotNull EditorView view, @NotNull Insets insets) {
       return view.getEditor().isRightAligned() ? new RightAligned(view) : new LeftAligned(view, insets);
     }
 

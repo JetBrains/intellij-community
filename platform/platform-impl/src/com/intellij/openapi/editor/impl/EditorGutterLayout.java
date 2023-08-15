@@ -40,8 +40,7 @@ public class EditorGutterLayout {
     return getLayout().stream().map(GutterArea::width).reduce(0, Integer::sum);
   }
 
-  @Nullable
-  public EditorMouseEventArea getEditorMouseAreaByOffset(int offset) {
+  public @Nullable EditorMouseEventArea getEditorMouseAreaByOffset(int offset) {
     int off = 0;
     for (GutterArea area : getLayout()) {
       off += area.width();
@@ -214,13 +213,11 @@ public class EditorGutterLayout {
     );
   }
 
-  @NotNull
-  private GutterArea areaGap() {
+  private @NotNull GutterArea areaGap() {
     return area(GAP_BETWEEN_AREAS, EditorGutterComponentImpl::getGapBetweenAreas);
   }
 
-  @NotNull
-  private GutterArea areaGap(int width) {
+  private @NotNull GutterArea areaGap(int width) {
     return area(GAP_BETWEEN_AREAS, () -> width); //type something
   }
 

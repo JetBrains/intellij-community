@@ -36,7 +36,7 @@ abstract class InstallAndEnableTask extends Task.Modal {
   private final boolean myShowDialog;
   private final boolean mySelectAllInDialog;
   protected final @Nullable ModalityState myModalityState;
-  protected @NotNull final Runnable myOnSuccess;
+  protected final @NotNull Runnable myOnSuccess;
 
   InstallAndEnableTask(@Nullable Project project,
                        @NotNull Set<PluginId> pluginIds,

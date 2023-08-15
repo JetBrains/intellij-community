@@ -105,9 +105,8 @@ public class WelcomeBalloonLayoutImpl extends BalloonLayoutImpl {
       myPopupBalloon.setActionProvider(new BalloonImpl.ActionProvider() {
         private BalloonImpl.ActionButton myAction;
 
-        @NotNull
         @Override
-        public List<BalloonImpl.ActionButton> createActions() {
+        public @NotNull List<BalloonImpl.ActionButton> createActions() {
           myAction = myPopupBalloon.new ActionButton(AllIcons.Ide.Notification.Close, null, null, EmptyConsumer.getInstance());
           return Collections.singletonList(myAction);
         }
@@ -210,8 +209,7 @@ public class WelcomeBalloonLayoutImpl extends BalloonLayoutImpl {
     }
   }
 
-  @Nullable
-  public Component getLocationComponent() {
+  public @Nullable Component getLocationComponent() {
     return myLayoutBaseComponent;
   }
 

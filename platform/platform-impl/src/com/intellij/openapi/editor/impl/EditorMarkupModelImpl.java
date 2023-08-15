@@ -154,14 +154,12 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
   private final ComponentListener toolbarComponentListener;
   private Rectangle cachedToolbarBounds = new Rectangle();
   private final JLabel smallIconLabel = new JLabel();
-  @NotNull
-  private volatile AnalyzerStatus analyzerStatus = AnalyzerStatus.getEMPTY();
+  private volatile @NotNull AnalyzerStatus analyzerStatus = AnalyzerStatus.getEMPTY();
   private boolean hasAnalyzed;
   private boolean isAnalyzing;
   private boolean showNavigation;
   private boolean reportErrorStripeInconsistency = true;
-  @NotNull
-  private final TrafficLightPopup myTrafficLightPopup;
+  private final @NotNull TrafficLightPopup myTrafficLightPopup;
   private final Alarm statusTimer = new Alarm(resourcesDisposable);
   private final Map<InspectionWidgetActionProvider, AnAction> extensionActions = new HashMap<>();
 
@@ -623,8 +621,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     return true;
   }
 
-  @NotNull
-  private static HintHint createHint(Component component, Point point) {
+  private static @NotNull HintHint createHint(Component component, Point point) {
     return new HintHint(component, point)
       .setAwtTooltip(true)
       .setPreferredPosition(Balloon.Position.atLeft)
@@ -688,8 +685,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     return nearestMarker;
   }
 
-  @NotNull
-  private Set<RangeHighlighter> getNearestHighlighters(int y) {
+  private @NotNull Set<RangeHighlighter> getNearestHighlighters(int y) {
     Set<RangeHighlighter> highlighters = new HashSet<>();
     addNearestHighlighters(this, y, highlighters);
     addNearestHighlighters(myEditor.getFilteredDocumentMarkupModel(), y, highlighters);

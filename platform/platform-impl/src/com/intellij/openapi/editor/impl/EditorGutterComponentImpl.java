@@ -162,17 +162,16 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   private static final TooltipGroup GUTTER_TOOLTIP_GROUP = new TooltipGroup("GUTTER_TOOLTIP_GROUP", 0);
 
   private ClickInfo myLastActionableClick;
-  @NotNull
-  private final EditorImpl myEditor;
+  private final @NotNull EditorImpl myEditor;
   private final FoldingAnchorsOverlayStrategy myAnchorDisplayStrategy;
-  @Nullable private Int2ObjectMap<List<GutterMark>> myLineToGutterRenderers;
+  private @Nullable Int2ObjectMap<List<GutterMark>> myLineToGutterRenderers;
   private boolean myLineToGutterRenderersCacheForLogicalLines;
   private boolean myHasInlaysWithGutterIcons;
   private int myStartIconAreaWidth = ExperimentalUI.isNewUI() ? 0 : START_ICON_AREA_WIDTH.get();
   private int myIconsAreaWidth;
   int myLineNumberAreaWidth = getInitialLineNumberWidth();
   int myAdditionalLineNumberAreaWidth;
-  @NotNull private List<FoldRegion> myActiveFoldRegions = Collections.emptyList();
+  private @NotNull List<FoldRegion> myActiveFoldRegions = Collections.emptyList();
   int myTextAnnotationGuttersSize;
   int myTextAnnotationExtraSize;
   final IntList myTextAnnotationGutterSizes = new IntArrayList();
@@ -180,11 +179,11 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   private boolean myGapAfterAnnotations;
   private final Map<TextAnnotationGutterProvider, EditorGutterAction> myProviderToListener = new HashMap<>();
   private String myLastGutterToolTip;
-  @Nullable private LineNumberConverter myLineNumberConverter;
-  @Nullable private LineNumberConverter myAdditionalLineNumberConverter;
+  private @Nullable LineNumberConverter myLineNumberConverter;
+  private @Nullable LineNumberConverter myAdditionalLineNumberConverter;
   private boolean myShowDefaultGutterPopup = true;
   private boolean myCanCloseAnnotations = true;
-  @Nullable private ActionGroup myCustomGutterPopupGroup;
+  private @Nullable ActionGroup myCustomGutterPopupGroup;
   private final Int2ObjectMap<Color> myTextFgColors = new Int2ObjectOpenHashMap<>();
   private boolean myPaintBackground = true;
   private boolean myLeftFreePaintersAreaShown;
@@ -196,14 +195,14 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   private int myLastNonDumbModeIconAreaWidth;
   boolean myDnDInProgress;
   private final EditorGutterLayout myLayout = new EditorGutterLayout(this);
-  @Nullable private AccessibleGutterLine myAccessibleGutterLine;
+  private @Nullable AccessibleGutterLine myAccessibleGutterLine;
   private final AlphaAnimationContext myAlphaContext = new AlphaAnimationContext(composite -> {
     if (isShowing()) repaint();
   });
   private boolean myHovered = false;
-  @NotNull private final EventDispatcher<EditorGutterListener> myEditorGutterListeners = EventDispatcher.create(EditorGutterListener.class);
+  private final @NotNull EventDispatcher<EditorGutterListener> myEditorGutterListeners = EventDispatcher.create(EditorGutterListener.class);
   private int myHoveredFreeMarkersLine = -1;
-  @Nullable private GutterIconRenderer myCurrentHoveringGutterRenderer;
+  private @Nullable GutterIconRenderer myCurrentHoveringGutterRenderer;
 
   EditorGutterComponentImpl(@NotNull EditorImpl editor) {
     myEditor = editor;
@@ -821,9 +820,8 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     return Math.max(0, myEditor.getDocument().getLineCount() - 1);
   }
 
-  @Nullable
   @Override
-  public Object getData(@NotNull @NonNls String dataId) {
+  public @Nullable Object getData(@NotNull @NonNls String dataId) {
     if (myEditor.isDisposed()) return null;
 
     if (EditorGutter.KEY.is(dataId)) {
@@ -1137,8 +1135,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   }
 
   @Override
-  @NotNull
-  public List<GutterMark> getGutterRenderers(int line) {
+  public @NotNull List<GutterMark> getGutterRenderers(int line) {
     if (myLineToGutterRenderers == null || myLineToGutterRenderersCacheForLogicalLines != logicalLinesMatchVisualOnes()) {
       buildGutterRenderersCache();
     }
@@ -1460,9 +1457,8 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     updateSize();
   }
 
-  @NotNull
   @Override
-  public List<TextAnnotationGutterProvider> getTextAnnotations() {
+  public @NotNull List<TextAnnotationGutterProvider> getTextAnnotations() {
     return new ArrayList<>(myTextAnnotationGutters);
   }
 
@@ -1881,8 +1877,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     return myEditor.getVerticalScrollbarOrientation() != EditorEx.VERTICAL_SCROLLBAR_RIGHT;
   }
 
-  @Nullable
-  private AffineTransform setMirrorTransformIfNeeded(Graphics2D g, int offset, int width) {
+  private @Nullable AffineTransform setMirrorTransformIfNeeded(Graphics2D g, int offset, int width) {
     if (isMirrored()) {
       AffineTransform old = g.getTransform();
       AffineTransform transform = new AffineTransform(old);
@@ -1897,9 +1892,8 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     }
   }
 
-  @Nullable
   @Override
-  public FoldRegion findFoldingAnchorAt(int x, int y) {
+  public @Nullable FoldRegion findFoldingAnchorAt(int x, int y) {
     if (!myEditor.getSettings().isFoldingOutlineShown()) return null;
 
     int anchorX = getFoldingAreaOffset();
@@ -2124,8 +2118,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     return Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR);
   }
 
-  @NotNull
-  private List<FoldRegion> getGroupRegions(@Nullable FoldRegion foldingAtCursor) {
+  private @NotNull List<FoldRegion> getGroupRegions(@Nullable FoldRegion foldingAtCursor) {
     if (foldingAtCursor == null) {
       return Collections.emptyList();
     }
@@ -2176,8 +2169,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     return EditorUtil.yToLogicalLineNoCustomRenderers(myEditor, clickPoint.y);
   }
 
-  @Nullable
-  private TextAnnotationGutterProvider getProviderAtPoint(final Point clickPoint) {
+  private @Nullable TextAnnotationGutterProvider getProviderAtPoint(final Point clickPoint) {
     int current = getAnnotationsAreaOffset();
     if (clickPoint.x < current) return null;
     for (int i = 0; i < myTextAnnotationGutterSizes.size(); i++) {
@@ -2314,8 +2306,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     return remover;
   }
 
-  @Nullable
-  private ActiveGutterRenderer getActiveRendererByMouseEvent(final MouseEvent e) {
+  private @Nullable ActiveGutterRenderer getActiveRendererByMouseEvent(final MouseEvent e) {
     if (findFoldingAnchorAt(e.getX(), e.getY()) != null) {
       return null;
     }
@@ -2390,8 +2381,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   }
 
   @Override
-  @Nullable
-  public Point getCenterPoint(final GutterIconRenderer renderer) {
+  public @Nullable Point getCenterPoint(final GutterIconRenderer renderer) {
     if (!areIconsShown()) {
       for (Int2ObjectMap.Entry<List<GutterMark>> entry : processGutterRenderers()) {
         if (ContainerUtil.find(entry.getValue(), renderer) != null) {
@@ -2633,14 +2623,12 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   }
 
   @Override
-  @Nullable
-  public GutterIconRenderer getGutterRenderer(final Point p) {
+  public @Nullable GutterIconRenderer getGutterRenderer(final Point p) {
     PointInfo info = getPointInfo(p);
     return info == null ? null : info.renderer;
   }
 
-  @Nullable
-  private PointInfo getPointInfo(@NotNull Point p) {
+  private @Nullable PointInfo getPointInfo(@NotNull Point p) {
     int cX = convertX((int)p.getX());
     int line = myEditor.yToVisualLine(p.y);
     int[] yRange = myEditor.visualLineToYRange(line);
@@ -2693,8 +2681,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     return null;
   }
 
-  @Nullable
-  private PointInfo getPointInfo(@NotNull Inlay<?> inlay, int inlayY, int x, int y) {
+  private @Nullable PointInfo getPointInfo(@NotNull Inlay<?> inlay, int inlayY, int x, int y) {
     GutterIconRenderer renderer = inlay.getGutterIconRenderer();
     if (!shouldBeShown(renderer) || !checkDumbAware(renderer)) return null;
     Icon icon = scaleIcon(renderer.getIcon());
@@ -2709,13 +2696,11 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     return pointInfo;
   }
 
-  @Nullable
-  private GutterIconRenderer getGutterRenderer(final MouseEvent e) {
+  private @Nullable GutterIconRenderer getGutterRenderer(final MouseEvent e) {
     return getGutterRenderer(e.getPoint());
   }
 
-  @NotNull
-  static LineMarkerRendererEx.Position getLineMarkerPosition(@NotNull LineMarkerRenderer renderer) {
+  static @NotNull LineMarkerRendererEx.Position getLineMarkerPosition(@NotNull LineMarkerRenderer renderer) {
     if (renderer instanceof LineMarkerRendererEx) {
       return ((LineMarkerRendererEx)renderer).getPosition();
     }

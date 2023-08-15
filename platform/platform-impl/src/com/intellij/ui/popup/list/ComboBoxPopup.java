@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.popup.list;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -52,10 +52,9 @@ public class ComboBoxPopup<T> extends ListPopupImpl {
     configurePopup();
   }
 
-  @NotNull
-  private static <T> MyBasePopupState<T> popupStateFromContext(@NotNull Context<T> context,
-                                                               @NotNull Consumer<? super T> onItemSelected,
-                                                               @Nullable T selectedItem) {
+  private static @NotNull <T> MyBasePopupState<T> popupStateFromContext(@NotNull Context<T> context,
+                                                                        @NotNull Consumer<? super T> onItemSelected,
+                                                                        @Nullable T selectedItem) {
     MyBasePopupState<T> step = new MyBasePopupState<>(onItemSelected,
                                                       () -> context.getModel(),
                                                       () -> context.getRenderer()) {
@@ -118,9 +117,8 @@ public class ComboBoxPopup<T> extends ListPopupImpl {
     moveToFitScreen();
   }
 
-  @NotNull
   @Override
-  protected WizardPopup createPopup(WizardPopup parent, PopupStep step, Object parentValue) {
+  protected @NotNull WizardPopup createPopup(WizardPopup parent, PopupStep step, Object parentValue) {
     if (step instanceof MyBasePopupState) {
       //noinspection unchecked
       return new ComboBoxPopup<>(myContext, parent, (MyBasePopupState<T>)step, parentValue);
@@ -205,10 +203,9 @@ public class ComboBoxPopup<T> extends ListPopupImpl {
       myGetRenderer = getRenderer;
     }
 
-    @Nullable
     @Override
     @SuppressWarnings("rawtypes")
-    public PopupStep onChosen(T selectedValue, boolean finalChoice) {
+    public @Nullable PopupStep onChosen(T selectedValue, boolean finalChoice) {
       ListModel<T> model = myGetComboboxModel.get();
       if (model instanceof ComboBoxPopupState) {
         //noinspection unchecked
@@ -239,9 +236,8 @@ public class ComboBoxPopup<T> extends ListPopupImpl {
       return true;
     }
 
-    @NotNull
     @Override
-    public String getTextFor(T value) {
+    public @NotNull String getTextFor(T value) {
       final ListCellRenderer<? super T> cellRenderer = myGetRenderer.get();
       Component component = cellRenderer.getListCellRendererComponent(myProxyList, value, -1, false, false);
       String componentText = component instanceof TitledSeparator || component instanceof JSeparator ? "" :
@@ -273,8 +269,7 @@ public class ComboBoxPopup<T> extends ListPopupImpl {
     }
   }
 
-  @NotNull
-  private static <T> List<T> copyItemsFromModel(@NotNull ListModel<T> model) {
+  private static @NotNull <T> List<T> copyItemsFromModel(@NotNull ListModel<T> model) {
     ArrayList<T> items = new ArrayList<>(model.getSize());
     for (int i = 0, size = model.getSize(); i < size; i++) {
       items.add(model.getElementAt(i));

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.ui.Divider;
@@ -33,10 +33,10 @@ public abstract class SplitterWithSecondHideable {
     void off(int hideableHeight);
   }
 
-  @NotNull private final PseudoSplitter mySplitter;
-  @NotNull private final MyTitledSeparator myTitledSeparator;
-  @NotNull private final OnOffListener myListener;
-  @NotNull private final JPanel myFictivePanel;
+  private final @NotNull PseudoSplitter mySplitter;
+  private final @NotNull MyTitledSeparator myTitledSeparator;
+  private final @NotNull OnOffListener myListener;
+  private final @NotNull JPanel myFictivePanel;
   private float myPreviousProportion;
 
   public SplitterWithSecondHideable(boolean vertical,
@@ -58,8 +58,7 @@ public abstract class SplitterWithSecondHideable {
     myTitledSeparator.setText(value);
   }
 
-  @NotNull
-  public Splitter getComponent() {
+  public @NotNull Splitter getComponent() {
     return mySplitter;
   }
 
@@ -143,7 +142,7 @@ public abstract class SplitterWithSecondHideable {
   }
 
   private class MySplitter extends PseudoSplitter {
-    @NotNull private final MouseEventHandler myMouseListener = new MouseEventHandler() {
+    private final @NotNull MouseEventHandler myMouseListener = new MouseEventHandler() {
       @Override
       public void mouseEntered(MouseEvent event) {
         myTitledSeparator.mySeparator.setCursor(new Cursor(isOn() ? Cursor.S_RESIZE_CURSOR : Cursor.DEFAULT_CURSOR));

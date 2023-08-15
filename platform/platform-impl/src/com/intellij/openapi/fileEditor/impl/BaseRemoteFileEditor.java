@@ -1,3 +1,4 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
@@ -35,15 +36,13 @@ public abstract class BaseRemoteFileEditor implements TextEditor, PropertyChange
   }
 
   @Override
-  @Nullable
-  public StructureViewBuilder getStructureViewBuilder() {
+  public @Nullable StructureViewBuilder getStructureViewBuilder() {
     TextEditor textEditor = getTextEditor();
     return textEditor == null ? null : textEditor.getStructureViewBuilder();
   }
 
   @Override
-  @NotNull
-  public Editor getEditor() {
+  public @NotNull Editor getEditor() {
     TextEditor fileEditor = getTextEditor();
     if (fileEditor != null) {
       return fileEditor.getEditor();
@@ -54,8 +53,7 @@ public abstract class BaseRemoteFileEditor implements TextEditor, PropertyChange
     return myMockTextEditor;
   }
 
-  @Nullable
-  protected abstract TextEditor getTextEditor();
+  protected abstract @Nullable TextEditor getTextEditor();
 
   @Override
   public FileEditorLocation getCurrentLocation() {
@@ -70,8 +68,7 @@ public abstract class BaseRemoteFileEditor implements TextEditor, PropertyChange
   }
 
   @Override
-  @NotNull
-  public FileEditorState getState(@NotNull FileEditorStateLevel level) {
+  public @NotNull FileEditorState getState(@NotNull FileEditorStateLevel level) {
     TextEditor textEditor = getTextEditor();
     return textEditor == null ? new TextEditorState() : textEditor.getState(level);
   }

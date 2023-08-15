@@ -14,7 +14,7 @@ import com.intellij.psi.util.PsiEditorUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class EditorFormatterListener implements CodeStyleManager.Listener {
-  final static Key<EditorStateKeeper> EDITOR_STATE_KEY = Key.create("formatter.caret.position.keeper");
+  static final Key<EditorStateKeeper> EDITOR_STATE_KEY = Key.create("formatter.caret.position.keeper");
 
   @Override
   public void beforeReformatText(@NotNull PsiFile file) {

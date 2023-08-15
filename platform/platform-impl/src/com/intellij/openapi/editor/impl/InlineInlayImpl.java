@@ -77,15 +77,13 @@ final class InlineInlayImpl<R extends EditorCustomElementRenderer> extends Inlay
     }
   }
 
-  @NotNull
   @Override
-  public Placement getPlacement() {
+  public @NotNull Placement getPlacement() {
     return Placement.INLINE;
   }
 
-  @NotNull
   @Override
-  public VisualPosition getVisualPosition() {
+  public @NotNull VisualPosition getVisualPosition() {
     int offset = getOffset();
     VisualPosition pos = myEditor.offsetToVisualPosition(offset);
     List<Inlay<?>> inlays = myEditor.getInlayModel().getInlineElementsInRange(offset, offset);

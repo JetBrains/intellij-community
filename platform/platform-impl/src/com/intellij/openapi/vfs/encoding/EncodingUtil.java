@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.encoding;
 
 import com.intellij.AppTopics;
@@ -64,8 +64,7 @@ public final class EncodingUtil {
   // returns ABSOLUTELY if bytes on disk, converted to text with the charset, converted back to bytes matched
   // returns NO_WAY if the new encoding is incompatible (bytes on disk will differ)
   // returns WELL_IF_YOU_INSIST if the bytes on disk remain the same but the text will change
-  @NotNull
-  static Magic8 isSafeToReloadIn(@NotNull VirtualFile virtualFile, @NotNull CharSequence text, byte @NotNull [] bytes, @NotNull Charset charset) {
+  static @NotNull Magic8 isSafeToReloadIn(@NotNull VirtualFile virtualFile, @NotNull CharSequence text, byte @NotNull [] bytes, @NotNull Charset charset) {
     // file has BOM but the charset hasn't
     byte[] bom = null;
     try {
@@ -115,8 +114,7 @@ public final class EncodingUtil {
     return CharsetToolkit.getMandatoryBom(charset);
   }
   
-  @NotNull
-  static Magic8 isSafeToConvertTo(@NotNull VirtualFile virtualFile, @NotNull CharSequence text, byte @NotNull [] bytesOnDisk, @NotNull Charset charset) {
+  static @NotNull Magic8 isSafeToConvertTo(@NotNull VirtualFile virtualFile, @NotNull CharSequence text, byte @NotNull [] bytesOnDisk, @NotNull Charset charset) {
     try {
       String lineSeparator = FileDocumentManager.getInstance().getLineSeparator(virtualFile, null);
       CharSequence textToSave = lineSeparator.equals("\n") ? text : StringUtilRt.convertLineSeparators(text, lineSeparator);
@@ -226,8 +224,7 @@ public final class EncodingUtil {
     return checkCanReload(virtualFile, null) == null;
   }
 
-  @Nullable
-  static FailReason checkCanReload(@NotNull VirtualFile virtualFile, @Nullable Ref<? super Charset> current) {
+  static @Nullable FailReason checkCanReload(@NotNull VirtualFile virtualFile, @Nullable Ref<? super Charset> current) {
     if (virtualFile.isDirectory()) {
       return FailReason.IS_DIRECTORY;
     }
@@ -253,16 +250,14 @@ public final class EncodingUtil {
     return result;
   }
 
-  @Nullable
-  private static FailReason fileTypeDescriptionError(@NotNull VirtualFile virtualFile) {
+  private static @Nullable FailReason fileTypeDescriptionError(@NotNull VirtualFile virtualFile) {
     if (virtualFile.getFileType().isBinary()) return FailReason.IS_BINARY;
 
     boolean hardcoded = checkHardcodedCharsetFileType(virtualFile);
     return hardcoded ? FailReason.BY_FILETYPE : null;
   }
 
-  @Nullable("null means enabled, notnull means disabled and contains error message")
-  static FailReason checkCanConvert(@NotNull VirtualFile virtualFile) {
+  static @Nullable("null means enabled, notnull means disabled and contains error message") FailReason checkCanConvert(@NotNull VirtualFile virtualFile) {
     if (virtualFile.isDirectory()) {
       return FailReason.IS_DIRECTORY;
     }
@@ -271,15 +266,13 @@ public final class EncodingUtil {
     return charsetFromContent != null ? FailReason.BY_FILE : fileTypeDescriptionError(virtualFile);
   }
 
-  @Nullable
-  static FailReason checkCanConvertAndReload(@NotNull VirtualFile selectedFile) {
+  static @Nullable FailReason checkCanConvertAndReload(@NotNull VirtualFile selectedFile) {
     FailReason result = checkCanConvert(selectedFile);
     if (result == null) return null;
     return checkCanReload(selectedFile, null);
   }
 
-  @Nullable
-  public static Pair<Charset, String> getCharsetAndTheReasonTooltip(@NotNull VirtualFile file) {
+  public static @Nullable Pair<Charset, String> getCharsetAndTheReasonTooltip(@NotNull VirtualFile file) {
     FailReason r1 = checkCanConvert(file);
     if (r1 == null) return null;
     Ref<Charset> current = Ref.create();
@@ -289,8 +282,7 @@ public final class EncodingUtil {
     return Pair.create(current.get(), errorDescription);
   }
 
-  @NotNull
-  static @Nls String reasonToString(@NotNull FailReason reason, @NotNull VirtualFile file) {
+  static @NotNull @Nls String reasonToString(@NotNull FailReason reason, @NotNull VirtualFile file) {
     return switch (reason) {
       case IS_DIRECTORY -> IdeBundle.message("no.charset.set.reason.disabled.for.directory");
       case IS_BINARY -> IdeBundle.message("no.charset.set.reason.disabled.for.binary.file");

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.module;
 
 import com.intellij.icons.AllIcons;
@@ -16,8 +16,8 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 
 public class GeneralModuleType extends ModuleType<ModuleBuilder>{
-  public final static String TYPE_ID = "GENERAL_MODULE";
-  public final static GeneralModuleType INSTANCE = new GeneralModuleType();
+  public static final String TYPE_ID = "GENERAL_MODULE";
+  public static final GeneralModuleType INSTANCE = new GeneralModuleType();
 
   public GeneralModuleType() {
     super(TYPE_ID);
@@ -28,15 +28,13 @@ public class GeneralModuleType extends ModuleType<ModuleBuilder>{
     return new GeneralModuleBuilder();
   }
 
-  @Nls(capitalization = Nls.Capitalization.Title)
   @Override
-  public @NotNull String getName() {
+  public @Nls(capitalization = Nls.Capitalization.Title) @NotNull String getName() {
     return ProjectBundle.message("module.type.general");
   }
 
-  @Nls(capitalization = Nls.Capitalization.Sentence)
   @Override
-  public @NotNull String getDescription() {
+  public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getDescription() {
     return ProjectBundle.message("general.purpose.type.to.support.any.kind.of.development");
   }
 

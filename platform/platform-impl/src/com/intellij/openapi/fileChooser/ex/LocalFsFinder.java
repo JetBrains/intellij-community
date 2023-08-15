@@ -176,7 +176,7 @@ public class LocalFsFinder implements Finder {
     }
   }
 
-  private static abstract class LookupFileWithMacro implements LookupFile {
+  private abstract static class LookupFileWithMacro implements LookupFile {
     private String myMacro;
 
     @Override

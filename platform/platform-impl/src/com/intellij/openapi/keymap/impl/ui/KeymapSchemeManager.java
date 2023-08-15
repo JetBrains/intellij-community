@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.keymap.impl.ui;
 
 import com.intellij.application.options.schemes.AbstractSchemeActions;
@@ -59,9 +59,8 @@ public final class KeymapSchemeManager extends AbstractSchemeActions<KeymapSchem
     }
   }
 
-  @NotNull
   @Override
-  protected Class<KeymapScheme> getSchemeType() {
+  protected @NotNull Class<KeymapScheme> getSchemeType() {
     return KeymapScheme.class;
   }
 
@@ -85,8 +84,7 @@ public final class KeymapSchemeManager extends AbstractSchemeActions<KeymapSchem
     copyScheme(parent, name);
   }
 
-  @NotNull
-  private KeymapScheme copyScheme(@NotNull KeymapScheme parent, @NotNull String name) {
+  private @NotNull KeymapScheme copyScheme(@NotNull KeymapScheme parent, @NotNull String name) {
     KeymapScheme scheme = parent.copy(name);
     list.add(scheme);
     selector.selectKeymap(scheme, true);
@@ -220,8 +218,7 @@ public final class KeymapSchemeManager extends AbstractSchemeActions<KeymapSchem
   /**
    * @return a list of loaded keymaps
    */
-  @NotNull
-  private static List<Keymap> getKeymaps() {
+  private static @NotNull List<Keymap> getKeymaps() {
     return ((KeymapManagerImpl)KeymapManager.getInstance()).getKeymaps(FILTER);
   }
 

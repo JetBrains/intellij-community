@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.inspector.components;
 
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
@@ -65,14 +65,14 @@ final class InspectorTable extends JBSplitter implements DataProvider, Disposabl
   private StripeTable myTable;
   private ConsoleView myPreviewComponent;
 
-  InspectorTable(@NotNull final List<? extends PropertyBean> clickInfo, @Nullable Project project) {
+  InspectorTable(final @NotNull List<? extends PropertyBean> clickInfo, @Nullable Project project) {
     super(true, 0.75f);
     myProject = project;
     myModel = new MyModel(clickInfo);
     init(null);
   }
 
-  InspectorTable(@NotNull final Component component, @Nullable Project project) {
+  InspectorTable(final @NotNull Component component, @Nullable Project project) {
     super(true, 0.75f);
     myProject = project;
     myModel = new MyModel(component);
@@ -174,8 +174,7 @@ final class InspectorTable extends JBSplitter implements DataProvider, Disposabl
     }
   }
 
-  @NotNull
-  public String getCellTextValue(int row, int col) {
+  public @NotNull String getCellTextValue(int row, int col) {
     Object value = myTable.getValueAt(row, col);
     if (value instanceof String) return (String)value;
 
@@ -219,8 +218,7 @@ final class InspectorTable extends JBSplitter implements DataProvider, Disposabl
     }
 
     @Override
-    @Nullable
-    public Object getValueAt(int row, int column) {
+    public @Nullable Object getValueAt(int row, int column) {
       final PropertyBean bean = myProperties.get(row);
       if (bean != null) {
         return column == 0 ? bean.propertyName : bean.propertyValue;
@@ -244,8 +242,7 @@ final class InspectorTable extends JBSplitter implements DataProvider, Disposabl
       }
     }
 
-    @Nullable
-    public Function<Object, Object> updater(PropertyBean bean) {
+    public @Nullable Function<Object, Object> updater(PropertyBean bean) {
       if (myComponent == null) return null;
 
       String name = bean.propertyName.trim();

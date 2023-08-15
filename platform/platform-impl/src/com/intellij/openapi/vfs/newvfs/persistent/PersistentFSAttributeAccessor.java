@@ -17,10 +17,8 @@ import java.io.IOException;
 @ApiStatus.Internal
 public final class PersistentFSAttributeAccessor {
 
-  @NotNull
-  private final PersistentFSConnection connection;
-  @NotNull
-  private final AbstractAttributesStorage attributesStorage;
+  private final @NotNull PersistentFSConnection connection;
+  private final @NotNull AbstractAttributesStorage attributesStorage;
 
   PersistentFSAttributeAccessor(final @NotNull PersistentFSConnection connection) {
     this.connection = connection;
@@ -32,17 +30,15 @@ public final class PersistentFSAttributeAccessor {
     return attributesStorage.hasAttributePage(connection, fileId, attribute);
   }
 
-  @Nullable
-  public AttributeInputStream readAttribute(final int fileId,
-                                            final @NotNull FileAttribute attribute) throws IOException {
+  public @Nullable AttributeInputStream readAttribute(final int fileId,
+                                                      final @NotNull FileAttribute attribute) throws IOException {
     final AttributeInputStream attributeStream = attributesStorage.readAttribute(connection, fileId, attribute);
     return validateAttributeVersion(attribute, attributeStream);
   }
 
   @ApiStatus.Internal
-  @Nullable
-  public static AttributeInputStream validateAttributeVersion(final @NotNull FileAttribute attribute,
-                                                              final AttributeInputStream attributeStream) {
+  public static @Nullable AttributeInputStream validateAttributeVersion(final @NotNull FileAttribute attribute,
+                                                                        final AttributeInputStream attributeStream) {
     if (attributeStream != null && attribute.isVersioned()) {
       try {
         final int actualVersion = DataInputOutputUtil.readINT(attributeStream);
@@ -112,8 +108,7 @@ public final class PersistentFSAttributeAccessor {
   /**
    * Opens given attribute of given file for writing
    */
-  @NotNull
-  public AttributeOutputStream writeAttribute(final int fileId,
+  public @NotNull AttributeOutputStream writeAttribute(final int fileId,
                                               final @NotNull FileAttribute attribute) {
     //MAYBE RC: check fileId for be in range (1..max)? fileId will be checked on stream.close(),
     //          but it is quite common to swallow exceptions from stream.close() -- and in general

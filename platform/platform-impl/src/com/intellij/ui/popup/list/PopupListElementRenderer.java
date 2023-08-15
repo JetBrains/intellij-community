@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.popup.list;
 
 import com.intellij.icons.AllIcons;
@@ -73,9 +73,8 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
         return aPopup.getListModel().getCaptionAboveOf(value);
       }
 
-      @Nullable
       @Override
-      public String getTooltipFor(E value) {
+      public @Nullable String getTooltipFor(E value) {
         ListPopupStep<Object> listStep = aPopup.getListStep();
         if (!(listStep instanceof ListPopupStepEx)) return null;
         return ((ListPopupStepEx<E>)listStep).getTooltipTextFor(value);
@@ -243,8 +242,7 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
     }
   }
 
-  @NotNull
-  protected static JComponent createButtonsSeparator() {
+  protected static @NotNull JComponent createButtonsSeparator() {
     SeparatorComponent separator = new SeparatorComponent(JBUI.CurrentTheme.List.buttonSeparatorColor(), SeparatorOrientation.VERTICAL);
     separator.setHGap(1);
     separator.setVGap(JBUI.CurrentTheme.List.buttonSeparatorInset());
@@ -454,8 +452,7 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
     return selected ? getSelectionBackground() : getBackground();
   }
 
-  @NotNull
-  static Insets getListCellPadding() {
+  static @NotNull Insets getListCellPadding() {
     if (ExperimentalUI.isNewUI()) {
       int leftRightInset = JBUI.CurrentTheme.Popup.Selection.LEFT_RIGHT_INSET.get();
       return JBUI.insets(0, leftRightInset, 0, leftRightInset);

@@ -106,7 +106,7 @@ public class IdeaMenuUI extends BasicMenuUI {
   }
 
   @ApiStatus.Internal
-  static public @NotNull Color getMenuBackgroundColor() {
+  public static @NotNull Color getMenuBackgroundColor() {
     return JBColor.namedColor("MainMenu.background", UIManager.getColor("Menu.background"));
   }
 

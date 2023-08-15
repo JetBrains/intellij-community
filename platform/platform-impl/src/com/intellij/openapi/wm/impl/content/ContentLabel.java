@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.content;
 
 import com.intellij.ide.IdeEventQueue;
@@ -52,9 +52,7 @@ public abstract class ContentLabel extends BaseLabel {
 
   protected abstract void handleMouseClick(@NotNull MouseEvent e);
 
-  @Nullable
-  @NlsContexts.Label
-  protected abstract String getOriginalText();
+  protected abstract @Nullable @NlsContexts.Label String getOriginalText();
 
   private void showTooltip(AdditionalIcon icon) {
     if (icon != null) {
@@ -171,8 +169,7 @@ public abstract class ContentLabel extends BaseLabel {
     showTooltip(null);
   }
 
-  @Nullable
-  protected AdditionalIcon findHoveredIcon() {
+  protected @Nullable AdditionalIcon findHoveredIcon() {
     return ContainerUtil.find(myAdditionalIcons, icon -> mouseOverIcon(icon));
   }
 

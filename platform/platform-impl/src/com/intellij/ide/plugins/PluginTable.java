@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -36,9 +36,8 @@ public class PluginTable extends JBTable {
     setShowGrid(false);
     this.setTableHeader(null);
     setTransferHandler(new TransferHandler() {
-      @Nullable
       @Override
-      protected Transferable createTransferable(JComponent c) {
+      protected @Nullable Transferable createTransferable(JComponent c) {
         final IdeaPluginDescriptor[] selectedValues = getSelectedObjects();
         if (selectedValues == null) return null;
         final String text = StringUtil.join(selectedValues, descriptor -> descriptor.getName(), ", ");

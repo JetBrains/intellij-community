@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.toolWindow;
 
 import com.intellij.openapi.Disposable;
@@ -41,9 +41,8 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     myProject = project;
   }
 
-  @NotNull
   @Override
-  public List<ToolWindow> getToolWindows() {
+  public @NotNull List<ToolWindow> getToolWindows() {
     return List.copyOf(myToolWindows.values());
   }
 
@@ -163,9 +162,8 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     return Collections.emptyList();
   }
 
-  @NotNull
   @Override
-  public ToolWindowAnchor getMoreButtonSide() {
+  public @NotNull ToolWindowAnchor getMoreButtonSide() {
     return ToolWindowAnchor.LEFT;
   }
 

@@ -142,8 +142,7 @@ public class UndoManagerImpl extends UndoManager {
     return getComponentManager().getService(ClientState.class);
   }
 
-  @Nullable
-  private ClientState getClientState(@Nullable FileEditor editor) {
+  private @Nullable ClientState getClientState(@Nullable FileEditor editor) {
     ClientState state = getClientState();
     if (myProject == null || editor == null) return state;
 

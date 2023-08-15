@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.ide.IdeBundle;
@@ -52,18 +52,15 @@ public abstract class SearchResultPanel {
     }
   }
 
-  @NotNull
-  public PluginsGroupComponent getPanel() {
+  public @NotNull PluginsGroupComponent getPanel() {
     return myPanel;
   }
 
-  @NotNull
-  public PluginsGroup getGroup() {
+  public @NotNull PluginsGroup getGroup() {
     return myGroup;
   }
 
-  @NotNull
-  public JComponent createScrollPane() {
+  public @NotNull JComponent createScrollPane() {
     JBScrollPane pane = new JBScrollPane(myPanel);
     pane.setBorder(JBUI.Borders.empty());
     if (isProgressMode()) {
@@ -72,8 +69,7 @@ public abstract class SearchResultPanel {
     return pane;
   }
 
-  @NotNull
-  public JComponent createVScrollPane() {
+  public @NotNull JComponent createVScrollPane() {
     JBScrollPane pane = (JBScrollPane)createScrollPane();
     pane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
     pane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
@@ -93,8 +89,7 @@ public abstract class SearchResultPanel {
     myQuery = "";
   }
 
-  @NotNull
-  public String getQuery() {
+  public @NotNull String getQuery() {
     return StringUtil.defaultIfEmpty(myQuery, "");
   }
 

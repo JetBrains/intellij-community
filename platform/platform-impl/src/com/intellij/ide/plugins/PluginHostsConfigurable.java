@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins;
 
 import com.intellij.ide.IdeBundle;
@@ -102,13 +102,11 @@ public class PluginHostsConfigurable implements Configurable.NoScroll, Configura
     }
   };
 
-  @Nullable
   @Override
-  public JComponent createComponent() {
+  public @Nullable JComponent createComponent() {
     myModel.setColumnInfos(new ColumnInfo[]{new ColumnInfo<UrlInfo, String>("") {
-      @Nullable
       @Override
-      public String valueOf(UrlInfo info) {
+      public @Nullable String valueOf(UrlInfo info) {
         return info.name;
       }
 
@@ -280,8 +278,7 @@ public class PluginHostsConfigurable implements Configurable.NoScroll, Configura
     }
   }
 
-  @NotNull
-  private static String correctRepositoryRule(@NotNull String input) {
+  private static @NotNull String correctRepositoryRule(@NotNull String input) {
     if (VirtualFileManager.extractProtocol(input) == null) {
       return VirtualFileManager.constructUrl(URLUtil.HTTP_PROTOCOL, input);
     }

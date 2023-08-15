@@ -71,9 +71,8 @@ public final class PotemkinProgress extends ProgressWindow implements PingProgre
            && !eventString.contains(",runnable=com.intellij.openapi.actionSystem.impl.ActionMenu$$Lambda")); // see IDEA-291469 Menu on macOs is invoked inside checkCanceled
   }
 
-  @NotNull
   @Override
-  protected ProgressDialog getDialog() {
+  protected @NotNull ProgressDialog getDialog() {
     return Objects.requireNonNull(super.getDialog());
   }
 

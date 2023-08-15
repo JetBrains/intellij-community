@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.idea.ActionsBundle;
@@ -54,8 +54,7 @@ final class ShowProcessWindowAction extends ToggleAction implements DumbAware {
     }
   }
 
-  @Nullable
-  private static ProjectFrameHelper getFrame() {
+  private static @Nullable ProjectFrameHelper getFrame() {
     return ProjectFrameHelper.getFrameHelper(KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow());
   }
 }

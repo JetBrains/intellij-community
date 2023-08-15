@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.dev;
 
 import com.intellij.openapi.Forceable;
@@ -106,8 +106,7 @@ public class OffsetBasedNonStrictStringsEnumerator implements ScannableDataEnume
   private volatile long valueOfQueriesCacheMisses = 0;
   private volatile long enumerateQueries = 0;
   private volatile long enumerateQueriesCacheMisses = 0;
-  @Nullable
-  private volatile BatchCallback monitoringCallback;
+  private volatile @Nullable BatchCallback monitoringCallback;
 
   public OffsetBasedNonStrictStringsEnumerator(final @NotNull ResizeableMappedFile file) throws IOException {
     this.file = file;
@@ -280,8 +279,7 @@ public class OffsetBasedNonStrictStringsEnumerator implements ScannableDataEnume
    * @param auxRecordData if non-null length=2 array -> auxRecordData[0] contains _total size_ of value record just read,
    *                      auxRecordData[1] contains redirectToId of record just read. If null -> just ignored.
    */
-  @NotNull
-  private String readValueByOffset(final int offset,
+  private @NotNull String readValueByOffset(final int offset,
                                    final /*out*/ int[] auxRecordData) throws IOException {
     if (offset + RECORD_HEADER_SIZE > file.getLogicalSize()) {
       throw new IOException("record[" + offset + "]: range[" + offset + ", +" + RECORD_HEADER_SIZE + "b) " +

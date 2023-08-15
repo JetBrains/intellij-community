@@ -78,9 +78,8 @@ public final class SettingsEditor extends AbstractEditor implements DataProvider
 
     myProperties = PropertiesComponent.getInstance(project);
     mySettings = new Settings(groups) {
-      @NotNull
       @Override
-      protected Promise<? super Object> selectImpl(Configurable configurable) {
+      protected @NotNull Promise<? super Object> selectImpl(Configurable configurable) {
         myFilter.update(null);
         return myTreeView.select(configurable);
       }
@@ -145,9 +144,8 @@ public final class SettingsEditor extends AbstractEditor implements DataProvider
       }
     };
     myFilter.myContext.addColleague(new OptionsEditorColleague() {
-      @NotNull
       @Override
-      public Promise<? super Object> onSelected(@Nullable Configurable configurable, Configurable oldConfigurable) {
+      public @NotNull Promise<? super Object> onSelected(@Nullable Configurable configurable, Configurable oldConfigurable) {
         if (configurable != null) {
           myProperties.setValue(SELECTED_CONFIGURABLE, ConfigurableVisitor.getId(configurable));
           myHistory.pushQueryPlace();
@@ -163,26 +161,22 @@ public final class SettingsEditor extends AbstractEditor implements DataProvider
         return result;
       }
 
-      @NotNull
       @Override
-      public Promise<? super Object> onModifiedAdded(Configurable configurable) {
+      public @NotNull Promise<? super Object> onModifiedAdded(Configurable configurable) {
         return updateIfCurrent(configurable);
       }
 
-      @NotNull
       @Override
-      public Promise<? super Object> onModifiedRemoved(Configurable configurable) {
+      public @NotNull Promise<? super Object> onModifiedRemoved(Configurable configurable) {
         return updateIfCurrent(configurable);
       }
 
-      @NotNull
       @Override
-      public Promise<? super Object> onErrorsChanged() {
+      public @NotNull Promise<? super Object> onErrorsChanged() {
         return updateIfCurrent(myFilter.myContext.getCurrentConfigurable());
       }
 
-      @NotNull
-      private Promise<? super Object> updateIfCurrent(@Nullable Configurable configurable) {
+      private @NotNull Promise<? super Object> updateIfCurrent(@Nullable Configurable configurable) {
         if (configurable != null && configurable == myFilter.myContext.getCurrentConfigurable()) {
           updateStatus(configurable);
           return Promises.resolvedPromise();
@@ -307,8 +301,7 @@ public final class SettingsEditor extends AbstractEditor implements DataProvider
     updateController(configurable);
   }
 
-  @NotNull
-  private MutableConfigurableGroup.Listener createReloadListener(List<? extends ConfigurableGroup> groups) {
+  private @NotNull MutableConfigurableGroup.Listener createReloadListener(List<? extends ConfigurableGroup> groups) {
     return new MutableConfigurableGroup.Listener() {
       @Override
       public void handleUpdate() {

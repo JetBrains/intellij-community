@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins;
 
 import com.intellij.execution.process.ProcessIOExecutorService;
@@ -149,9 +149,8 @@ public final class PluginManagerConfigurable
     myPluginModel = new MyPluginModel(null);
   }
 
-  @NotNull
   @Override
-  public String getId() {
+  public @NotNull String getId() {
     return ID;
   }
 
@@ -170,9 +169,8 @@ public final class PluginManagerConfigurable
     return getCenterComponent(TopComponentController.EMPTY);
   }
 
-  @Nullable
   @Override
-  public JComponent createComponent() {
+  public @Nullable JComponent createComponent() {
     myTabHeaderComponent = new TabbedPaneHeaderComponent(createGearActions(), index -> {
       myCardPanel.select(index, true);
       storeSelectionTab(index);
@@ -252,8 +250,7 @@ public final class PluginManagerConfigurable
     return myCardPanel;
   }
 
-  @NotNull
-  private DefaultActionGroup createGearActions() {
+  private @NotNull DefaultActionGroup createGearActions() {
     DefaultActionGroup actions = new DefaultActionGroup();
     actions.add(new DumbAwareAction(IdeBundle.message("plugin.manager.repositories")) {
       @Override
@@ -357,17 +354,15 @@ public final class PluginManagerConfigurable
         mySearchTextField.setHistoryPropertyName("MarketplacePluginsSearchHistory");
       }
 
-      @NotNull
       @Override
-      protected PluginDetailsPageComponent createDetailsPanel(@NotNull LinkListener<Object> searchListener) {
+      protected @NotNull PluginDetailsPageComponent createDetailsPanel(@NotNull LinkListener<Object> searchListener) {
         PluginDetailsPageComponent detailPanel = new PluginDetailsPageComponent(myPluginModel, searchListener, true);
         myPluginModel.addDetailPanel(detailPanel);
         return detailPanel;
       }
 
-      @NotNull
       @Override
-      protected JComponent createPluginsPanel(@NotNull Consumer<? super PluginsGroupComponent> selectionListener) {
+      protected @NotNull JComponent createPluginsPanel(@NotNull Consumer<? super PluginsGroupComponent> selectionListener) {
         MultiSelectionEventHandler eventHandler = new MultiSelectionEventHandler();
         myMarketplacePanel = new PluginsGroupComponentWithProgress(eventHandler) {
           @Override
@@ -497,13 +492,11 @@ public final class PluginManagerConfigurable
         selectionListener.accept(myMarketplacePanel);
       }
 
-      @NotNull
       @Override
-      protected SearchResultPanel createSearchPanel(@NotNull Consumer<? super PluginsGroupComponent> selectionListener) {
+      protected @NotNull SearchResultPanel createSearchPanel(@NotNull Consumer<? super PluginsGroupComponent> selectionListener) {
         SearchUpDownPopupController marketplaceController = new SearchUpDownPopupController(mySearchTextField) {
-          @NotNull
           @Override
-          protected List<String> getAttributes() {
+          protected @NotNull List<String> getAttributes() {
             List<String> attributes = new ArrayList<>();
             attributes.add(SearchWords.TAG.getValue());
             attributes.add(SearchWords.SORT_BY.getValue());
@@ -515,9 +508,8 @@ public final class PluginManagerConfigurable
             return attributes;
           }
 
-          @Nullable
           @Override
-          protected List<String> getValues(@NotNull String attribute) {
+          protected @Nullable List<String> getValues(@NotNull String attribute) {
             SearchWords word = SearchWords.find(attribute);
             if (word == null) return null;
             return switch (word) {
@@ -615,8 +607,7 @@ public final class PluginManagerConfigurable
             return getIcon().getIconHeight();
           }
 
-          @NotNull
-          private Icon getIcon() {
+          private @NotNull Icon getIcon() {
             return AllIcons.General.ButtonDropTriangle;
           }
         }); // TODO: icon
@@ -832,17 +823,15 @@ public final class PluginManagerConfigurable
         mySearchTextField.setHistoryPropertyName("InstalledPluginsSearchHistory");
       }
 
-      @NotNull
       @Override
-      protected PluginDetailsPageComponent createDetailsPanel(@NotNull LinkListener<Object> searchListener) {
+      protected @NotNull PluginDetailsPageComponent createDetailsPanel(@NotNull LinkListener<Object> searchListener) {
         PluginDetailsPageComponent detailPanel = new PluginDetailsPageComponent(myPluginModel, searchListener, false);
         myPluginModel.addDetailPanel(detailPanel);
         return detailPanel;
       }
 
-      @NotNull
       @Override
-      protected JComponent createPluginsPanel(@NotNull Consumer<? super PluginsGroupComponent> selectionListener) {
+      protected @NotNull JComponent createPluginsPanel(@NotNull Consumer<? super PluginsGroupComponent> selectionListener) {
         MultiSelectionEventHandler eventHandler = new MultiSelectionEventHandler();
         myInstalledPanel = new PluginsGroupComponent(eventHandler) {
           @Override
@@ -967,14 +956,11 @@ public final class PluginManagerConfigurable
         myPluginModel.setInvalidFixCallback(null);
       }
 
-      @NotNull
       @Override
-      protected SearchResultPanel createSearchPanel(@NotNull Consumer<? super PluginsGroupComponent> selectionListener) {
+      protected @NotNull SearchResultPanel createSearchPanel(@NotNull Consumer<? super PluginsGroupComponent> selectionListener) {
         SearchUpDownPopupController installedController = new SearchUpDownPopupController(mySearchTextField) {
-          @NotNull
           @Override
-          @NonNls
-          protected List<String> getAttributes() {
+          protected @NotNull @NonNls List<String> getAttributes() {
             return Arrays
               .asList(
                 "/downloaded",
@@ -1622,8 +1608,7 @@ public final class PluginManagerConfigurable
       }
     }
 
-    @Nullable
-    public String getQuery() {
+    public @Nullable String getQuery() {
       return switch (myOption) {
         case Downloads -> "/sortBy:downloads";
         case Name -> "/sortBy:name";
@@ -1688,8 +1673,7 @@ public final class PluginManagerConfigurable
       };
     }
 
-    @NotNull
-    public String getQuery() {
+    public @NotNull String getQuery() {
       return myOption == InstalledSearchOption.NeedUpdate ? "/outdated" : "/" + StringUtil.decapitalize(myOption.name());
     }
   }
@@ -1741,8 +1725,7 @@ public final class PluginManagerConfigurable
     }
   }
 
-  @NotNull
-  public static JComponent createScrollPane(@NotNull PluginsGroupComponent panel, boolean initSelection) {
+  public static @NotNull JComponent createScrollPane(@NotNull PluginsGroupComponent panel, boolean initSelection) {
     JBScrollPane pane =
       new JBScrollPane(panel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
     pane.setBorder(JBUI.Borders.empty());
@@ -1795,8 +1778,7 @@ public final class PluginManagerConfigurable
   }
 
   @Override
-  @NotNull
-  public String getHelpTopic() {
+  public @NotNull String getHelpTopic() {
     return ID;
   }
 
@@ -1881,14 +1863,12 @@ public final class PluginManagerConfigurable
     }
   }
 
-  @Nullable
   @Override
-  public Runnable enableSearch(String option) {
+  public @Nullable Runnable enableSearch(String option) {
     return enableSearch(option, false);
   }
 
-  @Nullable
-  public Runnable enableSearch(String option, boolean ignoreTagMarketplaceTab) {
+  public @Nullable Runnable enableSearch(String option, boolean ignoreTagMarketplaceTab) {
     if (myTabHeaderComponent == null) {
       myLaterSearchQuery = option;
       return () -> {};

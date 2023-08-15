@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.codeInsight.hint.TooltipController;
@@ -54,7 +54,7 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
 
   private boolean myForceHideShadow = false;
 
-  public LightweightHint(@NotNull final JComponent component) {
+  public LightweightHint(final @NotNull JComponent component) {
     myComponent = component;
   }
 
@@ -106,11 +106,11 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
    * appears on 250 layer.
    */
   @Override
-  public void show(@NotNull final JComponent parentComponent,
+  public void show(final @NotNull JComponent parentComponent,
                    final int x,
                    final int y,
                    final JComponent focusBackComponent,
-                   @NotNull final HintHint hintHint) {
+                   final @NotNull HintHint hintHint) {
     myParentComponent = parentComponent;
     myHintHint = hintHint;
 
@@ -426,12 +426,12 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
   }
 
   @Override
-  public final void addHintListener(@NotNull final HintListener listener) {
+  public final void addHintListener(final @NotNull HintListener listener) {
     myListenerList.add(HintListener.class, listener);
   }
 
   @Override
-  public final void removeHintListener(@NotNull final HintListener listener) {
+  public final void removeHintListener(final @NotNull HintListener listener) {
     myListenerList.remove(HintListener.class, listener);
   }
 

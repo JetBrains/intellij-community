@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -38,40 +38,34 @@ public final class VirtualFileImpl extends VirtualFileSystemEntry {
   }
 
   @Override
-  @Nullable
-  public NewVirtualFile findChild(@NotNull @NonNls final String name) {
+  public @Nullable NewVirtualFile findChild(final @NotNull @NonNls String name) {
     return null;
   }
 
-  @NotNull
   @Override
-  public Collection<VirtualFile> getCachedChildren() {
-    return Collections.emptyList();
-  }
-
-  @NotNull
-  @Override
-  public Iterable<VirtualFile> iterInDbChildren() {
+  public @NotNull Collection<VirtualFile> getCachedChildren() {
     return Collections.emptyList();
   }
 
   @Override
-  @NotNull
-  public NewVirtualFileSystem getFileSystem() {
+  public @NotNull Iterable<VirtualFile> iterInDbChildren() {
+    return Collections.emptyList();
+  }
+
+  @Override
+  public @NotNull NewVirtualFileSystem getFileSystem() {
     final VirtualFileSystemEntry parent = getParent();
     assert parent != null;
     return parent.getFileSystem();
   }
 
   @Override
-  @Nullable
-  public NewVirtualFile refreshAndFindChild(@NotNull final String name) {
+  public @Nullable NewVirtualFile refreshAndFindChild(final @NotNull String name) {
     return null;
   }
 
   @Override
-  @Nullable
-  public NewVirtualFile findChildIfCached(@NotNull final String name) {
+  public @Nullable NewVirtualFile findChildIfCached(final @NotNull String name) {
     return null;
   }
 
@@ -99,8 +93,7 @@ public final class VirtualFileImpl extends VirtualFileSystemEntry {
   }
 
   @Override
-  @NotNull
-  public InputStream getInputStream() throws IOException {
+  public @NotNull InputStream getInputStream() throws IOException {
     final byte[] preloadedContent = getUserData(ourPreloadedContentKey);
 
     return VfsUtilCore.inputStreamSkippingBOM(
@@ -142,8 +135,7 @@ public final class VirtualFileImpl extends VirtualFileSystemEntry {
   }
 
   @Override
-  @NotNull
-  public OutputStream getOutputStream(final Object requestor, final long modStamp, final long timeStamp) throws IOException {
+  public @NotNull OutputStream getOutputStream(final Object requestor, final long modStamp, final long timeStamp) throws IOException {
     checkNotTooLarge(requestor);
     return VfsUtilCore.outputStreamAddingBOM(getPersistence().getOutputStream(this, requestor, modStamp, timeStamp), this);
   }
@@ -157,9 +149,8 @@ public final class VirtualFileImpl extends VirtualFileSystemEntry {
     }
   }
 
-  @Nullable
   @Override
-  public String getDetectedLineSeparator() {
+  public @Nullable String getDetectedLineSeparator() {
     if (isDirectory()) {
       throw new IllegalArgumentException("getDetectedLineSeparator() must not be called for a directory");
     }
@@ -187,9 +178,8 @@ public final class VirtualFileImpl extends VirtualFileSystemEntry {
     getSegment().setUserMap(myId, map);
   }
 
-  @NotNull
   @Override
-  protected KeyFMap getUserMap() {
+  protected @NotNull KeyFMap getUserMap() {
     return getSegment().getUserMap(this, myId);
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.laf;
 
 import com.intellij.ide.ui.laf.darcula.DarculaLaf;
@@ -17,8 +17,7 @@ public class IntelliJLaf extends DarculaLaf {
   }
 
   @Override
-  @NotNull
-  protected String getPrefix() {
+  protected @NotNull String getPrefix() {
     return "com/intellij/ide/ui/laf/intellijlaf";
   }
 }

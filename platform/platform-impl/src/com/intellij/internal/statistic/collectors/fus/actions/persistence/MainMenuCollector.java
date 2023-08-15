@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.collectors.fus.actions.persistence;
 
 import com.intellij.internal.statistic.utils.PluginInfo;
@@ -72,13 +72,11 @@ public final class MainMenuCollector {
     return action.getTemplateText(); //avoid user data in Action Presentation
   }
 
-  @NotNull
-  private static String convertMenuItemsToKey(List<String> menuItems) {
+  private static @NotNull String convertMenuItemsToKey(List<String> menuItems) {
     return StringUtil.join(menuItems, " -> ");
   }
 
-  @NotNull
-  private String getPathFromMenuItem(AWTEvent e, AnAction action) {
+  private @NotNull String getPathFromMenuItem(AWTEvent e, AnAction action) {
     Object src = e.getSource();
     ArrayList<String> items = new ArrayList<>();
     while (src instanceof MenuItem) {
@@ -91,7 +89,7 @@ public final class MainMenuCollector {
     return convertMenuItemsToKey(items);
   }
 
-  public final static class State {
+  public static final class State {
     @Tag("counts")
     @MapAnnotation(surroundWithTag = false, keyAttributeName = "path", valueAttributeName = "count")
     public Map<String, Integer> myValues = new HashMap<>();

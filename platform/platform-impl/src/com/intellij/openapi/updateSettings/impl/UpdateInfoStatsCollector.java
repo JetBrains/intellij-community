@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
@@ -32,9 +32,8 @@ public final class UpdateInfoStatsCollector extends CounterUsagesCollector {
     private static final String ID = "update_dialog_rule_id";
     private static final List<String> JB_DOMAINS = Arrays.asList("jetbrains.com", "intellij.net", "intellij.com", "kotlinlang.org", "jb.gg");
 
-    @NotNull
     @Override
-    public String getRuleId() {
+    public @NotNull String getRuleId() {
       return ID;
     }
 

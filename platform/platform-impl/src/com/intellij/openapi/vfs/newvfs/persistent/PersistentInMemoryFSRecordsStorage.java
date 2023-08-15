@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -178,8 +178,7 @@ public class PersistentInMemoryFSRecordsStorage implements PersistentFSRecordsSt
   }
 
   @Override
-  @PersistentFS.Attributes
-  public int getFlags(final int recordId) throws IOException {
+  public @PersistentFS.Attributes int getFlags(final int recordId) throws IOException {
     return getIntField(recordId, FLAGS_OFFSET);
   }
 
@@ -427,19 +426,19 @@ public class PersistentInMemoryFSRecordsStorage implements PersistentFSRecordsSt
     }
   }
 
-  private void setLongHeaderField(@HeaderOffset final int headerRelativeOffsetBytes,
+  private void setLongHeaderField(final @HeaderOffset int headerRelativeOffsetBytes,
                                   final long headerValue) {
     checkHeaderOffset(headerRelativeOffsetBytes);
     LONG_HANDLE.setVolatile(records, headerRelativeOffsetBytes, headerValue);
     markDirty();
   }
 
-  private long getLongHeaderField(@HeaderOffset final int headerRelativeOffsetBytes) {
+  private long getLongHeaderField(final @HeaderOffset int headerRelativeOffsetBytes) {
     checkHeaderOffset(headerRelativeOffsetBytes);
     return (long)LONG_HANDLE.getVolatile(records, headerRelativeOffsetBytes);
   }
 
-  private void setIntHeaderField(@HeaderOffset final int headerRelativeOffsetBytes,
+  private void setIntHeaderField(final @HeaderOffset int headerRelativeOffsetBytes,
                                  final int headerValue) {
     checkHeaderOffset(headerRelativeOffsetBytes);
     INT_HANDLE.setVolatile(records, headerRelativeOffsetBytes, headerValue);
@@ -447,7 +446,7 @@ public class PersistentInMemoryFSRecordsStorage implements PersistentFSRecordsSt
   }
 
 
-  private int getIntHeaderField(@HeaderOffset final int headerRelativeOffsetBytes) {
+  private int getIntHeaderField(final @HeaderOffset int headerRelativeOffsetBytes) {
     checkHeaderOffset(headerRelativeOffsetBytes);
     return (int)INT_HANDLE.getVolatile(records, headerRelativeOffsetBytes);
   }

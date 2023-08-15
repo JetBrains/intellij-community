@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.designer.propertyTable.renderers;
 
 import com.intellij.designer.model.PropertiesContainer;
@@ -17,7 +17,7 @@ import javax.swing.*;
  * are based on JLabel.
  */
 public class LabelPropertyRenderer extends JLabel implements PropertyRenderer {
-  @Nullable private final @Nls String myStaticText;
+  private final @Nullable @Nls String myStaticText;
 
   public LabelPropertyRenderer(@Nullable @Nls String staticText) {
     myStaticText = staticText;
@@ -27,12 +27,11 @@ public class LabelPropertyRenderer extends JLabel implements PropertyRenderer {
   }
 
   @Override
-  @NotNull
-  public JComponent getComponent(@Nullable PropertiesContainer container,
-                                 PropertyContext context,
-                                 @Nullable Object value,
-                                 boolean selected,
-                                 boolean hasFocus) {
+  public @NotNull JComponent getComponent(@Nullable PropertiesContainer container,
+                                          PropertyContext context,
+                                          @Nullable Object value,
+                                          boolean selected,
+                                          boolean hasFocus) {
     // Reset text and icon
     setText(null);
     setIcon(null);

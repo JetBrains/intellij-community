@@ -158,9 +158,8 @@ public final class JobLauncherImpl extends JobLauncher {
     return null;
   }
 
-  @NotNull
   @Override
-  public Job<Void> submitToJobThread(@NotNull Runnable action, @Nullable Consumer<? super Future<?>> onDoneCallback) {
+  public @NotNull Job<Void> submitToJobThread(@NotNull Runnable action, @Nullable Consumer<? super Future<?>> onDoneCallback) {
     VoidForkJoinTask task = new VoidForkJoinTask(action, onDoneCallback);
     task.submit();
     return task;
@@ -327,8 +326,7 @@ public final class JobLauncherImpl extends JobLauncher {
       }
 
       @Override
-      @NonNls
-      public String toString() {
+      public @NonNls String toString() {
         return super.toString() + " seq="+mySeq;
       }
     }

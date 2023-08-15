@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.popup.tree;
 
 import com.intellij.icons.AllIcons;
@@ -351,8 +351,7 @@ public class TreePopupImpl extends WizardPopup implements TreePopup, NextStepHan
     }
 
     @Override
-    @NotNull
-    public Dimension getPreferredSize() {
+    public @NotNull Dimension getPreferredSize() {
       Dimension size = super.getPreferredSize();
       if (ExperimentalUI.isNewUI()) {
         size.height = JBUI.CurrentTheme.Tree.rowHeight();

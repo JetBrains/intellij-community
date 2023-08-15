@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.colors;
 
 import com.intellij.codeHighlighting.RainbowHighlighter;
@@ -80,15 +80,13 @@ public class RainbowDescriptionPanel extends JPanel implements OptionsPanelImpl.
     myInheritanceLabel.setBorder(JBUI.Borders.empty(4, 0, 4, 4));
   }
 
-  @NotNull
   @Contract(pure = true)
-  private static String checkRightArrow(@NotNull String str) {
+  private static @NotNull String checkRightArrow(@NotNull String str) {
     return str.replaceAll("->", FontUtil.rightArrow(StartupUiUtil.getLabelFont()));
   }
 
-  @NotNull
   @Override
-  public JComponent getPanel() {
+  public @NotNull JComponent getPanel() {
     return this;
   }
 

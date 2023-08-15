@@ -82,8 +82,7 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
     return templateGroup == null ? EMPTY_ARRAY : templateGroup.getChildren(null);
   }
 
-  @NotNull
-  private static ListPopup createMainPopup(@NotNull DataContext context) {
+  private static @NotNull ListPopup createMainPopup(@NotNull DataContext context) {
     List<AnAction> appActions = new ArrayList<>();
     List<AnAction> pluginActions = new ArrayList<>();
 
@@ -363,7 +362,7 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
     @NotNull Collection<UpdateAction> getUpdateActions(@NotNull DataContext context);
   }
 
-  public static abstract class UpdateAction extends DumbAwareAction {
+  public abstract static class UpdateAction extends DumbAwareAction {
     private boolean myNewAction = true;
 
     protected UpdateAction() {

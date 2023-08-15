@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.ide.ClipboardSynchronizer;
@@ -133,8 +133,7 @@ final class StatusPanel extends JPanel {
     };
   }
 
-  @Nullable
-  private Project getActiveProject() {
+  private @Nullable Project getActiveProject() {
     // a better way of finding a project would be great
     for (Project project : ProjectManager.getInstance().getOpenProjects()) {
       IdeFrame ideFrame = WindowManager.getInstance().getIdeFrame(project);
@@ -150,8 +149,7 @@ final class StatusPanel extends JPanel {
 
   // Returns the alarm used for displaying status messages in the status bar, or null if the status bar is attached to a floating
   // editor window.
-  @Nullable
-  private Alarm getAlarm() {
+  private @Nullable Alarm getAlarm() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (myLogAlarm == null || myLogAlarm.isDisposed()) {
       myLogAlarm = null; //Welcome screen
@@ -208,8 +206,7 @@ final class StatusPanel extends JPanel {
     myTextPanel.setText(text);
   }
 
-  @Nls
-  public String getText() {
+  public @Nls String getText() {
     return myTextPanel.getText();
   }
 

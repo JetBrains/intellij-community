@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.icons.AllIcons;
@@ -86,13 +86,12 @@ public class QuickChangeLookAndFeel extends QuickSwitchSchemeAction implements A
   }
 
   @Override
-  @Nullable
-  protected Condition<? super AnAction> preselectAction() {
+  protected @Nullable Condition<? super AnAction> preselectAction() {
     LafManager lafMan = LafManager.getInstance();
     return (a) -> (a instanceof LafChangeAction) && ((LafChangeAction)a).myLookAndFeelInfo == lafMan.getCurrentLookAndFeel();
   }
 
-  public static void switchLafAndUpdateUI(@NotNull final LafManager lafMan, @NotNull UIManager.LookAndFeelInfo lf, boolean async) {
+  public static void switchLafAndUpdateUI(final @NotNull LafManager lafMan, @NotNull UIManager.LookAndFeelInfo lf, boolean async) {
     switchLafAndUpdateUI(lafMan, lf, async, false, false);
   }
 
@@ -100,12 +99,12 @@ public class QuickChangeLookAndFeel extends QuickSwitchSchemeAction implements A
    * @deprecated use {@link #switchLafAndUpdateUI(LafManager, UIManager.LookAndFeelInfo, boolean)} instead
    */
   @Deprecated
-  public static void switchLafAndUpdateUI(@NotNull final LafManager lafMan, @NotNull UIManager.LookAndFeelInfo lf, boolean async, boolean force) {
+  public static void switchLafAndUpdateUI(final @NotNull LafManager lafMan, @NotNull UIManager.LookAndFeelInfo lf, boolean async, boolean force) {
     switchLafAndUpdateUI(lafMan, lf, async, force, false);
   }
 
   @ApiStatus.Internal
-  public static void switchLafAndUpdateUI(@NotNull final LafManager lafMan, @NotNull UIManager.LookAndFeelInfo lf, boolean async, 
+  public static void switchLafAndUpdateUI(final @NotNull LafManager lafMan, @NotNull UIManager.LookAndFeelInfo lf, boolean async,
                                           boolean force, boolean lockEditorScheme) {
     UIManager.LookAndFeelInfo cur = lafMan.getCurrentLookAndFeel();
     if (!force && cur == lf) return;
@@ -167,8 +166,7 @@ public class QuickChangeLookAndFeel extends QuickSwitchSchemeAction implements A
       switchLafAndUpdateUI(LafManager.getInstance(), myLookAndFeelInfo, false);
     }
 
-    @Nullable
-    private static Icon getIcon(boolean currentLaf) {
+    private static @Nullable Icon getIcon(boolean currentLaf) {
       return Registry.is("ide.instant.theme.switch") ? null : currentLaf ? AllIcons.Actions.Forward : ourNotCurrentAction;
     }
   }

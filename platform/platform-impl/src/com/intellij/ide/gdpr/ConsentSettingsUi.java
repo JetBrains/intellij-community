@@ -99,8 +99,7 @@ public class ConsentSettingsUi extends JPanel implements ConfigurableUi<List<Con
     return "<p style=\"margin-bottom:" + JBUIScale.scale(10) + "px;\">";
   }
 
-  @NotNull
-  private JComponent createConsentElement(Consent consent, boolean addCheckBox) {
+  private @NotNull JComponent createConsentElement(Consent consent, boolean addCheckBox) {
     //TODO: refactor DocumentationComponent to use external link marker here, there and everywhere
     final JPanel pane;
     final boolean dataSharingDisabledExternally = ConsentOptions.getInstance().isUsageStatsConsent(consent)
@@ -166,8 +165,7 @@ public class ConsentSettingsUi extends JPanel implements ConfigurableUi<List<Con
     return getParagraphTag() + StringUtil.replace(text, "\n", "</p>" + getParagraphTag()) + "</p>";
   }
 
-  @NotNull
-  private List<Consent> getState() {
+  private @NotNull List<Consent> getState() {
     final List<Consent> result = new ArrayList<>();
     for (Pair<JCheckBox, Consent> pair : consentMapping) {
       JCheckBox checkBox = pair.first;
@@ -197,9 +195,8 @@ public class ConsentSettingsUi extends JPanel implements ConfigurableUi<List<Con
     consents.addAll(getState());
   }
 
-  @NotNull
   @Override
-  public JComponent getComponent() {
+  public @NotNull JComponent getComponent() {
     return this;
   }
 }

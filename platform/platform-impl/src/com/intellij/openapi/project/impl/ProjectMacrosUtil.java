@@ -39,7 +39,7 @@ public final class ProjectMacrosUtil {
     return checkMacros(project, usedMacros);
   }
 
-  public static boolean checkMacros(@NotNull final Project project, @NotNull final Set<String> usedMacros) {
+  public static boolean checkMacros(final @NotNull Project project, final @NotNull Set<String> usedMacros) {
     PathMacros pathMacros = PathMacros.getInstance();
     usedMacros.removeAll(pathMacros.getSystemMacroNames());
     usedMacros.removeAll(pathMacros.getUserMacroNames());

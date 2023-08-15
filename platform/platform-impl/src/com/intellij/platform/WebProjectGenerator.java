@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform;
 
 import com.intellij.facet.ui.ValidationResult;
@@ -23,9 +23,8 @@ public abstract class WebProjectGenerator<T> extends DirectoryProjectGeneratorBa
    * Always returns {@link ValidationResult#OK}.
    * Real validation should be done in {@link WebProjectGenerator.GeneratorPeer#validate()}.
    */
-  @NotNull
   @Override
-  public final ValidationResult validate(@NotNull String baseDirPath) {
+  public final @NotNull ValidationResult validate(@NotNull String baseDirPath) {
     return ValidationResult.OK;
   }
 
@@ -35,8 +34,7 @@ public abstract class WebProjectGenerator<T> extends DirectoryProjectGeneratorBa
   }
 
   @Override
-  @DetailedDescription
-  public abstract String getDescription();
+  public abstract @DetailedDescription String getDescription();
 
   /**
    * @deprecated since 2017.3. Please use {@link ProjectGeneratorPeer} instead.

@@ -80,8 +80,7 @@ public final class PersistentFSConnection {
 
   private final @NotNull NotNullLazyValue<? extends IntList> freeRecords;
 
-  @NotNull
-  private final PersistentFSPaths persistentFSPaths;
+  private final @NotNull PersistentFSPaths persistentFSPaths;
 
   private final @NotNull AbstractAttributesStorage attributesStorage;
   private final @NotNull RefCountingContentStorage contentStorage;

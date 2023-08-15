@@ -23,21 +23,18 @@ import org.jetbrains.annotations.NotNull;
     return false;
   }
 
-  @NotNull
   @Override
-  public FileEditor createEditor(@NotNull Project project, @NotNull VirtualFile file) {
+  public @NotNull FileEditor createEditor(@NotNull Project project, @NotNull VirtualFile file) {
       return new WebPreviewFileEditor(project, (WebPreviewVirtualFile)file);
   }
 
-  @NotNull
   @Override
-  public String getEditorTypeId() {
+  public @NotNull String getEditorTypeId() {
     return "web-preview-editor";
   }
 
-  @NotNull
   @Override
-  public FileEditorPolicy getPolicy() {
+  public @NotNull FileEditorPolicy getPolicy() {
     return FileEditorPolicy.HIDE_DEFAULT_EDITOR;
   }
 }

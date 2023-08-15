@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.dnd;
 
 import com.intellij.icons.AllIcons;
@@ -84,7 +84,7 @@ public class Highlighters implements DnDEvent.DropTargetHighlightingType {
     return ourCurrentHighlighters.size() > 0;
   }
 
-  private static abstract class AbstractComponentHighlighter extends JPanel implements DropTargetHighlighter {
+  private abstract static class AbstractComponentHighlighter extends JPanel implements DropTargetHighlighter {
 
     protected AbstractComponentHighlighter() {
       setOpaque(false);

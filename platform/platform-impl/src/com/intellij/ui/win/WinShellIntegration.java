@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.win;
 
 import com.intellij.openapi.Disposable;
@@ -67,12 +67,11 @@ final class WinShellIntegration implements Disposable {
   /**
    * @return null if !{@link #isAvailable}
    */
-  @Nullable
-  public static WinShellIntegration getInstance() {
+  public static @Nullable WinShellIntegration getInstance() {
     return isAvailable ? ApplicationManager.getApplication().getService(WinShellIntegration.class) : null;
   }
 
-  public <R> @NotNull Future<R> postShellTask(@NotNull final ShellTask<? extends R> shellTask) {
+  public <R> @NotNull Future<R> postShellTask(final @NotNull ShellTask<? extends R> shellTask) {
     final ShellContext ctx = new ShellContext(this);
 
     return bridge.comExecutor.submit(() -> {
@@ -86,7 +85,7 @@ final class WinShellIntegration implements Disposable {
     });
   }
 
-  public @NotNull Future<?> postShellTask(@NotNull final VoidShellTask shellTask) {
+  public @NotNull Future<?> postShellTask(final @NotNull VoidShellTask shellTask) {
     final ShellContext ctx = new ShellContext(this);
 
     return bridge.comExecutor.submit(() -> {
@@ -142,11 +141,11 @@ final class WinShellIntegration implements Disposable {
     private boolean nativeIsInitialized = false;
 
     // this is the only native method does not require native is to be initialized
-    native private void setAppUserModelIdNative(@NotNull String appUserModelId);
+    private native void setAppUserModelIdNative(@NotNull String appUserModelId);
 
-    native private void initializeNative();
-    native private void clearRecentTasksListNative();
-    native private void setRecentTasksListNative(@NotNull JumpTask @NotNull [] recentTasks);
+    private native void initializeNative();
+    private native void clearRecentTasksListNative();
+    private native void setRecentTasksListNative(@NotNull JumpTask @NotNull [] recentTasks);
 
     static {
       Path lib = PathManager.findBinFile("WinShellIntegrationBridge.dll");

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.editor.fonts;
 
 import com.intellij.openapi.application.ApplicationBundle;
@@ -106,9 +106,7 @@ abstract class FontWeightCombo extends ComboBox<FontWeightCombo.MyWeightItem> {
     }
   }
 
-  @Nullable
-  abstract String getSubFamily(@NotNull FontPreferences preferences);
+  abstract @Nullable String getSubFamily(@NotNull FontPreferences preferences);
 
-  @NotNull
-  abstract String getRecommendedSubFamily(@NotNull String family);
+  abstract @NotNull String getRecommendedSubFamily(@NotNull String family);
 }

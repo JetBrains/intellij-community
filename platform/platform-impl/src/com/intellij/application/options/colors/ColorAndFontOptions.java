@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.application.options.colors;
 
@@ -198,29 +198,26 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     return false;
   }
 
-  @NotNull
   @Override
-  public Collection<BaseExtensionPointName<?>> getDependencies() {
+  public @NotNull Collection<BaseExtensionPointName<?>> getDependencies() {
     return List.of(ColorSettingsPage.EP_NAME, ColorAndFontPanelFactory.EP_NAME, ColorAndFontDescriptorsProvider.EP_NAME);
   }
 
-  public static boolean isReadOnly(@NotNull final EditorColorsScheme scheme) {
+  public static boolean isReadOnly(final @NotNull EditorColorsScheme scheme) {
     return ((MyColorScheme)scheme).isReadOnly();
   }
 
-  public static boolean canBeDeleted(@NotNull final EditorColorsScheme scheme) {
+  public static boolean canBeDeleted(final @NotNull EditorColorsScheme scheme) {
     return scheme instanceof  MyColorScheme && ((MyColorScheme)scheme).canBeDeleted();
   }
 
-  @NotNull
-  public Collection<EditorColorsScheme> getOrderedSchemes() {
+  public @NotNull Collection<EditorColorsScheme> getOrderedSchemes() {
     List<EditorColorsScheme> schemes = new ArrayList<>(mySchemes.values());
     schemes.sort(EditorColorSchemesComparator.INSTANCE);
     return schemes;
   }
 
-  @NotNull
-  public Collection<EditorColorsScheme> getSchemes() {
+  public @NotNull Collection<EditorColorsScheme> getSchemes() {
     return new ArrayList<>(mySchemes.values());
   }
 
@@ -386,8 +383,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     return mySubPanelFactories.values().toArray(new Configurable[0]);
   }
 
-  @NotNull
-  private Set<NewColorAndFontPanel> getPanels() {
+  private @NotNull Set<NewColorAndFontPanel> getPanels() {
     Set<NewColorAndFontPanel> result = new HashSet<>();
     for (InnerSearchableConfigurable configurable : mySubPanelFactories.values()) {
       NewColorAndFontPanel panel = configurable.getSubPanelIfInitialized();
@@ -406,15 +402,13 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     for (final ColorSettingsPage page : pages) {
       extensions.add(new ColorAndFontPanelFactoryEx() {
         @Override
-        @NotNull
-        public NewColorAndFontPanel createPanel(@NotNull ColorAndFontOptions options) {
+        public @NotNull NewColorAndFontPanel createPanel(@NotNull ColorAndFontOptions options) {
           final SimpleEditorPreview preview = new SimpleEditorPreview(options, page);
           return NewColorAndFontPanel.create(preview, page.getDisplayName(), options, null, page);
         }
 
         @Override
-        @NotNull
-        public String getPanelDisplayName() {
+        public @NotNull String getPanelDisplayName() {
           return page.getDisplayName();
         }
 
@@ -434,9 +428,8 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
           return ColorAndFontPanelFactoryEx.super.getWeight();
         }
 
-        @NotNull
         @Override
-        public Class<?> getOriginalClass() {
+        public @NotNull Class<?> getOriginalClass() {
           return page.getClass();
         }
       });
@@ -454,8 +447,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
 
   private static class FontConfigurableFactory implements ColorAndFontPanelFactoryEx {
     @Override
-    @NotNull
-    public NewColorAndFontPanel createPanel(@NotNull ColorAndFontOptions options) {
+    public @NotNull NewColorAndFontPanel createPanel(@NotNull ColorAndFontOptions options) {
       FontEditorPreview previewPanel = new FontEditorPreview(()->options.getSelectedScheme(), true);
       return new NewColorAndFontPanel(new SchemesPanel(options, 0), new FontOptions(options), previewPanel, getFontConfigurableName(), null, null){
         @Override
@@ -466,8 +458,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     }
 
     @Override
-    @NotNull
-    public String getPanelDisplayName() {
+    public @NotNull String getPanelDisplayName() {
       return getFontConfigurableName();
     }
 
@@ -479,8 +470,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
 
    private static class ConsoleFontConfigurableFactory implements ColorAndFontPanelFactoryEx {
     @Override
-    @NotNull
-    public NewColorAndFontPanel createPanel(@NotNull ColorAndFontOptions options) {
+    public @NotNull NewColorAndFontPanel createPanel(@NotNull ColorAndFontOptions options) {
       FontEditorPreview previewPanel = new FontEditorPreview(()->options.getSelectedScheme(), true) {
         @Override
         protected EditorColorsScheme updateOptionsScheme(EditorColorsScheme selectedScheme) {
@@ -496,14 +486,12 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     }
 
     @Override
-    @NotNull
-    public String getPanelDisplayName() {
+    public @NotNull String getPanelDisplayName() {
       return ApplicationBundle.message("title.console.font");
     }
 
-     @NotNull
      @Override
-     public DisplayPriority getPriority() {
+     public @NotNull DisplayPriority getPriority() {
        return DisplayPriority.FONT_SETTINGS;
      }
    }
@@ -702,7 +690,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
 
       myRootSchemesPanel.addListener(new ColorAndFontSettingsListener.Abstract(){
         @Override
-        public void schemeChanged(@NotNull final Object source) {
+        public void schemeChanged(final @NotNull Object source) {
           if (!myIsReset) {
             resetSchemesCombo(source);
           }
@@ -738,8 +726,8 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
   }
 
   private static final class SchemeTextAttributesDescription extends TextAttributesDescription implements UiInspectorContextProvider {
-    @NotNull private final TextAttributes myInitialAttributes;
-    @NotNull private final TextAttributesKey key;
+    private final @NotNull TextAttributes myInitialAttributes;
+    private final @NotNull TextAttributesKey key;
 
     private TextAttributes myFallbackAttributes;
     private Pair<ColorAndFontDescriptorsProvider, AttributesDescriptor> myBaseAttributeDescriptor;
@@ -780,8 +768,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
       return result;
     }
 
-    @NotNull
-    private static TextAttributes getInitialAttributes(@NotNull MyColorScheme scheme, @NotNull TextAttributesKey key) {
+    private static @NotNull TextAttributes getInitialAttributes(@NotNull MyColorScheme scheme, @NotNull TextAttributesKey key) {
       TextAttributes attributes = scheme.getAttributes(key);
       return attributes != null ? attributes : new TextAttributes();
     }
@@ -809,23 +796,20 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
       return true;
     }
 
-    @Nullable
     @Override
-    public TextAttributes getBaseAttributes() {
+    public @Nullable TextAttributes getBaseAttributes() {
       return myFallbackAttributes;
     }
 
-    @Nullable
     @Override
-    public Pair<ColorAndFontDescriptorsProvider, ? extends AbstractKeyDescriptor> getFallbackKeyDescriptor() {
+    public @Nullable Pair<ColorAndFontDescriptorsProvider, ? extends AbstractKeyDescriptor> getFallbackKeyDescriptor() {
       return myBaseAttributeDescriptor;
     }
   }
 
   private static class EditorSettingColorDescription extends ColorAndFontDescription implements UiInspectorContextProvider {
     private final ColorKey myColorKey;
-    @NotNull
-    private final ColorDescriptor.Kind myKind;
+    private final @NotNull ColorDescriptor.Kind myKind;
     private final Color myInitialColor;
 
     private Color myColor;
@@ -893,9 +877,8 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     public void setExternalEffectType(EffectType type) {
     }
 
-    @NotNull
     @Override
-    public EffectType getExternalEffectType() {
+    public @NotNull EffectType getExternalEffectType() {
       return EffectType.LINE_UNDERSCORE;
     }
 
@@ -965,9 +948,8 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
       return !Comparing.equal(myInitialColor, myColor) || myIsInheritedInitial;
     }
 
-    @Nullable
     @Override
-    public TextAttributes getBaseAttributes() {
+    public @Nullable TextAttributes getBaseAttributes() {
       return myFallbackAttributes;
     }
 
@@ -980,16 +962,14 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
       }
     }
 
-    @Nullable
     @Override
-    public Pair<ColorAndFontDescriptorsProvider, ? extends AbstractKeyDescriptor> getFallbackKeyDescriptor() {
+    public @Nullable Pair<ColorAndFontDescriptorsProvider, ? extends AbstractKeyDescriptor> getFallbackKeyDescriptor() {
       return myBaseAttributeDescriptor;
     }
   }
 
   @Override
-  @NotNull
-  public String getHelpTopic() {
+  public @NotNull String getHelpTopic() {
     return ID;
   }
 
@@ -998,7 +978,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     private String                            myName;
     private boolean myIsNew = false;
     private final RainbowColorsInSchemeState myRainbowState;
-    private final static Predicate<ColorKey> FILE_STATUS_COLORS =
+    private static final Predicate<ColorKey> FILE_STATUS_COLORS =
       input -> input != null && input.getExternalName().startsWith(FileStatusFactory.FILESTATUS_COLOR_KEY_PREFIX);
 
 
@@ -1027,15 +1007,13 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
       initFonts();
     }
 
-    @Nullable
     @Override
-    public AbstractColorsScheme getOriginal() {
+    public @Nullable AbstractColorsScheme getOriginal() {
       return myParentScheme instanceof AbstractColorsScheme ? ((AbstractColorsScheme)myParentScheme).getOriginal() : null;
     }
 
-    @NotNull
     @Override
-    public String getName() {
+    public @NotNull String getName() {
       return myName;
     }
 
@@ -1132,9 +1110,8 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
       return myIsNew;
     }
 
-    @NotNull
     @Override
-    public String toString() {
+    public @NotNull String toString() {
       return "temporary scheme for " + myName;
     }
 
@@ -1252,8 +1229,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
       return index;
     }
 
-    @NotNull
-    private static Pair<String, String> indexKey(Element e) {
+    private static @NotNull Pair<String, String> indexKey(Element e) {
       return Pair.create(e.getName(), e.getAttributeValue("name"));
     }
   }
@@ -1292,13 +1268,11 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
   }
 
   @Override
-  @NotNull
-  public String getId() {
+  public @NotNull String getId() {
     return getHelpTopic();
   }
 
-  @Nullable
-  public SearchableConfigurable findSubConfigurable(@NotNull Class<?> pageClass) {
+  public @Nullable SearchableConfigurable findSubConfigurable(@NotNull Class<?> pageClass) {
     if (mySubPanelFactories == null) {
       getConfigurables();
     }
@@ -1310,8 +1284,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     return null;
   }
 
-  @Nullable
-  public SearchableConfigurable findSubConfigurable(String pageName) {
+  public @Nullable SearchableConfigurable findSubConfigurable(String pageName) {
     if (mySubPanelFactories == null) {
       getConfigurables();
     }
@@ -1323,8 +1296,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     return null;
   }
 
-  @Nullable
-  public NewColorAndFontPanel findPage(String pageName) {
+  public @Nullable NewColorAndFontPanel findPage(String pageName) {
     InnerSearchableConfigurable child = (InnerSearchableConfigurable)findSubConfigurable(pageName);
     return child == null ? null : child.createPanel();
   }
@@ -1332,16 +1304,14 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
   private final class InnerSearchableConfigurable implements SearchableConfigurable, OptionsContainingConfigurable, NoScroll {
     private NewColorAndFontPanel mySubPanel;
     private boolean mySubInitInvoked = false;
-    @NotNull private final ColorAndFontPanelFactory myFactory;
+    private final @NotNull ColorAndFontPanelFactory myFactory;
 
     private InnerSearchableConfigurable(@NotNull ColorAndFontPanelFactory factory) {
       myFactory = factory;
     }
 
-    @NotNull
     @Override
-    @NlsContexts.ConfigurableName
-    public String getDisplayName() {
+    public @NotNull @NlsContexts.ConfigurableName String getDisplayName() {
       return myFactory.getPanelDisplayName();
     }
 
@@ -1355,7 +1325,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
         mySubPanel.reset(this);
         mySubPanel.addSchemesListener(new ColorAndFontSettingsListener.Abstract(){
           @Override
-          public void schemeChanged(@NotNull final Object source) {
+          public void schemeChanged(final @NotNull Object source) {
             if (!myIsReset) {
               resetSchemesCombo(source);
             }
@@ -1442,8 +1412,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     }
 
     @Override
-    @NotNull
-    public String getId() {
+    public @NotNull String getId() {
       return ColorAndFontOptions.this.getId() + "." + getDisplayName();
     }
 
@@ -1452,22 +1421,18 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
       return createPanel().showOption(option);
     }
 
-    @NotNull
     @Override
-    public Set<String> processListOptions() {
+    public @NotNull Set<String> processListOptions() {
       return createPanel().processListOptions();
     }
 
-    @NotNull
     @Override
-    public Class<?> getOriginalClass() {
+    public @NotNull Class<?> getOriginalClass() {
       return myFactory.getOriginalClass();
     }
 
-    @NotNull
-    @NonNls
     @Override
-    public String toString() {
+    public @NotNull @NonNls String toString() {
       return "Color And Fonts for "+getDisplayName();
     }
   }

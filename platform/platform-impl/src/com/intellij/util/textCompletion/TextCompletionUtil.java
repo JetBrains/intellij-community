@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.textCompletion;
 
 import com.intellij.codeInsight.AutoPopupController;
@@ -37,8 +37,7 @@ public final class TextCompletionUtil {
     psiFile.putUserData(AUTO_POPUP_KEY, autoPopup);
   }
 
-  @Nullable
-  public static TextCompletionProvider getProvider(@NotNull PsiFile file) {
+  public static @Nullable TextCompletionProvider getProvider(@NotNull PsiFile file) {
     TextCompletionProvider provider = file.getUserData(COMPLETING_TEXT_FIELD_KEY);
 
     if (provider == null || (DumbService.isDumb(file.getProject()) && !DumbService.isDumbAware(provider))) {
@@ -62,7 +61,7 @@ public final class TextCompletionUtil {
 
       editor.addFocusListener(new FocusChangeListener() {
         @Override
-        public void focusGained(@NotNull final Editor editor) {
+        public void focusGained(final @NotNull Editor editor) {
           if (Boolean.TRUE.equals(editor.getUserData(AutoPopupController.AUTO_POPUP_ON_FOCUS_GAINED))) {
             AutoPopupController.getInstance(editor.getProject()).scheduleAutoPopup(editor);
             return;
@@ -90,7 +89,7 @@ public final class TextCompletionUtil {
   }
 
   public static class DocumentWithCompletionCreator extends LanguageTextField.SimpleDocumentCreator {
-    @NotNull private final TextCompletionProvider myProvider;
+    private final @NotNull TextCompletionProvider myProvider;
     private final boolean myAutoPopup;
     private final boolean myForbidWordCompletion;
 

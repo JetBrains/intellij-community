@@ -33,7 +33,6 @@ import javax.swing.*;
 import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
-import java.io.IOException;
 import java.util.List;
 import java.util.*;
 import java.util.function.Function;
@@ -84,8 +83,7 @@ public class CustomizableActionsPanel {
     return toolbar;
   }
 
-  @NotNull
-  protected ActionGroup getRestoreGroup() {
+  protected @NotNull ActionGroup getRestoreGroup() {
     ActionGroup restoreGroup = new DefaultActionGroup(new RestoreSelectionAction(), new RestoreAllAction());
     restoreGroup.setPopup(true);
     restoreGroup.getTemplatePresentation().setText(IdeBundle.message("group.customizations.restore.action.group"));
@@ -328,8 +326,7 @@ public class CustomizableActionsPanel {
     }
   }
 
-  @Nullable
-  static String getActionId(DefaultMutableTreeNode node) {
+  static @Nullable String getActionId(DefaultMutableTreeNode node) {
     Object obj = node.getUserObject();
     if (obj instanceof String actionId) return actionId;
     if (obj instanceof Group group) return group.getId();
@@ -340,8 +337,7 @@ public class CustomizableActionsPanel {
     return null;
   }
 
-  @NotNull
-  static Pair<@Nullable String, @Nullable Icon> getActionIdAndIcon(@NotNull DefaultMutableTreeNode node) {
+  static @NotNull Pair<@Nullable String, @Nullable Icon> getActionIdAndIcon(@NotNull DefaultMutableTreeNode node) {
     Object userObj = node.getUserObject();
     if (userObj instanceof String actionId) {
       AnAction action = ActionManager.getInstance().getAction(actionId);

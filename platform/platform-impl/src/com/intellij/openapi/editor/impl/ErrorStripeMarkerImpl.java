@@ -21,8 +21,7 @@ final class ErrorStripeMarkerImpl extends RangeMarkerImpl {
     myHighlighter = highlighter;
   }
 
-  @NotNull
-  public RangeHighlighterEx getHighlighter() {
+  public @NotNull RangeHighlighterEx getHighlighter() {
     return myHighlighter;
   }
 

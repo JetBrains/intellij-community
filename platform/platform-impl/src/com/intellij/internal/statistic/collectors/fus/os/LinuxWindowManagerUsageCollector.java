@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.collectors.fus.os;
 
 import com.intellij.internal.statistic.beans.MetricEvent;
@@ -69,9 +69,8 @@ public class LinuxWindowManagerUsageCollector extends ApplicationUsagesCollector
     return GROUP;
   }
 
-  @NotNull
   @Override
-  public Set<MetricEvent> getMetrics() {
+  public @NotNull Set<MetricEvent> getMetrics() {
     if (SystemInfo.isLinux) {
       Set<MetricEvent> result = new HashSet<>();
       result.add(CURRENT_DESKTOP.metric(toReportedName(System.getenv("XDG_CURRENT_DESKTOP"))));
@@ -81,8 +80,7 @@ public class LinuxWindowManagerUsageCollector extends ApplicationUsagesCollector
   }
 
   @VisibleForTesting
-  @NotNull
-  public static String toReportedName(@Nullable String windowManger) {
+  public static @NotNull String toReportedName(@Nullable String windowManger) {
     if (windowManger == null) {
       return "empty";
     }
@@ -92,8 +90,7 @@ public class LinuxWindowManagerUsageCollector extends ApplicationUsagesCollector
     return isGnome ? findReportedName(windowManger, GNOME_WINDOW_MANAGERS) : findReportedName(windowManger, WINDOW_MANAGERS);
   }
 
-  @NotNull
-  private static String findReportedName(@NotNull String original, @NotNull Map<String, String> keywordToName) {
+  private static @NotNull String findReportedName(@NotNull String original, @NotNull Map<String, String> keywordToName) {
     for (Map.Entry<String, String> entry : keywordToName.entrySet()) {
       if (original.contains(entry.getKey())) {
         return entry.getValue();
