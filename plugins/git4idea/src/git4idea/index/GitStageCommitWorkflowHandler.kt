@@ -58,8 +58,8 @@ class GitStageCommitWorkflowHandler(
   }
 
   override fun getDefaultCommitActionName(isAmend: Boolean, isSkipCommitChecks: Boolean): @Nls String {
-    if (!ui.isCommitAll) return super.getDefaultCommitActionName(isAmend, isSkipCommitChecks)
-    return getDefaultCommitAllActionName(isAmend, isSkipCommitChecks)
+    if (!ui.isCommitAll || isAmend) return super.getDefaultCommitActionName(isAmend, isSkipCommitChecks)
+    return getDefaultCommitAllActionName(isSkipCommitChecks)
   }
 
   override fun saveCommitMessageBeforeCommit() {
@@ -70,7 +70,7 @@ class GitStageCommitWorkflowHandler(
     val superCheckResult = super.checkCommit(sessionInfo)
     ui.commitProgressUi.isEmptyRoots = ui.includedRoots.isEmpty()
     ui.commitProgressUi.isUnmerged = ui.conflictedRoots.any { ui.rootsToCommit.contains(it) }
-    ui.commitProgressUi.isCommitAll = ui.isCommitAll
+    ui.commitProgressUi.isCommitAll = ui.isCommitAll && !amendCommitHandler.isAmendCommitMode
     return superCheckResult &&
            !ui.commitProgressUi.isEmptyRoots &&
            !ui.commitProgressUi.isUnmerged
@@ -92,16 +92,11 @@ class GitStageCommitWorkflowHandler(
   }
 
   companion object {
-    private fun getDefaultCommitAllActionName(isAmend: Boolean, isSkipCommitChecks: Boolean): @Nls String {
+    private fun getDefaultCommitAllActionName(isSkipCommitChecks: Boolean): @Nls String {
       val actionName = GitBundle.message("stage.commit.all.text")
       val commitText = UIUtil.replaceMnemonicAmpersand(actionName.fixUnderscoreMnemonic())
-
-      return when {
-        isAmend && isSkipCommitChecks -> GitBundle.message("stage.commit.all.amend.anyway.text")
-        isAmend && !isSkipCommitChecks -> GitBundle.message("stage.commit.all.amend.all.text")
-        !isAmend && isSkipCommitChecks -> VcsBundle.message("action.commit.anyway.text", commitText)
-        else -> commitText
-      }
+      if (isSkipCommitChecks) VcsBundle.message("action.commit.anyway.text", commitText)
+      return commitText
     }
   }
 }
