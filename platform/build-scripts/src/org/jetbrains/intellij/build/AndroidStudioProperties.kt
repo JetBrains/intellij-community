@@ -200,6 +200,7 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
       init {
         icoPath = "$projectHome/adt-branding/src/artwork/androidstudio.ico"
         icoPathForEAP = "$projectHome/adt-branding/src/artwork/preview/androidstudio.ico"
+        buildZipArchiveWithBundledJre = false
         buildZipArchiveWithoutBundledJre = true
         installerImagesPath = "$projectHome/build/conf/ideaCE/win/images"
         fileAssociations = listOf(".java", ".groovy", ".kt")
