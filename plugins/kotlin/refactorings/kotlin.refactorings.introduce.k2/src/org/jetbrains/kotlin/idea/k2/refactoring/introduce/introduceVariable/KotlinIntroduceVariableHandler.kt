@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.k2.refactoring.introduce.introduceVariable
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.codeInsight.template.*
 import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.impl.FinishMarkAction
 import com.intellij.openapi.command.impl.StartMarkAction
 import com.intellij.openapi.editor.Editor
@@ -54,7 +53,6 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.types.Variance
-import org.jetbrains.kotlin.utils.addIfNotNull
 import org.jetbrains.kotlin.utils.ifEmpty
 import org.jetbrains.kotlin.utils.sure
 import kotlin.math.min
@@ -80,18 +78,13 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
 
         var propertyRef: KtDeclaration? = null
         var reference: SmartPsiElementPointer<KtExpression>? = null
-        val references = ArrayList<SmartPsiElementPointer<KtExpression>>()
         var mustSpecifyTypeExplicitly = false
         var renderedTypeArgumentsIfMightBeNeeded: String? = renderedTypeArguments
 
         private fun findElementByOffsetAndText(offset: Int, text: String, newContainer: PsiElement): PsiElement? =
             newContainer.findElementAt(offset)?.parentsWithSelf?.firstOrNull { (it as? KtExpression)?.text == text }
 
-        private fun replaceExpression(
-            expressionToReplace: KtExpression,
-            addToReferences: Boolean,
-            lambdaArgumentName: Name?,
-        ): KtExpression {
+        private fun replaceExpression(expressionToReplace: KtExpression, lambdaArgumentName: Name?): KtExpression {
             val isActualExpression = expression == expressionToReplace
 
             val replacement = psiFactory.createExpression(nameSuggestions.single().first())
@@ -106,10 +99,6 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
             }
 
             result = result.removeTemplateEntryBracesIfPossible()
-
-            if (addToReferences) {
-                references.addIfNotNull(SmartPointerManager.createPointer(result))
-            }
 
             if (isActualExpression) {
                 reference = SmartPointerManager.createPointer(result)
@@ -150,7 +139,7 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
             var anchor = calculateAnchor(expression, container) ?: return
             val needBraces = container !is KtBlockExpression && container !is KtClassBody && container !is KtFile
             val shouldReplaceOccurrence = !needBraces && expression.shouldReplaceOccurrence(container)
-            ApplicationManager.getApplication().runWriteAction {
+            application.runWriteAction {
                 if (!needBraces) {
                     property = container.addBefore(property, anchor) as KtDeclaration
                     container.addBefore(psiFactory.createNewLine(), anchor)
@@ -160,7 +149,7 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
                     emptyBody.addAfter(psiFactory.createNewLine(), firstChild)
 
                     if (replaceOccurrence) {
-                        val exprAfterReplace = replaceExpression(expression, false, lambdaArgumentName)
+                        val exprAfterReplace = replaceExpression(expression, lambdaArgumentName)
                         exprAfterReplace.isOccurrence = true
                         if (anchor == expression) {
                             anchor = exprAfterReplace
@@ -203,9 +192,7 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
                         emptyBody.accept(object : KtTreeVisitorVoid() {
                             override fun visitSimpleNameExpression(expression: KtSimpleNameExpression) {
                                 if (!expression.isOccurrence) return
-
                                 expression.isOccurrence = false
-                                references.add(SmartPointerManager.createPointer(expression))
                             }
                         })
                     } else {
@@ -242,7 +229,7 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
                 }
                 if (!needBraces) {
                     if (shouldReplaceOccurrence) {
-                        replaceExpression(expression, true, lambdaArgumentName)
+                        replaceExpression(expression, lambdaArgumentName)
                     } else {
                         val sibling = PsiTreeUtil.skipSiblingsBackward(expression, PsiWhiteSpace::class.java)
                         if (sibling == property) {
@@ -542,15 +529,11 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
                         return@executeCommand
                     }
 
-                    PsiDocumentManager.getInstance(project).commitDocument(editor.document)
-                    PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.document)
-
                     when (property) {
                         is KtProperty -> {
                             KotlinVariableInplaceIntroducer(
                                 property,
                                 introduceVariableContext.reference?.element,
-                                introduceVariableContext.references.mapNotNull { it.element }.toTypedArray(),
                                 suggestedNames.single(),
                                 expressionRenderedType,
                                 introduceVariableContext.mustSpecifyTypeExplicitly,
@@ -571,8 +554,8 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
 
         }
         if (isInplaceAvailable) {
-            ApplicationManager.getApplication().invokeLater {
-                SlowOperations.startSection(SlowOperations.ACTION_PERFORM).use { _ -> callback() }
+            application.invokeLater {
+                SlowOperations.startSection(SlowOperations.ACTION_PERFORM).use { callback() }
             }
         } else {
             callback()
@@ -688,6 +671,6 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
     }
 
     override fun invoke(project: Project, elements: Array<out PsiElement>, dataContext: DataContext?) {
-        //do nothing
+        // do nothing
     }
 }
