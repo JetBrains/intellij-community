@@ -197,7 +197,7 @@ public final class ApplicationNamesInfo {
   }
 
   /**
-   * Returns motto of the product. Used as a comment for the command-line launcher.
+   * Returns motto of the product. Used as a comment for a desktop entry on XDG-compliant systems (read "Linux").
    */
   public @NotNull String getMotto() {
     return myMotto;
