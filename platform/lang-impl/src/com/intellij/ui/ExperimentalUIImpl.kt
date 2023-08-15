@@ -23,8 +23,6 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.registry.EarlyAccessRegistryManager
 import com.intellij.platform.feedback.newUi.NewUIInfoService
 import com.intellij.util.PlatformUtils
-import java.time.LocalDate
-import java.time.temporal.ChronoUnit
 
 private val LOG: Logger
   get() = logger<ExperimentalUI>()
@@ -143,7 +141,7 @@ private class ExperimentalUIImpl : ExperimentalUI() {
 
   private fun setNewUiUsed() {
     val propertyComponent = PropertiesComponent.getInstance()
-    if (isNewUiUsedOnce()) {
+    if (isNewUiUsedOnce) {
       propertyComponent.unsetValue(NEW_UI_FIRST_SWITCH)
     }
     else {

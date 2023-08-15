@@ -1,231 +1,209 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ui;
+@file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
 
-import com.intellij.ide.ui.NotRoamableUiSettings;
-import com.intellij.ide.ui.UISettings;
-import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.IconLoaderKt;
-import com.intellij.openapi.util.IconPathPatcher;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.EarlyAccessRegistryManager;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.registry.RegistryValue;
-import com.intellij.openapi.util.registry.RegistryValueListener;
-import com.intellij.openapi.util.text.Strings;
-import com.intellij.util.PlatformUtils;
-import com.intellij.util.SystemProperties;
-import kotlin.Pair;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+package com.intellij.ui
 
-import javax.swing.*;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicBoolean;
+import com.intellij.ide.ui.NotRoamableUiSettings
+import com.intellij.ide.ui.UISettings
+import com.intellij.ide.util.PropertiesComponent
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.service
+import com.intellij.openapi.editor.colors.EditorColorsManager
+import com.intellij.openapi.util.IconLoader.installPathPatcher
+import com.intellij.openapi.util.IconLoader.removePathPatcher
+import com.intellij.openapi.util.IconPathPatcher
+import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.findIconUsingNewImplementation
+import com.intellij.openapi.util.registry.EarlyAccessRegistryManager
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.registry.RegistryValue
+import com.intellij.openapi.util.registry.RegistryValueListener
+import com.intellij.util.PlatformUtils
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.function.Supplier
+import javax.swing.Icon
+import javax.swing.UIDefaults
+import javax.swing.UIManager
 
 /**
  * Temporary utility class for migration to the new UI.
- * This is not a public API. For plugin development use {@link NewUI#isEnabled()}
+ * This is not a public API. For plugin development use [NewUI.isEnabled]
  *
  * @author Konstantin Bulenkov
  */
 @ApiStatus.Internal
-public abstract class ExperimentalUI {
-  @SuppressWarnings("deprecation") public static final String KEY = NewUiValue.KEY;
+abstract class ExperimentalUI {
+  private val isIconPatcherSet = AtomicBoolean()
+  private var iconPathPatcher: IconPathPatcher? = null
 
-  /** @deprecated please use {@link #isNewUiUsedOnce()} instead */
-  @SuppressWarnings("DeprecatedIsStillUsed") @Deprecated
-  public static final String NEW_UI_USED_PROPERTY = "experimental.ui.used.once";
-  // Last IDE version when New UI was enabled
-  public static final String NEW_UI_USED_VERSION = "experimental.ui.used.version";
-  public static final String NEW_UI_FIRST_SWITCH = "experimental.ui.first.switch";
-  // Means that IDE is started after enabling the New UI (not necessary the first time).
-  // Should be unset by the client, or it will be unset on the IDE close.
-  public static final String NEW_UI_SWITCH = "experimental.ui.switch";
-  public static final String NEW_UI_PROMO_BANNER_DISABLED_PROPERTY = "experimental.ui.promo.banner.disabled";
-
-  private final AtomicBoolean isIconPatcherSet = new AtomicBoolean();
-  private IconPathPatcher iconPathPatcher;
-
-  static {
-    NewUiValue.initialize(() -> EarlyAccessRegistryManager.INSTANCE.getBoolean(KEY));
-  }
-
-  public static ExperimentalUI getInstance() {
-    return ApplicationManager.getApplication().getService(ExperimentalUI.class);
-  }
-
-  @Contract(pure = true)
-  public static boolean isNewUI() {
-    return NewUiValue.isEnabled();
-  }
-
-  public static void setNewUI(boolean newUI) {
-    getInstance().setNewUIInternal(newUI, true);
-  }
-
-  public void setNewUIInternal(boolean newUI, boolean suggestRestart) {
-
-  }
+  open fun setNewUIInternal(newUI: Boolean, suggestRestart: Boolean) {}
 
   // used by the JBClient for cases where a link overrides new UI mode
-  public abstract void saveCurrentValueAndReapplyDefaultLaf();
+  abstract fun saveCurrentValueAndReapplyDefaultLaf()
 
-  public static boolean isNewNavbar() {
-    return isNewUI() && Registry.is("ide.experimental.ui.navbar.scroll");
-  }
-
-  public static boolean isEditorTabsWithScrollBar() {
-    return isNewUI() && Registry.is("ide.experimental.ui.editor.tabs.scrollbar");
-  }
-
-  /** Whether New UI was enabled at least once. Note: tracked since 2023.1 */
-  public static boolean isNewUiUsedOnce() {
-    var propertiesComponent = PropertiesComponent.getInstance();
-    return propertiesComponent.getValue(NEW_UI_USED_VERSION) != null || propertiesComponent.getBoolean(NEW_UI_USED_PROPERTY);
-  }
-
-  public static final class NotPatchedIconRegistry {
-    private static final HashSet<Pair<String, ClassLoader>> paths = new HashSet<>();
-    public static class IconModel {
-      public Icon icon;
-      public String originalPath;
-      public IconModel(Icon icon, String originalPath) {
-        this.icon = icon;
-        this.originalPath = originalPath;
+  @Suppress("unused")
+  class NewUiRegistryListener : RegistryValueListener {
+    override fun afterValueChanged(value: RegistryValue) {
+      if (!isApplicable || value.key != KEY) {
+        return
       }
-
-      @Override
-      public String toString() {
-        return originalPath;
-      }
-    }
-
-    public static @NotNull List<IconModel> getData() {
-      List<IconModel> result = new ArrayList<>(paths.size());
-      for (Pair<String, ClassLoader> p : paths) {
-        String path = p.getFirst();
-        ClassLoader classLoader = p.getSecond() != null ? p.getSecond() : NotPatchedIconRegistry.class.getClassLoader();
-        Icon icon = IconLoaderKt.findIconUsingNewImplementation(path, classLoader, null);
-        result.add(new IconModel(icon, path));
-      }
-      return result;
-    }
-
-    public static void registerNotPatchedIcon(String path, ClassLoader classLoader) {
-      paths.add(new Pair<>(path, classLoader));
-    }
-  }
-
-  @SuppressWarnings("unused")
-  public static final class NewUiRegistryListener implements RegistryValueListener {
-    private static boolean isApplicable() {
-      // JetBrains Client has custom listener
-      return !PlatformUtils.isJetBrainsClient();
-    }
-
-    @Override
-    public void afterValueChanged(@NotNull RegistryValue value) {
-      if (!isApplicable() || !value.getKey().equals(KEY)) {
-        return;
-      }
-
-      boolean isEnabled = value.asBoolean();
-
-      ExperimentalUI instance = getInstance();
+      val isEnabled = value.asBoolean()
+      val instance = getInstance()
       if (isEnabled) {
-        patchUiDefaultsForNewUi();
-
+        patchUiDefaultsForNewUi()
         if (instance.isIconPatcherSet.compareAndSet(false, true)) {
           if (instance.iconPathPatcher != null) {
-            IconLoader.removePathPatcher(instance.iconPathPatcher);
+            removePathPatcher(instance.iconPathPatcher!!)
           }
-          instance.iconPathPatcher = createPathPatcher(instance.getIconMappings());
-          IconLoader.installPathPatcher(instance.iconPathPatcher);
+          instance.iconPathPatcher = createPathPatcher(instance.getIconMappings())
+          installPathPatcher(instance.iconPathPatcher!!)
         }
-        instance.onExpUIEnabled(true);
+        instance.onExpUIEnabled(true)
       }
       else if (instance.isIconPatcherSet.compareAndSet(true, false)) {
-        IconLoader.removePathPatcher(instance.iconPathPatcher);
-        instance.iconPathPatcher = null;
-        instance.onExpUIDisabled(true);
+        removePathPatcher(instance.iconPathPatcher!!)
+        instance.iconPathPatcher = null
+        instance.onExpUIDisabled(true)
       }
+    }
+
+    companion object {
+      private val isApplicable: Boolean
+        get() = // JetBrains Client has custom listener
+          !PlatformUtils.isJetBrainsClient()
     }
   }
 
-  public void lookAndFeelChanged() {
+  fun lookAndFeelChanged() {
     if (!isNewUI()) {
-      return;
+      return
     }
-
     if (isIconPatcherSet.compareAndSet(false, true)) {
       if (iconPathPatcher != null) {
-        IconLoader.removePathPatcher(iconPathPatcher);
+        removePathPatcher(iconPathPatcher!!)
       }
-      iconPathPatcher = createPathPatcher(getIconMappings());
-      IconLoader.installPathPatcher(iconPathPatcher);
+      iconPathPatcher = createPathPatcher(getIconMappings())
+      installPathPatcher(iconPathPatcher!!)
     }
-    patchUiDefaultsForNewUi();
+    patchUiDefaultsForNewUi()
   }
 
-  private static @NotNull IconPathPatcher createPathPatcher(@NotNull Map<ClassLoader, Map<String, String>> paths) {
-    return new IconPathPatcher() {
-      private final boolean dumpNotPatchedIcons = SystemProperties.getBooleanProperty("ide.experimental.ui.dump.not.patched.icons", false);
+  abstract fun getIconMappings(): Map<ClassLoader, Map<String, String>>
 
-      @Override
-      public @Nullable String patchPath(@NotNull String path, @Nullable ClassLoader classLoader) {
-        Map<String, String> mappings = paths.get(classLoader);
-        if (mappings == null) {
-          return null;
-        }
-        String patchedPath = mappings.get(Strings.trimStart(path, "/"));
-        if (patchedPath == null && dumpNotPatchedIcons) {
-          NotPatchedIconRegistry.registerNotPatchedIcon(path, classLoader);
-        }
-        return patchedPath;
-      }
+  abstract fun onExpUIEnabled(suggestRestart: Boolean)
 
-      @Override
-      public @Nullable ClassLoader getContextClassLoader(@NotNull String path, @Nullable ClassLoader originalClassLoader) {
-        return originalClassLoader;
-      }
-    };
-  }
+  abstract fun onExpUIDisabled(suggestRestart: Boolean)
 
-  public abstract @NotNull Map<ClassLoader, Map<String, String>> getIconMappings();
+  companion object {
+    @Suppress("DEPRECATION")
+    const val KEY: String = NewUiValue.KEY
 
-  public abstract void onExpUIEnabled(boolean suggestRestart);
+    @Deprecated("please use {@link #isNewUiUsedOnce()} instead ")
+    const val NEW_UI_USED_PROPERTY: String = "experimental.ui.used.once"
 
-  public abstract void onExpUIDisabled(boolean suggestRestart);
+    // Last IDE version when New UI was enabled
+    const val NEW_UI_USED_VERSION: String = "experimental.ui.used.version"
+    const val NEW_UI_FIRST_SWITCH: String = "experimental.ui.first.switch"
 
-  private static void patchUiDefaultsForNewUi() {
-    UIDefaults defaults = UIManager.getDefaults();
-    if (defaults.getColor("EditorTabs.hoverInactiveBackground") == null) {
-      // avoid getting EditorColorsManager too early
-      setUIProperty("EditorTabs.hoverInactiveBackground", (UIDefaults.LazyValue)__ -> {
-        EditorColorsScheme editorColorScheme = EditorColorsManager.getInstance().getGlobalScheme();
-        return ColorUtil.mix(JBColor.PanelBackground, editorColorScheme.getDefaultBackground(), 0.5);
-      }, defaults);
+    // Means that IDE is started after enabling the New UI (not necessary the first time).
+    // Should be unset by the client, or it will be unset on the IDE close.
+    const val NEW_UI_SWITCH: String = "experimental.ui.switch"
+    const val NEW_UI_PROMO_BANNER_DISABLED_PROPERTY: String = "experimental.ui.promo.banner.disabled"
+
+    init {
+      NewUiValue.initialize(Supplier { EarlyAccessRegistryManager.getBoolean(KEY) })
     }
 
-    if (SystemInfo.isJetBrainsJvm && EarlyAccessRegistryManager.INSTANCE.getBoolean("ide.experimental.ui.inter.font")) {
-      if (UISettings.getInstance().getOverrideLafFonts()) {
-        //todo[kb] add RunOnce
-        NotRoamableUiSettings.Companion.getInstance().setOverrideLafFonts(false);
-      }
-    }
-  }
+    @JvmStatic
+    fun getInstance(): ExperimentalUI = ApplicationManager.getApplication().service<ExperimentalUI>()
 
-  private static void setUIProperty(@SuppressWarnings("SameParameterValue") String key, Object value, UIDefaults defaults) {
-    defaults.remove(key);
-    defaults.put(key, value);
+    @JvmStatic
+    fun isNewUI(): Boolean = NewUiValue.isEnabled()
+
+    fun setNewUI(value: Boolean) {
+      getInstance().setNewUIInternal(newUI = value, suggestRestart = true)
+    }
+
+    @JvmStatic
+    val isNewNavbar: Boolean
+      get() = NewUiValue.isEnabled() && Registry.`is`("ide.experimental.ui.navbar.scroll", isNewUI())
+
+    val isEditorTabsWithScrollBar: Boolean
+      get() = NewUiValue.isEnabled() && Registry.`is`("ide.experimental.ui.editor.tabs.scrollbar", true)
+
+    @JvmStatic
+    val isNewUiUsedOnce: Boolean
+      /** Whether New UI was enabled at least once. Note: tracked since 2023.1  */
+      get() {
+        val propertiesComponent = PropertiesComponent.getInstance()
+        @Suppress("DEPRECATION")
+        return propertiesComponent.getValue(NEW_UI_USED_VERSION) != null || propertiesComponent.getBoolean(NEW_UI_USED_PROPERTY)
+      }
   }
 }
+
+@Internal
+object NotPatchedIconRegistry {
+  private val paths = HashSet<Pair<String, ClassLoader?>>()
+
+  fun getData(): List<IconModel> {
+    val result = ArrayList<IconModel>(paths.size)
+    for ((path, second) in paths) {
+      val classLoader = second ?: NotPatchedIconRegistry::class.java.getClassLoader()
+      val icon = findIconUsingNewImplementation(path, classLoader!!, null)
+      result.add(IconModel(icon, path))
+    }
+    return result
+  }
+
+  fun registerNotPatchedIcon(path: String, classLoader: ClassLoader?) {
+    paths.add(Pair(path, classLoader))
+  }
+
+  class IconModel(var icon: Icon?, var originalPath: String) {
+    override fun toString(): String = originalPath
+  }
+}
+
+private fun createPathPatcher(paths: Map<ClassLoader, Map<String, String>>): IconPathPatcher {
+  return object : IconPathPatcher() {
+    private val dumpNotPatchedIcons = System.getProperty("ide.experimental.ui.dump.not.patched.icons").toBoolean()
+    override fun patchPath(path: String, classLoader: ClassLoader?): String? {
+      val mappings = paths.get(classLoader) ?: return null
+      val patchedPath = mappings.get(path.trimStart('/'))
+      if (patchedPath == null && dumpNotPatchedIcons) {
+        NotPatchedIconRegistry.registerNotPatchedIcon(path, classLoader)
+      }
+      return patchedPath
+    }
+
+    override fun getContextClassLoader(path: String, originalClassLoader: ClassLoader?): ClassLoader? {
+      return originalClassLoader
+    }
+  }
+}
+
+private fun patchUiDefaultsForNewUi() {
+  val defaults = UIManager.getDefaults()
+  if (defaults.getColor("EditorTabs.hoverInactiveBackground") == null) {
+    // avoid getting EditorColorsManager too early
+    setUIProperty("EditorTabs.hoverInactiveBackground", UIDefaults.LazyValue { `__`: UIDefaults? ->
+      val editorColorScheme = EditorColorsManager.getInstance().getGlobalScheme()
+      ColorUtil.mix(JBColor.PanelBackground, editorColorScheme.getDefaultBackground(), 0.5)
+    }, defaults)
+  }
+  if (SystemInfo.isJetBrainsJvm && EarlyAccessRegistryManager.getBoolean("ide.experimental.ui.inter.font")) {
+    if (UISettings.getInstance().overrideLafFonts) {
+      //todo[kb] add RunOnce
+      NotRoamableUiSettings.getInstance().overrideLafFonts = false
+    }
+  }
+}
+
+private fun setUIProperty(@Suppress("SameParameterValue") key: String, value: Any, defaults: UIDefaults) {
+  defaults.remove(key)
+  defaults.put(key, value)
+}
+

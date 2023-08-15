@@ -6,7 +6,6 @@ import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.experimental.ExperimentalUiCollector;
-import com.intellij.idea.AppMode;
 import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -37,7 +36,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Locale;
 
-public class WhatsNewAction extends AnAction implements DumbAware {
+public final class WhatsNewAction extends AnAction implements DumbAware {
   private static final String ENABLE_NEW_UI_REQUEST = "enable-new-UI";
 
   @Override
@@ -94,7 +93,7 @@ public class WhatsNewAction extends AnAction implements DumbAware {
           if (!ExperimentalUI.isNewUI()) {
             ApplicationManager.getApplication().invokeLater(() -> {
               ExperimentalUiCollector.logSwitchUi(ExperimentalUiCollector.SwitchSource.WHATS_NEW_PAGE, true);
-              ExperimentalUI.setNewUI(true);
+              ExperimentalUI.Companion.setNewUI(true);
               UISettings.getInstance().fireUISettingsChanged();
             });
           }

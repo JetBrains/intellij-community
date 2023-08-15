@@ -8,20 +8,17 @@ import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.wm.BannerStartPagePromoter
 import com.intellij.openapi.wm.StartPagePromoter.Companion.PRIORITY_LEVEL_HIGH
 import com.intellij.ui.ExperimentalUI
-import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JPanel
 
-@ApiStatus.Internal
-class NewUiPromoter : BannerStartPagePromoter() {
-
+internal class NewUiPromoter : BannerStartPagePromoter() {
   override val promoImage: Icon
     get() = IconLoader.getIcon("welcome/newUiPromo.png", NewUiPromoter::class.java.classLoader)
 
   override fun canCreatePromo(isEmptyState: Boolean): Boolean {
     return !ExperimentalUI.isNewUI() &&
-           !ExperimentalUI.isNewUiUsedOnce() &&
+           !ExperimentalUI.isNewUiUsedOnce &&
            !PropertiesComponent.getInstance().getBoolean(ExperimentalUI.NEW_UI_PROMO_BANNER_DISABLED_PROPERTY)
   }
 

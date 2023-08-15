@@ -22,8 +22,9 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ex.ToolWindowEx
 import com.intellij.toolWindow.InternalDecoratorImpl
 import com.intellij.ui.ClientProperty
-import com.intellij.ui.ExperimentalUI.isNewUI
+import com.intellij.ui.ExperimentalUI.Companion.isNewUI
 import com.intellij.ui.MouseDragHelper
+import com.intellij.ui.NewUiValue
 import com.intellij.ui.PopupHandler
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.panels.HorizontalLayout
@@ -149,7 +150,7 @@ internal class SingleContentLayout(
       )
     }
 
-    if (!isNewUI()) {
+    if (!NewUiValue.isEnabled()) {
       let {
         val contentActions = DefaultActionGroup()
         contentActions.add(closeCurrentContentAction)
@@ -535,7 +536,7 @@ internal class SingleContentLayout(
       return true
     }
 
-    override fun showMorePopup(): JBPopup? {
+    override fun showMorePopup(): JBPopup {
       val contentToShow = labels
         .filter { it.bounds.width <= 0 }
         .map(MyContentTabLabel::getContent)

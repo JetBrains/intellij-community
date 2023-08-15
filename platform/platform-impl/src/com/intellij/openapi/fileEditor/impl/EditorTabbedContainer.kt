@@ -597,14 +597,14 @@ private class EditorTabs(
   }
 
   override fun createSingleRowLayout(): SingleRowLayout {
-    return ScrollableSingleRowLayout(this, ExperimentalUI.isEditorTabsWithScrollBar())
+    return ScrollableSingleRowLayout(this, ExperimentalUI.isEditorTabsWithScrollBar)
   }
 
   override fun createMultiRowLayout(): MultiRowLayout {
     return when {
       !isSingleRow -> WrapMultiRowLayout(this, TabLayout.showPinnedTabsSeparately())
       UISettings.getInstance().hideTabsIfNeeded -> ScrollableMultiRowLayout(this, showPinnedTabsSeparately = true,
-                                                                            ExperimentalUI.isEditorTabsWithScrollBar())
+                                                                            ExperimentalUI.isEditorTabsWithScrollBar)
       else -> CompressibleMultiRowLayout(this, TabLayout.showPinnedTabsSeparately())
     }
   }
