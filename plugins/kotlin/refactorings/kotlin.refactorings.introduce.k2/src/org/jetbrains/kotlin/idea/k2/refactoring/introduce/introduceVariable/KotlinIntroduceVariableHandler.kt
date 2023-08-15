@@ -19,10 +19,9 @@ import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.util.SlowOperations
 import com.intellij.util.SmartList
 import com.intellij.util.application
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KtRendererAnnotationsFilter
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
@@ -34,6 +33,7 @@ import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester.Companion.
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.base.psi.moveInsideParenthesesAndReplaceWith
+import org.jetbrains.kotlin.idea.base.psi.shouldLambdaParameterBeNamed
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.utils.ConvertToBlockBodyUtils
 import org.jetbrains.kotlin.idea.codeinsight.utils.NamedArgumentUtils
@@ -48,6 +48,7 @@ import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.types.Variance
@@ -80,18 +81,18 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
         private fun findElementByOffsetAndText(offset: Int, text: String, newContainer: PsiElement): PsiElement? =
             newContainer.findElementAt(offset)?.parentsWithSelf?.firstOrNull { (it as? KtExpression)?.text == text }
 
-        private fun replaceExpression(expressionToReplace: KtExpression, addToReferences: Boolean): KtExpression {
+        private fun replaceExpression(
+            expressionToReplace: KtExpression,
+            addToReferences: Boolean,
+            lambdaArgumentName: Name?,
+        ): KtExpression {
             val isActualExpression = expression == expressionToReplace
 
             val replacement = psiFactory.createExpression(nameSuggestions.single().first())
             var result = when {
                 expressionToReplace.isLambdaOutsideParentheses() -> {
                     val functionLiteralArgument = expressionToReplace.getStrictParentOfType<KtLambdaArgument>()!!
-                    val argumentName =
-                        analyzeInModalWindow(expressionToReplace, KotlinBundle.message("find.usages.prepare.dialog.progress")) {
-                            NamedArgumentUtils.getStableNameFor(functionLiteralArgument)
-                        }
-                    val newCallExpression = functionLiteralArgument.moveInsideParenthesesAndReplaceWith(replacement, argumentName)
+                    val newCallExpression = functionLiteralArgument.moveInsideParenthesesAndReplaceWith(replacement, lambdaArgumentName)
                     newCallExpression.valueArguments.last().getArgumentExpression()!!
                 }
 
@@ -141,9 +142,14 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
                     append(initializerText)
                 }.let { psiFactory.createProperty(it) }
             }
-
+            val lambdaArgumentName = if (expression.isLambdaOutsideParentheses()) {
+                analyzeInModalWindow(expression, KotlinBundle.message("find.usages.prepare.dialog.progress")) {
+                    getLambdaArgumentNameIfShouldBeNamed(expression.getStrictParentOfType<KtLambdaArgument>()!!)
+                }
+            } else null
             var anchor = calculateAnchor(expression, container) ?: return
             val needBraces = container !is KtBlockExpression && container !is KtClassBody && container !is KtFile
+            val shouldReplaceOccurrence = !needBraces && expression.shouldReplaceOccurrence(container)
             ApplicationManager.getApplication().runWriteAction {
                 if (!needBraces) {
                     property = container.addBefore(property, anchor) as KtDeclaration
@@ -154,7 +160,7 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
                     emptyBody.addAfter(psiFactory.createNewLine(), firstChild)
 
                     if (replaceOccurrence) {
-                        val exprAfterReplace = replaceExpression(expression, false)
+                        val exprAfterReplace = replaceExpression(expression, false, lambdaArgumentName)
                         exprAfterReplace.isOccurrence = true
                         if (anchor == expression) {
                             anchor = exprAfterReplace
@@ -235,8 +241,8 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
                     }
                 }
                 if (!needBraces) {
-                    if (expression.shouldReplaceOccurrence(container)) {
-                        replaceExpression(expression, true)
+                    if (shouldReplaceOccurrence) {
+                        replaceExpression(expression, true, lambdaArgumentName)
                     } else {
                         val sibling = PsiTreeUtil.skipSiblingsBackward(expression, PsiWhiteSpace::class.java)
                         if (sibling == property) {
@@ -254,6 +260,13 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
                     shortenReferences(addedTypeReference)
                 }
             }
+        }
+
+        context(KtAnalysisSession)
+        private fun getLambdaArgumentNameIfShouldBeNamed(argument: KtLambdaArgument): Name? {
+            return if (shouldLambdaParameterBeNamed(argument)) {
+                NamedArgumentUtils.getStableNameFor(argument)
+            } else null
         }
 
         fun runRefactoring(isVar: Boolean) {
@@ -300,11 +313,8 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
     private fun KtExpression.shouldReplaceOccurrence(container: PsiElement?): Boolean {
         val effectiveParent = (parent as? KtScriptInitializer)?.parent ?: parent
         return container != effectiveParent || allowAnalysisOnEdt {
-            @OptIn(KtAllowAnalysisFromWriteAction::class)
-            allowAnalysisFromWriteAction {
-                analyze(this) {
-                    isUsedAsExpression()
-                }
+            analyze(this) {
+                isUsedAsExpression()
             }
         }
     }
