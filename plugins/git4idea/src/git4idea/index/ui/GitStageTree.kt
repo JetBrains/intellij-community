@@ -97,11 +97,13 @@ abstract class GitStageTree(project: Project,
     override fun buildTreeModelSync(grouping: ChangesGroupingPolicyFactory): DefaultTreeModel {
       val builder = MyTreeModelBuilder(myProject, grouping)
 
-      builder.createKindNode(NodeKind.STAGED)
-      builder.createKindNode(NodeKind.UNSTAGED)
+      if (!state.isEmpty()) {
+        builder.createKindNode(NodeKind.STAGED)
+        builder.createKindNode(NodeKind.UNSTAGED)
 
-      state.forEachStatus(*NodeKind.values()) { root, status, kind ->
-        builder.insertStatus(root, status, kind)
+        state.forEachStatus(*NodeKind.values()) { root, status, kind ->
+          builder.insertStatus(root, status, kind)
+        }
       }
 
       if (settings.ignoredFilesShown()) {

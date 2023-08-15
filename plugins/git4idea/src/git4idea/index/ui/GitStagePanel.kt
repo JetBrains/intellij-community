@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.ex.ActionUtil.performActionDumbAwareWithCallbacks
 import com.intellij.openapi.components.service
+import com.intellij.openapi.help.HelpManager
 import com.intellij.openapi.progress.util.ProgressWindow
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Splitter
@@ -255,6 +256,14 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
   override fun dispose() {
   }
 
+  private fun ChangesTree.setDefaultEmptyText() {
+    emptyText.setText(message("stage.default.status"))
+      .appendLine("")
+      .appendLine(AllIcons.General.ContextHelp, message("stage.default.status.help"), SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES) {
+        HelpManager.getInstance().invokeHelp(HELP_ID)
+      }
+  }
+
   private inner class MyChangesTree(project: Project) : GitStageTree(project, project.service<GitStageUiSettingsImpl>(),
                                                                      this@GitStagePanel) {
     override val state
@@ -267,6 +276,7 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
 
     init {
       isShowCheckboxes = true
+      setDefaultEmptyText()
 
       setInclusionModel(GitStageRootInclusionModel(project, tracker, this@GitStagePanel))
       groupingSupport.addPropertyChangeListener(PropertyChangeListener {
@@ -452,7 +462,7 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
       }
       else {
         progressStripe.stopLoading()
-        tree.setEmptyText("")
+        tree.setDefaultEmptyText()
       }
     }
   }
@@ -485,6 +495,7 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
     @NonNls
     private const val GROUPING_PROPERTY_NAME = "GitStage.ChangesTree.GroupingKeys"
     private const val GIT_STAGE_PANEL_PLACE = "GitStagePanelPlace"
+    private const val HELP_ID = "reference.VersionControl.Git.StagingArea"
   }
 }
 
