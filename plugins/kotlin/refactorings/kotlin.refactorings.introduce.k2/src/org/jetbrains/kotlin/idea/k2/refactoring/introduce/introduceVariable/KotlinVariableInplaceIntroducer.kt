@@ -25,30 +25,31 @@ import com.intellij.ui.dsl.builder.actionListener
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.builder.selected
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils
 import org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringSettings
 import org.jetbrains.kotlin.idea.refactoring.introduce.AbstractKotlinInplaceIntroducer
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
-import org.jetbrains.kotlin.psi.KtCallableDeclaration
-import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.kotlin.psi.KtProperty
-import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
 import org.jetbrains.kotlin.psi.psiUtil.isIdentifier
 import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import javax.swing.JCheckBox
 import javax.swing.JPanel
+import kotlin.reflect.KFunction2
 
 class KotlinVariableInplaceIntroducer(
     addedVariable: KtProperty,
     originalExpression: KtExpression?,
     occurrencesToReplace: Array<KtExpression>,
     suggestedNames: Collection<String>,
-    private val typeString: String?,
+    private val expressionRenderedType: String?,
+    private val mustSpecifyTypeExplicitly: Boolean,
     project: Project,
-    editor: Editor
+    editor: Editor,
+    private val postProcess: KFunction2<KtDeclaration, Editor?, Unit>,
 ) : AbstractKotlinInplaceIntroducer<KtProperty>(
     localVariable = addedVariable.takeIf { it.isLocal },
     expression = originalExpression,
@@ -78,7 +79,7 @@ class KotlinVariableInplaceIntroducer(
                         }
                     }
             }
-            if (typeString != null) {
+            if (expressionRenderedType != null && !mustSpecifyTypeExplicitly) {
                 row {
                     checkBox(KotlinBundle.message("specify.type.explicitly")).apply {
                         selected(KotlinCommonRefactoringSettings.getInstance().INTRODUCE_SPECIFY_TYPE_EXPLICITLY)
@@ -86,7 +87,8 @@ class KotlinVariableInplaceIntroducer(
                             runWriteCommandAndRestart {
                                 updateVariableName()
                                 if (component.isSelected) {
-                                    addedVariable?.typeReference = KtPsiFactory(myProject).createType(typeString)
+                                    addedVariable?.typeReference = KtPsiFactory(myProject).createType(expressionRenderedType)
+                                    shortenReferences(addedVariable!!)
                                 } else {
                                     addedVariable?.typeReference = null
                                 }
@@ -195,6 +197,13 @@ class KotlinVariableInplaceIntroducer(
                     it.replace(replacement)
                 }
             }
+        }
+    }
+
+    override fun moveOffsetAfter(success: Boolean) {
+        super.moveOffsetAfter(success)
+        if (success) {
+            addedVariable?.let { postProcess(it, myEditor) }
         }
     }
 }
