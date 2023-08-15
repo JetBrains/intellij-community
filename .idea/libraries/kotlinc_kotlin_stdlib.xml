@@ -11,6 +11,7 @@
       </verification>
       <exclude>
         <dependency maven-id="org.jetbrains:annotations" />
+        <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-jdk7" />
       </exclude>
     </properties>
     <ANNOTATIONS>
