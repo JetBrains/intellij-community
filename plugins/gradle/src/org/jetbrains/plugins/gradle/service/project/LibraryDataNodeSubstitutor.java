@@ -87,7 +87,7 @@ public class LibraryDataNodeSubstitutor {
       }
 
       ModuleMappingInfo mapping = resolverContext.getArtifactsMap().getModuleMapping(path);
-      if (mapping != null && !mapping.getHasNonModulesContent()) {
+      if (!lookupResults.isEmpty() && (mapping == null || !mapping.getHasNonModulesContent())) {
         libraryPaths.remove(path);
       }
       if (libraryPaths.isEmpty()) {
