@@ -117,15 +117,17 @@ internal class ProjectProblemCodeVisionProvider : JavaCodeVisionProviderBase() {
   }
 
   private fun updateHighlighters(project: Project, psiFile: PsiFile, editor: Editor, highlighters: MutableList<HighlightInfo>) {
-    ApplicationManager.getApplication().invokeLater({
-                                                      if (project.isDisposed || !psiFile.isValid) return@invokeLater
-                                                      val fileTextLength: Int = psiFile.textLength
-                                                      val colorsScheme = editor.colorsScheme
-                                                      UpdateHighlightersUtil.setHighlightersToEditor(project, editor.document, 0,
-                                                                                                     fileTextLength,
-                                                                                                     highlighters, colorsScheme, -1)
-                                                    },
-                                                    ModalityState.nonModal()
+    ApplicationManager.getApplication().invokeLater(
+      {
+        if (!psiFile.isValid) {
+          return@invokeLater
+        }
+        val fileTextLength = psiFile.textLength
+        val colorsScheme = editor.colorsScheme
+        UpdateHighlightersUtil.setHighlightersToEditor(project, editor.document, 0, fileTextLength, highlighters, colorsScheme, -1)
+      },
+      ModalityState.nonModal(),
+      project.disposed,
     )
   }
 
