@@ -115,7 +115,7 @@ private fun getProviders(element: PsiElement, editor: Editor): List<ProviderWith
 }
 
 private class InlayHintsEditorInitializer : TextEditorInitializer {
-  override suspend fun init(project: Project, file: VirtualFile, document: Document, editorSupplier: suspend () -> EditorEx) {
+  override suspend fun initializeEditor(project: Project, file: VirtualFile, document: Document, editorSupplier: suspend () -> EditorEx) {
     val editor = editorSupplier.invoke()
 
     var buffer: HintsBuffer? = null

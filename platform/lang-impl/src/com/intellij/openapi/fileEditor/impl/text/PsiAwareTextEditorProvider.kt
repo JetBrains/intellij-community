@@ -64,7 +64,7 @@ open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorPro
           val initializer = item.instance ?: continue
           launch(CoroutineName(item.implementationClassName)) {
             catchingExceptionsAsync {
-              initializer.init(project = project, file = file, document = document, editorSupplier = editorSupplier)
+              initializer.initializeEditor(project = project, file = file, document = document, editorSupplier = editorSupplier)
             }
           }
         }

@@ -22,11 +22,11 @@ import org.jetbrains.annotations.ApiStatus.Internal
  * Extension maybe implemented only by a core plugin.
  */
 interface TextEditorInitializer {
-  suspend fun init(project: Project, file: VirtualFile, document: Document, editorSupplier: suspend () -> EditorEx)
+  suspend fun initializeEditor(project: Project, file: VirtualFile, document: Document, editorSupplier: suspend () -> EditorEx)
 }
 
 internal class HighlighterTextEditorInitializer : TextEditorInitializer {
-  override suspend fun init(project: Project, file: VirtualFile, document: Document, editorSupplier: suspend () -> EditorEx) {
+  override suspend fun initializeEditor(project: Project, file: VirtualFile, document: Document, editorSupplier: suspend () -> EditorEx) {
     val scheme = serviceAsync<EditorColorsManager>().globalScheme
     val editorHighlighterFactory = serviceAsync<EditorHighlighterFactory>()
     val highlighter = readAction {

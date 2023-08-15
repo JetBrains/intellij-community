@@ -57,7 +57,7 @@ open class TextEditorImpl @Internal constructor(@JvmField protected val project:
     @Suppress("LeakingThis")
     asyncLoader.start(textEditor = this, tasks = listOf(
       asyncLoader.coroutineScope.async(CoroutineName("HighlighterTextEditorInitializer")) {
-        HighlighterTextEditorInitializer().init(project, file, editor.document, editorSupplier)
+        HighlighterTextEditorInitializer().initializeEditor(project, file, editor.document, editorSupplier)
       },
     ))
   }
