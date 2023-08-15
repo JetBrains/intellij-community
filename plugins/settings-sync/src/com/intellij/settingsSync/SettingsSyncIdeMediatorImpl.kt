@@ -260,7 +260,7 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
           }
           is FileState.Deleted -> {
             writeUnderLock(fileSpec) {
-              file.deleteExisting()
+              file.deleteIfExists()
             }
             deletedFileSpecs.add(fileSpec)
           }
