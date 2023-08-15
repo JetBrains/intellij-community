@@ -19,6 +19,7 @@ import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.module.JavaModuleType
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.module.ModuleType
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdk
@@ -193,7 +194,7 @@ private suspend fun setupFromSources(project: Project, projectDir: VirtualFile) 
   }
 
   val modules = ModuleManager.getInstance(project).modules
-  if (modules.any { it is JavaModuleType }) {
+  if (modules.any { ModuleType.get(it) is JavaModuleType }) {
     withRawProgressReporter {
       coroutineToIndicator {
         findAndSetupSdk(project, ProgressManager.getGlobalProgressIndicator(), JavaSdk.getInstance()) {
