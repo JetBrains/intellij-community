@@ -4,6 +4,7 @@ package com.intellij.ide.customize.transferSettings
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.customize.transferSettings.models.IdeVersion
 import com.intellij.ide.customize.transferSettings.providers.vscode.VSCodeTransferSettingsProvider
+import com.intellij.ide.util.PropertiesComponent
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationGroupManager
@@ -20,6 +21,10 @@ private var wasShownOnce = false
 class TransferSettingsProjectActivity : ProjectActivity {
   override suspend fun execute(project: Project) {
     if (!Registry.`is`(TRANSFER_SETTINGS_REGISTRY_KEY) || application.isUnitTestMode){
+      return
+    }
+    if (shouldNotShowBalloon()) {
+      LOG.info("User already imported settings or declined")
       return
     }
     if (wasShownOnce) {
@@ -46,21 +51,16 @@ class TransferSettingsProjectActivity : ProjectActivity {
     }
 
     val notification = NotificationGroupManager.getInstance().getNotificationGroup(NOTIFICATION_GROUP)
-      .createNotification("Transfer settings",
-                          "Would you like to import your settings from VSCode?",
+      .createNotification(IdeBundle.message("transfersettings.notification.title"),
+                          IdeBundle.message("transfersettings.notification.content"),
                           NotificationType.INFORMATION)
       .setSuggestionType(true)
 
-    notification.addAction(NotificationAction.create("Import", com.intellij.util.Consumer {
-      notification.hideBalloon()
-      TransferSettingsDialog(project, config).show()
+    notification.addAction(NotificationAction.create(IdeBundle.message("transfersettings.notification.button"), com.intellij.util.Consumer {
+      if (TransferSettingsDialog(project, config).showAndGet()) {
+        notification.hideBalloon()
+      }
     }))
-      .addAction(object : NotificationAction(IdeBundle.messagePointer("label.dont.show")) {
-        override fun actionPerformed(e: AnActionEvent, notification: Notification) {
-          notification.expire()
-          notification.setDoNotAskFor(null)
-        }
-      })
     .addAction(object : NotificationAction(IdeBundle.messagePointer("label.dont.show")) {
       override fun actionPerformed(e: AnActionEvent, notification: Notification) {
         notification.expire()
@@ -70,9 +70,17 @@ class TransferSettingsProjectActivity : ProjectActivity {
     .notify(project)
   }
 
+  private fun shouldNotShowBalloon(): Boolean {
+    return PropertiesComponent.getInstance().getBoolean("Notification.DoNotAsk-$NOTIFICATION_GROUP")
+  }
+
   companion object {
     const val NOTIFICATION_GROUP = "transferSettings"
     const val TRANSFER_SETTINGS_REGISTRY_KEY = "transferSettings.enabled"
     val LOG = logger<TransferSettingsProjectActivity>()
   }
+}
+
+fun neverShowTransferSettingsBalloonAgain() {
+  PropertiesComponent.getInstance().setValue("Notification.DoNotAsk-${TransferSettingsProjectActivity.NOTIFICATION_GROUP}", true)
 }
