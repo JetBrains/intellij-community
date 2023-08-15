@@ -238,6 +238,11 @@ public class HighLevelMultiFileJvmBasicCompletionTestGenerated extends AbstractH
         runTest("../completion/testData/basic/multifile/NotImportedClass/");
     }
 
+    @TestMetadata("NotImportedExtensionForFlexibleType")
+    public void testNotImportedExtensionForFlexibleType() throws Exception {
+        runTest("../completion/testData/basic/multifile/NotImportedExtensionForFlexibleType/");
+    }
+
     @TestMetadata("NotImportedExtensionForImplicitReceiver")
     public void testNotImportedExtensionForImplicitReceiver() throws Exception {
         runTest("../completion/testData/basic/multifile/NotImportedExtensionForImplicitReceiver/");
