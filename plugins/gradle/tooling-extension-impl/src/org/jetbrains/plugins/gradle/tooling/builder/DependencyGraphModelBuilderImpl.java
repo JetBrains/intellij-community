@@ -1,63 +1,64 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.plugins.gradle.tooling.builder
+package org.jetbrains.plugins.gradle.tooling.builder;
 
-import com.intellij.openapi.externalSystem.model.project.dependencies.ComponentDependenciesImpl
-import com.intellij.openapi.externalSystem.model.project.dependencies.DependencyScopeNode
-import com.intellij.openapi.externalSystem.model.project.dependencies.ProjectDependencies
-import com.intellij.openapi.externalSystem.model.project.dependencies.ProjectDependenciesImpl
-import groovy.transform.CompileStatic
-import org.gradle.api.Project
-import org.jetbrains.annotations.NotNull
-import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder
-import org.jetbrains.plugins.gradle.tooling.ModelBuilderService
-import org.jetbrains.plugins.gradle.tooling.tasks.DependenciesReport
-import org.jetbrains.plugins.gradle.tooling.util.JavaPluginUtil
+import com.intellij.openapi.externalSystem.model.project.dependencies.ComponentDependenciesImpl;
+import com.intellij.openapi.externalSystem.model.project.dependencies.DependencyScopeNode;
+import com.intellij.openapi.externalSystem.model.project.dependencies.ProjectDependencies;
+import com.intellij.openapi.externalSystem.model.project.dependencies.ProjectDependenciesImpl;
+import org.gradle.api.Project;
+import org.gradle.api.artifacts.Configuration;
+import org.gradle.api.tasks.SourceSet;
+import org.gradle.api.tasks.SourceSetContainer;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder;
+import org.jetbrains.plugins.gradle.tooling.ModelBuilderService;
+import org.jetbrains.plugins.gradle.tooling.tasks.DependenciesReport;
+import org.jetbrains.plugins.gradle.tooling.util.JavaPluginUtil;
 
-import static org.jetbrains.plugins.gradle.tooling.util.resolve.DependencyResolverImpl.isNewDependencyResolutionApplicable
+import static org.jetbrains.plugins.gradle.tooling.util.resolve.DependencyResolverImpl.isIsNewDependencyResolutionApplicable;
 
-@CompileStatic
-class DependencyGraphModelBuilderImpl implements ModelBuilderService {
+public class DependencyGraphModelBuilderImpl implements ModelBuilderService {
 
-  DependenciesReport.ReportGenerator reportGenerator = new DependenciesReport.ReportGenerator()
+  private final DependenciesReport.ReportGenerator reportGenerator = new DependenciesReport.ReportGenerator();
 
   @Override
-  boolean canBuild(String modelName) {
-    return ProjectDependencies.name == modelName
+  public boolean canBuild(String modelName) {
+    return ProjectDependencies.class.getName().equals(modelName);
   }
 
   @Override
-  Object buildAll(String modelName, Project project) {
-    def resolveSourceSetDependencies = System.properties.'idea.resolveSourceSetDependencies' as boolean
-    if (!resolveSourceSetDependencies || !isIsNewDependencyResolutionApplicable()) return null
+  public Object buildAll(String modelName, Project project) {
+    boolean resolveSourceSetDependencies = Boolean.parseBoolean(System.getProperty("idea.resolveSourceSetDependencies", "false"));
+    if (!resolveSourceSetDependencies || !isIsNewDependencyResolutionApplicable()) return null;
 
-    def sourceSetContainer = JavaPluginUtil.getJavaPluginAccessor(project).sourceSetContainer
-    if (sourceSetContainer == null) return null
+    SourceSetContainer sourceSetContainer = JavaPluginUtil.getJavaPluginAccessor(project).getSourceSetContainer();
+    if (sourceSetContainer == null) return null;
 
-    ProjectDependenciesImpl dependencies = new ProjectDependenciesImpl()
-    for (sourceSet in sourceSetContainer) {
-      def compileConfigurationName = sourceSet.compileClasspathConfigurationName
-      def compileConfiguration = project.configurations.findByName(compileConfigurationName)
-      if (compileConfiguration == null) continue
+    ProjectDependenciesImpl dependencies = new ProjectDependenciesImpl();
+    for (SourceSet sourceSet : sourceSetContainer) {
+      String compileConfigurationName = sourceSet.getCompileClasspathConfigurationName();
+      Configuration compileConfiguration = project.getConfigurations().findByName(compileConfigurationName);
+      if (compileConfiguration == null) continue;
 
-      def runtimeConfigurationName = sourceSet.runtimeClasspathConfigurationName
-      def runtimeConfiguration = project.configurations.findByName(runtimeConfigurationName)
-      if (runtimeConfiguration == null) continue
+      String runtimeConfigurationName = sourceSet.getRuntimeClasspathConfigurationName();
+      Configuration runtimeConfiguration = project.getConfigurations().findByName(runtimeConfigurationName);
+      if (runtimeConfiguration == null) continue;
 
-      DependencyScopeNode compileScopeNode = reportGenerator.buildDependenciesGraph(compileConfiguration, project)
-      DependencyScopeNode runtimeScopeNode = reportGenerator.buildDependenciesGraph(runtimeConfiguration, project)
+      DependencyScopeNode compileScopeNode = reportGenerator.buildDependenciesGraph(compileConfiguration, project);
+      DependencyScopeNode runtimeScopeNode = reportGenerator.buildDependenciesGraph(runtimeConfiguration, project);
 
-      if (!compileScopeNode.dependencies.isEmpty() || !runtimeScopeNode.dependencies.isEmpty()) {
-        dependencies.add(new ComponentDependenciesImpl(sourceSet.name, compileScopeNode, runtimeScopeNode))
+      if (!compileScopeNode.getDependencies().isEmpty() || !runtimeScopeNode.getDependencies().isEmpty()) {
+        dependencies.add(new ComponentDependenciesImpl(sourceSet.getName(), compileScopeNode, runtimeScopeNode));
       }
     }
 
-    return dependencies.componentsDependencies.isEmpty() ? null : dependencies
+    return dependencies.getComponentsDependencies().isEmpty() ? null : dependencies;
   }
 
 
   @NotNull
   @Override
-  ErrorMessageBuilder getErrorMessageBuilder(@NotNull Project project, @NotNull Exception e) {
-    return ErrorMessageBuilder.create(project, e, "Dependency graph model errors")
+  public ErrorMessageBuilder getErrorMessageBuilder(@NotNull Project project, @NotNull Exception e) {
+    return ErrorMessageBuilder.create(project, e, "Dependency graph model errors");
   }
 }

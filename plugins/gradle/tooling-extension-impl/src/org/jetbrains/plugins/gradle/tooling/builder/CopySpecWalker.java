@@ -14,90 +14,122 @@
  * limitations under the License.
  */
 
-package org.jetbrains.plugins.gradle.tooling.builder
+package org.jetbrains.plugins.gradle.tooling.builder;
 
-import org.gradle.api.Action
-import org.gradle.api.file.CopySpec
-import org.gradle.api.file.FileVisitDetails
-import org.gradle.api.file.FileVisitor
-import org.gradle.util.GradleVersion
+import groovy.lang.MetaClass;
+import groovy.lang.MetaMethod;
+import org.codehaus.groovy.runtime.DefaultGroovyMethods;
+import org.gradle.api.Action;
+import org.gradle.api.file.CopySpec;
+import org.gradle.api.file.FileTree;
+import org.gradle.api.file.FileVisitDetails;
+import org.gradle.api.file.FileVisitor;
+import org.gradle.util.GradleVersion;
+import org.jetbrains.plugins.gradle.tooling.util.ReflectionUtil;
+
+import java.util.Collection;
+import java.util.List;
 
 /**
  * @author Vladislav.Soroka
  */
-class CopySpecWalker {
+@SuppressWarnings("NullableProblems")
+public final class CopySpecWalker {
 
-  static interface Visitor {
-    void visitSourcePath(String relativePath, String path)
+  public interface Visitor {
+    void visitSourcePath(String relativePath, String path);
 
-    void visitDir(String relativePath, FileVisitDetails dirDetails)
+    void visitDir(String relativePath, FileVisitDetails dirDetails);
 
-    void visitFile(String relativePath, FileVisitDetails fileDetails)
+    void visitFile(String relativePath, FileVisitDetails fileDetails);
+  }
+
+  private static Collection<Object> getSourcePaths(Object object) {
+    MetaClass metaClass = DefaultGroovyMethods.getMetaClass(object);
+    List<MetaMethod> getSourcePaths = metaClass.respondsTo(object, "getSourcePaths");
+    if (!getSourcePaths.isEmpty()) {
+      //noinspection unchecked,SSBasedInspection
+      return (Collection<Object>)getSourcePaths.get(0).invoke(object, new Object[0]);
+    }
+    else if (metaClass.hasProperty(object, "sourcePaths") != null) {
+      //noinspection unchecked
+      return (Collection<Object>)metaClass.getProperty(object, "sourcePaths");
+    }
+
+    return null;
   }
 
   @SuppressWarnings("GrUnresolvedAccess")
   static void walk(CopySpec copySpec, Visitor visitor) {
-    copySpec.setIncludeEmptyDirs(true)
-    if (!(copySpec.metaClass.respondsTo(copySpec, 'walk', Action))) {
-      return
+    //if (true) return;
+
+    copySpec.setIncludeEmptyDirs(true);
+
+    MetaClass copySpecMetaclass = DefaultGroovyMethods.getMetaClass(copySpec);
+    List<MetaMethod> walkMethods = copySpecMetaclass.respondsTo(copySpec, "walk", new Object[]{Action.class});
+    if (walkMethods.isEmpty()) {
+      return;
     }
 
-    copySpec.walk({ resolver ->
-      // def resolver ->
-      //      in Gradle v1.x - org.gradle.api.internal.file.copy.CopySpecInternal
-      //      in Gradle v2.x - org.gradle.api.internal.file.copy.CopySpecResolver
+    walkMethods.get(0).invoke(copySpec, new Object[]{new Action<Object>() {
+      @Override
+      public void execute(Object resolver) {
+        // def resolver ->
+        //      in Gradle v1.x - org.gradle.api.internal.file.copy.CopySpecInternal
+        //      in Gradle v2.x - org.gradle.api.internal.file.copy.CopySpecResolver
 
-      if (resolver.metaClass.respondsTo(resolver, 'setIncludeEmptyDirs', boolean)) {
-        resolver.setIncludeEmptyDirs(true)
-      }
-      if (!resolver.metaClass.respondsTo(resolver, 'getDestPath') ||
-          !resolver.metaClass.respondsTo(resolver, 'getSource')) {
-        throw new RuntimeException("${GradleVersion.current()} is not supported by JEE artifact importer")
-      }
+        MetaClass resolverMetaclass = DefaultGroovyMethods.getMetaClass(resolver);
 
-      final String relativePath = resolver.destPath.pathString
-      def sourcePaths
-
-      if (resolver.metaClass.respondsTo(resolver, 'getSourcePaths')) {
-        sourcePaths = resolver.getSourcePaths()
-      }
-      else if (resolver.hasProperty('sourcePaths')) {
-        sourcePaths = resolver.sourcePaths
-      }
-      else if (resolver.hasProperty('this$0') && resolver.this$0.metaClass.respondsTo(resolver, 'getSourcePaths')) {
-        sourcePaths = resolver.this$0.getSourcePaths()
-      }
-      else if (resolver.hasProperty('this$0') && resolver.this$0.hasProperty('sourcePaths')) {
-        sourcePaths = resolver.this$0.sourcePaths
-      }
-
-      if (sourcePaths) {
-        (sourcePaths.flatten() as List).each { path ->
-          if (path instanceof String) {
-            visitor.visitSourcePath(relativePath, path)
-          }
+        List<MetaMethod> setIncludeEmptyDirs = resolverMetaclass.respondsTo(resolver, "setIncludeEmptyDirs", new Object[]{Boolean.class});
+        if (!setIncludeEmptyDirs.isEmpty()) {
+          setIncludeEmptyDirs.get(0).invoke(resolver, new Object[]{true});
         }
-      }
 
-      resolver.source.visit(new FileVisitor() {
-        @Override
-        void visitDir(FileVisitDetails dirDetails) {
-          try {
-            visitor.visitDir(relativePath, dirDetails)
-          }
-          catch (Exception ignore) {
+        if (resolverMetaclass.respondsTo(resolver, "getDestPath").isEmpty() ||
+            resolverMetaclass.respondsTo(resolver, "getSource").isEmpty()) {
+          throw new RuntimeException(GradleVersion.current() + " is not supported by JEE artifact importer");
+        }
+
+        @SuppressWarnings("SSBasedInspection")
+        Object destPath = resolverMetaclass.respondsTo(resolver, "getDestPath").get(0).invoke(resolver, new Object[0]);
+
+        final String relativePath = ReflectionUtil.reflectiveCall(destPath, "getPathString", String.class);
+
+        Collection<Object> sourcePaths = getSourcePaths(resolver);
+        if (sourcePaths == null) {
+          Object this0 = resolverMetaclass.getProperty(resolver, "this$0");
+          sourcePaths = getSourcePaths(this0);
+        }
+
+        if (sourcePaths != null) {
+          for (Object path : DefaultGroovyMethods.flatten(sourcePaths)) {
+            if (path instanceof String) {
+              visitor.visitSourcePath(relativePath, (String)path);
+            }
           }
         }
 
-        @Override
-        void visitFile(FileVisitDetails fileDetails) {
-          try {
-            visitor.visitFile(relativePath, fileDetails)
+        FileTree sourceTree = ReflectionUtil.reflectiveCall(resolver, "getSource", FileTree.class);
+        sourceTree.visit(new FileVisitor() {
+          @Override
+          public void visitDir(FileVisitDetails dirDetails) {
+            try {
+              visitor.visitDir(relativePath, dirDetails);
+            }
+            catch (Exception ignore) {
+            }
           }
-          catch (Exception ignore) {
+
+          @Override
+          public void visitFile(FileVisitDetails fileDetails) {
+            try {
+              visitor.visitFile(relativePath, fileDetails);
+            }
+            catch (Exception ignore) {
+            }
           }
-        }
-      })
-    })
+        });
+      }
+    }});
   }
 }
