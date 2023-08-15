@@ -2175,6 +2175,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("testData/newJ2k/field/conversion.java");
         }
 
+        @TestMetadata("initializedBothWithInitializerAndConstructor.java")
+        public void testInitializedBothWithInitializerAndConstructor() throws Exception {
+            runTest("testData/newJ2k/field/initializedBothWithInitializerAndConstructor.java");
+        }
+
         @TestMetadata("internalField.java")
         public void testInternalField() throws Exception {
             runTest("testData/newJ2k/field/internalField.java");
