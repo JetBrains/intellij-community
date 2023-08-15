@@ -39,18 +39,23 @@ object ActualAnnotationsNotMatchExpectFixFactoryCommon {
             is ExpectActualAnnotationsIncompatibilityType.DifferentOnActual -> incompatibilityType.actualAnnotation
         }
 
-        val fixOnActualFix = if (actualAnnotationEntry == null) {
-            createCopyFromExpectToActualFix(expectAnnotationEntry, actualDeclaration, annotationClassIdProvider)
-        } else {
-            val annotationName = expectAnnotationEntry.shortName ?: return emptyList()
-            ReplaceAnnotationArgumentsInExpectActualFix(
-                KotlinBundle.message("fix.replace.mismatched.annotation.args.on.actual.declaration.may.change.semantics", annotationName),
-                copyFromAnnotationEntry = expectAnnotationEntry,
-                copyToAnnotationEntry = actualAnnotationEntry,
-            )
+        if (actualAnnotationEntry == null) {
+            val copyFromExpect = createCopyFromExpectToActualFix(expectAnnotationEntry, actualDeclaration, annotationClassIdProvider)
+            return listOfNotNull(copyFromExpect)
         }
 
-        return listOfNotNull(fixOnActualFix)
+        val annotationName = expectAnnotationEntry.shortName ?: return emptyList()
+        val fixOnActual = ReplaceAnnotationArgumentsInExpectActualFix(
+            KotlinBundle.message("fix.replace.mismatched.annotation.args.on.actual.declaration.may.change.semantics", annotationName),
+            copyFromAnnotationEntry = expectAnnotationEntry,
+            copyToAnnotationEntry = actualAnnotationEntry,
+        )
+        val fixOnExpect = ReplaceAnnotationArgumentsInExpectActualFix(
+            KotlinBundle.message("fix.replace.mismatched.annotation.args.on.expect.declaration.may.change.semantics", annotationName),
+            copyFromAnnotationEntry = actualAnnotationEntry,
+            copyToAnnotationEntry = expectAnnotationEntry,
+        )
+        return listOf(fixOnActual, fixOnExpect)
     }
 
     private fun createCopyFromExpectToActualFix(

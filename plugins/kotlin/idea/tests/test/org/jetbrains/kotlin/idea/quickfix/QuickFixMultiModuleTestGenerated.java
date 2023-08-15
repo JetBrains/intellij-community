@@ -203,6 +203,11 @@ public abstract class QuickFixMultiModuleTestGenerated extends AbstractQuickFixM
         public void testReplaceArgsOnActualOverrideWithEmpty() throws Exception {
             runTest("testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/replaceArgsOnActualOverrideWithEmpty/");
         }
+
+        @TestMetadata("replaceArgsOnExpect")
+        public void testReplaceArgsOnExpect() throws Exception {
+            runTest("testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/replaceArgsOnExpect/");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)

@@ -203,6 +203,11 @@ public abstract class HighLevelQuickFixMultiModuleTestGenerated extends Abstract
         public void testReplaceArgsOnActualOverrideWithEmpty() throws Exception {
             runTest("../idea/tests/testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/replaceArgsOnActualOverrideWithEmpty/");
         }
+
+        @TestMetadata("replaceArgsOnExpect")
+        public void testReplaceArgsOnExpect() throws Exception {
+            runTest("../idea/tests/testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/replaceArgsOnExpect/");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
