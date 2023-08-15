@@ -342,6 +342,14 @@ public final class ArtifactRepositoryManager {
         }
         RepositorySystemSession session = prepareRequests(groupId, artifactId, constraints, kind, includeTransitiveDependencies, excludedDependencies, requests);
 
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Resolving " + groupId + ":" + artifactId + ":" + versionConstraint +
+                    " transitiveDependencies=" + includeTransitiveDependencies +
+                    " excludedDependencies=" + excludedDependencies +
+                    " kind=" + kind +
+                    " requests=" + requests);
+        }
+
         if (!requests.isEmpty()) {
           try {
             List<ArtifactResult> resultList = mySessionFactory.retryWithClearSessionData(
