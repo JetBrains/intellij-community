@@ -269,7 +269,7 @@ public final class UIUtil {
       return new GrayFilterUIResource(this);
     }
 
-    public static class GrayFilterUIResource extends GrayFilter implements UIResource {
+    public static final class GrayFilterUIResource extends GrayFilter implements UIResource {
       public GrayFilterUIResource(@NotNull GrayFilter filter) {
         super(filter.origBrightness, filter.origContrast, filter.alpha);
       }
@@ -2232,7 +2232,7 @@ public final class UIUtil {
     return ComponentUtil.findComponentsOfType(parent, cls);
   }
 
-  public static class TextPainter {
+  public static final class TextPainter {
     private final List<String> myLines = new ArrayList<>();
     private boolean myDrawShadow;
     private Color myShadowColor;

@@ -147,7 +147,7 @@ import java.util.Map;
     return new EmptyIconUIResource(this);
   }
 
-  public static class EmptyIconUIResource extends EmptyIcon implements UIResource {
+  public static final class EmptyIconUIResource extends EmptyIcon implements UIResource {
     EmptyIconUIResource(@NotNull EmptyIcon icon) {
       super(icon);
     }

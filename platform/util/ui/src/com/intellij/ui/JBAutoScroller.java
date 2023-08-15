@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.util.Key;
@@ -178,7 +178,7 @@ public final class JBAutoScroller implements ActionListener {
     }
   }
 
-  public static class AutoscrollLocker {
+  public static final class AutoscrollLocker {
     private boolean locked;
 
     public boolean locked() {
@@ -195,7 +195,7 @@ public final class JBAutoScroller implements ActionListener {
     }
   }
 
-  private static class SyntheticDragEvent extends MouseEvent {
+  private static final class SyntheticDragEvent extends MouseEvent {
     SyntheticDragEvent(Component source, int id, long when, int modifiers,
                               int x, int y, int xAbs, int yAbs,
                               int clickCount, boolean popupTrigger, int button) {
@@ -205,7 +205,7 @@ public final class JBAutoScroller implements ActionListener {
 
   // JTable's UI only updates cell editor location upon it's cell painting which doesn't occur if the cell becomes obscure.
   // Moving cell editor prevents it from being 'stuck' on autoscroll.
-  private static class MoveTableCellEditorOnAutoscrollFix implements AdjustmentListener, PropertyChangeListener {
+  private static final class MoveTableCellEditorOnAutoscrollFix implements AdjustmentListener, PropertyChangeListener {
     private final JTable myTable;
 
     MoveTableCellEditorOnAutoscrollFix(JTable table) {
@@ -266,7 +266,7 @@ public final class JBAutoScroller implements ActionListener {
 
   // Disabling swing autoscroll on a JTable leads to table not being scrolled on selection changes.
   // Particularly, scrollRectToVisible in javax.swing.JTable#changeSelection won't be called.
-  private static class ScrollOnTableSelectionChangeFix implements ListSelectionListener, PropertyChangeListener {
+  private static final class ScrollOnTableSelectionChangeFix implements ListSelectionListener, PropertyChangeListener {
     private final JTable myTable;
     private final AutoscrollLocker myLocker;
 

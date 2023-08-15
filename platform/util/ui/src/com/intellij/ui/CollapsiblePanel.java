@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.util.containers.ContainerUtil;
@@ -14,7 +14,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.util.Collection;
 
-public class CollapsiblePanel extends JPanel {
+public final class CollapsiblePanel extends JPanel {
   private final JButton myToggleCollapseButton;
   private final JComponent myContent;
   private boolean myIsCollapsed;

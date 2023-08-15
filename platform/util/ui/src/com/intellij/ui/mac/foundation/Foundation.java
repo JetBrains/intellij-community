@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.mac.foundation;
 
 import com.intellij.jna.JnaLoader;
@@ -302,7 +302,7 @@ public final class Foundation {
   private static long ourCurrentRunnableCount = 0;
   private static final Object RUNNABLE_LOCK = new Object();
 
-  static class RunnableInfo {
+  static final class RunnableInfo {
     RunnableInfo(Runnable runnable, boolean useAutoreleasePool) {
       myRunnable = runnable;
       myUseAutoreleasePool = useAutoreleasePool;
@@ -377,7 +377,7 @@ public final class Foundation {
     }
   }
 
-  public static class NSDictionary {
+  public static final class NSDictionary {
     private final ID myDelegate;
 
     public NSDictionary(ID delegate) {
@@ -426,7 +426,7 @@ public final class Foundation {
     }
   }
 
-  public static class NSArray {
+  public static final class NSArray {
     private final ID myDelegate;
 
     public NSArray(ID delegate) {
@@ -451,7 +451,7 @@ public final class Foundation {
     }
   }
 
-  public static class NSData {
+  public static final class NSData {
     private final ID myDelegate;
 
     // delegate should not be nil
@@ -473,7 +473,7 @@ public final class Foundation {
     }
   }
 
-  public static class NSAutoreleasePool {
+  public static final class NSAutoreleasePool {
     private final ID myDelegate;
 
     public NSAutoreleasePool() {
@@ -486,7 +486,7 @@ public final class Foundation {
   }
 
   @Structure.FieldOrder({"origin", "size"})
-  public static class NSRect extends Structure implements Structure.ByValue {
+  public static final class NSRect extends Structure implements Structure.ByValue {
     public NSPoint origin;
     public NSSize size;
 
@@ -497,7 +497,7 @@ public final class Foundation {
   }
 
   @Structure.FieldOrder({"x", "y"})
-  public static class NSPoint extends Structure implements Structure.ByValue {
+  public static final class NSPoint extends Structure implements Structure.ByValue {
     public CoreGraphics.CGFloat x;
     public CoreGraphics.CGFloat y;
 
@@ -513,7 +513,7 @@ public final class Foundation {
   }
 
   @Structure.FieldOrder({"width", "height"})
-  public static class NSSize extends Structure implements Structure.ByValue {
+  public static final class NSSize extends Structure implements Structure.ByValue {
     public CoreGraphics.CGFloat width;
     public CoreGraphics.CGFloat height;
 

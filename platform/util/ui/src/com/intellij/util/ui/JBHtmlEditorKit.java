@@ -166,7 +166,7 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
   // This needs to be a static class to avoid memory leaks.
   // It's because StyleSheet instance gets leaked into parent (global) StyleSheet
   // due to JDK implementation nuances (see javax.swing.text.html.CSS#getStyleSheet)
-  private static class StyleSheetCompressionThreshold extends StyleSheet {
+  private static final class StyleSheetCompressionThreshold extends StyleSheet {
     @Override
     protected int getCompressionThreshold() {
       return -1;
@@ -174,7 +174,7 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
   }
 
   // Workaround for https://bugs.openjdk.org/browse/JDK-8202529
-  private static class MouseExitSupportLinkController extends HTMLEditorKit.LinkController {
+  private static final class MouseExitSupportLinkController extends HTMLEditorKit.LinkController {
     @Override
     public void mouseExited(@NotNull MouseEvent e) {
       mouseMoved(new MouseEvent(e.getComponent(), e.getID(), e.getWhen(), e.getModifiersEx(), -1, -1, e.getClickCount(), e.isPopupTrigger(),
@@ -276,7 +276,7 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
     }
   }
 
-  private static class LinkUnderlineListener implements HyperlinkListener {
+  private static final class LinkUnderlineListener implements HyperlinkListener {
     @Override
     public void hyperlinkUpdate(HyperlinkEvent e) {
       Element element = e.getSourceElement();
