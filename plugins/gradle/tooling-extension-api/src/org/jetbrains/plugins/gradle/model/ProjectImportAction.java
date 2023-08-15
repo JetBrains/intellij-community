@@ -86,12 +86,7 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
 
   @Override
   public @Nullable AllModels execute(@NotNull BuildController controller) {
-    ExecutorService converterExecutor = Executors.newSingleThreadExecutor(new ThreadFactory() {
-      @Override
-      public Thread newThread(@NotNull Runnable runnable) {
-        return new Thread(runnable, "idea-tooling-model-converter");
-      }
-    });
+    ExecutorService converterExecutor = Executors.newSingleThreadExecutor(new SimpleThreadFactory());
     try {
       return doExecute(controller, converterExecutor);
     }
@@ -293,6 +288,15 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
       String currentKey = super.getBuildKeyPrefix(buildIdentifier);
       String originalKey = myBuildsKeyPrefixesMapping == null ? null : myBuildsKeyPrefixesMapping.get(currentKey);
       return originalKey == null ? currentKey : originalKey;
+    }
+  }
+
+  // Use this static class as a simple ThreadFactory to prevent a memory leak when passing an anonymous ThreadFactory object to
+  // Executors.newSingleThreadExecutor. Memory leak will occur on the Gradle Daemon otherwise.
+  private static final class SimpleThreadFactory implements ThreadFactory {
+    @Override
+    public Thread newThread(@NotNull Runnable runnable) {
+      return new Thread(runnable, "idea-tooling-model-converter");
     }
   }
 }
