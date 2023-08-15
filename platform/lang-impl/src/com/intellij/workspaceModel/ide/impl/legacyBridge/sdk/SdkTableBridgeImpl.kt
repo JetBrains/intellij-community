@@ -3,17 +3,16 @@ package com.intellij.workspaceModel.ide.impl.legacyBridge.sdk
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkTypeId
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.util.Comparing
-import com.intellij.openapi.util.JDOMUtil
 import com.intellij.platform.workspace.jps.JpsGlobalFileEntitySource
 import com.intellij.platform.workspace.jps.entities.SdkMainEntity
 import com.intellij.platform.workspace.jps.entities.SdkRoot
 import com.intellij.platform.workspace.jps.entities.SdkRootTypeId
 import com.intellij.platform.workspace.jps.entities.modifyEntity
-import com.intellij.platform.workspace.jps.serialization.impl.ELEMENT_ADDITIONAL
 import com.intellij.platform.workspace.jps.serialization.impl.JpsGlobalEntitiesSerializers
 import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
@@ -21,7 +20,7 @@ import com.intellij.util.containers.ConcurrentFactoryMap
 import com.intellij.workspaceModel.ide.getGlobalInstance
 import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
 import com.intellij.workspaceModel.ide.legacyBridge.sdk.SdkTableImplementationDelegate
-import org.jdom.Element
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.TestOnly
 
 //TODO::
@@ -33,6 +32,7 @@ import org.jetbrains.annotations.TestOnly
 // [] SdkType.EP_NAME.addExtensionPointListener
 // [] Additional data loading/saving
 // [] The same problem as with FacetConfiguration we have 7 types of additional data for SDK so 7 entities
+// [] Listener if we create entity manually, bridge has to be created
 
 internal val rootTypes = ConcurrentFactoryMap.createMap<String, SdkRootTypeId> { SdkRootTypeId(it) }
 class SdkTableBridgeImpl: SdkTableImplementationDelegate {
@@ -116,8 +116,11 @@ class SdkTableBridgeImpl: SdkTableImplementationDelegate {
   }
 
   @TestOnly
+  @Suppress("RAW_RUN_BLOCKING")
   override fun saveOnDisk() {
-    ApplicationManager.getApplication().saveAll()
+    runBlocking {
+      ApplicationManager.getApplication().stateStore.save(true)
+    }
   }
 
   companion object {
