@@ -119,8 +119,7 @@
 
     <projectService serviceImplementation="com.intellij.codeInsight.daemon.impl.DaemonListeners" preload="await"/>
 
-    <textEditorInitializer implementation="com.intellij.codeInsight.daemon.impl.HighlightingMarkupCacheTextEditorInitializer"/>
-    <textEditorInitializer implementation="com.intellij.openapi.fileEditor.impl.text.HighlighterTextEditorInitializer"/>
+    <textEditorInitializer implementation="com.intellij.codeInsight.daemon.impl.HighlighterTextEditorInitializer"/>
     <textEditorInitializer implementation="com.intellij.openapi.fileEditor.impl.text.FoldingTextEditorInitializer"/>
     <textEditorInitializer implementation="com.intellij.codeInsight.hints.codeVision.CodeVisionTextEditorInitializer"/>
     <textEditorInitializer implementation="com.intellij.codeInsight.daemon.impl.InlayHintsEditorInitializer"/>
