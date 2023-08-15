@@ -32,11 +32,13 @@ internal object ActualAnnotationsNotMatchExpectFixFactory {
         diagnostic: KtFirDiagnostic.ActualAnnotationsNotMatchExpect,
         expectAnnotationEntry: KtAnnotationEntry,
     ): List<QuickFixActionBase<*>> {
+        val expectDeclaration = diagnostic.expectSymbol.psi as? KtNamedDeclaration ?: return emptyList()
         val actualDeclaration = diagnostic.actualSymbol.psi as? KtNamedDeclaration ?: return emptyList()
         val mappedIncompatibilityType = diagnostic.incompatibilityType.mapAnnotationType {
             it.psi as? KtAnnotationEntry
         }
         return ActualAnnotationsNotMatchExpectFixFactoryCommon.createCopyAndReplaceAnnotationFixes(
+            expectDeclaration,
             actualDeclaration,
             expectAnnotationEntry,
             mappedIncompatibilityType,

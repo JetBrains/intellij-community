@@ -32,20 +32,23 @@ internal object ActualAnnotationsNotMatchExpectFixFactory : KotlinIntentionActio
             ActualAnnotationsNotMatchExpectFixFactoryCommon.createRemoveAnnotationFromExpectFix(expectAnnotationEntry)
 
         return listOfNotNull(removeAnnotationFix) +
-                createCopyAndReplaceAnnotationFixes(expectAnnotationEntry, castedDiagnostic.b, incompatibilityType)
+                createCopyAndReplaceAnnotationFixes(expectAnnotationEntry, castedDiagnostic.a, castedDiagnostic.b, incompatibilityType)
     }
 
     private fun createCopyAndReplaceAnnotationFixes(
         expectAnnotationEntry: KtAnnotationEntry,
+        expectDeclarationDescriptor: DeclarationDescriptor,
         actualDeclarationDescriptor: DeclarationDescriptor,
         incompatibilityType: ExpectActualAnnotationsIncompatibilityType<AnnotationDescriptor>,
     ): List<QuickFixActionBase<*>> {
+        val expectDeclaration = expectDeclarationDescriptor.toSourceElement.getPsi() as? KtNamedDeclaration ?: return emptyList()
         val actualDeclaration = actualDeclarationDescriptor.toSourceElement.getPsi() as? KtNamedDeclaration ?: return emptyList()
         val mappedIncompatibilityType = incompatibilityType.mapAnnotationType {
             it.source.getPsi() as? KtAnnotationEntry
         }
 
         return ActualAnnotationsNotMatchExpectFixFactoryCommon.createCopyAndReplaceAnnotationFixes(
+            expectDeclaration,
             actualDeclaration,
             expectAnnotationEntry,
             mappedIncompatibilityType,

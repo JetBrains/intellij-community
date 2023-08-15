@@ -124,6 +124,16 @@ public abstract class QuickFixMultiModuleTestGenerated extends AbstractQuickFixM
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("copyNotSuggestedWhenActualFakeOverride")
+        public void testCopyNotSuggestedWhenActualFakeOverride() throws Exception {
+            runTest("testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/copyNotSuggestedWhenActualFakeOverride/");
+        }
+
+        @TestMetadata("copyNotSuggestedWhenActualTypealias")
+        public void testCopyNotSuggestedWhenActualTypealias() throws Exception {
+            runTest("testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/copyNotSuggestedWhenActualTypealias/");
+        }
+
         @TestMetadata("copyToActualConstExpression")
         public void testCopyToActualConstExpression() throws Exception {
             runTest("testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/copyToActualConstExpression/");
@@ -157,6 +167,21 @@ public abstract class QuickFixMultiModuleTestGenerated extends AbstractQuickFixM
         @TestMetadata("removeFromExpect")
         public void testRemoveFromExpect() throws Exception {
             runTest("testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/removeFromExpect/");
+        }
+
+        @TestMetadata("removeFromExpectSuggestedWhenActualFakeOverride")
+        public void testRemoveFromExpectSuggestedWhenActualFakeOverride() throws Exception {
+            runTest("testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/removeFromExpectSuggestedWhenActualFakeOverride/");
+        }
+
+        @TestMetadata("removeFromExpectSuggestedWhenActualHasNoSource")
+        public void testRemoveFromExpectSuggestedWhenActualHasNoSource() throws Exception {
+            runTest("testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/removeFromExpectSuggestedWhenActualHasNoSource/");
+        }
+
+        @TestMetadata("removeFromExpectSuggestedWhenActualTypealias")
+        public void testRemoveFromExpectSuggestedWhenActualTypealias() throws Exception {
+            runTest("testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/removeFromExpectSuggestedWhenActualTypealias/");
         }
 
         @TestMetadata("replaceArgsOnActual")
