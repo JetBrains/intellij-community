@@ -21,6 +21,7 @@ import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.SmartList;
+import com.intellij.util.concurrency.SynchronizedClearableLazy;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.jetbrains.jsonSchema.*;
@@ -33,7 +34,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -510,33 +510,12 @@ public class JsonSchemaServiceImpl implements JsonSchemaService, ModificationTra
   private static final class MyState {
     @NotNull private final Supplier<List<JsonSchemaFileProvider>> myFactory;
     @NotNull private final Project myProject;
-    @NotNull private final ClearableLazyValue<Map<VirtualFile, List<JsonSchemaFileProvider>>> myData;
-    private final AtomicBoolean myIsComputed = new AtomicBoolean(false);
+    @NotNull private final SynchronizedClearableLazy<Map<VirtualFile, List<JsonSchemaFileProvider>>> myData;
 
     private MyState(@NotNull final Supplier<List<JsonSchemaFileProvider>> factory, @NotNull Project project) {
       myFactory = factory;
       myProject = project;
-      myData = new ClearableLazyValue<>() {
-        @NotNull
-        @Override
-        public Map<VirtualFile, List<JsonSchemaFileProvider>> compute() {
-          Map<VirtualFile, List<JsonSchemaFileProvider>> map = createFileProviderMap(myFactory.get(), myProject);
-          myIsComputed.set(true);
-          return map;
-        }
-
-        @NotNull
-        @Override
-        public synchronized Map<VirtualFile, List<JsonSchemaFileProvider>> getValue() {
-          return super.getValue();
-        }
-
-        @Override
-        public synchronized void drop() {
-          myIsComputed.set(false);
-          super.drop();
-        }
-      };
+      myData = new SynchronizedClearableLazy<>(() -> createFileProviderMap(myFactory.get(), myProject));
     }
 
     public void reset() {
@@ -575,7 +554,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaService, ModificationTra
     }
 
     public boolean isComputed() {
-      return myIsComputed.get();
+      return myData.isInitialized();
     }
 
     @NotNull
