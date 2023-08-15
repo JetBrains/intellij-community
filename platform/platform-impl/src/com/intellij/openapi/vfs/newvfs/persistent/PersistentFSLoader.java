@@ -34,6 +34,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
@@ -616,11 +617,17 @@ public final class PersistentFSLoader {
 
   public static @NotNull ScannableDataEnumeratorEx<String> createFileNamesEnumerator(@NotNull Path namesFile) throws IOException {
     if (FSRecordsImpl.USE_FAST_NAMES_IMPLEMENTATION) {
-      LOG.info("VFS uses fast names enumerator");
-      return new DurableStringEnumerator(namesFile);
+      LOG.info("VFS uses 'fast' (hash) names enumerator");
+      //if we use _same_ namesFile for fast/regular enumerator (which seems natural at a first glance), then
+      // on transition, fast enumerator couldn't recognize regular enumerator file format, and throws some
+      // bizare exception => VFS is rebuilt, but with rebuildCause=UNRECOGNIZED instead of 'version mismatch'.
+      //To get an expected exception on transition, we need regular/fast enumerator to use different files,
+      // e.g. 'names.dat' / 'names.dat.mmap'
+      Path namesPathEx = Paths.get(namesFile.toString() + ".mmap");
+      return new DurableStringEnumerator(namesPathEx);
     }
     else {
-      LOG.info("VFS uses regular names enumerator");
+      LOG.info("VFS uses regular (btree) names enumerator");
       return new PersistentStringEnumerator(namesFile, PERSISTENT_FS_STORAGE_CONTEXT);
     }
   }
