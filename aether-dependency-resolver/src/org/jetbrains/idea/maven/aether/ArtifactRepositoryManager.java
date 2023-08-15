@@ -1,6 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.aether;
 
+import com.intellij.openapi.application.ClassPathUtil;
+import com.intellij.util.ArrayUtil;
 import org.apache.maven.repository.internal.MavenRepositorySystemUtils;
 import org.eclipse.aether.DefaultRepositorySystemSession;
 import org.eclipse.aether.DefaultSessionData;
@@ -39,8 +41,7 @@ import org.eclipse.aether.util.version.GenericVersionScheme;
 import org.eclipse.aether.version.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.intellij.openapi.diagnostic.Logger;
 
 import java.io.File;
 import java.util.*;
@@ -55,7 +56,7 @@ import java.util.stream.Collectors;
 public final class ArtifactRepositoryManager {
   private static final VersionScheme ourVersioning = new GenericVersionScheme();
   private static final JreProxySelector ourProxySelector = new JreProxySelector();
-  private static final Logger LOG = LoggerFactory.getLogger(ArtifactRepositoryManager.class);
+  private static final Logger LOG = Logger.getInstance(ArtifactRepositoryManager.class);
   private final RepositorySystemSessionFactory mySessionFactory;
 
   private static final RemoteRepository MAVEN_CENTRAL_REPOSITORY = createRemoteRepository(
@@ -256,7 +257,7 @@ public final class ArtifactRepositoryManager {
    */
   @SuppressWarnings("UnnecessaryFullyQualifiedName")
   public static Class<?>[] getClassesFromDependencies() {
-    return new Class<?>[]{
+    var result = new ArrayList<>(List.of(
       org.jetbrains.idea.maven.aether.ArtifactRepositoryManager.class, //this module
       org.apache.maven.repository.internal.VersionsMetadataGeneratorFactory.class, //maven-aether-provider
       org.apache.maven.artifact.Artifact.class, //maven-artifact
@@ -277,9 +278,13 @@ public final class ArtifactRepositoryManager {
       org.apache.http.HttpConnection.class, //http-core
       org.apache.http.client.HttpClient.class, //http-client
       org.apache.commons.logging.LogFactory.class, // commons-logging
-      org.slf4j.Marker.class, // slf4j
+      org.slf4j.Marker.class, // slf4j, - required for aether resolver at runtime
+      org.slf4j.impl.JDK14LoggerFactory.class, // slf4j-jdk14 - required for aether resolver at runtime
       org.apache.commons.codec.binary.Base64.class // commons-codec
-    };
+    ));
+    result.addAll(Arrays.asList(ClassPathUtil.getUtilClasses())); // intellij.platform.util module
+
+    return result.toArray(ArrayUtil.EMPTY_CLASS_ARRAY);
   }
 
   public @NotNull Collection<File> resolveDependency(String groupId,

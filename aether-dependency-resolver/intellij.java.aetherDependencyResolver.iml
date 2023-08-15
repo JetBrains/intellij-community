@@ -109,5 +109,6 @@
     <orderEntry type="library" name="commons-lang3" level="project" />
     <orderEntry type="library" name="plexus-utils" level="project" />
     <orderEntry type="library" name="commons-codec" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.util" />
   </component>
 </module>
