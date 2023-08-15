@@ -976,7 +976,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
 
   @Nullable
   public static String getLambdaBaseClassName(String typeName) {
-    return StringUtil.substringBefore(typeName, "$$Lambda$");
+    return StringUtil.substringBefore(typeName, "$$Lambda");
   }
 
   public static boolean isLambdaName(@Nullable String name) {
