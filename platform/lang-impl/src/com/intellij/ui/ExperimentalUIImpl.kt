@@ -45,8 +45,6 @@ private class ExperimentalUIImpl : ExperimentalUI() {
   private var iconPathPatcher: IconPathPatcher? = null
 
   override fun lookAndFeelChanged() {
-    super.lookAndFeelChanged()
-
     if (isNewUI()) {
       installIconPatcher()
       patchUiDefaultsForNewUi()
@@ -68,14 +66,19 @@ private class ExperimentalUIImpl : ExperimentalUI() {
     }
   }
 
-  private fun installIconPatcher() {
-    if (isIconPatcherSet.compareAndSet(false, true)) {
-      iconPathPatcher?.let {
-        IconLoader.removePathPatcher(it)
-      }
+  override fun installIconPatcher() {
+    if (!isNewUI()) {
+      return
+    }
 
-      val patcher = createPathPatcher(service<IconMapLoader>().loadIconMapping())
-      iconPathPatcher = patcher
+    val iconMapping = service<IconMapLoader>().loadIconMapping() ?: return
+    if (!isIconPatcherSet.compareAndSet(false, true)) {
+      return
+    }
+
+    val patcher = iconMapping.takeIf { it.isNotEmpty() }?.let { createPathPatcher(it) }
+    iconPathPatcher = patcher
+    if (patcher != null) {
       IconLoader.installPathPatcher(patcher)
     }
   }

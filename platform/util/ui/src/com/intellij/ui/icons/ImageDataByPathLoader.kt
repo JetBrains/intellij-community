@@ -63,9 +63,6 @@ class ImageDataByPathLoader private constructor(private val path: String,
       return CachedImageIcon(originalPath = null, resolver = resolver, toolTip = toolTip)
     }
 
-    private fun normalizePath(patchedPath: String): String {
-      return if (patchedPath[0] == '/') patchedPath.substring(1) else patchedPath
-    }
 
     private fun doPatch(originalLoader: ImageDataByPathLoader,
                         transform: IconTransform,
@@ -126,6 +123,8 @@ class ImageDataByPathLoader private constructor(private val path: String,
     return result
   }
 }
+
+private fun normalizePath(patchedPath: String): String = patchedPath.trimStart('/')
 
 private val LOOKUP = MethodHandles.lookup()
 

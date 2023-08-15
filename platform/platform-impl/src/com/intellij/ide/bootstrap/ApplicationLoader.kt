@@ -45,6 +45,7 @@ import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.AppIcon
+import com.intellij.ui.ExperimentalUI
 import com.intellij.util.PlatformUtils
 import com.intellij.util.io.URLUtil
 import com.intellij.util.io.createDirectories
@@ -114,14 +115,6 @@ internal suspend fun loadApp(app: ApplicationImpl,
 
     initServiceContainerJob.join()
 
-    val initConfigurationStoreJob = launch {
-      initConfigurationStore(app)
-    }
-
-    val deferredStarter = span("app starter creation") {
-      createAppStarter(args)
-    }
-
     val loadIconMapping = if (app.isHeadlessEnvironment) {
       null
     }
@@ -131,6 +124,14 @@ internal suspend fun loadApp(app: ApplicationImpl,
           app.serviceAsync<IconMapLoader>().preloadIconMapping()
         }.getOrLogException(logDeferred.await())
       }
+    }
+
+    val initConfigurationStoreJob = launch {
+      initConfigurationStore(app)
+    }
+
+    val deferredStarter = span("app starter creation") {
+      createAppStarter(args)
     }
 
     launch(CoroutineName("app pre-initialization")) {
@@ -235,6 +236,11 @@ private suspend fun preInitApp(app: ApplicationImpl,
 
     euaTaskDeferred?.await()?.invoke()
 
+    val installIconPatcherJob = if (loadIconMapping == null) null else launch {
+      loadIconMapping.join()
+      ExperimentalUI.getInstance().installIconPatcher()
+    }
+
     coroutineScope {
       launch {
         // used by LafManager
@@ -245,11 +251,11 @@ private suspend fun preInitApp(app: ApplicationImpl,
       }
     }
 
-    loadIconMapping?.join()
-
     val lafJob = launch(CoroutineName("laf initialization") + RawSwingDispatcher) {
       app.serviceAsync<LafManager>()
     }
+
+    installIconPatcherJob?.join()
 
     if (!app.isHeadlessEnvironment) {
       asyncScope.launch(CoroutineName("icons preloading") + Dispatchers.IO) {

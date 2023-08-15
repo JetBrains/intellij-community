@@ -70,4 +70,7 @@ abstract class ExperimentalUI {
 
   open fun lookAndFeelChanged() {
   }
+
+  open fun installIconPatcher() {
+  }
 }
