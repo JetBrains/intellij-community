@@ -288,7 +288,9 @@
       <xs:annotation>
         <xs:documentation>
           Path to an ico file with the product icon.
+          <strong>Deprecated:</strong> unused for a long time (if ever).
         </xs:documentation>
+        <xs:documentation>deprecated</xs:documentation>
       </xs:annotation>
     </xs:attribute>
     <xs:attribute type="xs:string" name="svg" use="required">
