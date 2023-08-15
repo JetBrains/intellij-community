@@ -23,6 +23,8 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.registry.EarlyAccessRegistryManager
 import com.intellij.platform.feedback.newUi.NewUIInfoService
 import com.intellij.util.PlatformUtils
+import java.time.LocalDate
+import java.time.temporal.ChronoUnit
 
 private val LOG: Logger
   get() = logger<ExperimentalUI>()
@@ -34,7 +36,7 @@ private class ExperimentalUIImpl : ExperimentalUI() {
   private var shouldApplyOnClose: Boolean? = null
   private var shouldUnsetNewUiSwitchKey: Boolean = true
 
-  override fun getIconMappings(): Map<ClassLoader, Map<String, String>> = service<IconMapLoader>().loadIconMapping()
+  override fun getIconMappings() = service<IconMapLoader>().loadIconMapping()
 
   /**
    * For RD session, we take the newUI preference from the join link of IDE backend,
@@ -208,13 +210,11 @@ private fun resetLafSettingsToDefault() {
  */
 private class ExperimentalUiAppLifecycleListener : AppLifecycleListener {
   override fun appStarted() {
-    (ExperimentalUI.getInstance() as? ExperimentalUIImpl)
-      ?.appStarted()
+    (ExperimentalUI.getInstance() as? ExperimentalUIImpl)?.appStarted()
   }
 
   override fun appClosing() {
-    (ExperimentalUI.getInstance() as? ExperimentalUIImpl)
-      ?.appClosing()
+    (ExperimentalUI.getInstance() as? ExperimentalUIImpl)?.appClosing()
   }
 }
 

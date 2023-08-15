@@ -5,7 +5,6 @@ import com.intellij.ide.ui.NotRoamableUiSettings;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.util.IconLoader;
@@ -26,15 +25,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.time.LocalDate;
-import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
-
-import static java.time.temporal.ChronoUnit.DAYS;
 
 /**
  * Temporary utility class for migration to the new UI.
@@ -56,8 +51,6 @@ public abstract class ExperimentalUI {
   // Should be unset by the client, or it will be unset on the IDE close.
   public static final String NEW_UI_SWITCH = "experimental.ui.switch";
   public static final String NEW_UI_PROMO_BANNER_DISABLED_PROPERTY = "experimental.ui.promo.banner.disabled";
-
-  private static final String FIRST_PROMOTION_DATE_PROPERTY = "experimental.ui.first.promotion.localdate";
 
   private final AtomicBoolean isIconPatcherSet = new AtomicBoolean();
   private IconPathPatcher iconPathPatcher;
@@ -81,27 +74,6 @@ public abstract class ExperimentalUI {
 
   public void setNewUIInternal(boolean newUI, boolean suggestRestart) {
 
-  }
-
-  public static int getPromotionDaysCount() {
-    PropertiesComponent propertyComponent = PropertiesComponent.getInstance();
-    String value = propertyComponent.getValue(FIRST_PROMOTION_DATE_PROPERTY);
-    LocalDate now = LocalDate.now();
-
-    if (value == null) {
-      propertyComponent.setValue(FIRST_PROMOTION_DATE_PROPERTY, now.toString());
-      return 0;
-    }
-
-    try {
-      LocalDate firstDate = LocalDate.parse(value);
-      return (int)DAYS.between(firstDate, now);
-    }
-    catch (DateTimeParseException e) {
-      Logger.getInstance(ExperimentalUI.class).warn("Invalid stored date " + value);
-      propertyComponent.setValue(FIRST_PROMOTION_DATE_PROPERTY, now.toString());
-      return 0;
-    }
   }
 
   // used by the JBClient for cases where a link overrides new UI mode
@@ -168,14 +140,15 @@ public abstract class ExperimentalUI {
 
       boolean isEnabled = value.asBoolean();
 
-      patchUIDefaults(isEnabled);
       ExperimentalUI instance = getInstance();
       if (isEnabled) {
+        patchUiDefaultsForNewUi();
+
         if (instance.isIconPatcherSet.compareAndSet(false, true)) {
           if (instance.iconPathPatcher != null) {
             IconLoader.removePathPatcher(instance.iconPathPatcher);
           }
-          instance.iconPathPatcher = instance.createPathPatcher();
+          instance.iconPathPatcher = createPathPatcher(instance.getIconMappings());
           IconLoader.installPathPatcher(instance.iconPathPatcher);
         }
         instance.onExpUIEnabled(true);
@@ -189,21 +162,22 @@ public abstract class ExperimentalUI {
   }
 
   public void lookAndFeelChanged() {
-    if (isNewUI()) {
-      if (isIconPatcherSet.compareAndSet(false, true)) {
-        if (iconPathPatcher != null) {
-          IconLoader.removePathPatcher(iconPathPatcher);
-        }
-        iconPathPatcher = createPathPatcher();
-        IconLoader.installPathPatcher(iconPathPatcher);
-      }
-      patchUIDefaults(true);
+    if (!isNewUI()) {
+      return;
     }
+
+    if (isIconPatcherSet.compareAndSet(false, true)) {
+      if (iconPathPatcher != null) {
+        IconLoader.removePathPatcher(iconPathPatcher);
+      }
+      iconPathPatcher = createPathPatcher(getIconMappings());
+      IconLoader.installPathPatcher(iconPathPatcher);
+    }
+    patchUiDefaultsForNewUi();
   }
 
-  private @NotNull IconPathPatcher createPathPatcher() {
+  private static @NotNull IconPathPatcher createPathPatcher(@NotNull Map<ClassLoader, Map<String, String>> paths) {
     return new IconPathPatcher() {
-      private final Map<ClassLoader, Map<String, String>> paths = getIconMappings();
       private final boolean dumpNotPatchedIcons = SystemProperties.getBooleanProperty("ide.experimental.ui.dump.not.patched.icons", false);
 
       @Override
@@ -232,11 +206,7 @@ public abstract class ExperimentalUI {
 
   public abstract void onExpUIDisabled(boolean suggestRestart);
 
-  private static void patchUIDefaults(boolean isNewUiEnabled) {
-    if (!isNewUiEnabled) {
-      return;
-    }
-
+  private static void patchUiDefaultsForNewUi() {
     UIDefaults defaults = UIManager.getDefaults();
     if (defaults.getColor("EditorTabs.hoverInactiveBackground") == null) {
       // avoid getting EditorColorsManager too early
@@ -247,19 +217,15 @@ public abstract class ExperimentalUI {
     }
 
     if (SystemInfo.isJetBrainsJvm && EarlyAccessRegistryManager.INSTANCE.getBoolean("ide.experimental.ui.inter.font")) {
-      installInterFont();
+      if (UISettings.getInstance().getOverrideLafFonts()) {
+        //todo[kb] add RunOnce
+        NotRoamableUiSettings.Companion.getInstance().setOverrideLafFonts(false);
+      }
     }
   }
 
-  private static void setUIProperty(String key, Object value, UIDefaults defaults) {
+  private static void setUIProperty(@SuppressWarnings("SameParameterValue") String key, Object value, UIDefaults defaults) {
     defaults.remove(key);
     defaults.put(key, value);
-  }
-
-  private static void installInterFont() {
-    if (UISettings.getInstance().getOverrideLafFonts()) {
-      //todo[kb] add RunOnce
-      NotRoamableUiSettings.Companion.getInstance().setOverrideLafFonts(false);
-    }
   }
 }

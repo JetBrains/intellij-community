@@ -4,6 +4,7 @@ package com.intellij.ide.actions;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.ui.NewUiUtilKt;
 import com.intellij.ide.ui.ToolbarSettings;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
@@ -172,8 +173,7 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
   }
 
   private static boolean calculateOurNewUiIcon() {
-    return !ExperimentalUI.isNewUI() && !ExperimentalUI.isNewUiUsedOnce()
-           && ExperimentalUI.getPromotionDaysCount() < 14;
+    return !ExperimentalUI.isNewUI() && !ExperimentalUI.isNewUiUsedOnce() && NewUiUtilKt.getNewUiPromotionDaysCount() < 14;
   }
 
   private static @NotNull @Nls String getActionTooltip() {
