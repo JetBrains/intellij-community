@@ -18,12 +18,9 @@ import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.util.SlowOperations
 import com.intellij.util.SmartList
 import com.intellij.util.application
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.KtDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
-import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinDeclarationNameValidator
@@ -321,13 +318,10 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
         KtPsiUtil.isAssignment(it) && (it as KtBinaryExpression).left == this
     }
 
-    @OptIn(KtAllowAnalysisOnEdt::class)
     private fun KtExpression.shouldReplaceOccurrence(container: PsiElement?): Boolean {
         val effectiveParent = (parent as? KtScriptInitializer)?.parent ?: parent
-        return container != effectiveParent || allowAnalysisOnEdt {
-            analyze(this) {
-                isUsedAsExpression()
-            }
+        return container != effectiveParent || analyzeInModalWindow(this, KotlinBundle.message("find.usages.prepare.dialog.progress")) {
+            isUsedAsExpression()
         }
     }
 
@@ -407,8 +401,7 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
         }
     }
 
-    @OptIn(KtAllowAnalysisOnEdt::class)
-    fun doRefactoring(
+    internal fun doRefactoring(
         project: Project,
         editor: Editor?,
         expression: KtExpression,
@@ -461,24 +454,22 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
 
             expression.chooseApplicableComponentNamesForVariableDeclaration(replaceOccurrence, editor) { componentNames ->
                 val anchor = calculateAnchor(expression, container) as? KtElement ?: return@chooseApplicableComponentNamesForVariableDeclaration
-                val suggestedNames = allowAnalysisOnEdt {
-                    analyze(expression) {
-                        val nameValidator = KotlinDeclarationNameValidator(
-                            anchor,
-                            true,
-                            KotlinNameSuggestionProvider.ValidatorTarget.VARIABLE,
-                            this,
-                        )
-                        if (componentNames.isNotEmpty()) {
-                            componentNames.map { componentName -> suggestNameByName(componentName, nameValidator) }
-                        } else {
-                            with(KotlinNameSuggester()) {
-                                suggestExpressionNames(expression)
-                                    .map { name -> suggestNameByName(name, nameValidator) }
-                                    .toList()
-                            }
-                        }.let(::listOf)
-                    }
+                val suggestedNames = analyzeInModalWindow(expression, KotlinBundle.message("find.usages.prepare.dialog.progress")) {
+                    val nameValidator = KotlinDeclarationNameValidator(
+                        anchor,
+                        true,
+                        KotlinNameSuggestionProvider.ValidatorTarget.VARIABLE,
+                        this,
+                    )
+                    if (componentNames.isNotEmpty()) {
+                        componentNames.map { componentName -> suggestNameByName(componentName, nameValidator) }
+                    } else {
+                        with(KotlinNameSuggester()) {
+                            suggestExpressionNames(expression)
+                                .map { name -> suggestNameByName(name, nameValidator) }
+                                .toList()
+                        }
+                    }.let(::listOf)
                 }
 
                 val introduceVariableContext = IntroduceVariableContext(
