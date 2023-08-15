@@ -8,10 +8,8 @@ import com.intellij.internal.statistic.FUCollectorTestCase
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.EmptyRunnable
 import com.intellij.searchEverywhereMl.log.MLSE_RECORDER_ID
 import com.intellij.testFramework.PlatformTestUtil
-import com.intellij.util.concurrency.NonUrgentExecutor
 import com.jetbrains.fus.reporting.model.lion3.LogEvent
 import java.util.concurrent.CompletableFuture
 import javax.swing.SwingUtilities
@@ -46,11 +44,6 @@ fun runSearchEverywhereLoggingTest(project: Project, testProcedure: SearchEveryw
 
     Disposer.dispose(searchEverywhereUI)  // Otherwise, the instance seems to be reused between different tests
     Disposer.dispose(emptyDisposable)
-
-    // Inspired by com.intellij.codeInspection.InspectionApplicationBase.waitForInvokeLaterActivities
-    // we wait for these activities. Without this, session-finished event does not get reported in time
-    repeat(3) { SwingUtilities.invokeLater { EmptyRunnable.getInstance() } }
-    waitForNonUrgentExecutorExecution()  // Wait till the session-finished event is reported
   }.toList()
 }
 
@@ -70,10 +63,4 @@ fun SearchEverywhereUI.type(query: CharSequence) = also { searchEverywhereUI ->
     searchEverywhereUI.searchField.text += character
     PlatformTestUtil.waitForFuture(future)
   }
-}
-
-fun waitForNonUrgentExecutorExecution() {
-  val future = CompletableFuture<Unit>()
-  NonUrgentExecutor.getInstance().execute { future.complete(Unit) }
-  PlatformTestUtil.waitForFuture(future)
 }
