@@ -18,6 +18,7 @@ import com.intellij.refactoring.RefactoringActionHandler
 import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.util.SlowOperations
 import com.intellij.util.SmartList
+import com.intellij.util.application
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
@@ -267,18 +268,21 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
             expression.putCopyableUserData(EXPRESSION_KEY, true)
 
             analyzeInModalWindow(container, KotlinBundle.message("find.usages.prepare.dialog.progress")) {
-                ConvertToBlockBodyUtils.createContext(container, ShortenReferencesFacility.getInstance(), reformat = false)?.let {
-                    ConvertToBlockBodyUtils.convert(container, it)
+                ConvertToBlockBodyUtils.createContext(container, ShortenReferencesFacility.getInstance(), reformat = false)
+            }?.let { context ->
+                application.runWriteAction {
+                    ConvertToBlockBodyUtils.convert(container, context)
                 }
-                val newContainer = container.bodyBlockExpression.sure { "New body is not found: $container" }
-                val newExpression = newContainer.findExpressionByCopyableDataAndClearIt(EXPRESSION_KEY)
-
-                runRefactoring(
-                    isVar,
-                    newExpression ?: return@analyzeInModalWindow,
-                    newContainer,
-                )
             }
+
+            val newContainer = container.bodyBlockExpression.sure { "New body is not found: $container" }
+            val newExpression = newContainer.findExpressionByCopyableDataAndClearIt(EXPRESSION_KEY)
+
+            runRefactoring(
+                isVar,
+                newExpression ?: return,
+                newContainer,
+            )
         }
     }
 
