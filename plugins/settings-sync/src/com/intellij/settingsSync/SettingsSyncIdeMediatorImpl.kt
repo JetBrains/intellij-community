@@ -301,6 +301,7 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
       val provider = SettingsProvider.SETTINGS_PROVIDER_EP.findFirstSafe(Predicate { it.id == id })
       if (provider != null) {
         try {
+          @Suppress("UNCHECKED_CAST")
           return provider as SettingsProvider<T>
         }
         catch (e: Exception) {
