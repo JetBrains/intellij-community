@@ -1875,6 +1875,28 @@
         <constraint name="s1" nameOfExprType="java\.lang\.String" within="" contains="" />
         <constraint name="s2" nameOfExprType="java\.lang\.String" within="" contains="" />
       </replaceConfiguration>
+      <searchConfiguration name="Use `lt` instead of `lifetime` as argument name" uuid="75974233-e6df-342f-bb28-90fa3ddfde86" description="`lifetime` has higher priority as variable and shadows `lifetime` of nested scopes. It leads to subscription leaks.&#10;Just renaming it to `lt` helps a lot." text="class $Name$($Param1$: $T1$, $Param2$: $T2$, $Param3$: $T3$)" recursive="true" caseInsensitive="false" type="Kotlin" pattern_context="default">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Name" within="" contains="" />
+        <constraint name="Param1" minCount="0" maxCount="2147483647" within="" contains="" />
+        <constraint name="Param2" regexp="lifetime" nameOfExprType="libraries\.coroutines\.extra\.Lifetime" target="true" within="" contains="" />
+        <constraint name="Param3" minCount="0" maxCount="2147483647" within="" contains="" />
+        <constraint name="T1" within="" contains="" />
+        <constraint name="T2" within="" contains="" />
+        <constraint name="T3" within="" contains="" />
+      </searchConfiguration>
+      <searchConfiguration name="Use `lt` instead of `lifetime` as argument name" uuid="75974233-e6df-342f-bb28-90fa3ddfde86" text="fun $Name$($Param1$, $Param2$, $Param3$) : $Type$" recursive="true" caseInsensitive="false" type="Kotlin" pattern_context="default">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Name" within="" contains="" />
+        <constraint name="Type" within="" contains="" />
+        <constraint name="Param1" minCount="0" maxCount="2147483647" within="" contains="" />
+        <constraint name="Param2" regexp="lifetime" nameOfExprType="libraries\.coroutines\.extra\.Lifetime" target="true" within="" contains="" />
+        <constraint name="Param3" minCount="0" maxCount="2147483647" within="" contains="" />
+      </searchConfiguration>
+      <searchConfiguration name="Use `lt` instead of `lifetime` as argument name" uuid="75974233-e6df-342f-bb28-90fa3ddfde86" text="var $Param2$" recursive="true" caseInsensitive="false" type="Kotlin" pattern_context="default">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Param2" regexp="lifetime" nameOfExprType="libraries\.coroutines\.extra\.Lifetime" target="true" within="" contains="" _kotlinAlsoMatchVal="enabled" />
+      </searchConfiguration>
       <replaceConfiguration name="Use explicit function to cast as SwiftExpression" description="Instances of SwiftExpression might still be a statement.&#10;Please be more explicit in what you are interested in by using either:&#10; - asSwiftExpressionThatMightBeStatement()&#10; - asSwiftExpression()&#10; - asSwiftExpressionThatIsNotUsedAsStatement()" suppressId="swift.explicit.expression.as" problemDescriptor="Use explicit function to cast as SwiftExpression" text="$ref$ as SwiftExpression" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" replacement="$ref$.asSwiftExpression()">
         <constraint name="__context__" within="" contains="" />
         <constraint name="ref" within="" contains="" />
