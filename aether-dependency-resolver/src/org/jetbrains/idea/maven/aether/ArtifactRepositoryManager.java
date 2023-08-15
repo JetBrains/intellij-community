@@ -4,10 +4,7 @@ package org.jetbrains.idea.maven.aether;
 import com.intellij.openapi.application.ClassPathUtil;
 import com.intellij.util.ArrayUtil;
 import org.apache.maven.repository.internal.MavenRepositorySystemUtils;
-import org.eclipse.aether.DefaultRepositorySystemSession;
-import org.eclipse.aether.DefaultSessionData;
-import org.eclipse.aether.RepositorySystem;
-import org.eclipse.aether.RepositorySystemSession;
+import org.eclipse.aether.*;
 import org.eclipse.aether.artifact.Artifact;
 import org.eclipse.aether.artifact.DefaultArtifact;
 import org.eclipse.aether.collection.CollectRequest;
@@ -168,6 +165,8 @@ public final class ArtifactRepositoryManager {
       var artifactCachePolicy = ResolutionErrorPolicy.CACHE_NOT_FOUND;
       var metadataCachePolicy = ResolutionErrorPolicy.CACHE_NOT_FOUND;
       session.setResolutionErrorPolicy(new SimpleResolutionErrorPolicy(artifactCachePolicy, metadataCachePolicy));
+
+      session.setCache(new DefaultRepositoryCache());
 
       session.setReadOnly();
       sessionTemplate = session;
