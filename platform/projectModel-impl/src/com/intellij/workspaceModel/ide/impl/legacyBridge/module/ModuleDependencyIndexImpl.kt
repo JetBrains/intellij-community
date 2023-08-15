@@ -269,7 +269,7 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
 
   private inner class JdkChangeListener : ProjectJdkTable.Listener, ProjectRootManagerEx.ProjectJdkListener {
     private val sdkDependencies = MultiMap.createSet<ModuleDependencyItem, ModuleId>()
-    private val watchedSdks = HashSet<RootProvider>()
+    private val watchedSdks = HashSet<Sdk>()
     private var watchedProjectSdk: Sdk? = null
     private var projectJdkListenerAdded = false
 
@@ -282,7 +282,7 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
         if (hasProjectSdkDependency() && isProjectSdk(jdk)) {
           watchedProjectSdk = jdk
         }
-        if (watchedSdks.add(jdk.rootProvider)) {
+        if (watchedSdks.add(jdk)) {
           eventDispatcher.multicaster.addedDependencyOn(jdk)
           jdk.rootProvider.addRootSetChangedListener(rootSetChangeListener)
         }
@@ -314,7 +314,7 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
       if (hasProjectSdkDependency() && isProjectSdk(jdk)) {
         watchedProjectSdk = null
       }
-      if (watchedSdks.remove(jdk.rootProvider)) {
+      if (watchedSdks.remove(jdk)) {
         jdk.rootProvider.removeRootSetChangedListener(rootSetChangeListener)
         eventDispatcher.multicaster.removedDependencyOn(jdk)
       }
@@ -345,7 +345,7 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
       if (watchedSdks.isEmpty()) {
         eventDispatcher.multicaster.firstDependencyOnSdkAdded()
       }
-      if (watchedSdks.add(sdk.rootProvider)) {
+      if (watchedSdks.add(sdk)) {
         eventDispatcher.multicaster.addedDependencyOn(sdk)
         sdk.rootProvider.addRootSetChangedListener(rootSetChangeListener)
       }
@@ -363,7 +363,7 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
     }
 
     private fun removeTrackedJdk(sdk: Sdk) {
-      if (!hasDependencyOn(sdk) && watchedSdks.remove(sdk.rootProvider)) {
+      if (!hasDependencyOn(sdk) && watchedSdks.remove(sdk)) {
         sdk.rootProvider.removeRootSetChangedListener(rootSetChangeListener)
         eventDispatcher.multicaster.removedDependencyOn(sdk)
         if (watchedSdks.isEmpty()) {
@@ -401,15 +401,13 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
       jdk.name == projectRootManager.projectSdkName && jdk.sdkType.name == projectRootManager.projectSdkTypeName
 
     fun unsubscribe(fireEvents: Boolean) {
-      watchedSdks.forEach {
+      watchedSdks.forEach { sdk ->
         if (fireEvents) {
-          @Suppress("UNCHECKED_CAST")
-          val sdk = if (it is Sdk) it else (it as Supplier<Sdk>).get()
           if (hasDependencyOn(sdk)) {
             eventDispatcher.multicaster.removedDependencyOn(sdk)
           }
         }
-        it.removeRootSetChangedListener(rootSetChangeListener)
+        sdk.rootProvider.removeRootSetChangedListener(rootSetChangeListener)
       }
       watchedSdks.clear()
     }
