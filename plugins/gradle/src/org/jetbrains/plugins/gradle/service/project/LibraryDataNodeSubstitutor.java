@@ -174,10 +174,10 @@ public class LibraryDataNodeSubstitutor {
 
         final boolean result;
         // ignore provided scope during the search since it can be resolved incorrectly for file dependencies on a source set outputs
-        if (moduleDependencyData.getScope() == DependencyScope.PROVIDED) {
-          moduleDependencyData.setScope(candidateData.getScope());
-          result = moduleDependencyData.equals(candidateData);
-          moduleDependencyData.setScope(DependencyScope.PROVIDED);
+        // ignore scope if the candidate already has the largest possible scope - compile
+        if (moduleDependencyData.getScope() == DependencyScope.PROVIDED ||
+            candidateData.getScope() == DependencyScope.COMPILE) {
+          result = isEqualIgnoringScope(moduleDependencyData, candidateData);
         }
         else {
           result = moduleDependencyData.equals(candidateData);
@@ -201,6 +201,15 @@ public class LibraryDataNodeSubstitutor {
       libraryPaths.removeAll(targetModuleOutputPaths);
     }
     return addedNewDependency;
+  }
+
+  private static boolean isEqualIgnoringScope(@NotNull ModuleDependencyData data1, @NotNull ModuleDependencyData data2) {
+    final boolean result;
+    final DependencyScope tmp = data1.getScope();
+    data1.setScope(data2.getScope());
+    result = data1.equals(data2);
+    data1.setScope(tmp);
+    return result;
   }
 
   @NotNull
