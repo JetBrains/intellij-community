@@ -1,15 +1,12 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.SdkAdditionalData;
-import com.intellij.openapi.projectRoots.SdkTypeId;
-import com.intellij.openapi.projectRoots.impl.MockSdk;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.MultiMap;
 import com.jetbrains.python.codeInsight.typing.PyTypeShed;
 import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
 import com.jetbrains.python.psi.LanguageLevel;
@@ -52,20 +49,24 @@ public final class PythonMockSdk {
                                     @NotNull SdkTypeId sdkType,
                                     @NotNull LanguageLevel level,
                                     VirtualFile @NotNull ... additionalRoots) {
-    MultiMap<OrderRootType, VirtualFile> roots = MultiMap.create();
-    roots.putValues(OrderRootType.CLASSES, createRoots(sdkPath, level));
-    roots.putValues(OrderRootType.CLASSES, Arrays.asList(additionalRoots));
+    Sdk sdk = ProjectJdkTable.getInstance().createSdk(sdkName, sdkType);
+    SdkModificator sdkModificator = sdk.getSdkModificator();
+    sdkModificator.setHomePath(sdkPath + "/bin/python");
+    sdkModificator.setVersionString(toVersionString(level));
 
-    MockSdk sdk = new MockSdk(
-      sdkName,
-      sdkPath + "/bin/python",
-      toVersionString(level),
-      roots,
-      sdkType
-    );
+    createRoots(sdkPath, level).forEach(vFile -> {
+      sdkModificator.addRoot(vFile, OrderRootType.CLASSES);
+    });
+
+    Arrays.asList(additionalRoots).forEach(vFile -> {
+      sdkModificator.addRoot(vFile, OrderRootType.CLASSES);
+    });
+
+    ApplicationManager.getApplication().runWriteAction(() -> sdkModificator.commitChanges());
+    return sdk;
 
     // com.jetbrains.python.psi.resolve.PythonSdkPathCache.getInstance() corrupts SDK, so have to clone
-    return sdk.clone();
+    //return sdk.clone();
   }
 
   private static @NotNull List<VirtualFile> createRoots(@NotNull @NonNls String mockSdkPath, @NotNull LanguageLevel level) {
