@@ -2,5 +2,8 @@
 class X {
   void test() {
     String s = "abcd";
+    String t = """
+      \t
+""";
   }
 }

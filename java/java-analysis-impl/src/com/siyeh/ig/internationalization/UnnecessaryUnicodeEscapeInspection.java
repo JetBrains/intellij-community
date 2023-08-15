@@ -41,10 +41,7 @@ public class UnnecessaryUnicodeEscapeInspection extends BaseInspection {
     if (c == '\n') {
       return InspectionGadgetsBundle.message("unnecessary.unicode.escape.problem.newline.descriptor");
     }
-    else if (c == '\t') {
-      return InspectionGadgetsBundle.message("unnecessary.unicode.escape.problem.tab.descriptor");
-    }
-    return InspectionGadgetsBundle.message("unnecessary.unicode.escape.problem.descriptor", c);
+    return InspectionGadgetsBundle.message("unnecessary.unicode.escape.problem.descriptor", (c == '\t') ? "\\t" : c);
   }
 
   @Override
@@ -74,10 +71,7 @@ public class UnnecessaryUnicodeEscapeInspection extends BaseInspection {
       if (c == '\n') {
         return InspectionGadgetsBundle.message("unnecessary.unicode.escape.fix.text");
       }
-      else if (c == '\t') {
-        return InspectionGadgetsBundle.message("unnecessary.unicode.escape.fix.text");
-      }
-      return CommonQuickFixBundle.message("fix.replace.with.x", c);
+      return CommonQuickFixBundle.message("fix.replace.with.x", (c == '\t') ? "\\t" : c);
     }
 
     @NotNull
@@ -90,7 +84,8 @@ public class UnnecessaryUnicodeEscapeInspection extends BaseInspection {
     protected void applyFix(@NotNull Project project, @NotNull PsiElement startElement, @NotNull ModPsiUpdater updater) {
       Document document = startElement.getContainingFile().getViewProvider().getDocument();
       if (document != null) {
-        document.replaceString(myRangeMarker.getStartOffset(), myRangeMarker.getEndOffset(), String.valueOf(c));
+        String replacement = c == '\t' ? "\\t" : String.valueOf(c);
+        document.replaceString(myRangeMarker.getStartOffset(), myRangeMarker.getEndOffset(), replacement);
       }
     }
   }
