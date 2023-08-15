@@ -403,8 +403,8 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
     fun unsubscribe(fireEvents: Boolean) {
       watchedSdks.forEach {
         if (fireEvents) {
-          //@Suppress("UNCHECKED_CAST") val sdk = (it as Supplier<Sdk>).get()
-          val sdk = it as Sdk
+          @Suppress("UNCHECKED_CAST")
+          val sdk = if (it is Sdk) it else (it as Supplier<Sdk>).get()
           if (hasDependencyOn(sdk)) {
             eventDispatcher.multicaster.removedDependencyOn(sdk)
           }
