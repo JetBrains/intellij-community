@@ -275,6 +275,7 @@ public class InspectionEP extends LanguageExtensionPoint<InspectionProfileEntry>
            ", applyToDialects=" + applyToDialects +
            ", cleanupTool=" + cleanupTool +
            ", level='" + level + '\'' +
+           ", editorAttributes='" + editorAttributes + '\'' +
            ", hasStaticDescription=" + hasStaticDescription +
            ", presentation='" + presentation + '\'' +
            ", isInternal=" + isInternal +
