@@ -12526,6 +12526,26 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/joinDeclarationAndAssignment/singleConstructor.kt");
         }
 
+        @TestMetadata("subtypeAssignment.kt")
+        public void testSubtypeAssignment() throws Exception {
+            runTest("testData/intentions/joinDeclarationAndAssignment/subtypeAssignment.kt");
+        }
+
+        @TestMetadata("subtypeAssignment2.kt")
+        public void testSubtypeAssignment2() throws Exception {
+            runTest("testData/intentions/joinDeclarationAndAssignment/subtypeAssignment2.kt");
+        }
+
+        @TestMetadata("subtypeAssignment3.kt")
+        public void testSubtypeAssignment3() throws Exception {
+            runTest("testData/intentions/joinDeclarationAndAssignment/subtypeAssignment3.kt");
+        }
+
+        @TestMetadata("subtypeAssignment4.kt")
+        public void testSubtypeAssignment4() throws Exception {
+            runTest("testData/intentions/joinDeclarationAndAssignment/subtypeAssignment4.kt");
+        }
+
         @TestMetadata("usedBeforeAssignment.kt")
         public void testUsedBeforeAssignment() throws Exception {
             runTest("testData/intentions/joinDeclarationAndAssignment/usedBeforeAssignment.kt");

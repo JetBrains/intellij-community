@@ -1,10 +1,5 @@
 class Temp1 {
-    private val listField: MutableList<Int>
-
-    init {
-        listField = ArrayList()
-    }
-
+    private val listField: MutableList<Int> = ArrayList()
     fun m() {
         listField.add(2)
         listField.add(1)
