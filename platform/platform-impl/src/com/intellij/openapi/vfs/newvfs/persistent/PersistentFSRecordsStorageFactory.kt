@@ -63,7 +63,7 @@ object PersistentFSRecordsStorageFactory {
   @JvmStatic
   @Throws(IOException::class)
   fun createStorage(file: Path): PersistentFSRecordsStorage {
-    FSRecords.LOG.info("using $RECORDS_STORAGE_KIND storage for VFS records")
+    FSRecords.LOG.trace("using $RECORDS_STORAGE_KIND storage for VFS records")
 
     return when (RECORDS_STORAGE_KIND) {
       RecordsStorageKind.REGULAR -> PersistentFSSynchronizedRecordsStorage(openRMappedFile(file, recordsLength()))

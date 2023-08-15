@@ -78,12 +78,14 @@ public final class FSRecordsImpl {
   private static final Logger LOG = Logger.getInstance(FSRecordsImpl.class);
 
   //@formatter:off
-  static final boolean USE_FAST_NAMES_IMPLEMENTATION = getBooleanProperty("vfs.use-fast-names-enumerator", false);
 
   public static final boolean USE_STREAMLINED_ATTRIBUTES_IMPLEMENTATION = getBooleanProperty("vfs.use-streamlined-attributes-storage", true);
   public static final boolean USE_RAW_ACCESS_TO_READ_CHILDREN = getBooleanProperty("vfs.use-raw-access-to-read-children", true);
+
+  static final boolean USE_FAST_NAMES_IMPLEMENTATION = getBooleanProperty("vfs.use-fast-names-enumerator", false);
   private static final boolean USE_FILE_NAME_CACHE = getBooleanProperty("vfs.name-cache.enable", true);
   private static final boolean USE_MRU_FILE_NAME_CACHE = getBooleanProperty("vfs.name-cache.use-mru", false);
+
   //@formatter:on
 
   private static final FileAttribute SYMLINK_TARGET_ATTRIBUTE = new FileAttribute("FsRecords.SYMLINK_TARGET");
@@ -1362,7 +1364,7 @@ public final class FSRecordsImpl {
           invertedNameIndex.updateDataInner(fileId, nameId);
         }
       }
-      LOG.info("VFS scanned: file names index filled");
+      LOG.info("VFS scanned: file-by-name index was populated");
       return invertedNameIndex;
     });
 
