@@ -260,7 +260,9 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
         }
       }
     }
-    fail("Cannot find JDK for Gradle " + gradleVersion.getVersion() + ", checked paths: " + paths);
+    fail("Cannot find JDK for Gradle " + gradleVersion.getVersion() +
+         "\nchecked paths: " + paths +
+         "\npossibly compatible java versions: " + GradleJvmSupportMatrix.Companion.getSupportedJavaVersions(gradleVersion));
     return null;
   }
 
