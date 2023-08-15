@@ -4974,6 +4974,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("testData/newJ2k/postProcessing/AnonymousObject.java");
         }
 
+        @TestMetadata("CheckForInstanceOfErasedArrayType.java")
+        public void testCheckForInstanceOfErasedArrayType() throws Exception {
+            runTest("testData/newJ2k/postProcessing/CheckForInstanceOfErasedArrayType.java");
+        }
+
         @TestMetadata("ConvertConcatenationToRawString.java")
         public void testConvertConcatenationToRawString() throws Exception {
             runTest("testData/newJ2k/postProcessing/ConvertConcatenationToRawString.java");
