@@ -118,7 +118,7 @@ public class ExternalSystemResolveProjectTask extends AbstractExternalSystemTask
     StructuredIdeActivity activity =
       externalSystemTaskStarted(ideProject, getExternalSystemId(), ResolveProject, environmentConfigurationProvider);
     try {
-      boolean pauseIndexingDuringSync = Registry.is("external.system.pause.indexing.during.sync", true);
+      boolean pauseIndexingDuringSync = Registry.is("external.system.pause.indexing.during.sync", false);
       DataNode<ProjectData> project = pauseIndexingDuringSync ? pauseIndexingAndResolveProjectNode(id, resolver, settings)
                                       : resolver.resolveProjectInfo(id, myProjectPath, myIsPreviewMode, settings, myResolverPolicy);
       if (project != null) {
