@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.gotoByName;
 
 import com.intellij.ide.actions.JavaQualifiedNameProvider;
@@ -9,7 +9,6 @@ import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Predicates;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
@@ -145,8 +144,8 @@ public class DefaultSymbolNavigationContributor implements ChooseByNameContribut
       return member -> member instanceof PsiMethod && JavaQualifiedNameProvider.hasQualifiedName(completePattern, (PsiMethod)member);
     }
 
-    if (completePattern.contains(".") || completePattern.contains("#")) {
-      String normalized = StringUtil.replace(StringUtil.replace(completePattern, "#", ".*"), ".", ".*");
+    if (completePattern.contains(".") || completePattern.contains("#") || completePattern.contains("$")) {
+      String normalized = completePattern.replace("#", ".*").replace(".", ".*").replace("$", ".*");
       MinusculeMatcher matcher = NameUtil.buildMatcher("*" + normalized).build();
       return member -> {
         String qualifiedName = PsiUtil.getMemberQualifiedName(member);
