@@ -7,10 +7,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.AppLifecycleListener
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.DistractionFreeModeController
-import com.intellij.ide.ui.IconMapLoader
-import com.intellij.ide.ui.LafManager
-import com.intellij.ide.ui.NotRoamableUiSettings
-import com.intellij.ide.ui.UISettings
+import com.intellij.ide.ui.*
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
