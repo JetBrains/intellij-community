@@ -12526,6 +12526,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/joinDeclarationAndAssignment/singleConstructor.kt");
         }
 
+        @TestMetadata("usedBeforeAssignment.kt")
+        public void testUsedBeforeAssignment() throws Exception {
+            runTest("testData/intentions/joinDeclarationAndAssignment/usedBeforeAssignment.kt");
+        }
+
         @TestMetadata("usedInAssignment.kt")
         public void testUsedInAssignment() throws Exception {
             runTest("testData/intentions/joinDeclarationAndAssignment/usedInAssignment.kt");

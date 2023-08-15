@@ -10,17 +10,18 @@ import com.intellij.psi.PsiReferenceService
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.descriptors.ClassConstructorDescriptor
+import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.psi.replaced
-import org.jetbrains.kotlin.util.match
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.IntentionBasedInspection
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
 import org.jetbrains.kotlin.idea.core.canOmitDeclaredType
 import org.jetbrains.kotlin.idea.core.moveCaret
 import org.jetbrains.kotlin.idea.core.unblockDocument
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.IntentionBasedInspection
 import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.lexer.KtTokens.LATEINIT_KEYWORD
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.resolve.BindingContext
@@ -28,7 +29,7 @@ import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.calls.util.getType
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.TypeUtils
-import org.jetbrains.kotlin.psi.psiUtil.parents
+import org.jetbrains.kotlin.util.match
 
 @Suppress("DEPRECATION")
 class JoinDeclarationAndAssignmentInspection : IntentionBasedInspection<KtProperty>(
@@ -61,13 +62,9 @@ class JoinDeclarationAndAssignmentIntention : SelfTargetingRangeIntention<KtProp
         val assignment = findAssignment(element) ?: return null
         val initializer = assignment.right ?: return null
         val context = assignment.analyze()
-        val propertyDescriptor = context[BindingContext.DECLARATION_TO_DESCRIPTOR, element]
+        val propertyDescriptor = context[BindingContext.DECLARATION_TO_DESCRIPTOR, element] ?: return null
 
-        val isUsedInInitializer = initializer.anyDescendantOfType<KtNameReferenceExpression> {
-            context[BindingContext.REFERENCE_TARGET, it] == propertyDescriptor
-        }
-
-        if (isUsedInInitializer) return null
+        if (initializer.hasReference(propertyDescriptor, context)) return null
         if (hasLocalDependencies(initializer, element)) return null
 
         val isNonLocalVar = element.isVar && !element.isLocal
@@ -78,6 +75,13 @@ class JoinDeclarationAndAssignmentIntention : SelfTargetingRangeIntention<KtProp
         }
 
         if (!isNonLocalVar && !typesAreEqual.value) return null
+
+        val isUsedBeforeAssignment = lazy {
+            val nextSiblings = element.siblings(forward = true, withItself = false).takeWhile { it != assignment }
+            nextSiblings.any { it.hasReference(propertyDescriptor, context) }
+        }
+
+        if (element.isLocal && element.hasModifier(LATEINIT_KEYWORD) && isUsedBeforeAssignment.value) return null
 
         val startOffset = (element.modifierList ?: element.valOrVarKeyword).startOffset
         val endOffset = (element.typeReference ?: element).endOffset
@@ -90,7 +94,7 @@ class JoinDeclarationAndAssignmentIntention : SelfTargetingRangeIntention<KtProp
         val initializer = assignment.right ?: return
 
         element.initializer = initializer
-        if (element.hasModifier(KtTokens.LATEINIT_KEYWORD)) element.removeModifier(KtTokens.LATEINIT_KEYWORD)
+        if (element.hasModifier(LATEINIT_KEYWORD)) element.removeModifier(LATEINIT_KEYWORD)
 
         val grandParent = (assignment.parent as? KtBlockExpression)?.parent
         val initializerBlock = grandParent as? KtAnonymousInitializer
@@ -190,6 +194,13 @@ class JoinDeclarationAndAssignmentIntention : SelfTargetingRangeIntention<KtProp
         val nextSiblings = property.siblings(forward = true, withItself = false)
         return initializer.anyDescendantOfType<PsiElement> { child ->
             child.resolveAllReferences().any { it != null && PsiTreeUtil.isAncestor(localContext, it, false) && it in nextSiblings }
+        }
+    }
+
+    private fun PsiElement.hasReference(declaration: DeclarationDescriptor, context: BindingContext): Boolean {
+        val declarationName = declaration.name.asString()
+        return anyDescendantOfType<KtNameReferenceExpression> {
+            it.text == declarationName && context[BindingContext.REFERENCE_TARGET, it] == declaration
         }
     }
 }
