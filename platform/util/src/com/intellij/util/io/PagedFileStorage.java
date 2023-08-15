@@ -73,7 +73,7 @@ public class PagedFileStorage implements Forceable/*, PagedStorage*/ {
       storageLockContext = context;
     }
 
-    myStorageLockContext = storageLockContext != null ? storageLockContext : StorageLockContext.ourDefaultContext;
+    myStorageLockContext = storageLockContext != null ? storageLockContext : StorageLockContext.DEFAULT_CONTEXT;
     myPageSize = Math.max(pageSize > 0 ? pageSize : DEFAULT_PAGE_SIZE, AbstractStorage.PAGE_SIZE);
     myValuesAreBufferAligned = valuesAreBufferAligned;
     myStorageIndex = myStorageLockContext.getBufferCache().registerPagedFileStorage(this);
