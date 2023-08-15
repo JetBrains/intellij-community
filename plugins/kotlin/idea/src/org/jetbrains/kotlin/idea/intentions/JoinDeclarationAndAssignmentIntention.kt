@@ -29,6 +29,7 @@ import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.calls.util.getType
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.TypeUtils
+import org.jetbrains.kotlin.types.typeUtil.isSubtypeOf
 import org.jetbrains.kotlin.util.match
 
 @Suppress("DEPRECATION")
@@ -71,14 +72,17 @@ class JoinDeclarationAndAssignmentIntention : SelfTargetingRangeIntention<KtProp
         val typesAreEqual = lazy {
             val initializerType = initializer.getType(context)
             val propertyType = context[BindingContext.TYPE, element.typeReference]
-            equalNullableTypes(initializerType, propertyType)
+            when {
+                equalNullableTypes(initializerType, propertyType) -> true
+                isSubtype(initializerType, propertyType) -> !assignment.nextSiblings().hasSmartCast(propertyDescriptor, context)
+                else -> false
+            }
         }
 
         if (!isNonLocalVar && !typesAreEqual.value) return null
 
         val isUsedBeforeAssignment = lazy {
-            val nextSiblings = element.siblings(forward = true, withItself = false).takeWhile { it != assignment }
-            nextSiblings.any { it.hasReference(propertyDescriptor, context) }
+            element.nextSiblings().takeWhile { it != assignment }.hasReference(propertyDescriptor, context)
         }
 
         if (element.isLocal && element.hasModifier(LATEINIT_KEYWORD) && isUsedBeforeAssignment.value) return null
@@ -191,7 +195,7 @@ class JoinDeclarationAndAssignmentIntention : SelfTargetingRangeIntention<KtProp
 
     private fun KtElement.dependsOnNextSiblingsOfProperty(property: KtProperty): Boolean {
         val propertyScope = property.parent
-        val nextSiblings = property.siblings(forward = true, withItself = false)
+        val nextSiblings = property.nextSiblings()
         return anyDescendantOfType<PsiElement> { child ->
             child.resolveAllReferences().any { it != null && PsiTreeUtil.isAncestor(propertyScope, it, false) && it in nextSiblings }
         }
@@ -203,6 +207,27 @@ class JoinDeclarationAndAssignmentIntention : SelfTargetingRangeIntention<KtProp
             it.text == declarationName && context[BindingContext.REFERENCE_TARGET, it] == declaration
         }
     }
+
+    private fun PsiElement.hasSmartCast(declaration: DeclarationDescriptor, context: BindingContext): Boolean {
+        val declarationName = declaration.name.asString()
+        return anyDescendantOfType<KtNameReferenceExpression> {
+            it.text == declarationName && context[BindingContext.REFERENCE_TARGET, it] == declaration &&
+                    context[BindingContext.SMARTCAST, it] != null
+        }
+    }
+
+    private fun Sequence<PsiElement>.hasReference(declaration: DeclarationDescriptor, context: BindingContext): Boolean =
+        any { it.hasReference(declaration, context) }
+
+    private fun Sequence<PsiElement>.hasSmartCast(declaration: DeclarationDescriptor, context: BindingContext): Boolean =
+        any { it.hasSmartCast(declaration, context) }
+
+    private fun isSubtype(type: KotlinType?, superType: KotlinType?): Boolean {
+        if (type == null || superType == null) return false
+        return type.isSubtypeOf(superType)
+    }
+
+    private fun PsiElement.nextSiblings(): Sequence<PsiElement> = siblings(forward = true, withItself = false)
 }
 
 private fun KtElement.deleteWithPreviousWhitespace() {
