@@ -5054,6 +5054,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("testData/newJ2k/postProcessing/NotIs.java");
         }
 
+        @TestMetadata("NullChecksToSafeCall.java")
+        public void testNullChecksToSafeCall() throws Exception {
+            runTest("testData/newJ2k/postProcessing/NullChecksToSafeCall.java");
+        }
+
         @TestMetadata("OptimizeImports.java")
         public void testOptimizeImports() throws Exception {
             runTest("testData/newJ2k/postProcessing/OptimizeImports.java");
