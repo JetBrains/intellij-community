@@ -21,7 +21,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.task.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.gradle.util.GradleVersion;
@@ -31,7 +30,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.plugins.gradle.service.task.GradleTaskManager;
-import org.jetbrains.plugins.gradle.service.task.VersionSpecificInitScript;
+import org.jetbrains.plugins.gradle.service.task.LazyVersionSpecificInitScript;
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
@@ -39,10 +38,11 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration.PROGRESS_LISTENER_KEY;
-import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.*;
+import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.isExternalSystemAwareModule;
 import static com.intellij.openapi.util.text.StringUtil.*;
 
 /**
@@ -200,20 +200,20 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
         String outputFilePath = FileUtil.toCanonicalPath(outputPathsFile.getAbsolutePath());
         GradleVersion v68 = GradleVersion.version("6.8");
 
-        String initScript;
-        String initScriptUsingService;
+        Supplier<String> initScriptSupplier;
+        Supplier<String> initScriptUsingServiceSupplier;
 
         if (GradleImprovedHotswapDetection.isEnabled()) {
-          initScript = GradleImprovedHotswapDetection.getInitScript(outputPathsFile);
-          initScriptUsingService = GradleImprovedHotswapDetection.getInitScriptUsingService(outputPathsFile);
+          initScriptSupplier = () -> GradleImprovedHotswapDetection.getInitScript(outputPathsFile);
+          initScriptUsingServiceSupplier = () -> GradleImprovedHotswapDetection.getInitScriptUsingService(outputPathsFile);
         }
         else {
-          initScript = String.format(COLLECT_OUTPUT_PATHS_INIT_SCRIPT_TEMPLATE, outputFilePath);
-          initScriptUsingService = String.format(COLLECT_OUTPUT_PATHS_USING_SERVICES_INIT_SCRIPT_TEMPLATE, outputFilePath);
+          initScriptSupplier = () -> String.format(COLLECT_OUTPUT_PATHS_INIT_SCRIPT_TEMPLATE, outputFilePath);
+          initScriptUsingServiceSupplier = () -> String.format(COLLECT_OUTPUT_PATHS_USING_SERVICES_INIT_SCRIPT_TEMPLATE, outputFilePath);
         }
-
-        var simple = new VersionSpecificInitScript(initScript, "ijpathcollect", v -> v.compareTo(v68) < 0);
-        var services = new VersionSpecificInitScript(initScriptUsingService, "ijpathcollect", v -> v.compareTo(v68) >= 0);
+        var simple = new LazyVersionSpecificInitScript(initScriptSupplier, "ijpathcollect", v -> v.compareTo(v68) < 0);
+        var services =
+          new LazyVersionSpecificInitScript(initScriptUsingServiceSupplier, "ijpathcollect", v -> v.compareTo(v68) >= 0);
         executionSettingsBuilder.addInitScripts(rootProjectPath, simple, services);
       }
 

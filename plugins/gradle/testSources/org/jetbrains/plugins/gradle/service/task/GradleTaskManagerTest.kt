@@ -78,19 +78,18 @@ class GradleTaskManagerTest: UsefulTestCase() {
   fun `test gradle-version-specific init scripts executed`() {
 
     val oldMessage = "this should be executed for gradle 3.0"
-    val oldVer = VersionSpecificInitScript("""println('$oldMessage')""") { v ->
+    val oldVer = PredefinedVersionSpecificInitScript("""println('$oldMessage')""") { v ->
       v == GradleVersion.version("3.0")
     }
     val intervalMessage = "this should be executed for gradle between 4 and 6"
-    val intervalVer = VersionSpecificInitScript("println('$intervalMessage')") { v ->
+    val intervalVer = PredefinedVersionSpecificInitScript("println('$intervalMessage')") { v ->
       v > GradleVersion.version("4.0") && v <= GradleVersion.version("6.0")
     }
     val newerVerMessage = "this should be executed for gradle 4.8 and newer"
-    val newerVer = VersionSpecificInitScript("println('$newerVerMessage')") { v ->
-      v >= GradleVersion.version("4.8")
-    }
+    val newerVer = LazyVersionSpecificInitScript({ "println('$newerVerMessage')" }) { v -> v >= GradleVersion.version("4.8") }
+    val never = LazyVersionSpecificInitScript({ throw IllegalStateException("Should never be invoked") }) { _ -> false }
 
-    val initScripts = listOf(oldVer, intervalVer, newerVer)
+    val initScripts = listOf(oldVer, intervalVer, newerVer, never)
     gradleExecSettings.putUserData(GradleTaskManager.VERSION_SPECIFIC_SCRIPTS_KEY, initScripts)
 
     val output = runHelpTask(GradleVersion.version("4.9"))
