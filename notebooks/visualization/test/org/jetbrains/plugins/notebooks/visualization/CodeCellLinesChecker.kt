@@ -18,7 +18,7 @@ class CodeCellLinesChecker(private val description: String,
       markers = mutableListOf()
     }
 
-    fun marker(cellType: NotebookCellLines.CellType, offset: Int, length: Int, language: Language? = null) {
+    fun marker(cellType: NotebookCellLines.CellType, offset: Int, length: Int, language: Language) {
       markers!!.add(
         NotebookCellLinesLexer.Marker(ordinal = markers!!.size + markersStartOrdinal, type = cellType, offset = offset, length = length,
                                       language = language))

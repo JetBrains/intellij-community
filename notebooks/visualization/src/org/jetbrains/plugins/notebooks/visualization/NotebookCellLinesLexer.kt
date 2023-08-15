@@ -17,14 +17,14 @@ interface NotebookCellLinesLexer {
     val type: CellType,
     val offset: Int,
     val length: Int,
-    var language: Language? = null
+    val language: Language,
   ) : Comparable<Marker> {
     override fun compareTo(other: Marker): Int = offset - other.offset
   }
 
   companion object {
     fun defaultMarkerSequence(underlyingLexerFactory: () -> Lexer,
-                              tokenToCellType: (IElementType) -> CellType?,
+                              getCellLanguageAndType: (IElementType, lexer: Lexer) -> Pair<Language, CellType>?,
                               chars: CharSequence,
                               ordinalIncrement: Int,
                               offsetIncrement: Int): Sequence<Marker> = sequence {
@@ -33,14 +33,16 @@ interface NotebookCellLinesLexer {
       var ordinal = 0
       while (true) {
         val tokenType = lexer.tokenType ?: break
-        val cellType = tokenToCellType(tokenType)
+        val cellLanguageAndType = getCellLanguageAndType(tokenType, lexer)
 
-        if (cellType != null) {
+        if (cellLanguageAndType != null) {
+          val (language, type) = cellLanguageAndType
           yield(Marker(
             ordinal = ordinal++ + ordinalIncrement,
-            type = cellType,
+            type = type,
             offset = lexer.currentPosition.offset + offsetIncrement,
             length = lexer.tokenText.length,
+            language = language,
           ))
         }
         lexer.advance()
@@ -75,7 +77,7 @@ private fun toIntervalsInfo(document: Document,
   }
 
   for (marker in markers) {
-    m += IntervalInfo(document.getLineNumber(marker.offset), marker.type, MarkersAtLines.TOP, marker.language!!) // marker.language is provided in makeIntervals
+    m += IntervalInfo(document.getLineNumber(marker.offset), marker.type, MarkersAtLines.TOP, marker.language) // marker.language is provided in makeIntervals
   }
 
   // marker for the end
