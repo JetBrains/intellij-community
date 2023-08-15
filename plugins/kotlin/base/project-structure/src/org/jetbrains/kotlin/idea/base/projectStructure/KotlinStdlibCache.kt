@@ -85,17 +85,12 @@ internal class KotlinStdlibCacheImpl(private val project: Project) : KotlinStdli
         override fun toString() = "All files under: $directories"
     }
 
-    private fun libraryScopeContainsIndexedFilesForNames(libraryInfo: LibraryInfo, names: Collection<FqName>): Boolean {
+    private fun libraryScopeContainsIndexedFilesForName(libraryInfo: LibraryInfo, name: FqName): Boolean {
         val libraryScope = LibraryScope(project, libraryInfo.library.getFiles(OrderRootType.CLASSES).toSet())
-        return names.any { name ->
-            DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(ThrowableComputable {
-                FileBasedIndex.getInstance().getContainingFilesIterator(KotlinStdlibIndex.NAME, name, libraryScope).hasNext()
-            })
-        }
+        return DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(ThrowableComputable {
+            FileBasedIndex.getInstance().getContainingFilesIterator(KotlinStdlibIndex.NAME, name, libraryScope).hasNext()
+        })
     }
-
-    private fun libraryScopeContainsIndexedFilesForName(libraryInfo: LibraryInfo, name: FqName) =
-        libraryScopeContainsIndexedFilesForNames(libraryInfo, listOf(name))
 
     private fun isFatJar(libraryInfo: LibraryInfo) = libraryInfo.getLibraryRoots().size > 1
 
@@ -130,17 +125,17 @@ internal class KotlinStdlibCacheImpl(private val project: Project) : KotlinStdli
         }
     }
 
+    private fun LibraryInfo.isStdlibWithFile(fileName: FqName): Boolean {
+        if (isFatJar(this) && !isKotlinJavaRuntime(this)) return false
+        return libraryScopeContainsIndexedFilesForName(this, fileName)
+    }
+
     private inner class StdLibCache : BaseStdLibCache(project) {
-        override fun calculate(key: LibraryInfo): Boolean =
-            libraryScopeContainsIndexedFilesForName(key, KotlinStdlibIndex.KOTLIN_STDLIB_NAME) &&
-                    (!isFatJar(key) || isKotlinJavaRuntime(key))
+        override fun calculate(key: LibraryInfo): Boolean = key.isStdlibWithFile(KotlinStdlibIndex.KOTLIN_STDLIB_NAME)
     }
 
     private inner class StdlibDependencyCache : BaseStdLibCache(project) {
-        override fun calculate(key: LibraryInfo): Boolean =
-            libraryScopeContainsIndexedFilesForNames(key, KotlinStdlibIndex.STANDARD_LIBRARY_DEPENDENCY_NAMES) &&
-                    (!isFatJar(key) || isKotlinJavaRuntime(key))
-
+        override fun calculate(key: LibraryInfo): Boolean = key.isStdlibWithFile(KotlinStdlibIndex.STANDARD_LIBRARY_DEPENDENCY_NAME)
     }
 
     private inner class ModuleStdlibDependencyCache : Disposable {

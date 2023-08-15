@@ -82,8 +82,8 @@ class KotlinStdlibIndex : KotlinFileIndexBase() {
     companion object {
         val NAME: ID<FqName, Void> = ID.create("org.jetbrains.kotlin.idea.vfilefinder.KotlinStdlibIndex")
 
-        val KOTLIN_STDLIB_NAME = FqName("kotlin-stdlib")
-        val STANDARD_LIBRARY_DEPENDENCY_NAMES = setOf(FqName("kotlin-stdlib-common"))
+        val KOTLIN_STDLIB_NAME: FqName = FqName("kotlin-stdlib")
+        val STANDARD_LIBRARY_DEPENDENCY_NAME: FqName = FqName("kotlin-stdlib-common")
 
         private const val LIBRARY_NAME_MANIFEST_ATTRIBUTE = "Implementation-Title"
         private const val STDLIB_TAG_MANIFEST_ATTRIBUTE = "Kotlin-Runtime-Component"
