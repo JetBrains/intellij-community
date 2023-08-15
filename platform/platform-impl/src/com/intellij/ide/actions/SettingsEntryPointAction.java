@@ -173,7 +173,7 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
   }
 
   private static boolean calculateOurNewUiIcon() {
-    return !ExperimentalUI.isNewUI() && !ExperimentalUI.isNewUiUsedOnce() && NewUiUtilKt.getNewUiPromotionDaysCount() < 14;
+    return !ExperimentalUI.isNewUI() && !ExperimentalUI.Companion.isNewUiUsedOnce() && NewUiUtilKt.getNewUiPromotionDaysCount() < 14;
   }
 
   private static @NotNull @Nls String getActionTooltip() {
