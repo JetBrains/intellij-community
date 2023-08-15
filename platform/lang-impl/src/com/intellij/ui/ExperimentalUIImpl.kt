@@ -48,31 +48,15 @@ private class ExperimentalUIImpl : ExperimentalUI() {
     super.lookAndFeelChanged()
 
     if (isNewUI()) {
-      if (isIconPatcherSet.compareAndSet(false, true)) {
-        if (iconPathPatcher != null) {
-          IconLoader.removePathPatcher(iconPathPatcher!!)
-        }
-        iconPathPatcher = createPathPatcher(service<IconMapLoader>().loadIconMapping())
-        IconLoader.installPathPatcher(iconPathPatcher!!)
-      }
-
+      installIconPatcher()
       patchUiDefaultsForNewUi()
     }
   }
 
   fun onRegistryValueChange(isEnabled: Boolean) {
     if (isEnabled) {
+      installIconPatcher()
       patchUiDefaultsForNewUi()
-
-      if (isIconPatcherSet.compareAndSet(false, true)) {
-        iconPathPatcher?.let {
-          IconLoader.removePathPatcher(it)
-        }
-
-        val patcher = createPathPatcher(service<IconMapLoader>().loadIconMapping())
-        iconPathPatcher = patcher
-        IconLoader.installPathPatcher(patcher)
-      }
       onValueChanged(isEnabled = true)
     }
     else if (isIconPatcherSet.compareAndSet(true, false)) {
@@ -81,6 +65,18 @@ private class ExperimentalUIImpl : ExperimentalUI() {
         IconLoader.removePathPatcher(it)
       }
       onValueChanged(isEnabled = false)
+    }
+  }
+
+  private fun installIconPatcher() {
+    if (isIconPatcherSet.compareAndSet(false, true)) {
+      iconPathPatcher?.let {
+        IconLoader.removePathPatcher(it)
+      }
+
+      val patcher = createPathPatcher(service<IconMapLoader>().loadIconMapping())
+      iconPathPatcher = patcher
+      IconLoader.installPathPatcher(patcher)
     }
   }
 
