@@ -34,11 +34,7 @@ class KotlinOptimizeImportsRefactoringHelper : RefactoringHelper<Set<KtFile>> {
         project: Project,
         private val unusedImports: MutableSet<SmartPsiElementPointer<KtImportDirective>>,
         private val operationData: Set<KtFile>
-    ) : Task.Backgroundable(project, KotlinBundle.message("optimize.imports.collect.unused.imports"), true) {
-
-        override fun isConditionalModal(): Boolean = true
-
-        override fun shouldStartInBackground(): Boolean = System.getProperty("kotlin.optimize.imports.synchronously") != "true"
+    ) : Task.Modal(project, KotlinBundle.message("optimize.imports.collect.unused.imports"), true) {
 
         @OptIn(KtAllowAnalysisOnEdt::class)
         override fun run(indicator: ProgressIndicator) = allowAnalysisOnEdt {
