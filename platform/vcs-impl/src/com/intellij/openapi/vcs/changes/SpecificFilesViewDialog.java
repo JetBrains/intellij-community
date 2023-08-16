@@ -12,6 +12,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.ui.*;
+import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.EditSourceOnEnterKeyHandler;
@@ -146,6 +147,16 @@ abstract class SpecificFilesViewDialog extends DialogWrapper {
     MyChangesTree(@NotNull Project project, @NotNull DataKey<Iterable<FilePath>> shownDataKey) {
       super(project, false, true);
       myShownDataKey = shownDataKey;
+    }
+
+    @Override
+    public int getToggleClickCount() {
+      return 2;
+    }
+
+    @Override
+    public void installPopupHandler(@NotNull ActionGroup group) {
+      PopupHandler.installPopupMenu(this, group, ActionPlaces.CHANGES_VIEW_POPUP);
     }
 
     @NotNull
