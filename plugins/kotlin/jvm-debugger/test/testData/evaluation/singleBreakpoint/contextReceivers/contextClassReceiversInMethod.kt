@@ -43,4 +43,3 @@ fun main() {
 
 // PRINT_FRAME
 // SHOW_KOTLIN_VARIABLES
-// IGNORE_K2
