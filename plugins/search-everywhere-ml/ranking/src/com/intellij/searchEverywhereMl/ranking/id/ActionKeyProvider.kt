@@ -4,7 +4,7 @@ import com.intellij.ide.ui.search.OptionDescription
 import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.openapi.actionSystem.AnAction
 
-private class ActionKeyProvider: ElementKeyForIdProvider() {
+private class ActionKeyProvider: ElementKeyForIdProvider {
   override fun getKey(element: Any): Any? {
     if (element is GotoActionModel.MatchedValue) {
       val elementValue = element.value
