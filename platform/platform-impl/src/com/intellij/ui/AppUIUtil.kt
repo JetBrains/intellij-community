@@ -74,7 +74,7 @@ fun updateAppWindowIcon(window: Window) {
         images.add(it)
       }
     }
-    loadAppIconImage(svgPath = smallSvgIconUrl, scaleContext = scaleContext, size = 32)?.let {
+    loadAppIconImage(svgPath = svgIconUrl, scaleContext = scaleContext, size = 32)?.let {
       images.add(it)
     }
     if (SystemInfoRt.isWindows) {
