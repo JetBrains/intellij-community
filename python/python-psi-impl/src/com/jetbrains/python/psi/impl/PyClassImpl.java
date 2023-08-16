@@ -144,6 +144,12 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   }
 
   @Override
+  @Nullable
+  public PyTypeParameterList getTypeParameterList() {
+    return childToPsi(PyElementTypes.TYPE_PARAMETER_LIST);
+  }
+
+  @Override
   public PyArgumentList getSuperClassExpressionList() {
     final PyArgumentList argList = PsiTreeUtil.getChildOfType(this, PyArgumentList.class);
     if (argList != null && argList.getFirstChild() != null) {
