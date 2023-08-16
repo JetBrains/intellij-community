@@ -145,6 +145,7 @@
     <orderEntry type="module" module-name="kotlin.code-insight.override-implement-k1" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.code-insight.override-implement-shared" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.code-insight.intentions-k1" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.code-insight.k1" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.code-insight.postfix-templates-k1" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.code-insight.structural-search-k1" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.code-insight.line-markers-shared" scope="RUNTIME" />
