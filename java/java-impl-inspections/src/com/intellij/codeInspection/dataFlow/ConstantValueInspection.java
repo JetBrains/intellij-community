@@ -310,10 +310,8 @@ public class ConstantValueInspection extends AbstractBaseJavaLocalInspectionTool
     }
 
     //it can be done deliberately, because it is expected to throw exception
-    if (expression instanceof PsiSwitchExpression switchExpression) {
-      if (!PsiTreeUtil.findChildrenOfAnyType(switchExpression, PsiThrowStatement.class).isEmpty()) {
-        return true;
-      }
+    if (expression instanceof PsiSwitchExpression switchExpression && containsImmediateThrowStatement(switchExpression)) {
+      return true;
     }
     PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
     // Don't report "x" in "x == null" as will be anyway reported as "always true"
@@ -362,6 +360,50 @@ public class ConstantValueInspection extends AbstractBaseJavaLocalInspectionTool
     // Avoid double reporting
     return expression instanceof PsiMethodCallExpression call && EqualsWithItselfInspection.isEqualsWithItself(call) ||
            expression instanceof PsiBinaryExpression binOp && ComparisonToNaNInspection.extractNaNFromComparison(binOp) != null;
+  }
+
+  private static boolean containsImmediateThrowStatement(PsiSwitchExpression expression) {
+    class Visitor extends JavaRecursiveElementWalkingVisitor {
+      boolean found = false;
+
+      @Override
+      public void visitElement(@NotNull PsiElement psiElement) {
+        if (found) {
+          return;
+        }
+        if (psiElement != expression) {
+          PsiElement parent = psiElement.getParent();
+          // do not process any anonymous class children except its getArgumentList()
+          //if the visitor was not called from inside anonymous class
+          if (parent instanceof PsiAnonymousClass && !(psiElement instanceof PsiExpressionList)) {
+            return;
+          }
+        }
+        super.visitElement(psiElement);
+      }
+
+      @Override
+      public void visitAnonymousClass(@NotNull PsiAnonymousClass aClass) {
+        // process anonymous getArgumentList()
+        visitElement(aClass);
+      }
+
+      @Override
+      public void visitClass(@NotNull PsiClass aClass) {
+      }
+
+      @Override
+      public void visitThrowStatement(@NotNull PsiThrowStatement statement) {
+        found = true;
+      }
+
+      @Override
+      public void visitLambdaExpression(@NotNull PsiLambdaExpression expression) {
+      }
+    }
+    Visitor visitor = new Visitor();
+    expression.accept(visitor);
+    return visitor.found;
   }
 
   private static boolean isDereferenceContext(PsiExpression ref) {
