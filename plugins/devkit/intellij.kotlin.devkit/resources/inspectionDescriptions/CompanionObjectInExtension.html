@@ -67,7 +67,9 @@ Reports incorrect companion objects' usage in <a href="https://plugins.jetbrains
               fieldName="INSTANCE"
               implementationClass="com.intellij.spring.boot.spi.SpringBootImportsFileType"/&gt;
 </code></pre>
-<h4>How to rewrite CounterUsagesCollector?</h4>
+<h4>How to rewrite CounterUsagesCollector?
+</h4>
+<h5>Internal API</h5>
 <p>Before:</p>
 <pre><code lang="kotlin">
   class AntActionsUsagesCollector : CounterUsagesCollector() {

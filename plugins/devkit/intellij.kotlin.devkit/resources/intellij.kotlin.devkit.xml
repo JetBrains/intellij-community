@@ -35,7 +35,7 @@
                      projectType="INTELLIJ_PLUGIN"
                      groupBundle="messages.DevKitBundle"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
-                     enabledByDefault="true" level="ERROR"
+                     enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.kotlin.inspections.CompanionObjectInExtensionInspection"
                      key="inspections.companion.object.in.extension"/>
   </extensions>

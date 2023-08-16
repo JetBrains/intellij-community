@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations
 import com.intellij.ide.IdeDeprecatedMessagesBundle
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.ide.util.EditorHelper
+import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
@@ -72,6 +73,7 @@ private object ElementHashingStrategy : HashingStrategy<PsiElement> {
     }
 }
 
+@IntellijInternalApi
 open class MoveKotlinDeclarationsProcessor(
     val descriptor: MoveDeclarationsDescriptor,
     val mover: KotlinMover = KotlinMover.Default,
