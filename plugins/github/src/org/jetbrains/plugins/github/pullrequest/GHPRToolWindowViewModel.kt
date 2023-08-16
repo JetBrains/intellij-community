@@ -13,7 +13,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.util.childScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -42,8 +41,8 @@ class GHPRToolWindowViewModel internal constructor(private val project: Project,
     it.isNotEmpty()
   }
 
-  private val _activationRequests = Channel<Unit>(1)
-  internal val activationRequests: Flow<Unit> = _activationRequests.receiveAsFlow()
+  private val _activationRequests = MutableSharedFlow<Unit>(1)
+  internal val activationRequests: Flow<Unit> = _activationRequests.asSharedFlow()
 
   private val singleRepoAndAccountState: StateFlow<Pair<GHGitRepositoryMapping, GithubAccount>?> =
     combineState(cs, repositoriesManager.knownRepositoriesState, accountManager.accountsState) { repos, accounts ->
@@ -102,12 +101,12 @@ class GHPRToolWindowViewModel internal constructor(private val project: Project,
   }
 
   fun activate() {
-    _activationRequests.trySend(Unit)
+    _activationRequests.tryEmit(Unit)
   }
 
   fun activateAndAwaitProject(action: GHPRToolWindowProjectViewModel.() -> Unit) {
     cs.launch {
-      _activationRequests.trySend(Unit)
+      _activationRequests.emit(Unit)
       projectVm.filterNotNull().first().action()
     }
   }

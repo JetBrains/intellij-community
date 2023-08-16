@@ -3,8 +3,11 @@ package org.jetbrains.plugins.gitlab.mergerequest.action
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.wm.ToolWindowManager
+import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabToolWindowViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.GitLabToolWindowFactory
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 
@@ -18,8 +21,7 @@ class GitLabShowMergeRequestsAction : DumbAwareAction() {
       e.presentation.description = null
       return
     }
-    val isAvailable = ToolWindowManager.getInstance(project)
-                        .getToolWindow(GitLabToolWindowFactory.ID)?.isAvailable ?: false
+    val isAvailable = project.service<GitLabToolWindowViewModel>().isAvailable.value
 
     e.presentation.isEnabledAndVisible = isAvailable
     e.presentation.description = if (isAvailable) {
@@ -31,7 +33,6 @@ class GitLabShowMergeRequestsAction : DumbAwareAction() {
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val tw = ToolWindowManager.getInstance(e.project!!).getToolWindow(GitLabToolWindowFactory.ID) ?: return
-    tw.activate {}
+    e.project!!.service<GitLabToolWindowViewModel>().activate()
   }
 }

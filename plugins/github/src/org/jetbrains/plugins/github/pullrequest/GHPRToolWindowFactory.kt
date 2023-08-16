@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest
 
+import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.ui.toolwindow.dontHideOnEmptyContent
 import com.intellij.collaboration.ui.toolwindow.manageReviewToolwindowTabs
 import com.intellij.openapi.actionSystem.CommonShortcuts
@@ -41,8 +42,16 @@ private class GHPRToolWindowController(private val project: Project, parentCs: C
   fun manageAvailability(toolWindow: ToolWindow) {
     cs.launch {
       val vm = project.serviceAsync<GHPRToolWindowViewModel>()
-      vm.isAvailable.collect {
-        toolWindow.isAvailable = it
+      launchNow {
+        vm.isAvailable.collect {
+          toolWindow.isAvailable = it
+        }
+      }
+
+      launchNow {
+        vm.activationRequests.collect {
+          toolWindow.activate {}
+        }
       }
     }.cancelOnDispose(toolWindow.disposable)
   }
@@ -70,12 +79,6 @@ private class GHPRToolWindowController(private val project: Project, parentCs: C
           GHPRSelectPullRequestForFileAction(),
         ))
         toolWindow.setAdditionalGearActions(DefaultActionGroup(GHPRSwitchRemoteAction()))
-
-        launch {
-          vm.activationRequests.collect {
-            toolWindow.activate {}
-          }
-        }
 
         awaitCancellation()
       }
