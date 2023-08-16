@@ -58,7 +58,6 @@ object KotlinPluginBuilder {
     "kotlin.base.fe10.analysis",
     "kotlin.base.fe10.analysis-api-providers",
     "kotlin.base.fe10.kdoc",
-    "kotlin.base.fe10.highlighting",
     "kotlin.base.fe10.code-insight",
     "kotlin.base.fe10.obsolete-compat",
     "kotlin.base.fe10.project-structure",

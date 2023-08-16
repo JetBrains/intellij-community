@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.analysis.api.KtSymbolBasedReference
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.symbols.KtJavaFieldSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSyntheticJavaPropertySymbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.invokeShortening
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
@@ -153,23 +154,26 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
     }
 
     override fun handleElementRename(ktReference: KtReference, newElementName: String): PsiElement? {
-        val newName = (ktReference as? KtSimpleReference<KtNameReferenceExpression>)?.getAdjustedNewName(newElementName)
-
         @OptIn(KtAllowAnalysisFromWriteAction::class)
         allowAnalysisFromWriteAction {
-            if (newName == null && ktReference is KtSymbolBasedReference) {
+            if (ktReference is KtSymbolBasedReference) {
                 @OptIn(KtAllowAnalysisOnEdt::class)
                 allowAnalysisOnEdt {
                     analyze(ktReference.element) {
-                        val symbol = ktReference.resolveToSymbol() as? KtSyntheticJavaPropertySymbol
-                        if (symbol != null) {
-                            return (ktReference as? KtSimpleReference<KtNameReferenceExpression>)?.renameToOrdinaryMethod(newElementName)
+                        val symbol = ktReference.resolveToSymbol()
+                        if (symbol is KtSyntheticJavaPropertySymbol || symbol is KtJavaFieldSymbol) {
+                            val newName = (ktReference as? KtSimpleReference<KtNameReferenceExpression>)?.getAdjustedNewName(newElementName)
+                            if (newName == null) {
+                                return (ktReference as? KtSimpleReference<KtNameReferenceExpression>)?.renameToOrdinaryMethod(newElementName)
+                            } else {
+                                return super.handleElementRename(ktReference, newName.asString())
+                            }
                         }
                     }
                 }
             }
 
-            return super.handleElementRename(ktReference, newName?.asString() ?: newElementName)
+            return super.handleElementRename(ktReference, newElementName)
         }
     }
 

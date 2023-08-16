@@ -64,9 +64,9 @@ object TestKotlinArtifacts {
             ".klib"
         )
     }
-    @JvmStatic val kotlinStdlibWasm: File by lazy {
+    @JvmStatic val kotlinStdlibWasmJs: File by lazy {
         downloadOrReportUnavailability(
-            "kotlin-stdlib-wasm",
+            "kotlin-stdlib-wasm-js",
             KotlinMavenUtils.findLibraryVersion(kotlincStdlibFileName),
             ".klib"
         )

@@ -1556,6 +1556,11 @@ public abstract class K1IdeK2CodeKotlinEvaluateExpressionInMppTestGenerated exte
                 runTest("testData/evaluation/singleBreakpoint/privateMember.kt");
             }
 
+            @TestMetadata("privateMemberShadowing.kt")
+            public void testPrivateMemberShadowing() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/privateMemberShadowing.kt");
+            }
+
             @TestMetadata("privatePropertyWithExplicitDefaultGetter.kt")
             public void testPrivatePropertyWithExplicitDefaultGetter() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/privatePropertyWithExplicitDefaultGetter.kt");

@@ -73,6 +73,11 @@ public class K1AddImportActionTestGenerated extends AbstractK1AddImportActionTes
         runTest("testData/idea/actions/kotlinAddImportAction/ExtendingClass2.kt");
     }
 
+    @TestMetadata("Flexible.kt")
+    public void testFlexible() throws Exception {
+        runTest("testData/idea/actions/kotlinAddImportAction/Flexible.kt");
+    }
+
     @TestMetadata("KotlinDurations.kt")
     public void testKotlinDurations() throws Exception {
         runTest("testData/idea/actions/kotlinAddImportAction/KotlinDurations.kt");
