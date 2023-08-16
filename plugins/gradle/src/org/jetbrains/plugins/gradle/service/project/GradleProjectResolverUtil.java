@@ -459,7 +459,7 @@ public final class GradleProjectResolverUtil {
       return;
     }
     try {
-      if (binaryPath.contains("/.gradle/caches/modules-2/files-2.1/")) {
+      if (binaryPath.contains("/caches/modules-2/files-2.1/")) {
         collectSourcesAndJavadocsFromGradleCache(binaryPath, collect, sourceResolved, docResolved);
       }
       else {

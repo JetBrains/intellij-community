@@ -1,0 +1,60 @@
+//file:noinspection GrPackage
+
+interface Properties {
+//noinspection GrUnresolvedAccess
+  public static final String dependencyNotation = DEPENDENCY_NOTATION
+//noinspection GrUnresolvedAccess
+  public static final String targetPath = TARGET_PATH
+//noinspection GrUnresolvedAccess
+  public static final String gradleTaskName = GRADLE_TASK_NAME
+}
+
+// Solution for Gradle 3.0...5.5
+Set<? extends ArtifactRepository> projectRepositories() {
+  def target = new HashSet()
+  allprojects {
+    target.addAll(it.repositories)
+  }
+  return target
+}
+
+gradle.projectsEvaluated {
+  rootProject
+    .repositories
+    .addAll(projectRepositories())
+  rootProject.tasks
+    .create(Properties.gradleTaskName) {
+      doLast {
+        def configuration
+        def repository = rootProject.repositories.toList().find {
+          logger.lifecycle('Attempt to download sources from ' + it.name)
+          project.repositories.clear()
+          project.repositories.add(it)
+          configuration = rootProject.configurations.create('downloadSourcesFrom_' + UUID.randomUUID())
+          configuration.transitive = false
+          rootProject.dependencies.add(configuration.name, Properties.dependencyNotation)
+          def files = null
+          try {
+            files = configuration.resolvedConfiguration.lenientConfiguration.getFiles()
+          }
+          catch (java.lang.Throwable ignore) {
+          }
+          return files && !files.isEmpty()
+        }
+        if (!repository) {
+          configuration = rootProject.configurations.create('downloadSources_' + UUID.randomUUID())
+          configuration.transitive = false
+          rootProject.dependencies.add(configuration.name, Properties.dependencyNotation)
+          configuration.resolve()
+        }
+        def sourcesPath = configuration?.singleFile?.path
+        if (sourcesPath) {
+          logger.lifecycle('Sources were downloaded to ' + sourcesPath)
+          new File(Properties.targetPath).write sourcesPath
+        }
+        else {
+          throw new RuntimeException('Sources download failed')
+        }
+      }
+    }
+}

@@ -38,6 +38,17 @@ fun createIdeaPluginConfiguratorInitScript() : Path {
   return createInitScript(IDEA_PLUGIN_CONFIGURATOR_SCRIPT_NAME, initScript)
 }
 
+fun loadDownloadSourcesInitScript(dependencyNotation: String,
+                                  taskName: String,
+                                  downloadTarget: String): String = loadDownloadSourcesInitScript(
+  "/org/jetbrains/plugins/gradle/tooling/internal/init/downloadSources.gradle", dependencyNotation, taskName, downloadTarget)
+
+fun loadLegacyDownloadSourcesInitScript(dependencyNotation: String,
+                                        taskName: String,
+                                        downloadTarget: String): String = loadDownloadSourcesInitScript(
+  "/org/jetbrains/plugins/gradle/tooling/internal/init/legacyDownloadSources.gradle", dependencyNotation,
+  taskName, downloadTarget)
+
 fun loadTaskInitScript(
   projectPath: String,
   taskName: String,
@@ -191,4 +202,12 @@ fun createInitScript(prefix: String, content: String): Path {
 private fun isContentEquals(path: Path, content: ByteArray): Boolean {
   return content.size.toLong() == path.fileSize() &&
          content.contentEquals(path.readBytes())
+}
+
+private fun loadDownloadSourcesInitScript(path: String, dependencyNotation: String, taskName: String, downloadTarget: String): String {
+  return loadInitScript(path, mapOf(
+    "DEPENDENCY_NOTATION" to "\"" + dependencyNotation + "\"",
+    "TARGET_PATH" to "\"" + downloadTarget + "\"",
+    "GRADLE_TASK_NAME" to "\"" + taskName + "\""
+  ))
 }
