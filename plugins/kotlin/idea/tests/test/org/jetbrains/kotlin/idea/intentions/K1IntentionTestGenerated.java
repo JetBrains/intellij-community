@@ -12556,6 +12556,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/joinDeclarationAndAssignment/usedLocal4.kt");
         }
 
+        @TestMetadata("usedMember.kt")
+        public void testUsedMember() throws Exception {
+            runTest("testData/intentions/joinDeclarationAndAssignment/usedMember.kt");
+        }
+
         @TestMetadata("varReassignment.kt")
         public void testVarReassignment() throws Exception {
             runTest("testData/intentions/joinDeclarationAndAssignment/varReassignment.kt");

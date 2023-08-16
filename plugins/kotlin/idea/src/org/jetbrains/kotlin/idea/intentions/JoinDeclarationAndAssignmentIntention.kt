@@ -65,7 +65,7 @@ class JoinDeclarationAndAssignmentIntention : SelfTargetingRangeIntention<KtProp
         val propertyDescriptor = context[BindingContext.DECLARATION_TO_DESCRIPTOR, element] ?: return null
 
         if (initializer.hasReference(propertyDescriptor, context)) return null
-        if (hasLocalDependencies(initializer, element)) return null
+        if (initializer.dependsOnNextSiblingsOfProperty(element)) return null
 
         val isNonLocalVar = element.isVar && !element.isLocal
         val typesAreEqual = lazy {
@@ -189,11 +189,11 @@ class JoinDeclarationAndAssignmentIntention : SelfTargetingRangeIntention<KtProp
     // a block that only contains comments is not empty
     private fun KtBlockExpression.isEmpty() = contentRange().isEmpty
 
-    private fun hasLocalDependencies(initializer: KtElement, property: KtProperty): Boolean {
-        val localContext = property.parent
+    private fun KtElement.dependsOnNextSiblingsOfProperty(property: KtProperty): Boolean {
+        val propertyScope = property.parent
         val nextSiblings = property.siblings(forward = true, withItself = false)
-        return initializer.anyDescendantOfType<PsiElement> { child ->
-            child.resolveAllReferences().any { it != null && PsiTreeUtil.isAncestor(localContext, it, false) && it in nextSiblings }
+        return anyDescendantOfType<PsiElement> { child ->
+            child.resolveAllReferences().any { it != null && PsiTreeUtil.isAncestor(propertyScope, it, false) && it in nextSiblings }
         }
     }
 
