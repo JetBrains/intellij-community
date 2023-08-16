@@ -12,6 +12,7 @@ import org.jetbrains.annotations.Nullable;
  * Implementations of this interface are not obliged to be thread-safe.
  */
 public interface GradleSettingsListener extends ExternalSystemSettingsListener<GradleProjectSettings> {
+
   Topic<GradleSettingsListener> TOPIC = new Topic<>(GradleSettingsListener.class, Topic.BroadcastDirection.NONE);
 
   /**
@@ -23,7 +24,7 @@ public interface GradleSettingsListener extends ExternalSystemSettingsListener<G
    * @param newPath            new path (if any)
    * @param linkedProjectPath  target linked gradle project path
    */
-  void onGradleHomeChange(@Nullable String oldPath, @Nullable String newPath, @NotNull String linkedProjectPath);
+  default void onGradleHomeChange(@Nullable String oldPath, @Nullable String newPath, @NotNull String linkedProjectPath) { }
 
   /**
    * Is expected to be invoked when 'gradle distribution type' setting is changed (generally this
@@ -34,7 +35,7 @@ public interface GradleSettingsListener extends ExternalSystemSettingsListener<G
    * @param currentValue       current value
    * @param linkedProjectPath  target linked gradle project path
    */
-  void onGradleDistributionTypeChange(DistributionType currentValue, @NotNull String linkedProjectPath);
+  default void onGradleDistributionTypeChange(DistributionType currentValue, @NotNull String linkedProjectPath) { }
 
   /**
    * Is expected to be invoked when service directory path is changed.
@@ -45,7 +46,7 @@ public interface GradleSettingsListener extends ExternalSystemSettingsListener<G
    * @param newPath  new path (if any)
    * @see GradleSettings#getServiceDirectoryPath()
    */
-  void onServiceDirectoryPathChange(@Nullable String oldPath, @Nullable String newPath);
+  default void onServiceDirectoryPathChange(@Nullable String oldPath, @Nullable String newPath) { }
 
   /**
    * Is expected to be called when gradle JVM is changed by end-user.
@@ -53,7 +54,7 @@ public interface GradleSettingsListener extends ExternalSystemSettingsListener<G
    * @param oldGradleJvm  old gradleJvm (if any)
    * @param newGradleJvm  new gradleJvm (if any)
    */
-  void onGradleJvmChange(@Nullable String oldGradleJvm, @Nullable String newGradleJvm, @NotNull String linkedProjectPath);
+  default void onGradleJvmChange(@Nullable String oldGradleJvm, @Nullable String newGradleJvm, @NotNull String linkedProjectPath) { }
 
   /**
    * Is expected to be called when gradle JVM options are changed by end-user.
@@ -61,7 +62,7 @@ public interface GradleSettingsListener extends ExternalSystemSettingsListener<G
    * @param oldOptions  old options (if any)
    * @param newOptions  new option (if any)
    */
-  void onGradleVmOptionsChange(@Nullable String oldOptions, @Nullable String newOptions);
+  default void onGradleVmOptionsChange(@Nullable String oldOptions, @Nullable String newOptions) { }
 
   /**
    * Is expected to be called when build delegation setting is changed by end-user.
@@ -69,7 +70,7 @@ public interface GradleSettingsListener extends ExternalSystemSettingsListener<G
    * @param delegatedBuild    current value
    * @param linkedProjectPath target linked gradle project path
    */
-  void onBuildDelegationChange(boolean delegatedBuild, @NotNull String linkedProjectPath);
+  default void onBuildDelegationChange(boolean delegatedBuild, @NotNull String linkedProjectPath) { }
 
   /**
    * Is expected to be called when test runner setting is changed by end-user.
@@ -77,5 +78,5 @@ public interface GradleSettingsListener extends ExternalSystemSettingsListener<G
    * @param currentTestRunner current value
    * @param linkedProjectPath target linked gradle project path
    */
-  void onTestRunnerChange(@NotNull TestRunner currentTestRunner, @NotNull String linkedProjectPath);
+  default void onTestRunnerChange(@NotNull TestRunner currentTestRunner, @NotNull String linkedProjectPath) { }
 }
