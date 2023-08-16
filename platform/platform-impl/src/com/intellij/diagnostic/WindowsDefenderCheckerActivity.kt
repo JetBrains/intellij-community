@@ -3,7 +3,6 @@ package com.intellij.diagnostic
 
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.actions.ShowLogAction
-import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.idea.ActionsBundle
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction.createSimple
@@ -21,9 +20,11 @@ import java.nio.file.Path
 
 private val LOG = logger<WindowsDefenderCheckerActivity>()
 
+private const val DisableWindowsDefenderCheckProperty = "idea.winDefender.check.disable"
+
 internal class WindowsDefenderCheckerActivity : ProjectActivity {
   init {
-    if (ApplicationManager.getApplication().isUnitTestMode || PluginManagerCore.isRunningFromSources()) {
+    if (ApplicationManager.getApplication().isUnitTestMode || java.lang.Boolean.getBoolean(DisableWindowsDefenderCheckProperty)) {
       throw ExtensionNotApplicableException.create()
     }
   }
