@@ -568,11 +568,12 @@ public final class PersistentFSLoader {
 
   private static @NotNull AbstractAttributesStorage createAttributesStorage_makeStorage(@NotNull Path attributesFile) throws IOException {
     if (FSRecordsImpl.USE_STREAMLINED_ATTRIBUTES_IMPLEMENTATION) {
-      LOG.info("VFS uses new (streamlined) attributes storage");
+      LOG.info("VFS uses streamlined attributes storage");
       //avg record size is ~60b, hence I've chosen minCapacity=64 bytes, and defaultCapacity= 2*minCapacity
       final SpaceAllocationStrategy allocationStrategy = new SpaceAllocationStrategy.DataLengthPlusFixedPercentStrategy(128, 64, 30);
       final StreamlinedBlobStorage blobStorage;
-      if (PageCacheUtils.LOCK_FREE_PAGE_CACHE_ENABLED) {
+      if (FSRecordsImpl.USE_ATTRIBUTES_OVER_NEW_FILE_PAGE_CACHE) {
+        LOG.info("VFS uses streamlined attributes storage (over new FilePageCache)");
         blobStorage = new StreamlinedBlobStorageOverLockFreePagesStorage(
           new PagedFileStorageWithRWLockedPageContent(
             attributesFile,
@@ -585,6 +586,7 @@ public final class PersistentFSLoader {
         );
       }
       else {
+        LOG.info("VFS uses streamlined attributes storage (over regular FilePageCache)");
         blobStorage = new LargeSizeStreamlinedBlobStorage(
           new PagedFileStorage(
             attributesFile,
@@ -646,7 +648,8 @@ public final class PersistentFSLoader {
 
   private static @NotNull RefCountingContentStorage createContentStorage_makeStorage(@NotNull Path contentsFile) throws IOException {
     // sources usually zipped with 4x ratio
-    if (PageCacheUtils.LOCK_FREE_PAGE_CACHE_ENABLED) {
+    if (FSRecordsImpl.USE_CONTENT_STORAGE_OVER_NEW_FILE_PAGE_CACHE) {
+      LOG.info("VFS uses content storage over new FilePageCache");
       return new RefCountingContentStorageImplLF(
         contentsFile,
         CapacityAllocationPolicy.FIVE_PERCENT_FOR_GROWTH,
@@ -655,6 +658,7 @@ public final class PersistentFSLoader {
       );
     }
     else {
+      LOG.info("VFS uses content storage over regular FilePageCache");
       return new RefCountingContentStorageImpl(
         contentsFile,
         CapacityAllocationPolicy.FIVE_PERCENT_FOR_GROWTH,
