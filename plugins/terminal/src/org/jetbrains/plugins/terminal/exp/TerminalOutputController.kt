@@ -40,9 +40,7 @@ class TerminalOutputController(private val editor: EditorEx,
   }
 
   fun startCommandBlock(command: String?) {
-    val block = outputModel.createBlock(command)
-    val decoration = blocksDecorator.installDecoration(block, isFirstBlock = outputModel.getBlocksSize() == 1)
-    outputModel.putDecoration(block, decoration)
+    outputModel.createBlock(command)
 
     val disposable = Disposer.newDisposable().also { Disposer.register(session, it) }
     runningListenersDisposable = disposable
@@ -151,6 +149,16 @@ class TerminalOutputController(private val editor: EditorEx,
     val block = outputModel.getLastBlock() ?: error("No active block")
     editor.document.replaceString(block.startOffset, block.endOffset, content.text)
     outputModel.putHighlightings(block, content.highlightings)
+    // Install decorations lazily, only if there is some text.
+    // ZSH prints '%' character on startup and then removing it immediately, so ignore this character to avoid blinking.
+    // This hack can be solved by debouncing the update text requests.
+    if (outputModel.getDecoration(block) == null
+        && content.text.isNotBlank()
+        && content.text.trim() != "%") {
+      val decoration = blocksDecorator.installDecoration(block, isFirstBlock = outputModel.getBlocksSize() == 1)
+      outputModel.putDecoration(block, decoration)
+    }
+
     if (terminalModel.useAlternateBuffer) {
       editor.setCaretEnabled(false)
     }

@@ -19,10 +19,11 @@ class TerminalOutputModel(private val editor: EditorEx) {
     val lastBlock = getLastBlock()
     // restrict previous block expansion
     if (lastBlock != null) {
-      val decoration = decorations[lastBlock]!!
       lastBlock.range.isGreedyToRight = false
-      decoration.highlighter.isGreedyToRight = false
-      (decoration.bottomInlay as RangeMarkerImpl).isStickingToRight = false
+      decorations[lastBlock]?.let {
+        it.highlighter.isGreedyToRight = false
+        (it.bottomInlay as RangeMarkerImpl).isStickingToRight = false
+      }
     }
 
     val textLength = document.textLength
@@ -41,11 +42,12 @@ class TerminalOutputModel(private val editor: EditorEx) {
   fun removeBlock(block: CommandBlock) {
     document.deleteString(block.startOffset, block.endOffset)
 
-    val decoration = decorations[block]!!
-    Disposer.dispose(decoration.topInlay)
-    Disposer.dispose(decoration.bottomInlay)
-    editor.markupModel.removeHighlighter(decoration.highlighter)
     block.range.dispose()
+    decorations[block]?.let {
+      Disposer.dispose(it.topInlay)
+      Disposer.dispose(it.bottomInlay)
+      editor.markupModel.removeHighlighter(it.highlighter)
+    }
 
     blocks.remove(block)
     decorations.remove(block)
@@ -57,6 +59,10 @@ class TerminalOutputModel(private val editor: EditorEx) {
   }
 
   fun getBlocksSize(): Int = blocks.size
+
+  fun getDecoration(block: CommandBlock): BlockDecoration? {
+    return decorations[block]
+  }
 
   fun putDecoration(block: CommandBlock, decoration: BlockDecoration) {
     decorations[block] = decoration
