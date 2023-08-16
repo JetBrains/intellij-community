@@ -56,6 +56,8 @@ class TerminalOutputModel(private val editor: EditorEx) {
     return blocks.lastOrNull()
   }
 
+  fun getBlocksSize(): Int = blocks.size
+
   fun putDecoration(block: CommandBlock, decoration: BlockDecoration) {
     decorations[block] = decoration
   }

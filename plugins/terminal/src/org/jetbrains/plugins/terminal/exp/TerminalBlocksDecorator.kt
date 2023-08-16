@@ -26,8 +26,10 @@ class TerminalBlocksDecorator(private val editor: EditorEx) {
     }
   }
 
-  fun installDecoration(block: CommandBlock): BlockDecoration {
-    val topRenderer = EmptyWidthInlayRenderer(TerminalUI.blockTopInset)
+  fun installDecoration(block: CommandBlock, isFirstBlock: Boolean = false): BlockDecoration {
+    // add additional empty space on top of the block, if it is the first block
+    val topInset = TerminalUI.blockTopInset + if (isFirstBlock) TerminalUI.blocksGap else 0
+    val topRenderer = EmptyWidthInlayRenderer(topInset)
     val topInlay = editor.inlayModel.addBlockElement(block.startOffset, false, true, 1, topRenderer)!!
     val bottomRenderer = EmptyWidthInlayRenderer(TerminalUI.blockBottomInset + TerminalUI.blocksGap)
     val bottomInlay = editor.inlayModel.addBlockElement(block.endOffset, true, false, 0, bottomRenderer)!!

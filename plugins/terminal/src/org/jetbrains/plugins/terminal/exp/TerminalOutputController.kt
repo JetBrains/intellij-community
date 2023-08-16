@@ -41,7 +41,7 @@ class TerminalOutputController(private val editor: EditorEx,
 
   fun startCommandBlock(command: String?) {
     val block = outputModel.createBlock(command)
-    val decoration = blocksDecorator.installDecoration(block)
+    val decoration = blocksDecorator.installDecoration(block, isFirstBlock = outputModel.getBlocksSize() == 1)
     outputModel.putDecoration(block, decoration)
 
     val disposable = Disposer.newDisposable().also { Disposer.register(session, it) }
