@@ -33,6 +33,7 @@ public class StarAnnotator extends PyAnnotator {
     if (!node.isAssignmentTarget() &&
         !allowedUnpacking(node) &&
         !(parent instanceof PyParameterTypeList) &&
+        !(parent instanceof PyTypeParameter) &&
         !(parent instanceof PyAnnotation && isVariadicArg(parent.getParent()))) {
       getHolder().newAnnotation(HighlightSeverity.ERROR, PyPsiBundle.message("ANN.can.t.use.starred.expression.here")).create();
     }

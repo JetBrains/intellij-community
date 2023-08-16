@@ -44,7 +44,8 @@ public class FunctionParsing extends Parsing {
 
   protected void parseFunctionInnards(@NotNull SyntaxTreeBuilder.Marker functionMarker, boolean async) {
     myBuilder.advanceLexer();
-    parseIdentifierOrSkip(PyTokenTypes.LPAR);
+    parseIdentifierOrSkip(PyTokenTypes.LPAR, PyTokenTypes.LBRACKET);
+    myContext.getStatementParser().parseTypeParameterList();
     parseParameterList();
     parseReturnTypeAnnotation();
     checkMatches(PyTokenTypes.COLON, message("PARSE.expected.colon"));

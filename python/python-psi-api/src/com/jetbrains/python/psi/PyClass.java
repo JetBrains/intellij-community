@@ -39,7 +39,8 @@ import java.util.Map;
  * Represents a class declaration in source.
  */
 public interface PyClass extends PsiNameIdentifierOwner, PyCompoundStatement, PyDocStringOwner, StubBasedPsiElement<PyClassStub>,
-                                 ScopeOwner, PyDecoratable, PyTypedElement, PyQualifiedNameOwner, PyStatementListContainer, PyWithAncestors {
+                                 ScopeOwner, PyDecoratable, PyTypedElement, PyQualifiedNameOwner, PyStatementListContainer, PyWithAncestors,
+                                 PyTypeParameterListOwner {
   PyClass[] EMPTY_ARRAY = new PyClass[0];
   ArrayFactory<PyClass> ARRAY_FACTORY = count -> count == 0 ? EMPTY_ARRAY : new PyClass[count];
 
@@ -74,7 +75,7 @@ public interface PyClass extends PsiNameIdentifierOwner, PyCompoundStatement, Py
    * @see #getSuperClassTypes(TypeEvalContext) for the full list of super classes.
    * @see #getAncestorTypes(TypeEvalContext) for the full list of ancestors.
    */
-  PyClass @NotNull [] getSuperClasses(@Nullable  TypeEvalContext context);
+  PyClass @NotNull [] getSuperClasses(@Nullable TypeEvalContext context);
 
   /**
    * Returns a PSI element for the super classes list.
@@ -160,8 +161,8 @@ public interface PyClass extends PsiNameIdentifierOwner, PyCompoundStatement, Py
   /**
    * Finds a property with the specified name in the class or one of its ancestors.
    *
-   * @param name      of the property
-   * @param context   type eval (null to use loose context, but you better provide one)
+   * @param name    of the property
+   * @param context type eval (null to use loose context, but you better provide one)
    * @return descriptor of property accessors, or null if such property does not exist.
    */
   @Nullable
@@ -203,7 +204,7 @@ public interface PyClass extends PsiNameIdentifierOwner, PyCompoundStatement, Py
    *
    * @param context context to use for this process
    * @return list of attrs.
-   *
+   * <p>
    * TODO: Replace it and {@link #getClassAttributes()} with a single getClassAttributes(@NotNull TypeEvalContext context, boolean inherited)
    */
   @NotNull
@@ -256,7 +257,7 @@ public interface PyClass extends PsiNameIdentifierOwner, PyCompoundStatement, Py
   /**
    * @return True iff this and parent are the same or parent is one of our superclasses.
    */
-  boolean isSubclass(PyClass parent, @Nullable  TypeEvalContext context);
+  boolean isSubclass(PyClass parent, @Nullable TypeEvalContext context);
 
   boolean isSubclass(@NotNull String superClassQName, @Nullable TypeEvalContext context);
 
