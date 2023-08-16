@@ -75,6 +75,8 @@ abstract class AbstractKotlinHighlightExitPointsHandlerFactory : HighlightUsages
 
     protected abstract fun isInlinedArgument(declaration: KtDeclarationWithBody): Boolean
 
+    protected abstract fun hasNonUnitReturnType(functionLiteral: KtFunctionLiteral): Boolean
+
     protected fun getRelevantDeclaration(expression: KtExpression): KtDeclarationWithBody? {
         if (expression is KtReturnExpression) {
             getRelevantReturnDeclaration(expression)?.let { return it }
@@ -139,7 +141,7 @@ abstract class AbstractKotlinHighlightExitPointsHandlerFactory : HighlightUsages
             }
 
             val lastStatementExpressions =
-                if (relevantFunction is KtFunctionLiteral ||
+                if ((relevantFunction is KtFunctionLiteral && hasNonUnitReturnType(relevantFunction)) ||
                     (relevantFunction is KtNamedFunction && relevantFunction.bodyBlockExpression == null)
                 ) {
                     val lastStatements = mutableSetOf<PsiElement>(relevantFunction)
@@ -209,17 +211,17 @@ abstract class AbstractKotlinHighlightExitPointsHandlerFactory : HighlightUsages
 
                 override fun visitExpression(expression: KtExpression) {
                     if (relevantFunction is KtFunctionLiteral || relevantFunction is KtNamedFunction) {
-                        if (occurrenceForFunctionLiteralReturnExpression(expression, expression in lastStatementExpressions)) {
-                            if (!targetOccurrenceAdded) {
-                                when (relevantFunction) {
-                                    is KtFunctionLiteral -> relevantFunction.parentOfTypes(KtCallExpression::class)?.calleeExpression
-                                    is KtNamedFunction -> relevantFunction.funKeyword
-                                    else -> null
-                                }?.let {
-                                    targetOccurrenceAdded = true
-                                    addOccurrence(it)
-                                }
+                        if (!targetOccurrenceAdded) {
+                            when (relevantFunction) {
+                                is KtFunctionLiteral -> relevantFunction.parentOfTypes(KtCallExpression::class)?.calleeExpression
+                                is KtNamedFunction -> relevantFunction.funKeyword
+                                else -> null
+                            }?.let {
+                                targetOccurrenceAdded = true
+                                addOccurrence(it)
                             }
+                        }
+                        if (occurrenceForFunctionLiteralReturnExpression(expression, expression in lastStatementExpressions)) {
                             return
                         }
                     }
