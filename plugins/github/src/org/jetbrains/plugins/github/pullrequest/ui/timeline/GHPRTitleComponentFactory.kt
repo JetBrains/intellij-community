@@ -5,22 +5,24 @@ import com.intellij.collaboration.ui.SimpleHtmlPane
 import com.intellij.collaboration.ui.SingleValueModel
 import com.intellij.collaboration.ui.codereview.CodeReviewTitleUIUtil
 import com.intellij.collaboration.ui.setHtmlBody
+import com.intellij.openapi.project.Project
 import com.intellij.util.ui.JBFont
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.i18n.GithubBundle
+import org.jetbrains.plugins.github.pullrequest.comment.convertToHtml
 import javax.swing.JComponent
 
 internal object GHPRTitleComponentFactory {
 
-  fun create(model: SingleValueModel<GHPullRequestShort>): JComponent {
+  fun create(project: Project, model: SingleValueModel<GHPullRequestShort>): JComponent {
     val titlePane = SimpleHtmlPane().apply {
       font = JBFont.h2().asBold()
     }
-    model.addAndInvokeListener {
+    model.addAndInvokeListener { pullRequest ->
       val title = CodeReviewTitleUIUtil.createTitleText(
-        title = model.value.title,
-        reviewNumber = "#${model.value.number}",
-        url = model.value.url,
+        title = pullRequest.title.convertToHtml(project),
+        reviewNumber = "#${pullRequest.number}",
+        url = pullRequest.url,
         tooltip = GithubBundle.message("open.on.github.action")
       )
       titlePane.setHtmlBody(title)
