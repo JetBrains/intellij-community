@@ -516,6 +516,5 @@
       </library>
     </orderEntry>
     <orderEntry type="library" name="kotlinx-html-jvm" level="project" />
-    <orderEntry type="library" name="jetbrains-annotations-java5" level="project" />
   </component>
 </module>
