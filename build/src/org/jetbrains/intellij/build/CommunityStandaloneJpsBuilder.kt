@@ -75,7 +75,7 @@ suspend fun buildCommunityStandaloneJpsBuilder(targetDir: Path,
   for (it in listOf(
     "jna", "OroMatcher", "ASM", "NanoXML", "protobuf", "cli-parser", "Log4J", "jgoodies-forms", "Eclipse",
     "netty-codec-http", "lz4-java", "commons-codec", "commons-logging", "http-client", "Slf4j", "Guava", "plexus-utils",
-    "jetbrains-annotations-java5", "gson", "jps-javac-extension", "fastutil-min", "kotlin-stdlib",
+    "jetbrains-annotations", "gson", "jps-javac-extension", "fastutil-min", "kotlin-stdlib",
     "commons-lang3", "maven-resolver-provider", "netty-buffer", "aalto-xml"
   )) {
     layout.withProjectLibrary(it, LibraryPackMode.STANDALONE_MERGED)

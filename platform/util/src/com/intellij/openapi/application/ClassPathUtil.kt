@@ -45,7 +45,7 @@ object ClassPathUtil {
       SystemInfoRt::class.java,  // module 'intellij.platform.util.rt'
       UrlClassLoader::class.java,  // module 'intellij.platform.util.classLoader'
       classLoader.loadClass("org.jetbrains.xxh3.Xx3UnencodedString"),  // intellij.platform.util.rt.java8 (required for classLoader)
-      Flow::class.java,  // jetbrains-annotations-java5
+      Flow::class.java,  // jetbrains-annotations
       Document::class.java,  // jDOM
       Appender::class.java,  // Log4J
       Object2IntMap::class.java,  // fastutil

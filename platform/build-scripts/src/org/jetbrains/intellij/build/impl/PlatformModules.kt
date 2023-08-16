@@ -97,7 +97,7 @@ private val PLATFORM_IMPLEMENTATION_MODULES = persistentListOf(
 )
 
 internal val PLATFORM_CUSTOM_PACK_MODE: Map<String, LibraryPackMode> = persistentMapOf(
-  "jetbrains-annotations-java5" to LibraryPackMode.STANDALONE_SEPARATE_WITHOUT_VERSION_NAME,
+  "jetbrains-annotations" to LibraryPackMode.STANDALONE_SEPARATE_WITHOUT_VERSION_NAME,
   "intellij-coverage" to LibraryPackMode.STANDALONE_SEPARATE,
 )
 
@@ -167,6 +167,10 @@ internal suspend fun createPlatformLayout(addPlatformCoverage: Boolean,
   // used only in modules that packed into Java
   layout.withoutProjectLibrary("jps-javac-extension")
   layout.withoutProjectLibrary("Eclipse")
+  
+  //this library is used in some modules compatible with Java 7, it's replaced by its superset 'jetbrains-annotations' in the distribution 
+  layout.withoutProjectLibrary("jetbrains-annotations-java5")
+  
   for (customizer in productLayout.platformLayoutSpec) {
     customizer(layout, context)
   }
