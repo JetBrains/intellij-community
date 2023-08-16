@@ -12,6 +12,7 @@ import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.project.structure.KtModule
+import org.jetbrains.kotlin.analysis.project.structure.KtScriptDependencyModule
 import org.jetbrains.kotlin.analysis.project.structure.ProjectStructureProvider
 import org.jetbrains.kotlin.analysis.providers.KotlinModificationTrackerFactory
 import org.jetbrains.kotlin.analyzer.ModuleInfo
@@ -40,7 +41,7 @@ inline fun <reified T : KtModule> IdeaModuleInfo.toKtModuleOfType(): @kotlin.int
 
 internal class ProjectStructureProviderIdeImpl(private val project: Project) : ProjectStructureProvider() {
     override fun getModule(element: PsiElement, contextualModule: KtModule?): KtModule {
-        if (contextualModule is KtSourceModuleByModuleInfoForOutsider) {
+        if (contextualModule is KtSourceModuleByModuleInfoForOutsider || contextualModule is KtScriptDependencyModule) {
             val virtualFile = element.containingFile?.virtualFile
             if (virtualFile != null && virtualFile in contextualModule.contentScope) {
                 return contextualModule
