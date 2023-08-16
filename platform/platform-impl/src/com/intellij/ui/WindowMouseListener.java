@@ -213,6 +213,6 @@ abstract class WindowMouseListener extends MouseAdapter implements MouseInputLis
   private static boolean jbrMoveSupported(Component component) {
     // The JBR team states that isWindowMoveSupported works only for Frame/Dialog
     return (component instanceof Frame || component instanceof Dialog)
-           && IdeRootPane.Companion.jbr5777Workaround() && JBR.isWindowMoveSupported();
+           && JBR.isWindowMoveSupported();
   }
 }

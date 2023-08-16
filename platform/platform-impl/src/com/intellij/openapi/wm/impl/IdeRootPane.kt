@@ -328,7 +328,7 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
     internal val hideNativeLinuxTitleSupported: Boolean
       get() = SystemInfoRt.isXWindow
               && ExperimentalUI.isNewUI()
-              && jbr5777Workaround() && JBR.isWindowMoveSupported()
+              && JBR.isWindowMoveSupported()
               && !X11UiUtil.isWSL()
               && !X11UiUtil.isTileWM()
 
@@ -347,11 +347,6 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
       if (SystemInfoRt.isMac) {
         MacWinTabsHandler.fastInit(frame)
       }
-    }
-
-    // Workaround for JBR-5777, it should be removed after JBR-5777 is fixed
-    fun jbr5777Workaround(): Boolean {
-      return GraphicsEnvironment.getLocalGraphicsEnvironment().javaClass.getName().equals("sun.awt.X11GraphicsEnvironment")
     }
   }
 
