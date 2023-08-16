@@ -27,7 +27,7 @@ import java.awt.*;
 import java.awt.event.*;
 
 @ApiStatus.Internal
-public final class FloatingDecorator extends JDialog implements FloatingDecoratorMarker {
+public final class FloatingDecorator extends JDialog implements FloatingDecoratorMarker, ToolWindowExternalDecorator {
   private static final Logger LOG = Logger.getInstance(FloatingDecorator.class);
 
   static final int DIVIDER_WIDTH = 3;
@@ -53,6 +53,7 @@ public final class FloatingDecorator extends JDialog implements FloatingDecorato
 
   FloatingDecorator(@NotNull JFrame owner, @NotNull InternalDecoratorImpl decorator) {
     super(owner, decorator.toolWindow.getStripeTitle());
+    ClientProperty.put(this, DECORATOR_PROPERTY, this);
 
     MnemonicHelper.init(getContentPane());
 
@@ -90,6 +91,7 @@ public final class FloatingDecorator extends JDialog implements FloatingDecorato
       public void componentMoved(ComponentEvent e) {
         decorator.toolWindow.onMovedOrResized();
       }
+      // resize is handled by the internal decorator
     });
 
     myDelayAlarm = new Alarm();
@@ -160,6 +162,13 @@ public final class FloatingDecorator extends JDialog implements FloatingDecorato
     super.dispose();
   }
 
+  @NotNull
+  @Override
+  public ToolWindowType getToolWindowType() {
+    return ToolWindowType.FLOATING;
+  }
+
+  @Override
   @ApiStatus.Internal
   public void apply(@NotNull WindowInfo info) {
     LOG.assertTrue(info.getType() == ToolWindowType.FLOATING);

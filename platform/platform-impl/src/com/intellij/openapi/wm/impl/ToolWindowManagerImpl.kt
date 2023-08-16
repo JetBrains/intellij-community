@@ -47,7 +47,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCloseListener
 import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.project.getOpenedProjects
-import com.intellij.openapi.ui.FrameWrapper
 import com.intellij.openapi.ui.Splitter
 import com.intellij.openapi.ui.ThreeComponentsSplitter
 import com.intellij.openapi.ui.popup.Balloon
@@ -1971,7 +1970,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
 
     val id = entry.id
     val decorator = entry.toolWindow.getOrCreateDecoratorComponent()
-    val windowedDecorator = FrameWrapper(project, title = "${entry.toolWindow.stripeTitle} - ${project.name}", component = decorator)
+    val windowedDecorator = WindowedDecorator(project, title = "${entry.toolWindow.stripeTitle} - ${project.name}", component = decorator)
     val window = windowedDecorator.getFrame()
 
     MnemonicHelper.init((window as RootPaneContainer).contentPane)

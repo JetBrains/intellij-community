@@ -17,11 +17,9 @@ import com.intellij.openapi.wm.IdeGlassPane
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ToolWindowType
 import com.intellij.openapi.wm.WindowInfo
-import com.intellij.openapi.wm.impl.FloatingDecorator
-import com.intellij.openapi.wm.impl.InternalDecorator
+import com.intellij.openapi.wm.impl.*
 import com.intellij.openapi.wm.impl.ToolWindowImpl
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
-import com.intellij.openapi.wm.impl.isInternal
 import com.intellij.ui.*
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.content.Content
@@ -414,9 +412,22 @@ class InternalDecoratorImpl internal constructor(
     }
 
     // push "apply" request forward
-    if (info.type == ToolWindowType.FLOATING) {
-      (SwingUtilities.getAncestorOfClass(FloatingDecorator::class.java, this) as FloatingDecorator?)?.apply(info)
+    if (!info.type.isInternal) {
+      getExternalDecorator(info.type)?.apply(info)
     }
+  }
+
+  private fun getExternalDecorator(type: ToolWindowType): ToolWindowExternalDecorator? {
+    var result: ToolWindowExternalDecorator? = null
+    var component: Component? = this
+    while (component != null) {
+      result = ClientProperty.get(component, ToolWindowExternalDecorator.DECORATOR_PROPERTY)
+      if (result != null && result.getToolWindowType() == type) {
+        break
+      }
+      component = component.parent
+    }
+    return result
   }
 
   override fun getData(dataId: @NonNls String): Any? {
