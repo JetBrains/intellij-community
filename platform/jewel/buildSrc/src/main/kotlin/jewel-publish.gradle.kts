@@ -43,14 +43,6 @@ publishing {
                         url.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
                     }
                 }
-                developers {
-                    developer {
-                        name.set("Lamberto Basti")
-                        email.set("basti.lamberto@gmail.com")
-                        organization.set("JetBrains")
-                        organizationUrl.set("https://www.jetbrains.com/")
-                    }
-                }
                 scm {
                     connection.set("scm:git:https://github.com/JetBrains/jewel.git")
                     developerConnection.set("scm:git:https://github.com/JetBrains/jewel.git")
