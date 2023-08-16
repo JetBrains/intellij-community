@@ -90,7 +90,7 @@
     {
       "id": "python",
       "experimentBucketsCount": 8,
-      "includeGroups": [],
+      "includeGroups": [15, 16],
       "shouldLogElementFeatures": true
     },
     {
