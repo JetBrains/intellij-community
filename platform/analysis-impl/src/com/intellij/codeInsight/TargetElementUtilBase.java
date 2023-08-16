@@ -90,7 +90,7 @@ public final class TargetElementUtilBase {
   }
 
   @Nullable
-  static TargetElementEvaluatorEx2 getElementEvaluatorsEx2(@NotNull Language language) {
+  public static TargetElementEvaluatorEx2 getElementEvaluatorsEx2(@NotNull Language language) {
     TargetElementEvaluator result = TARGET_ELEMENT_EVALUATOR.forLanguage(language);
     return result instanceof TargetElementEvaluatorEx2 ? (TargetElementEvaluatorEx2)result : null;
   }

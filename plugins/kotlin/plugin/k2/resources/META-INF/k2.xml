@@ -11,7 +11,6 @@
 
   <xi:include href="navigation.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="refactorings.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="highlighting.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="indices.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="file-types.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="language.xml" xpointer="xpointer(/idea-plugin/*)"/>
@@ -21,6 +20,7 @@
   <xi:include href="kotlin-core.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="searching-base.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="statistics.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="kotlin.highlighting-shared.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="codeInsights.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="lowLevelApiFir.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="light-classes.xml" xpointer="xpointer(/idea-plugin/*)"/>
@@ -28,7 +28,6 @@
   <xi:include href="parcelize.k2.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="jvm-debugger.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="jvm-debugger-k2.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="highlighting-k2.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="dep-spellchecker.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="scripting-base.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="native.xml" xpointer="xpointer(/idea-plugin/*)"/>
@@ -167,8 +166,6 @@
 
     <projectService serviceImplementation="org.jetbrains.kotlin.idea.base.projectStructure.libraryToSourceAnalysis.KotlinLibraryToSourceAnalysisStateComponent"/>
 
-    <highlightingPassFactory implementation="org.jetbrains.kotlin.idea.base.highlighting.KotlinBeforeResolveHighlightingPass$Registrar"/>
-
     <targetElementEvaluator language="kotlin"
                             implementationClass="org.jetbrains.kotlin.idea.search.ideaExtensions.FirKotlinTargetElementEvaluator"/>
     <targetElementUtilExtender implementation="org.jetbrains.kotlin.idea.search.ideaExtensions.FirKotlinTargetElementEvaluator"/>
@@ -252,7 +249,8 @@
 
     <module name="kotlin.navigation"/>
     <module name="kotlin.code-insight.line-markers-k2"/>
-    <module name="kotlin.highlighting"/>
+
+    <module name="kotlin.highlighting.k2"/>
 
     <module name="kotlin.compiler-reference-index"/>
     <module name="kotlin.compiler-plugins.assignment.common-k2"/>

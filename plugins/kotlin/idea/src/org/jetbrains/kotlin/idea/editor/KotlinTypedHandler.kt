@@ -27,6 +27,133 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
+internal object KotlinTypedHandlerHelper {
+    internal val PREVIOUS_IN_STRING_DOLLAR_TYPED_OFFSET_KEY = Key.create<Int>("PREVIOUS_IN_STRING_DOLLAR_TYPED_OFFSET_KEY")
+    internal fun autoPopupParameterInfo(project: Project, editor: Editor) {
+        val offset = editor.caretModel.offset
+        if (offset == 0) return
+        val iterator = editor.highlighter.createIterator(offset - 1)
+        val tokenType = iterator.tokenType
+        if (KtTokens.COMMENTS.contains(tokenType) ||
+            tokenType === KtTokens.REGULAR_STRING_PART ||
+            tokenType === KtTokens.OPEN_QUOTE ||
+            tokenType === KtTokens.CHARACTER_LITERAL
+        ) {
+            return
+        }
+
+        AutoPopupController.getInstance(project).autoPopupParameterInfo(editor, null)
+    }
+
+    internal fun autoPopupMemberLookup(project: Project, editor: Editor): Unit =
+        AutoPopupController.getInstance(project).autoPopupMemberLookup(editor, fun(file: PsiFile): Boolean {
+            val offset = editor.caretModel.offset
+            val lastToken = file.findElementAt(offset - 1) ?: return false
+            val elementType = lastToken.node.elementType
+            if (elementType === KtTokens.DOT || elementType === KtTokens.SAFE_ACCESS) return true
+            if (elementType === KtTokens.REGULAR_STRING_PART && lastToken.textRange.startOffset == offset - 1) {
+                val prevSibling = lastToken.parent.prevSibling
+                return prevSibling is KtSimpleNameStringTemplateEntry
+            }
+            return false
+        })
+
+    private fun isLabelCompletion(chars: CharSequence, offset: Int): Boolean {
+        return endsWith(chars, offset, "this@")
+                || endsWith(chars, offset, "return@")
+                || endsWith(chars, offset, "break@")
+                || endsWith(chars, offset, "continue@")
+    }
+
+    internal fun autoPopupAt(project: Project, editor: Editor) {
+        AutoPopupController.getInstance(project).autoPopupMemberLookup(editor) { file: PsiFile ->
+            val offset = editor.caretModel.offset
+            val chars = editor.document.charsSequence
+            val lastNodeType = file.findElementAt(offset - 1)?.node?.elementType ?: return@autoPopupMemberLookup false
+
+            lastNodeType === KDocTokens.TEXT || (lastNodeType === KtTokens.AT && isLabelCompletion(chars, offset))
+        }
+    }
+
+    internal fun autoPopupCallableReferenceLookup(project: Project, editor: Editor): Unit =
+        AutoPopupController.getInstance(project).autoPopupMemberLookup(editor) { file: PsiFile ->
+            val offset = editor.caretModel.offset
+            val lastElement = file.findElementAt(offset - 1) ?: return@autoPopupMemberLookup false
+            lastElement.node.elementType === KtTokens.COLONCOLON
+        }
+
+    private fun endsWith(chars: CharSequence, offset: Int, text: String): Boolean =
+        if (offset < text.length) false else chars.subSequence(offset - text.length, offset).toString() == text
+
+    internal fun dataClassValParameterInsert(
+        project: Project,
+        editor: Editor,
+        file: PsiFile,
+        beforeType: Boolean
+    ) {
+        if (!KotlinEditorOptions.getInstance().isAutoAddValKeywordToDataClassParameters) return
+        val document = editor.document
+        PsiDocumentManager.getInstance(project).commitDocument(document)
+        var commaOffset = editor.caretModel.offset
+        if (!beforeType) commaOffset--
+        if (commaOffset < 1) return
+        val elementOnCaret = file.findElementAt(commaOffset) ?: return
+        var contextMatched = false
+        var parentElement = elementOnCaret.parent
+        if (parentElement is KtParameterList) {
+            parentElement = parentElement.getParent()
+            if (parentElement is KtPrimaryConstructor) {
+                parentElement = parentElement.getParent()
+                if (parentElement is KtClass) {
+                    val klassElement = parentElement
+                    contextMatched = klassElement.mustHaveNonEmptyPrimaryConstructor()
+                }
+            }
+        }
+
+        if (!contextMatched) return
+        val leftElement = PsiTreeUtil.skipWhitespacesAndCommentsBackward(elementOnCaret) as? KtParameter ?: return
+        val typeReference = leftElement.typeReference ?: return
+        if (leftElement.hasValOrVar()) return
+        if (typeReference.textLength == 0) return
+        document.insertString(leftElement.textOffset, "val ")
+    }
+
+    internal fun autoIndentCase(
+        editor: Editor,
+        project: Project,
+        file: PsiFile,
+        klass: Class<*>,
+        forFirstElement: Boolean = true,
+    ): Boolean {
+        val offset = editor.caretModel.offset
+        PsiDocumentManager.getInstance(project).commitDocument(editor.document)
+        val currElement = file.findElementAt(offset - 1)
+        if (currElement != null) {
+            // Should be applied only if there's nothing but the whitespace in line before the element
+            val prevLeaf = PsiTreeUtil.prevLeaf(currElement)
+            if (forFirstElement && !(prevLeaf is PsiWhiteSpace && prevLeaf.textContains('\n'))) {
+                return false
+            }
+
+            val parent = currElement.parent
+            if (klass.isInstance(parent)) {
+                val curElementLength = currElement.text.length
+                if (offset < curElementLength) return false
+                if (forFirstElement) {
+                    CodeStyleManager.getInstance(project).adjustLineIndent(file, offset - curElementLength)
+                } else {
+                    PsiDocumentManager.getInstance(project).getDocument(file)?.adjustLineIndent(project, offset)
+                }
+
+                return true
+            }
+        }
+
+        return false
+    }
+}
+
 class KotlinTypedHandler : TypedHandlerDelegate() {
     private var kotlinLTTyped = false
 
@@ -42,12 +169,12 @@ class KotlinTypedHandler : TypedHandlerDelegate() {
     ): Result {
         if (file !is KtFile) return Result.CONTINUE
         when (c) {
-            ')' -> dataClassValParameterInsert(project, editor, file,  /*beforeType = */true)
+            ')' -> KotlinTypedHandlerHelper.dataClassValParameterInsert(project, editor, file,  /*beforeType = */true)
             '<' -> {
                 kotlinLTTyped = CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET &&
                         LtGtTypingUtils.shouldAutoCloseAngleBracket(editor.caretModel.offset, editor)
 
-                autoPopupParameterInfo(project, editor)
+                KotlinTypedHandlerHelper.autoPopupParameterInfo(project, editor)
             }
 
             '>' -> {
@@ -96,10 +223,10 @@ class KotlinTypedHandler : TypedHandlerDelegate() {
                 }
             }
 
-            '.' -> autoPopupMemberLookup(project, editor)
-            ':' -> autoPopupCallableReferenceLookup(project, editor)
-            '[' -> autoPopupParameterInfo(project, editor)
-            '@' -> autoPopupAt(project, editor)
+            '.' -> KotlinTypedHandlerHelper.autoPopupMemberLookup(project, editor)
+            ':' -> KotlinTypedHandlerHelper.autoPopupCallableReferenceLookup(project, editor)
+            '[' -> KotlinTypedHandlerHelper.autoPopupParameterInfo(project, editor)
+            '@' -> KotlinTypedHandlerHelper.autoPopupAt(project, editor)
         }
 
         return Result.CONTINUE
@@ -111,10 +238,10 @@ class KotlinTypedHandler : TypedHandlerDelegate() {
         var previousDollarInStringOffset: Int? = null
         if (isGlobalPreviousDollarInString) {
             isGlobalPreviousDollarInString = false
-            previousDollarInStringOffset = editor.getUserData(PREVIOUS_IN_STRING_DOLLAR_TYPED_OFFSET_KEY)
+            previousDollarInStringOffset = editor.getUserData(KotlinTypedHandlerHelper.PREVIOUS_IN_STRING_DOLLAR_TYPED_OFFSET_KEY)
         }
 
-        editor.putUserData(PREVIOUS_IN_STRING_DOLLAR_TYPED_OFFSET_KEY, null)
+        editor.putUserData(KotlinTypedHandlerHelper.PREVIOUS_IN_STRING_DOLLAR_TYPED_OFFSET_KEY, null)
         when {
             kotlinLTTyped -> {
                 kotlinLTTyped = false
@@ -123,7 +250,7 @@ class KotlinTypedHandler : TypedHandlerDelegate() {
                 return Result.STOP
             }
 
-            c == ',' || c == ')' -> dataClassValParameterInsert(project, editor, file,  /*beforeType = */false)
+            c == ',' || c == ')' -> KotlinTypedHandlerHelper.dataClassValParameterInsert(project, editor, file,  /*beforeType = */false)
             c == '{' && CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET -> {
                 PsiDocumentManager.getInstance(project).commitDocument(editor.document)
                 val offset = editor.caretModel.offset
@@ -153,36 +280,36 @@ class KotlinTypedHandler : TypedHandlerDelegate() {
             }
 
             c == ':' -> {
-                if (autoIndentCase(editor, project, file, KtClassOrObject::class.java) ||
-                    autoIndentCase(editor, project, file, KtOperationReferenceExpression::class.java)
+                if (KotlinTypedHandlerHelper.autoIndentCase(editor, project, file, KtClassOrObject::class.java) ||
+                    KotlinTypedHandlerHelper.autoIndentCase(editor, project, file, KtOperationReferenceExpression::class.java)
                 ) {
                     return Result.STOP
                 }
             }
 
             c == '.' -> {
-                if (autoIndentCase(editor, project, file, KtQualifiedExpression::class.java)) return Result.STOP
+                if (KotlinTypedHandlerHelper.autoIndentCase(editor, project, file, KtQualifiedExpression::class.java)) return Result.STOP
             }
 
             c == '|' -> {
-                if (autoIndentCase(editor, project, file, KtOperationReferenceExpression::class.java)) return Result.STOP
+                if (KotlinTypedHandlerHelper.autoIndentCase(editor, project, file, KtOperationReferenceExpression::class.java)) return Result.STOP
             }
 
             c == '&' -> {
-                if (autoIndentCase(editor, project, file, KtOperationReferenceExpression::class.java)) return Result.STOP
+                if (KotlinTypedHandlerHelper.autoIndentCase(editor, project, file, KtOperationReferenceExpression::class.java)) return Result.STOP
             }
 
             c == '$' -> {
                 val offset = editor.caretModel.offset
                 val element = file.findElementAt(offset)
                 if (element is LeafPsiElement && element.elementType === KtTokens.REGULAR_STRING_PART) {
-                    editor.putUserData(PREVIOUS_IN_STRING_DOLLAR_TYPED_OFFSET_KEY, offset)
+                    editor.putUserData(KotlinTypedHandlerHelper.PREVIOUS_IN_STRING_DOLLAR_TYPED_OFFSET_KEY, offset)
                     isGlobalPreviousDollarInString = true
                 }
             }
 
             c == '(' -> {
-                if (autoIndentCase(editor, project, file, KtPropertyAccessor::class.java, forFirstElement = false)) return Result.STOP
+                if (KotlinTypedHandlerHelper.autoIndentCase(editor, project, file, KtPropertyAccessor::class.java, forFirstElement = false)) return Result.STOP
             }
         }
 
@@ -203,132 +330,5 @@ class KotlinTypedHandler : TypedHandlerDelegate() {
             KtTokens.ELSE_KEYWORD,
             KtTokens.TRY_KEYWORD,
         )
-    }
-
-    companion object {
-        private val PREVIOUS_IN_STRING_DOLLAR_TYPED_OFFSET_KEY = Key.create<Int>("PREVIOUS_IN_STRING_DOLLAR_TYPED_OFFSET_KEY")
-        private fun autoPopupParameterInfo(project: Project, editor: Editor) {
-            val offset = editor.caretModel.offset
-            if (offset == 0) return
-            val iterator = editor.highlighter.createIterator(offset - 1)
-            val tokenType = iterator.tokenType
-            if (KtTokens.COMMENTS.contains(tokenType) ||
-                tokenType === KtTokens.REGULAR_STRING_PART ||
-                tokenType === KtTokens.OPEN_QUOTE ||
-                tokenType === KtTokens.CHARACTER_LITERAL
-            ) {
-                return
-            }
-
-            AutoPopupController.getInstance(project).autoPopupParameterInfo(editor, null)
-        }
-
-        private fun autoPopupMemberLookup(project: Project, editor: Editor): Unit =
-            AutoPopupController.getInstance(project).autoPopupMemberLookup(editor, fun(file: PsiFile): Boolean {
-                val offset = editor.caretModel.offset
-                val lastToken = file.findElementAt(offset - 1) ?: return false
-                val elementType = lastToken.node.elementType
-                if (elementType === KtTokens.DOT || elementType === KtTokens.SAFE_ACCESS) return true
-                if (elementType === KtTokens.REGULAR_STRING_PART && lastToken.textRange.startOffset == offset - 1) {
-                    val prevSibling = lastToken.parent.prevSibling
-                    return prevSibling is KtSimpleNameStringTemplateEntry
-                }
-                return false
-            })
-
-        private fun isLabelCompletion(chars: CharSequence, offset: Int): Boolean {
-            return endsWith(chars, offset, "this@")
-                    || endsWith(chars, offset, "return@")
-                    || endsWith(chars, offset, "break@")
-                    || endsWith(chars, offset, "continue@")
-        }
-
-        private fun autoPopupAt(project: Project, editor: Editor) {
-            AutoPopupController.getInstance(project).autoPopupMemberLookup(editor) { file: PsiFile ->
-                val offset = editor.caretModel.offset
-                val chars = editor.document.charsSequence
-                val lastNodeType = file.findElementAt(offset - 1)?.node?.elementType ?: return@autoPopupMemberLookup false
-
-                lastNodeType === KDocTokens.TEXT || (lastNodeType === KtTokens.AT && isLabelCompletion(chars, offset))
-            }
-        }
-
-        private fun autoPopupCallableReferenceLookup(project: Project, editor: Editor): Unit =
-            AutoPopupController.getInstance(project).autoPopupMemberLookup(editor) { file: PsiFile ->
-                val offset = editor.caretModel.offset
-                val lastElement = file.findElementAt(offset - 1) ?: return@autoPopupMemberLookup false
-                lastElement.node.elementType === KtTokens.COLONCOLON
-            }
-
-        private fun endsWith(chars: CharSequence, offset: Int, text: String): Boolean =
-            if (offset < text.length) false else chars.subSequence(offset - text.length, offset).toString() == text
-
-        private fun dataClassValParameterInsert(
-            project: Project,
-            editor: Editor,
-            file: PsiFile,
-            beforeType: Boolean
-        ) {
-            if (!KotlinEditorOptions.getInstance().isAutoAddValKeywordToDataClassParameters) return
-            val document = editor.document
-            PsiDocumentManager.getInstance(project).commitDocument(document)
-            var commaOffset = editor.caretModel.offset
-            if (!beforeType) commaOffset--
-            if (commaOffset < 1) return
-            val elementOnCaret = file.findElementAt(commaOffset) ?: return
-            var contextMatched = false
-            var parentElement = elementOnCaret.parent
-            if (parentElement is KtParameterList) {
-                parentElement = parentElement.getParent()
-                if (parentElement is KtPrimaryConstructor) {
-                    parentElement = parentElement.getParent()
-                    if (parentElement is KtClass) {
-                        val klassElement = parentElement
-                        contextMatched = klassElement.mustHaveNonEmptyPrimaryConstructor()
-                    }
-                }
-            }
-
-            if (!contextMatched) return
-            val leftElement = PsiTreeUtil.skipWhitespacesAndCommentsBackward(elementOnCaret) as? KtParameter ?: return
-            val typeReference = leftElement.typeReference ?: return
-            if (leftElement.hasValOrVar()) return
-            if (typeReference.textLength == 0) return
-            document.insertString(leftElement.textOffset, "val ")
-        }
-
-        private fun autoIndentCase(
-            editor: Editor,
-            project: Project,
-            file: PsiFile,
-            klass: Class<*>,
-            forFirstElement: Boolean = true,
-        ): Boolean {
-            val offset = editor.caretModel.offset
-            PsiDocumentManager.getInstance(project).commitDocument(editor.document)
-            val currElement = file.findElementAt(offset - 1)
-            if (currElement != null) {
-                // Should be applied only if there's nothing but the whitespace in line before the element
-                val prevLeaf = PsiTreeUtil.prevLeaf(currElement)
-                if (forFirstElement && !(prevLeaf is PsiWhiteSpace && prevLeaf.textContains('\n'))) {
-                    return false
-                }
-
-                val parent = currElement.parent
-                if (klass.isInstance(parent)) {
-                    val curElementLength = currElement.text.length
-                    if (offset < curElementLength) return false
-                    if (forFirstElement) {
-                        CodeStyleManager.getInstance(project).adjustLineIndent(file, offset - curElementLength)
-                    } else {
-                        PsiDocumentManager.getInstance(project).getDocument(file)?.adjustLineIndent(project, offset)
-                    }
-
-                    return true
-                }
-            }
-
-            return false
-        }
     }
 }

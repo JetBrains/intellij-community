@@ -8,7 +8,7 @@
   <xi:include href="refactorings.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="file-types.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="resolution-fe10.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="highlighting.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="kotlin.highlighting-shared.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="highlighting-fe10.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="language.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="light-classes.xml" xpointer="xpointer(/idea-plugin/*)"/>

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.highlighter.markers
 
@@ -10,6 +10,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.util.Function
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
 import org.jetbrains.kotlin.descriptors.Modality
+import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
@@ -17,11 +18,11 @@ import org.jetbrains.kotlin.idea.codeInsight.KtFunctionPsiElementCellRenderer
 import org.jetbrains.kotlin.idea.codeInsight.lineMarkers.shared.NavigationPopupDescriptor
 import org.jetbrains.kotlin.idea.codeInsight.lineMarkers.shared.TestableLineMarkerNavigator
 import org.jetbrains.kotlin.idea.core.getDirectlyOverriddenDeclarations
-import org.jetbrains.kotlin.idea.search.usagesSearch.propertyDescriptor
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
+import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import java.awt.event.MouseEvent
 import java.util.concurrent.atomic.AtomicReference
 
@@ -109,3 +110,7 @@ fun resolveDeclarationWithParents(element: KtDeclaration): ResolveWithParentsRes
 
     return ResolveWithParentsResult(descriptor, descriptor.getDirectlyOverriddenDeclarations())
 }
+
+// TODO: copy-paste
+val KtParameter.propertyDescriptor: PropertyDescriptor?
+    get() = this.resolveToDescriptorIfAny(BodyResolveMode.FULL) as? PropertyDescriptor

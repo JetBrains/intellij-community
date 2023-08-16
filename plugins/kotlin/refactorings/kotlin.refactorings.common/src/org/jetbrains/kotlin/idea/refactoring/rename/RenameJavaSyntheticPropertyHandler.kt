@@ -45,8 +45,6 @@ class RenameJavaSyntheticPropertyHandler : AbstractReferenceSubstitutionRenameHa
         override fun getName() = name.asString()
 
         override fun setName(name: String): PsiElement {
-            getter?.name = JvmAbi.getterName(name)
-            setter?.name = JvmAbi.setterName(name)
             return this
         }
 

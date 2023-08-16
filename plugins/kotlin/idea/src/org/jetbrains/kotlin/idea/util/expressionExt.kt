@@ -4,23 +4,24 @@ package org.jetbrains.kotlin.idea.util
 
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.openapi.util.TextRange
-import com.intellij.psi.PsiComment
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiMember
-import com.intellij.psi.PsiMethod
+import com.intellij.psi.*
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.descriptors.ConstructorDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
+import org.jetbrains.kotlin.descriptors.DeclarationDescriptorWithSource
 import org.jetbrains.kotlin.idea.base.psi.textRangeIn
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.codeinsight.utils.isReferenceToImplicitLambdaParameter
 import org.jetbrains.kotlin.idea.intentions.callExpression
 import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.idea.references.resolveMainReferenceToDescriptors
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElementSelector
 import org.jetbrains.kotlin.resolve.constants.evaluate.ConstantExpressionEvaluator
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
+import org.jetbrains.kotlin.resolve.source.getPsi
 import org.jetbrains.kotlin.idea.base.psi.textRangeIn as _textRangeIn
 
 fun KtCallElement.replaceOrCreateTypeArgumentList(newTypeArgumentList: KtTypeArgumentList) {
@@ -68,3 +69,15 @@ val KtNamedFunction.isAnonymousFunction: Boolean get() = nameIdentifier == null
 
 val DeclarationDescriptor.isPrimaryConstructorOfDataClass: Boolean
     get() = this is ConstructorDescriptor && this.isPrimary && this.constructedClass.isData
+
+fun findLambdaOpenLBraceForGeneratedIt(ref: PsiReference): PsiElement? {
+    val element: PsiElement = ref.element
+    if (element.text != StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME.identifier) return null
+
+    if (element !is KtNameReferenceExpression || !element.isReferenceToImplicitLambdaParameter()) return null
+
+    val itDescriptor = element.resolveMainReferenceToDescriptors().singleOrNull() ?: return null
+    val descriptorWithSource = itDescriptor.containingDeclaration as? DeclarationDescriptorWithSource ?: return null
+    val lambdaExpression = descriptorWithSource.source.getPsi()?.parent as? KtLambdaExpression ?: return null
+    return lambdaExpression.leftCurlyBrace.treeNext?.psi
+}

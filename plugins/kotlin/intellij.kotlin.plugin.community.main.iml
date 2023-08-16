@@ -35,7 +35,6 @@
     <orderEntry type="module" module-name="kotlin.base.fe10.analysis" exported="" />
     <orderEntry type="module" module-name="kotlin.base.fe10.analysis-api-providers" exported="" />
     <orderEntry type="module" module-name="kotlin.base.fe10.kdoc" exported="" />
-    <orderEntry type="module" module-name="kotlin.base.fe10.highlighting" exported="" />
     <orderEntry type="module" module-name="kotlin.base.fe10.code-insight" exported="" />
     <orderEntry type="module" module-name="kotlin.base.fe10.obsolete-compat" exported="" />
     <orderEntry type="module" module-name="kotlin.base.fe10.project-structure" exported="" />
