@@ -121,7 +121,6 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
 
             doTestFor(mainFile, inspection, fileText)
 
-            checkForUnexpectedErrors()
             PsiTestUtil.checkPsiStructureWithCommit(file, PsiTestUtil::checkPsiMatchesTextIgnoringNonCode)
         }
     }
@@ -298,6 +297,8 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
                 editor.document.text
             )
         }
+
+        checkForUnexpectedErrors()
     }
 
     private fun createAfterFileIfItDoesNotExist(path: Path) {
