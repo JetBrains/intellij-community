@@ -1,0 +1,61 @@
+LineBreakpoint created at nestedInlineFunctions6.kt:8
+LineBreakpoint created at nestedInlineFunctions6.kt:26
+LineBreakpoint created at nestedInlineFunctions6.kt:32
+LineBreakpoint created at nestedInlineFunctions6.kt:38
+LineBreakpoint created at nestedInlineFunctions6.kt:44
+LineBreakpoint created at nestedInlineFunctions6.kt:53
+Run Java
+Connected to the target VM
+nestedInlineFunctions6.kt:32
+Compile bytecode for x2
+InlineStackFrame x2 (nestedInlineFunctions6.kt:32)
+    JavaValue[local] x2: int = 2 (nestedInlineFunctions6.kt:30)
+InlineStackFrame x1 (nestedInlineFunctions6.kt:23)
+    JavaValue[local] x1: int = 1
+InlineStackFrame bar (nestedInlineFunctions6.kt:13)
+    JavaValue[local] x0: int = 0
+KotlinStackFrame (nestedInlineFunctions6.kt:49)
+    JavaValue[local] m: int = -1
+nestedInlineFunctions6.kt:26
+Compile bytecode for x1 + x3
+InlineStackFrame x1 (nestedInlineFunctions6.kt:26)
+    JavaValue[local] x1: int = 1 (nestedInlineFunctions6.kt:22)
+    JavaValue[local] x3: int = 3 (nestedInlineFunctions6.kt:24)
+InlineStackFrame bar (nestedInlineFunctions6.kt:13)
+    JavaValue[local] x0: int = 0
+KotlinStackFrame (nestedInlineFunctions6.kt:49)
+    JavaValue[local] m: int = -1
+nestedInlineFunctions6.kt:53
+Compile bytecode for x8 + m
+InlineStackFrame lambda 'foo' in 'main' (nestedInlineFunctions6.kt:53)
+    JavaValue[local] m: int = -1 (nestedInlineFunctions6.kt:48)
+    JavaValue[local] it: int = 8 (nestedInlineFunctions6.kt:50)
+    JavaValue[local] x8: int = 8 (nestedInlineFunctions6.kt:51)
+InlineStackFrame foo (nestedInlineFunctions6.kt:5)
+    JavaValue[local] x6: int = 6
+KotlinStackFrame (nestedInlineFunctions6.kt:50)
+    JavaValue[local] m: int = -1 (nestedInlineFunctions6.kt:48)
+nestedInlineFunctions6.kt:8
+Compile bytecode for x6 + x7
+InlineStackFrame foo (nestedInlineFunctions6.kt:8)
+    JavaValue[local] x6: int = 6 (nestedInlineFunctions6.kt:4)
+    JavaValue[local] x7: int = 7 (nestedInlineFunctions6.kt:6)
+KotlinStackFrame (nestedInlineFunctions6.kt:50)
+    JavaValue[local] m: int = -1
+nestedInlineFunctions6.kt:38
+Compile bytecode for x4
+InlineStackFrame x4 (nestedInlineFunctions6.kt:38)
+    JavaValue[local] x4: int = 4 (nestedInlineFunctions6.kt:36)
+InlineStackFrame baz (nestedInlineFunctions6.kt:17)
+KotlinStackFrame (nestedInlineFunctions6.kt:55)
+    JavaValue[local] m: int = -1
+nestedInlineFunctions6.kt:44
+Compile bytecode for x5
+InlineStackFrame x5 (nestedInlineFunctions6.kt:44)
+    JavaValue[local] x5: int = 5 (nestedInlineFunctions6.kt:42)
+InlineStackFrame baz (nestedInlineFunctions6.kt:18)
+KotlinStackFrame (nestedInlineFunctions6.kt:55)
+    JavaValue[local] m: int = -1
+Disconnected from the target VM
+
+Process finished with exit code 0

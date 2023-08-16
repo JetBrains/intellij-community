@@ -150,6 +150,8 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase(), IgnorableTestCas
 
     protected open val compileWithK2: Boolean get() = false
 
+    protected open val useInlineScopes: Boolean get() = false
+
     override fun setUp() {
         super.setUp()
 
@@ -227,7 +229,12 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase(), IgnorableTestCas
 
         val compilerFacility = createDebuggerTestCompilerFacility(
             testFiles, jvmTarget,
-            TestCompileConfiguration(lambdasGenerationScheme(), languageVersion, enabledLanguageFeatures)
+            TestCompileConfiguration(
+                lambdasGenerationScheme(),
+                languageVersion,
+                enabledLanguageFeatures,
+                useInlineScopes
+            )
         )
 
         compileLibrariesAndTestSources(preferences, compilerFacility)
@@ -523,6 +530,7 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase(), IgnorableTestCas
 
     protected fun getExpectedOutputFile(): File {
         val extensions = sequenceOf(
+            ".scopes.out".takeIf { useInlineScopes },
             ".k2.out".takeIf { compileWithK2 },
             ".indy.out".takeIf { lambdasGenerationScheme() == JvmClosureGenerationScheme.INDY },
             ".out",

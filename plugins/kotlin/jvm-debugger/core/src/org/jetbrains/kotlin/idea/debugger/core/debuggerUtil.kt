@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.codegen.coroutines.INVOKE_SUSPEND_METHOD_NAME
 import org.jetbrains.kotlin.codegen.inline.KOTLIN_STRATA_NAME
+import org.jetbrains.kotlin.codegen.inline.dropInlineScopeInfo
 import org.jetbrains.kotlin.codegen.inline.isFakeLocalVariableForInline
 import org.jetbrains.kotlin.codegen.topLevelClassAsmType
 import org.jetbrains.kotlin.idea.base.psi.getLineEndOffset
@@ -97,7 +98,7 @@ private fun isInlinedArgument(localVariables: List<LocalVariable>, inlineArgumen
             .any { variableName ->
                 if (variableName.startsWith("-")) {
                     val lambdaClassName = ClassNameCalculator.getClassName(inlineArgument)?.substringAfterLast('.') ?: return@any false
-                    dropInlineSuffix(variableName) == "-$functionName-$lambdaClassName"
+                    dropInlineSuffix(variableName).dropInlineScopeInfo() == "-$functionName-$lambdaClassName"
                 } else {
                     // For Kotlin up to 1.3.10
                     lambdaOrdinalByLocalVariable(variableName) == lambdaOrdinal
@@ -326,3 +327,9 @@ fun Method.getInlineFunctionOrArgumentVariables(): Sequence<LocalVariable> {
 
 val DebugProcessImpl.canRunEvaluation: Boolean
     get() = suspendManager.pausedContext != null
+
+val String.isInlineFunctionMarkerVariableName: Boolean
+    get() = startsWith(JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_FUNCTION)
+
+val String.isInlineLambdaMarkerVariableName: Boolean
+    get() = startsWith(JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_ARGUMENT)

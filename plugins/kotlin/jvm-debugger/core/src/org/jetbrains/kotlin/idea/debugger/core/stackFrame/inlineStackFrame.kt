@@ -15,9 +15,13 @@ class InlineStackFrame(
     name: String,
     frameProxy: StackFrameProxyImpl,
     variableInlineDepth: Int,
-    visibleVariables: List<LocalVariableProxyImpl>
+    visibleVariables: List<LocalVariableProxyImpl>,
+    inlineScopeNumber: Int = -1,
+    surroundingScopeNumber: Int = -1,
 ) : KotlinStackFrame(
-        safeInlineStackFrameProxy(location, variableInlineDepth, frameProxy),
+        safeInlineStackFrameProxy(
+            location, variableInlineDepth, frameProxy, inlineScopeNumber, surroundingScopeNumber
+        ),
         visibleVariables
     ), XDebuggerFramesList.ItemWithCustomBackgroundColor {
     init {

@@ -1,0 +1,60 @@
+LineBreakpoint created at nestedInlineFunctions4.kt:15
+LineBreakpoint created at nestedInlineFunctions4.kt:20
+LineBreakpoint created at nestedInlineFunctions4.kt:23
+Run Java
+Connected to the target VM
+nestedInlineFunctions4.kt:15
+Compile bytecode for x + y + it
+InlineStackFrame lambda 'foo' in 'flaf' (nestedInlineFunctions4.kt:15)
+    JavaValue[local] flafVar: int = 0 (nestedInlineFunctions4.kt:9)
+    JavaValue[local] it: int = 1 (nestedInlineFunctions4.kt:12)
+    JavaValue[local] x: int = 1 (nestedInlineFunctions4.kt:11)
+    JavaValue[local] y: int = 2 (nestedInlineFunctions4.kt:13)
+InlineStackFrame foo (nestedInlineFunctions4.kt:5)
+    JavaValue[local] fooParam: int = 1
+    JavaValue[local] fooVar: int = 0
+InlineStackFrame lambda 'foo' in 'flaf' (nestedInlineFunctions4.kt:12)
+    JavaValue[local] flafVar: int = 0 (nestedInlineFunctions4.kt:9)
+    JavaValue[local] it: int = 0 (nestedInlineFunctions4.kt:12)
+    JavaValue[local] x: int = 1 (nestedInlineFunctions4.kt:11)
+InlineStackFrame foo (nestedInlineFunctions4.kt:5)
+    JavaValue[local] fooParam: int = 0
+    JavaValue[local] fooVar: int = 0
+InlineStackFrame flaf (nestedInlineFunctions4.kt:10)
+    JavaValue[local] flafVar: int = 0 (nestedInlineFunctions4.kt:9)
+KotlinStackFrame (nestedInlineFunctions4.kt:28)
+nestedInlineFunctions4.kt:20
+Compile bytecode for x + z + it
+InlineStackFrame lambda 'foo' in 'flaf' (nestedInlineFunctions4.kt:20)
+    JavaValue[local] flafVar: int = 0 (nestedInlineFunctions4.kt:9)
+    JavaValue[local] it: int = 2 (nestedInlineFunctions4.kt:17)
+    JavaValue[local] x: int = 1 (nestedInlineFunctions4.kt:11)
+    JavaValue[local] z: int = 3 (nestedInlineFunctions4.kt:18)
+InlineStackFrame foo (nestedInlineFunctions4.kt:5)
+    JavaValue[local] fooParam: int = 2
+    JavaValue[local] fooVar: int = 0
+InlineStackFrame lambda 'foo' in 'flaf' (nestedInlineFunctions4.kt:17)
+    JavaValue[local] flafVar: int = 0 (nestedInlineFunctions4.kt:9)
+    JavaValue[local] it: int = 0 (nestedInlineFunctions4.kt:17)
+    JavaValue[local] x: int = 1 (nestedInlineFunctions4.kt:11)
+InlineStackFrame foo (nestedInlineFunctions4.kt:5)
+    JavaValue[local] fooParam: int = 0
+    JavaValue[local] fooVar: int = 0
+InlineStackFrame flaf (nestedInlineFunctions4.kt:10)
+    JavaValue[local] flafVar: int = 0 (nestedInlineFunctions4.kt:9)
+KotlinStackFrame (nestedInlineFunctions4.kt:28)
+nestedInlineFunctions4.kt:23
+Compile bytecode for x + it
+InlineStackFrame lambda 'foo' in 'flaf' (nestedInlineFunctions4.kt:23)
+    JavaValue[local] flafVar: int = 0 (nestedInlineFunctions4.kt:9)
+    JavaValue[local] it: int = 0 (nestedInlineFunctions4.kt:10)
+    JavaValue[local] x: int = 1 (nestedInlineFunctions4.kt:11)
+InlineStackFrame foo (nestedInlineFunctions4.kt:5)
+    JavaValue[local] fooParam: int = 0
+    JavaValue[local] fooVar: int = 0
+InlineStackFrame flaf (nestedInlineFunctions4.kt:10)
+    JavaValue[local] flafVar: int = 0 (nestedInlineFunctions4.kt:9)
+KotlinStackFrame (nestedInlineFunctions4.kt:28)
+Disconnected from the target VM
+
+Process finished with exit code 0
