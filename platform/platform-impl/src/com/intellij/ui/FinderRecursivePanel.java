@@ -42,7 +42,6 @@ import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -253,7 +252,7 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
     IdeFocusManager.getInstance(myProject).requestFocus(myList, true);
   }
 
-  private void installListActions(JBList list) {
+  private void installListActions(JBList<T> list) {
     AnAction previousPanelAction = new AnAction(IdeBundle.messagePointer("action.FinderRecursivePanel.text.previous"), AllIcons.Actions.Back) {
       @Override
       public void update(@NotNull AnActionEvent e) {
@@ -334,13 +333,12 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
     return AnAction.EMPTY_ARRAY;
   }
 
-  private void installSpeedSearch(JBList list) {
-    //noinspection unchecked
-    final ListSpeedSearch search = ListSpeedSearch.installOn(list, o -> getItemText((T)o));
+  private void installSpeedSearch(JBList<T> list) {
+    final ListSpeedSearch<T> search = ListSpeedSearch.installOn(list, o -> getItemText(o));
     search.setComparator(new SpeedSearchComparator(false));
   }
 
-  private void installEditOnDoubleClick(JBList list) {
+  private void installEditOnDoubleClick(JBList<T> list) {
     new DoubleClickListener() {
       @Override
       protected boolean onDoubleClick(@NotNull MouseEvent event) {
@@ -432,58 +430,6 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
     return myList.getSelectedValue();
   }
 
-  /**
-   * Performs recursive update selecting given values.
-   *
-   * @param pathToSelect Values to select.
-   */
-  public void updateSelectedPath(Object... pathToSelect) {
-    if (!myUpdateSelectedPathModeActive.compareAndSet(false, true)) return;
-    try {
-      FinderRecursivePanel<?> panel = this;
-      for (int i = 0; i < pathToSelect.length; i++) {
-        Object selectedValue = pathToSelect[i];
-        panel.setSelectedValue(selectedValue);
-
-        if (i < pathToSelect.length - 1) {
-          final JComponent component = panel.getSecondComponent();
-          if (!(component instanceof FinderRecursivePanel)) {
-            throw new IllegalStateException("failed to select idx=" + (i + 1) + ": " +
-                                            "component=" + component + ", " +
-                                            "pathToSelect=" + Arrays.toString(pathToSelect));
-          }
-          panel = (FinderRecursivePanel<?>)component;
-        }
-      }
-
-      IdeFocusManager.getInstance(myProject).requestFocus(panel.myList, true);
-    }
-    finally {
-      myUpdateSelectedPathModeActive.set(false);
-    }
-  }
-
-  private void setSelectedValue(final Object value) {
-    if (value.equals(myList.getSelectedValue())) {
-      return;
-    }
-
-    // load list items synchronously
-    myList.setPaintBusy(true);
-    try {
-      final List<T> listItems = ReadAction.compute(() -> getListItems());
-      mergeListItems(myListModel, myList, listItems);
-    }
-    finally {
-      myList.setPaintBusy(false);
-    }
-
-    myList.setSelectedValue(value, true);
-
-    // always recreate since instance might depend on this one's selected value
-    createRightComponent(false);
-  }
-
   public @NotNull Project getProject() {
     return myProject;
   }
@@ -552,7 +498,7 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
     mergeListItems(myListModel, myList, listItems);
 
     if (myList.isEmpty()) {
-      createRightComponent(true);
+      createRightComponent();
     }
     else if (myList.getSelectedIndex() < 0) {
       myList.setSelectedIndex(myListModel.getSize() > oldIndex ? oldIndex : 0);
@@ -570,7 +516,7 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
       if (listModel.getSize() == 0) {
         listModel.add(newItems);
       }
-      else if (newItems.size() == 0) {
+      else if (newItems.isEmpty()) {
         listModel.removeAll();
       }
       else {
@@ -604,14 +550,14 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
 
   public void updateRightComponent(boolean force) {
     if (force) {
-      createRightComponent(true);
+      createRightComponent();
     }
     else if (myChild instanceof FinderRecursivePanel) {
       ((FinderRecursivePanel<?>)myChild).updatePanel();
     }
   }
 
-  private void createRightComponent(boolean withUpdatePanel) {
+  private void createRightComponent() {
     if (myChild instanceof Disposable) {
       Disposer.dispose((Disposable)myChild);
     }
@@ -619,12 +565,7 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
     if (value != null) {
       myChild = createRightComponent(value);
       if (myChild instanceof FinderRecursivePanel<?> childPanel) {
-        if (withUpdatePanel) {
-          childPanel.initPanel();
-        }
-        else {
-          childPanel.initWithoutUpdatePanel();
-        }
+        childPanel.initPanel();
       }
     }
     else {
@@ -680,8 +621,8 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
     }
 
     @Override
-    public Component getListCellRendererComponent(JList list,
-                                                  Object value,
+    public Component getListCellRendererComponent(JList<? extends T> list,
+                                                  T value,
                                                   int index,
                                                   boolean isSelected,
                                                   boolean cellHasFocus) {
@@ -692,19 +633,17 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
       clear();
       setFont(UIUtil.getListFont());
 
-      //noinspection unchecked
-      final T t = (T)value;
       try {
-        putClientProperty(ITEM_PROPERTY, t);
-        setIcon(getItemIcon(t));
-        append(getItemText(t));
+        putClientProperty(ITEM_PROPERTY, value);
+        setIcon(getItemIcon(value));
+        append(getItemText(value));
       }
       catch (IndexNotReadyException e) {
         append(IdeBundle.message("progress.text.loading"));
       }
 
       try {
-        doCustomizeCellRenderer(this, list, t, index, isSelected, cellHasFocus);
+        doCustomizeCellRenderer(this, list, value, index, isSelected, cellHasFocus);
       }
       catch (IndexNotReadyException ignored) {
         // ignore
@@ -712,13 +651,13 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
 
       Color bg = UIUtil.getTreeBackground(isSelected, cellHasFocus);
       if (!isSelected) {
-        VirtualFile file = getContainingFile(t);
+        VirtualFile file = getContainingFile(value);
         Color bgColor = file == null ? null : getFileBackgroundColor(myProject, file);
         bg = bgColor == null ? bg : bgColor;
       }
       setBackground(bg);
 
-      if (hasChildren(t)) {
+      if (hasChildren(value)) {
         final JComponent rendererComponent = this;
         JPanel result = new JPanel(new BorderLayout()) {
           @Override
