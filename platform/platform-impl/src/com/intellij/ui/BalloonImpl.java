@@ -332,6 +332,7 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
   private final Dimension myPointerSize;
   private final int myCornerToPointerDistance;
   private int myCornerRadius = -1;
+  private int myClipY = -1;
 
   public BalloonImpl(@NotNull JComponent content,
                      @NotNull Color borderColor,
@@ -1923,6 +1924,11 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
 
     @Override
     protected void paintComponent(final Graphics g) {
+      if (myClipY != -1) {
+        //noinspection GraphicsSetClipInspection
+        g.setClip(0, 0, getWidth(), myClipY);
+      }
+
       super.paintComponent(g);
 
       final Graphics2D g2d = (Graphics2D)g;
@@ -2241,6 +2247,18 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
 
   public void setId(String id) {
     myId = id;
+  }
+
+  public int getClipY() {
+    return myClipY;
+  }
+
+  public void setClipY(int clipY) {
+    int oldClip = myClipY;
+    myClipY = clipY;
+    if (oldClip != clipY) {
+      component.repaint();
+    }
   }
 
   public interface HideListenerWithMouse extends Runnable {
