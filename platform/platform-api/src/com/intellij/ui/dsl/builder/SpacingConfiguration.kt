@@ -4,6 +4,7 @@ package com.intellij.ui.dsl.builder
 import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.dsl.gridLayout.toUnscaled
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * List of all configurable spacings for building Kotlin UI DSL panels. All returned values are unscaled
@@ -70,7 +71,9 @@ interface SpacingConfiguration {
    */
   @Deprecated("Use dialogUnscaledGaps instead",
               ReplaceWith("dialogUnscaledGaps", "com.intellij.ui.dsl.gridLayout.UnscaledGaps"))
-  val dialogGap: Gaps get() = Gaps.EMPTY
+  val dialogGap: Gaps
+    @ApiStatus.ScheduledForRemoval
+    get() = Gaps.EMPTY
 
   /**
    * Unscaled gaps between dialog content and its content
