@@ -228,7 +228,7 @@ private suspend fun createProductProperties(productConfiguration: ProductConfigu
     PathClassLoader(UrlClassLoader.build().files(classPathFiles).parent(BuildRequest::class.java.classLoader))
   }
 
-  val productProperties = spanBuilder("create product properties").useWithScope2 {
+  return spanBuilder("create product properties").useWithScope2 {
     val productPropertiesClass = try {
       classLoader.loadClass(productConfiguration.className)
     }
@@ -239,11 +239,16 @@ private suspend fun createProductProperties(productConfiguration: ProductConfigu
       throw RuntimeException("cannot create product properties (classPath=$classPathString")
     }
 
-    MethodHandles.lookup()
-      .findConstructor(productPropertiesClass, MethodType.methodType(Void.TYPE, Path::class.java))
-      .invoke(if (request.platformPrefix == "Idea") getCommunityHomePath(request.homePath).communityRoot else request.homePath) as ProductProperties
+    val lookup = MethodHandles.lookup()
+    try {
+      lookup.findConstructor(productPropertiesClass, MethodType.methodType(Void.TYPE)).invoke()
+    }
+    catch (e: NoSuchMethodException) {
+      lookup
+        .findConstructor(productPropertiesClass, MethodType.methodType(Void.TYPE, Path::class.java))
+        .invoke(if (request.platformPrefix == "Idea") getCommunityHomePath(request.homePath).communityRoot else request.homePath)
+    } as ProductProperties
   }
-  return productProperties
 }
 
 private fun checkBuildModulesModificationAndMark(productConfiguration: ProductConfiguration, outDir: Path): Boolean {
