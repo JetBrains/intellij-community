@@ -22,8 +22,10 @@ class PersistentGitLabAccountManager :
   override fun accountsRepository(): AccountsRepository<GitLabAccount> = service<GitLabPersistentAccounts>()
 
   override fun credentialsRepository() =
-    PasswordSafeCredentialsRepository<GitLabAccount, String>(GitLabUtil.SERVICE_NAME,
-                                                             PasswordSafeCredentialsRepository.CredentialsMapper.Simple)
+    PasswordSafeCredentialsRepository<GitLabAccount, String>(
+      GitLabUtil.SERVICE_NAME,
+      PasswordSafeCredentialsRepository.CredentialsMapper.Simple
+    )
 
   override fun dispose() = Unit
 

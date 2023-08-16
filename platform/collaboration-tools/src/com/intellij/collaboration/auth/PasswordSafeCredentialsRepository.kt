@@ -3,8 +3,12 @@ package com.intellij.collaboration.auth
 
 import com.intellij.credentialStore.*
 import com.intellij.ide.passwordSafe.PasswordSafe
-import com.intellij.openapi.components.service
+import com.intellij.openapi.application.ApplicationManager
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 /**
@@ -19,11 +23,21 @@ class PasswordSafeCredentialsRepository<A : Account, Cred : Any>(
   private val serviceName: String,
   private val mapper: CredentialsMapper<Cred>
 ) : CredentialsRepository<A, Cred> {
-  /** Settings for the password, lazily fetched. */
-  private val passwordSafeSettings by lazy { service<PasswordSafeSettings>() }
-
   private val passwordSafe
     get() = PasswordSafe.instance
+
+  // It is assumed all options other than MEMORY_ONLY persist to disk in some way.
+  override val canPersistCredentials: Flow<Boolean> =
+    callbackFlow {
+      trySend(!passwordSafe.isMemoryOnly)
+      ApplicationManager.getApplication().messageBus.connect(this)
+        .subscribe(PasswordSafeSettings.TOPIC, object : PasswordSafeSettingsListener {
+          override fun typeChanged(oldValue: ProviderType, newValue: ProviderType) {
+            trySend(newValue != ProviderType.MEMORY_ONLY)
+          }
+        })
+      awaitClose()
+    }
 
   override suspend fun persistCredentials(account: A, credentials: Cred?) {
     withContext(Dispatchers.IO) {
@@ -37,10 +51,6 @@ class PasswordSafeCredentialsRepository<A : Account, Cred : Any>(
         ?.getPasswordAsString()
         ?.let(mapper::deserialize)
     }
-
-  // It is assumed all options other than MEMORY_ONLY persist to disk in some way.
-  override fun canPersistCredentials(): Boolean =
-    passwordSafeSettings.providerType != ProviderType.MEMORY_ONLY
 
   private fun A.credentialAttributes() = CredentialAttributes(generateServiceName(serviceName, id))
 

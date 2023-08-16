@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gitlab
 
 import com.intellij.collaboration.async.DisposingMainScope
 import com.intellij.collaboration.auth.ui.AccountsPanelFactory
+import com.intellij.collaboration.auth.ui.AccountsPanelFactory.Companion.addWarningForMemoryOnlyPasswordSafe
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.service
@@ -43,6 +44,12 @@ internal class GitLabSettingsConfigurable(private val project: Project)
         accountsPanelFactory.accountsPanelCell(this, detailsProvider, actionsController)
           .align(Align.FILL)
       }.resizableRow()
+
+      addWarningForMemoryOnlyPasswordSafe(
+        scope,
+        service<GitLabAccountManager>().canPersistCredentials,
+        ::panel
+      )
     }
   }
 }

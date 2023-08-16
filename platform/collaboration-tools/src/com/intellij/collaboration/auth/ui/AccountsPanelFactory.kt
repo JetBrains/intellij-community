@@ -4,27 +4,41 @@ package com.intellij.collaboration.auth.ui
 import com.intellij.collaboration.auth.Account
 import com.intellij.collaboration.auth.AccountManager
 import com.intellij.collaboration.auth.DefaultAccountHolder
-import com.intellij.collaboration.messages.CollaborationToolsBundle
+import com.intellij.collaboration.messages.CollaborationToolsBundle.message
+import com.intellij.collaboration.ui.CollaborationToolsUIUtil.asObservableIn
+import com.intellij.collaboration.ui.HorizontalListPanel
 import com.intellij.collaboration.ui.findIndex
 import com.intellij.collaboration.ui.util.JListHoveredRowMaterialiser
 import com.intellij.icons.AllIcons
+import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonShortcuts
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.keymap.KeymapUtil
+import com.intellij.openapi.options.ex.Settings
 import com.intellij.openapi.progress.ModalTaskOwner
 import com.intellij.openapi.progress.runBlockingModalWithRawProgressReporter
 import com.intellij.ui.LayeredIcon
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.ToolbarDecorator
 import com.intellij.ui.awt.RelativePoint
+import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBList
+import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.Row
+import com.intellij.util.ui.NamedColorUtil
 import com.intellij.util.ui.StatusText
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
 import java.awt.event.MouseEvent
 import javax.swing.*
 
@@ -86,7 +100,7 @@ private constructor(private val accountManager: AccountManager<A, Cred>,
       for (account in accountsModel.accounts) {
         newTokensMap.putIfAbsent(account, null)
       }
-      runBlockingModalWithRawProgressReporter(ModalTaskOwner.component(component), CollaborationToolsBundle.message("accounts.saving.credentials")) {
+      runBlockingModalWithRawProgressReporter(ModalTaskOwner.component(component), message("accounts.saving.credentials")) {
         accountManager.updateAccounts(newTokensMap)
       }
       accountsModel.clearNewCredentials()
@@ -130,8 +144,8 @@ private constructor(private val accountManager: AccountManager<A, Cred>,
     accountsList.addListSelectionListener { accountsModel.selectedAccount = accountsList.selectedValue }
 
     accountsList.emptyText.apply {
-      appendText(CollaborationToolsBundle.message("accounts.none.added"))
-      appendSecondaryText(CollaborationToolsBundle.message("accounts.add.link"), SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES) {
+      appendText(message("accounts.none.added"))
+      appendSecondaryText(message("accounts.add.link"), SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES) {
         val event = it.source
         val relativePoint = if (event is MouseEvent) RelativePoint(event) else null
         actionsController.addAccount(accountsList, relativePoint)
@@ -160,7 +174,7 @@ private constructor(private val accountManager: AccountManager<A, Cred>,
       .setRemoveActionUpdater { accountsModel is MutableAccountsListModel && accountsList.selectedValue != null }
 
     if (accountsModel is AccountsListModel.WithDefault) {
-      toolbar.addExtraAction(object : ToolbarDecorator.ElementActionButton(CollaborationToolsBundle.message("accounts.set.default"),
+      toolbar.addExtraAction(object : ToolbarDecorator.ElementActionButton(message("accounts.set.default"),
                                                                            AllIcons.Actions.Checked) {
         override fun actionPerformed(e: AnActionEvent) {
           val selected = accountsList.selectedValue
@@ -177,5 +191,61 @@ private constructor(private val accountManager: AccountManager<A, Cred>,
     }
 
     return toolbar.createPanel()
+  }
+
+  companion object {
+    /**
+     * Adds a warning to a panel that tells the user that passwords and other credentials
+     * are currently not persisted to disk.
+     *
+     * Note: an observable property is created under the given coroutine scope that will
+     * live on for as long as the scope is live. This means the scope needs to be cancelled
+     * manually or through a disposing scope.
+     */
+    @ApiStatus.Experimental
+    fun addWarningForPersistentCredentials(cs: CoroutineScope,
+                                           canPersistCredentials: Flow<Boolean>,
+                                           panel: (Panel.() -> Unit) -> Panel,
+                                           solution: ((DataContext) -> Unit)? = null) {
+      panel {
+        row {
+          cell(HorizontalListPanel(4).apply {
+            val warning = message(if (solution != null) "accounts.error.password-not-saved.colon" else "accounts.error.password-not-saved")
+            add(JLabel(warning).apply {
+              foreground = NamedColorUtil.getErrorForeground()
+            })
+
+            if (solution != null) {
+              add(ActionLink(message("accounts.error.password-not-saved.link")).apply {
+                addActionListener {
+                  if (it.source != this) return@addActionListener
+                  solution(DataManager.getInstance().getDataContext(this))
+                }
+              })
+            }
+          }).align(AlignX.RIGHT)
+            .visibleIf(canPersistCredentials.map { !it }
+                         .stateIn(cs, SharingStarted.Lazily, false)
+                         .asObservableIn(cs))
+        }
+      }.align(AlignX.FILL)
+    }
+
+    /**
+     * Adds a warning to a panel that tells the user that password safe settings are
+     * currently not set to persistent storage, meaning no passwords or tokens are
+     * persisted to storage.
+     *
+     * This specific function also adds a link to the settings page to solve it.
+     */
+    @ApiStatus.Experimental
+    fun addWarningForMemoryOnlyPasswordSafe(cs: CoroutineScope,
+                                            canPersistCredentials: Flow<Boolean>,
+                                            panel: (Panel.() -> Unit) -> Panel) {
+      addWarningForPersistentCredentials(cs, canPersistCredentials, panel) {
+        val settings = Settings.KEY.getData(it)
+        settings?.select(settings.find("application.passwordSafe"))
+      }
+    }
   }
 }

@@ -1,6 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.collaboration.auth
 
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Test
@@ -27,7 +29,7 @@ class AccountManagerBaseTest {
 
     override suspend fun retrieveCredentials(account: MockAccount): String? = map[account]
 
-    override fun canPersistCredentials(): Boolean = false
+    override val canPersistCredentials: StateFlow<Boolean> = MutableStateFlow(false)
   }
 
   private lateinit var manager: AccountManagerBase<MockAccount, String>

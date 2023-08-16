@@ -12,6 +12,7 @@ import com.intellij.ide.ui.LafManagerListener
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.observable.properties.AbstractObservableProperty
 import com.intellij.openapi.progress.util.ProgressWindow
 import com.intellij.openapi.ui.ComponentValidator
 import com.intellij.openapi.ui.ValidationInfo
@@ -33,6 +34,9 @@ import com.intellij.util.ui.update.UiNotifyConnector
 import com.intellij.vcs.log.ui.frame.ProgressStripe
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 import java.awt.*
 import java.awt.event.InputEvent
@@ -296,6 +300,26 @@ object CollaborationToolsUIUtil {
         border = JBUI.Borders.empty()
         background = UIUtil.getPanelBackground()
         add(it)
+      }
+    }
+
+  /**
+   * Turns the flow into an observable property collected under the given scope.
+   *
+   * Note: this collects the state flow which will never complete. The passed scope
+   * thus needs to be cancelled manually or through a disposing scope for example
+   * for collecting to stop.
+   */
+  fun <T> StateFlow<T>.asObservableIn(scope: CoroutineScope): AbstractObservableProperty<T> =
+    object : AbstractObservableProperty<T>() {
+      override fun get() = value
+
+      init {
+        scope.launch {
+          collect { state ->
+            fireChangeEvent(state)
+          }
+        }
       }
     }
 }

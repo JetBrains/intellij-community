@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.authentication
 
+import com.intellij.collaboration.auth.ui.AccountsPanelFactory.Companion.addWarningForPersistentCredentials
 import com.intellij.collaboration.auth.ui.login.LoginModel
 import com.intellij.collaboration.auth.ui.login.TokenLoginDialog
 import com.intellij.collaboration.auth.ui.login.TokenLoginInputPanelFactory
@@ -12,6 +13,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gitlab.api.GitLabServerPath
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
+import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabProjectDefaultAccountHolder
 import org.jetbrains.plugins.gitlab.authentication.ui.GitLabChooseAccountDialog
 import org.jetbrains.plugins.gitlab.authentication.ui.GitLabTokenLoginPanelModel
@@ -79,9 +81,17 @@ object GitLabLoginUtil {
     serverFieldDisabled: Boolean
   ): LoginModel.LoginState {
     TokenLoginDialog(project, parentComponent, model) {
+      val cs = this
       TokenLoginInputPanelFactory(model).create(
         serverFieldDisabled,
-        tokenNote = CollaborationToolsBundle.message("clone.dialog.insufficient.scopes", GitLabSecurityUtil.MASTER_SCOPES)
+        tokenNote = CollaborationToolsBundle.message("clone.dialog.insufficient.scopes", GitLabSecurityUtil.MASTER_SCOPES),
+        footer = {
+            addWarningForPersistentCredentials(
+              cs,
+              service<GitLabAccountManager>().canPersistCredentials,
+              ::panel
+            )
+        }
       )
     }.showAndGet()
     return model.loginState.value

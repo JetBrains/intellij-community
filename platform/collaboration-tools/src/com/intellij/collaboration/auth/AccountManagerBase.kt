@@ -25,6 +25,8 @@ abstract class AccountManagerBase<A : Account, Cred : Any>(
   private val persistentCredentials get() = credentialsRepository()
   protected abstract fun credentialsRepository(): CredentialsRepository<A, Cred>
 
+  override val canPersistCredentials: Flow<Boolean> by lazy { persistentCredentials.canPersistCredentials }
+
   private val _accountsState = MutableStateFlow(persistentAccounts.accounts)
   override val accountsState: StateFlow<Set<A>> = _accountsState.asStateFlow()
 
@@ -136,9 +138,6 @@ abstract class AccountManagerBase<A : Account, Cred : Any>(
         }
       }
     }.flowOn(Dispatchers.Default)
-
-  override fun canPersistCredentials(): Boolean =
-    persistentCredentials.canPersistCredentials()
 
   private sealed interface Event<A, Cred> {
     class AccountsRemoved<A, Cred>(val accounts: Set<A>) : Event<A, Cred>

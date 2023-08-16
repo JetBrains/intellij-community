@@ -1,8 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.authentication.ui
 
+import com.intellij.collaboration.auth.ui.AccountsPanelFactory.Companion.addWarningForPersistentCredentials
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.ide.BrowserUtil.browse
+import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.ui.ValidationInfo
@@ -12,11 +14,13 @@ import com.intellij.ui.components.fields.ExtendableTextField
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.layout.ComponentPredicate
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubApiRequests
 import org.jetbrains.plugins.github.api.GithubServerPath
+import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
 import org.jetbrains.plugins.github.authentication.util.GHSecurityUtil
 import org.jetbrains.plugins.github.authentication.util.GHSecurityUtil.buildNewTokenUrl
 import org.jetbrains.plugins.github.exceptions.GithubAuthenticationException
@@ -30,6 +34,7 @@ import javax.swing.JTextField
 import javax.swing.event.DocumentEvent
 
 internal class GHTokenCredentialsUi(
+  private val cs: CoroutineScope,
   private val serverTextField: ExtendableTextField,
   val factory: GithubApiRequestExecutor.Factory,
   private val isAccountUnique: UniqueLoginPredicate
@@ -47,6 +52,14 @@ internal class GHTokenCredentialsUi(
         .resizableColumn()
       button(message("credentials.button.generate")) { browseNewTokenUrl() }
         .enabledIf(serverTextField.serverValid)
+    }
+
+    row {
+      addWarningForPersistentCredentials(
+        cs,
+        service<GHAccountManager>().canPersistCredentials,
+        ::panel
+      )
     }
   }
 

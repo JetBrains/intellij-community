@@ -3,19 +3,14 @@ package org.jetbrains.plugins.github.ui
 
 import com.intellij.collaboration.async.DisposingMainScope
 import com.intellij.collaboration.auth.ui.AccountsPanelFactory
-import com.intellij.credentialStore.PasswordSafeSettings
-import com.intellij.credentialStore.ProviderType
-import com.intellij.ide.DataManager
+import com.intellij.collaboration.auth.ui.AccountsPanelFactory.Companion.addWarningForMemoryOnlyPasswordSafe
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.service
 import com.intellij.openapi.options.BoundConfigurable
-import com.intellij.openapi.options.ex.Settings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
-import com.intellij.ui.components.ActionLink
 import com.intellij.ui.dsl.builder.*
-import com.intellij.util.ui.NamedColorUtil
 import kotlinx.coroutines.plus
 import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubProjectDefaultAccountHolder
@@ -26,11 +21,10 @@ import org.jetbrains.plugins.github.i18n.GithubBundle.message
 import org.jetbrains.plugins.github.util.GithubSettings
 import org.jetbrains.plugins.github.util.GithubUtil
 
-internal class GithubSettingsConfigurable internal constructor(private val project: Project)
-  : BoundConfigurable(GithubUtil.SERVICE_DISPLAY_NAME, "settings.github") {
+internal class GithubSettingsConfigurable internal constructor(
+  private val project: Project
+) : BoundConfigurable(GithubUtil.SERVICE_DISPLAY_NAME, "settings.github") {
   override fun createPanel(): DialogPanel {
-    val passwordSafeSettings = service<PasswordSafeSettings>()
-
     val defaultAccountHolder = project.service<GithubProjectDefaultAccountHolder>()
     val accountManager = service<GHAccountManager>()
     val ghSettings = GithubSettings.getInstance()
@@ -61,19 +55,11 @@ internal class GithubSettingsConfigurable internal constructor(private val proje
         label(message("settings.timeout.seconds"))
           .gap(RightGap.COLUMNS)
 
-        panel {
-          row {
-            label(message("accounts.error.password.not.saved")).applyToComponent {
-              foreground = NamedColorUtil.getErrorForeground()
-            }
-            link(message("accounts.error.password.not.saved.link")) {
-              val settings = Settings.KEY.getData(DataManager.getInstance().getDataContext(it.source as ActionLink))
-              settings?.select(settings.find("application.passwordSafe"))
-            }
-          }
-        }
-          .align(AlignX.RIGHT)
-          .visible(passwordSafeSettings.state.provider == ProviderType.MEMORY_ONLY)
+        addWarningForMemoryOnlyPasswordSafe(
+          scope,
+          service<GHAccountManager>().canPersistCredentials,
+          ::panel
+        )
       }
     }
   }

@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.ui.cloneDialog
 
-import com.intellij.collaboration.async.disposingMainScope
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.HorizontalListPanel
 import com.intellij.collaboration.ui.VerticalListPanel
@@ -30,10 +29,7 @@ import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI.Borders.empty
 import com.intellij.util.ui.JBUI.Panels.simplePanel
 import com.intellij.util.ui.UIUtil.getRegularPanelInsets
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.async
+import kotlinx.coroutines.*
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
@@ -42,16 +38,17 @@ import javax.swing.JButton
 import javax.swing.JComponent
 import javax.swing.SwingConstants
 
-internal class CloneDialogLoginPanel(private val account: GithubAccount?) :
+internal class CloneDialogLoginPanel(
+  private val cs: CoroutineScope,
+  private val account: GithubAccount?
+) :
   JBPanel<CloneDialogLoginPanel>(ListLayout.vertical(0)),
   Disposable {
-
-  private val cs = disposingMainScope()
 
   private val accountManager get() = service<GHAccountManager>()
 
   private val errorPanel = VerticalListPanel(10)
-  private val loginPanel = GithubLoginPanel(GithubApiRequestExecutor.Factory.getInstance()) { name, server ->
+  private val loginPanel = GithubLoginPanel(cs, GithubApiRequestExecutor.Factory.getInstance()) { name, server ->
     if (account == null) accountManager.isAccountUnique(server, name) else true
   }
   private val inlineCancelPanel = simplePanel()

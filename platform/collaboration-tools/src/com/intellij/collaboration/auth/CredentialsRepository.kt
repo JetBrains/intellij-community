@@ -1,10 +1,19 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.auth
 
+import kotlinx.coroutines.flow.Flow
+
 interface CredentialsRepository<A : Account, Cred : Any> {
   /**
-   * Attempts to persist credentials to some credential store. If they could not be persisted,
-   * the user can be displayed a notification to inform them.
+   * Checks whether the account manager can persist credentials.
+   * If it cannot, one might need to notify the user of a way to
+   * fix this. Returns `true` when the credentials repository is
+   * able to write credentials to persistent storage, `false` otherwise.
+   */
+  val canPersistCredentials: Flow<Boolean>
+
+  /**
+   * Attempts to persist credentials to some credential store.
    *
    * @param account The account to store credentials for.
    * @param credentials The actual credentials to store.
@@ -18,12 +27,4 @@ interface CredentialsRepository<A : Account, Cred : Any> {
    * this function returns `null`.
    */
   suspend fun retrieveCredentials(account: A): Cred?
-
-  /**
-   * Checks whether the account manager can persist credentials.
-   * If it cannot, one might need to notify the user of a way to
-   * fix this. Returns `true` when the credentials repository is
-   * able to write credentials to persistent storage, `false` otherwise.
-   */
-  fun canPersistCredentials(): Boolean
 }
