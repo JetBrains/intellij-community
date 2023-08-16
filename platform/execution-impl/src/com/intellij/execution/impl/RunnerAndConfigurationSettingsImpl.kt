@@ -15,6 +15,7 @@ import com.intellij.execution.configurations.*
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.runners.ProgramRunner
 import com.intellij.ide.DataManager
+import com.intellij.ide.ui.IdeUiService
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
@@ -343,16 +344,16 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(
     val configuration = configuration
     var warning: RuntimeConfigurationException? = null
 
-    ReadAction.nonBlocking {
-      try {
-        val dataContext = if (ApplicationManager.getApplication().isHeadlessEnvironment) {
-          val dataContextFromFocusAsync = DataManager.getInstance().dataContextFromFocusAsync
-          ProgressIndicatorUtils.awaitWithCheckCanceled(dataContextFromFocusAsync.asCompletableFuture())
-        }
-        else {
-          DataContext.EMPTY_CONTEXT
-        }
+    var dataContext = DataContext.EMPTY_CONTEXT
+    if (!ApplicationManager.getApplication().isHeadlessEnvironment) {
+      val dataContextFromFocusAsync = DataManager.getInstance().dataContextFromFocusAsync.onSuccess {
+        dataContext = IdeUiService.getInstance().createAsyncDataContext(it)
+      }
+      ProgressIndicatorUtils.awaitWithCheckCanceled(dataContextFromFocusAsync.asCompletableFuture())
+    }
 
+     ReadAction.nonBlocking {
+      try {
         ExecutionManagerImpl.withEnvironmentDataContext(dataContext).use {
           configuration.checkConfiguration()
         }
