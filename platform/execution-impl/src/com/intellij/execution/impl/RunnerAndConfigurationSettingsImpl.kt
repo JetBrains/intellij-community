@@ -15,6 +15,7 @@ import com.intellij.execution.configurations.*
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.runners.ProgramRunner
 import com.intellij.ide.DataManager
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.components.PathMacroManager
@@ -345,8 +346,13 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(
 
      ReadAction.nonBlocking {
       try {
-        val dataContextFromFocusAsync = DataManager.getInstance().dataContextFromFocusAsync
-        val dataContext = ProgressIndicatorUtils.awaitWithCheckCanceled(dataContextFromFocusAsync.asCompletableFuture())
+        val dataContext = if (ApplicationManager.getApplication().isHeadlessEnvironment) {
+          val dataContextFromFocusAsync = DataManager.getInstance().dataContextFromFocusAsync
+          ProgressIndicatorUtils.awaitWithCheckCanceled(dataContextFromFocusAsync.asCompletableFuture())
+        }
+        else {
+          DataContext.EMPTY_CONTEXT
+        }
 
         ExecutionManagerImpl.withEnvironmentDataContext(dataContext).use {
           configuration.checkConfiguration()
