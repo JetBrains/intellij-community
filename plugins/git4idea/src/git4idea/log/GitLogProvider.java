@@ -31,6 +31,7 @@ import com.intellij.vcs.log.impl.VcsIndexableLogProvider;
 import com.intellij.vcs.log.impl.VcsLogIndexer;
 import com.intellij.vcs.log.util.UserNameRegex;
 import com.intellij.vcs.log.util.VcsUserUtil;
+import com.intellij.vcs.log.visible.CommitCountStageKt;
 import com.intellij.vcs.log.visible.filters.VcsLogFiltersKt;
 import com.intellij.vcsUtil.VcsFileUtil;
 import git4idea.*;
@@ -507,7 +508,7 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
       configParameters.add("log.mailmap=false");
     }
 
-    if (maxCount > 0) {
+    if (!CommitCountStageKt.isAll(maxCount)) {
       filterParameters.add(prepareParameter("max-count", String.valueOf(maxCount)));
     }
 

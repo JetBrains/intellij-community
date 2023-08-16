@@ -23,3 +23,5 @@ enum class CommitCountStage(val count: Int) {
     return if (ordinal == values.size - 1) this else values[ordinal + 1]
   }
 }
+
+fun isAll(count: Int) = count < 0 || count == Int.MAX_VALUE
