@@ -200,7 +200,7 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
     val headsForVcs = if (filterAllWithVcs) matchingHeads else getMatchingHeads(dataPack.refsModel, rootsForVcs, filtersForVcs)
     val filteredWithVcs = filterWithVcs(dataPack.permanentGraph, filtersForVcs, headsForVcs, commitCount, commitCandidates)
 
-    val filteredCommits: Set<Int>? = union(filteredWithIndex, filteredWithVcs.matchingCommits)
+    val filteredCommits = union(filteredWithIndex, filteredWithVcs.matchingCommits)
     return FilterByDetailsResult(filteredCommits, filteredWithVcs.canRequestMore, filteredWithVcs.commitCount, historyData)
   }
 
@@ -269,7 +269,7 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
 
   private fun filterWithIndex(dataGetter: IndexDataGetter,
                               detailsFilters: List<VcsLogDetailsFilter>,
-                              commitCandidates: IntSet?): Pair<Set<Int>?, FileHistoryData?> {
+                              commitCandidates: IntSet?): Pair<IntSet?, FileHistoryData?> {
     val structureFilter = detailsFilters.filterIsInstance(VcsLogStructureFilter::class.java).singleOrNull()
                           ?: return Pair(dataGetter.filter(detailsFilters, commitCandidates), null)
 
@@ -293,7 +293,7 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
     var commitCountToTry = commitCount
     if (commitCountToTry == CommitCountStage.INITIAL) {
       if (filters.get(VcsLogFilterCollection.RANGE_FILTER) == null) { // not filtering in memory by range for simplicity
-        val commitsFromMemory = filterDetailsInMemory(graph, filters.detailsFilters, matchingHeads, commitCandidates).toCommitIndexes()
+        val commitsFromMemory = filterDetailsInMemory(graph, filters.detailsFilters, matchingHeads, commitCandidates)
         if (commitsFromMemory.size >= commitCountToTry.count) {
           return FilterByDetailsResult(commitsFromMemory, true, commitCountToTry)
         }
@@ -301,13 +301,13 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
       commitCountToTry = commitCountToTry.next()
     }
 
-    val commitsFromVcs = filteredDetailsInVcs(filters, commitCountToTry.count).toCommitIndexes()
+    val commitsFromVcs = filteredDetailsInVcs(filters, commitCountToTry.count)
     return FilterByDetailsResult(commitsFromVcs, commitsFromVcs.size >= commitCountToTry.count, commitCountToTry)
   }
 
   @Throws(VcsException::class)
-  private fun filteredDetailsInVcs(filterCollection: VcsLogFilterCollection, maxCount: Int): Collection<CommitId> {
-    val commits = mutableListOf<CommitId>()
+  private fun filteredDetailsInVcs(filterCollection: VcsLogFilterCollection, maxCount: Int): IntSet {
+    val commits = IntOpenHashSet()
 
     val visibleRoots = VcsLogUtil.getAllVisibleRoots(logProviders.keys, filterCollection)
     for (root in visibleRoots) {
@@ -348,8 +348,9 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
           .with(VcsLogFilterObject.fromRange(resolvedRanges))
       }
 
-      val matchingCommits = provider.getCommitsMatchingFilter(root, actualFilterCollection, maxCount)
-      commits.addAll(matchingCommits.map { commit -> CommitId(commit.id, root) })
+      provider.getCommitsMatchingFilter(root, actualFilterCollection, maxCount).forEach { commit ->
+        commits.add(storage.getCommitIndex(commit.id, root))
+      }
     }
 
     return commits
@@ -360,7 +361,7 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
                               sortType: PermanentGraph.SortType,
                               commitCount: CommitCountStage): Pair<VisiblePack, CommitCountStage>? {
     val hashes = hashFilter.hashes
-    val hashFilterResult = hashSetOf<Int>()
+    val hashFilterResult = IntOpenHashSet()
     for (partOfHash in hashes) {
       if (partOfHash.length == FULL_HASH_LENGTH) {
         val hash = HashImpl.build(partOfHash)
@@ -443,7 +444,9 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
   }
 
   private fun getMatchingHeads(roots: Collection<VirtualFile>, filter: VcsLogRevisionFilter): Set<Int> {
-    return filter.heads.filter { roots.contains(it.root) }.toCommitIndexes()
+    return filter.heads.filter { roots.contains(it.root) }.mapTo(IntOpenHashSet()) { commitId ->
+      storage.getCommitIndex(commitId.hash, commitId.root)
+    }
   }
 
   private fun getMatchingHeads(refsModel: RefsModel, roots: Collection<VirtualFile>): Set<Int> {
@@ -456,15 +459,15 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
   private fun filterDetailsInMemory(permanentGraph: PermanentGraph<Int>,
                                     detailsFilters: List<VcsLogDetailsFilter>,
                                     matchingHeads: Set<Int>?,
-                                    commitCandidates: IntSet?): Collection<CommitId> {
-    val result = mutableListOf<CommitId>()
+                                    commitCandidates: IntSet?): IntSet {
+    val result = IntOpenHashSet()
     for (commit in permanentGraph.allCommits) {
       if (commitCandidates == null || commitCandidates.contains(commit.id)) {
         val data = getDetailsFromCache(commit.id)
                    ?: // no more continuous details in the cache
                    break
         if (matchesAllFilters(data, permanentGraph, detailsFilters, matchingHeads)) {
-          result.add(CommitId(data.id, data.root))
+          result.add(storage.getCommitIndex(data.id, data.root))
         }
       }
     }
@@ -494,12 +497,6 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
     return topCommitsDetailsCache.get(commitIndex) ?: commitDetailsGetter.getCommitDataIfAvailable(commitIndex)
   }
 
-  private fun Collection<CommitId>.toCommitIndexes(): Set<Int> {
-    return this.mapTo(mutableSetOf()) { commitId ->
-      storage.getCommitIndex(commitId.hash, commitId.root)
-    }
-  }
-
   private fun Collection<VcsRef>.toReferencedCommitIndexes(): Set<Int> {
     return this.mapTo(mutableSetOf()) { ref ->
       storage.getCommitIndex(ref.commitHash, ref.root)
@@ -509,7 +506,7 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
 
 private val LOG = Logger.getInstance(VcsLogFiltererImpl::class.java)
 
-private data class FilterByDetailsResult(val matchingCommits: Set<Int>?,
+private data class FilterByDetailsResult(val matchingCommits: IntSet?,
                                          val canRequestMore: Boolean,
                                          val commitCount: CommitCountStage,
                                          val fileHistoryData: FileHistoryData? = null)
@@ -530,8 +527,11 @@ internal fun <T> Collection<T>?.matchesNothing(): Boolean {
   return this != null && this.isEmpty()
 }
 
-internal fun <T> union(c1: Set<T>?, c2: Set<T>?): Set<T>? {
+internal fun union(c1: IntSet?, c2: IntSet?): IntSet? {
   if (c1 == null) return c2
   if (c2 == null) return c1
-  return c1.union(c2)
+
+  val result = IntOpenHashSet(c1)
+  result.addAll(c2)
+  return result
 }
