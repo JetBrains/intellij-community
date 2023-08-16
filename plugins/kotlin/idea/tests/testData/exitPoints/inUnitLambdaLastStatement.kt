@@ -1,6 +1,6 @@
 fun f(ac: () -> Unit) {}
 fun m() {
-    <info descr="null">~f</info> {
+    ~f {
         var i = 0
         i
     }

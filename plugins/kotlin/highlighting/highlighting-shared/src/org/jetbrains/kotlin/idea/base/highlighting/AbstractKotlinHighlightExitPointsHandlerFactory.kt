@@ -211,22 +211,26 @@ abstract class AbstractKotlinHighlightExitPointsHandlerFactory : HighlightUsages
 
                 override fun visitExpression(expression: KtExpression) {
                     if (relevantFunction is KtFunctionLiteral || relevantFunction is KtNamedFunction) {
-                        if (!targetOccurrenceAdded) {
-                            when (relevantFunction) {
-                                is KtFunctionLiteral -> relevantFunction.parentOfTypes(KtCallExpression::class)?.calleeExpression
-                                is KtNamedFunction -> relevantFunction.funKeyword
-                                else -> null
-                            }?.let {
-                                targetOccurrenceAdded = true
-                                addOccurrence(it)
-                            }
-                        }
                         if (occurrenceForFunctionLiteralReturnExpression(expression, expression in lastStatementExpressions)) {
+                            addTargetOccurenceIfNeeded(relevantFunction)
                             return
                         }
                     }
 
                     super.visitExpression(expression)
+                }
+
+                private fun addTargetOccurenceIfNeeded(relevantFunction: KtDeclarationWithBody) {
+                    if (!targetOccurrenceAdded) {
+                        when (relevantFunction) {
+                            is KtFunctionLiteral -> relevantFunction.parentOfTypes(KtCallExpression::class)?.calleeExpression
+                            is KtNamedFunction -> relevantFunction.funKeyword
+                            else -> null
+                        }?.let {
+                            targetOccurrenceAdded = true
+                            addOccurrence(it)
+                        }
+                    }
                 }
 
                 private fun occurrenceForFunctionLiteralReturnExpression(expression: KtExpression, lastLambdaExpression: Boolean): Boolean {
@@ -290,6 +294,8 @@ abstract class AbstractKotlinHighlightExitPointsHandlerFactory : HighlightUsages
 
                         else -> addOccurrence(expression)
                     }
+
+                    addTargetOccurenceIfNeeded(relevantFunction)
                 }
 
                 override fun visitThrowExpression(expression: KtThrowExpression) {
