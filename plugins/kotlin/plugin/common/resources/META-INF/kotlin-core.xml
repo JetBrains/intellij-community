@@ -64,6 +64,7 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+    <aboutPopupDescriptionProvider implementation="org.jetbrains.kotlin.idea.base.plugin.KotlinPluginKindAboutPopupDescriptionProvider"/>
     <applicationService serviceImplementation="org.jetbrains.kotlin.idea.PluginStartupApplicationService" />
     <applicationService serviceImplementation="org.jetbrains.kotlin.idea.KotlinPluginUpdater"/>
     <applicationService serviceImplementation="org.jetbrains.kotlin.idea.quickfix.QuickFixes"/>
