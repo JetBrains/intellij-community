@@ -136,8 +136,7 @@ class ReplaceWithJavadocInspection : LocalInspectionTool() {
      */
     @Contract(pure = true)
     private fun getCommentTextLines(comment: PsiComment): Collection<String> {
-      val lines: Stream<String>
-      lines = if (comment is PsiDocComment) {
+      val lines = if (comment is PsiDocComment) {
         Arrays.stream(comment.descriptionElements)
           .map { obj: PsiElement -> obj.text }
       }

@@ -406,9 +406,8 @@ class KotlinExpressionMover : AbstractKotlinUpDownMover() {
                     }
                 }
             } else {
-                val blockLikeElement: PsiElement?
                 val dslBlock = getDSLLambdaBlock(editor, currentSibling, down)
-                blockLikeElement = if (dslBlock != null) {
+                val blockLikeElement = if (dslBlock != null) {
                     // Use JetFunctionLiteral (since it contains braces)
                     dslBlock.parent
                 } else {

@@ -39,10 +39,8 @@ fun formatPsiClass(
     markAsJava: Boolean,
     inCode: Boolean
 ): String {
-    var description: String
-
     val kind = if (psiClass.isInterface) "interface " else "class "
-    description = kind + PsiFormatUtil.formatClass(
+    var description: String = kind + PsiFormatUtil.formatClass(
         psiClass,
         PsiFormatUtilBase.SHOW_CONTAINING_CLASS or PsiFormatUtilBase.SHOW_NAME or PsiFormatUtilBase.SHOW_PARAMETERS or PsiFormatUtilBase.SHOW_TYPE
     )

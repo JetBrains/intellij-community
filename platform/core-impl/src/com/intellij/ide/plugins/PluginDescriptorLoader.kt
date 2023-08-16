@@ -424,9 +424,8 @@ private fun logPlugins(plugins: Collection<IdeaPluginDescriptorImpl>,
   val custom = StringBuilder()
   val disabledPlugins = HashSet<PluginId>()
   for (descriptor in plugins) {
-    var target: StringBuilder
     val pluginId = descriptor.pluginId
-    target = if (!descriptor.isEnabled) {
+    val target = if (!descriptor.isEnabled) {
       if (!context.isPluginDisabled(pluginId)) {
         // plugin will be logged as part of "Problems found loading plugins"
         continue

@@ -316,9 +316,8 @@ private fun getSourceRootsWithPrefixes(module: JpsModule): Sequence<Pair<Path, S
       JavaModuleSourceRootTypes.PRODUCTION.contains(root.rootType)
     }
     .map { moduleSourceRoot: JpsModuleSourceRoot ->
-      var prefix: String
       val properties = moduleSourceRoot.properties
-      prefix = if (properties is JavaSourceRootProperties) {
+      var prefix = if (properties is JavaSourceRootProperties) {
         properties.packagePrefix.replace(".", "/")
       }
       else {

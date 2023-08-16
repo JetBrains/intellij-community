@@ -50,8 +50,7 @@ import javax.swing.JLabel
 const val CONFIGURABLE_ID = "com.jetbrains.python.black.configuration.BlackFormatterConfigurable"
 
 class BlackFormatterConfigurable(val project: Project) : BoundConfigurable(PyBundle.message("black.configurable.name")) {
-
-  private var storedState: BlackFormatterConfiguration
+  private var storedState = BlackFormatterConfiguration.getBlackConfiguration(project)
 
   private var isBlackFormatterPackageInstalled: Boolean = false
   private var detectedBlackExecutable: File? = null
@@ -180,8 +179,6 @@ class BlackFormatterConfigurable(val project: Project) : BoundConfigurable(PyBun
   }
 
   init {
-    storedState = BlackFormatterConfiguration.getBlackConfiguration(project)
-
     selectedSdk = storedState.getSdk(project)
                   ?: if (project.modules.size == 1) project.pythonSdk
                   else null

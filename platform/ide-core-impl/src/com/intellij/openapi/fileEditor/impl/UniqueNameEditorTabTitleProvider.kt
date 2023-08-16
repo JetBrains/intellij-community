@@ -32,8 +32,7 @@ open class UniqueNameEditorTabTitleProvider : EditorTabTitleProvider {
     }
 
     // Even though this is a 'tab title provider' it is used also when tabs are not shown, namely for building IDE frame title.
-    var uniqueName: String
-    uniqueName = if (uiSettings.editorTabPlacement == UISettings.TABS_NONE) {
+    var uniqueName: String = if (uiSettings.editorTabPlacement == UISettings.TABS_NONE) {
       UniqueVFilePathBuilder.getInstance().getUniqueVirtualFilePath(project, file)
     }
     else {

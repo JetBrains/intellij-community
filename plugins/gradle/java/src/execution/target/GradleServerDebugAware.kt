@@ -26,13 +26,11 @@ class GradleServerDebugAware : GradleTargetEnvironmentAware {
                                                progressIndicator: TargetProgressIndicator) {
     val targetServerDebugPort = Registry.intValue("gradle.execution.target.server.debug.port", -1)
     if (targetServerDebugPort == -1) return
-
-    val remoteAddressForVmParams: String
     val java9plus: Boolean = environmentSetup.environmentConfiguration.runtimes
                                .findByType<JavaLanguageRuntimeConfiguration>()
                                ?.run { javaVersionString.nullize() }
                                ?.run { JavaSdkVersion.fromVersionString(this)?.isAtLeast(JavaSdkVersion.JDK_1_9) } ?: false
-    remoteAddressForVmParams = if (java9plus) "*:$targetServerDebugPort" else targetServerDebugPort.toString()
+    val remoteAddressForVmParams = if (java9plus) "*:$targetServerDebugPort" else targetServerDebugPort.toString()
     val javaParamsDelegate = object : JavaParameters() {
       override fun getClassPath() = environmentSetup.javaParameters.classPath
       override fun getVMParametersList(): ParametersList = environmentSetup.javaParameters.vmParametersList

@@ -67,8 +67,8 @@ interface IdeaModelInfosCache {
 }
 
 class FineGrainedIdeaModelInfosCache(private val project: Project) : IdeaModelInfosCache, Disposable {
-    private val moduleCache: ModuleCache
-    private val sdkCache: SdkCache
+    private val moduleCache = ModuleCache()
+    private val sdkCache = SdkCache()
 
     private val resultByPlatform: CachedValue<MutableMap<TargetPlatform, List<IdeaModuleInfo>>>
     private val modulesAndSdk: CachedValue<List<IdeaModuleInfo>>
@@ -76,9 +76,6 @@ class FineGrainedIdeaModelInfosCache(private val project: Project) : IdeaModelIn
     private val modificationTracker = SimpleModificationTracker()
 
     init {
-        moduleCache = ModuleCache()
-        sdkCache = SdkCache()
-
         val cachedValuesManager = CachedValuesManager.getManager(project)
         resultByPlatform = cachedValuesManager.createCachedValue {
             CachedValueProvider.Result.create(

@@ -207,10 +207,9 @@ private fun formatPsiClass(
     inCode: Boolean
 ): String {
     fun wrapOrSkip(s: String, inCode: Boolean) = if (inCode) "<code>$s</code>" else s
-    var description: String
 
     val kind = if (psiClass.isInterface) "interface " else "class "
-    description = kind + PsiFormatUtil.formatClass(
+    var description = kind + PsiFormatUtil.formatClass(
         psiClass,
         PsiFormatUtilBase.SHOW_CONTAINING_CLASS or PsiFormatUtilBase.SHOW_NAME or PsiFormatUtilBase.SHOW_PARAMETERS or PsiFormatUtilBase.SHOW_TYPE
     )
