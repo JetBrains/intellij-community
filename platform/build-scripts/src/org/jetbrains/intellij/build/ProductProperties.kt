@@ -163,6 +163,13 @@ abstract class ProductProperties {
   val productLayout: ProductModulesLayout = ProductModulesLayout()
 
   /**
+   * Base part of URL (ending with `/`) where additional product resources are located.
+   * For example, for IntelliJ IDEA it's `https://download.jetbrains.com/idea/`.
+   * Note that it can be used only for published builds; there will be no resources for snapshot or nightly builds.
+   */
+  var baseDownloadUrl: String? = null
+
+  /**
    * If `true`, a cross-platform ZIP archive containing binaries for all OSes will be built.
    * The archive will be generated in [BuildPaths.artifactDir] directory and have ".portable" suffix by default
    * (override [getCrossPlatformZipFileName] to change the file name).

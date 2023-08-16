@@ -26,6 +26,7 @@ interface ApplicationInfoProperties {
   val shortCompanyName: String
   val svgRelativePath: String?
   val svgProductIcons: List<String>
+  @Deprecated("Use ProductProperties::baseDownloadUrl instead")
   val patchesUrl: String?
   val fullVersion: String
   val productNameWithEdition: String
