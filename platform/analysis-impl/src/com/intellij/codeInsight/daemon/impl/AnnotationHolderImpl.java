@@ -26,6 +26,7 @@ import java.util.List;
  * Use {@link AnnotationHolder} instead. The members of this class can suddenly change or disappear.
  */
 @ApiStatus.Internal
+@ApiStatus.NonExtendable
 public class AnnotationHolderImpl extends SmartList<Annotation> implements AnnotationHolder {
   private static final Logger LOG = Logger.getInstance(AnnotationHolderImpl.class);
   private final AnnotationSession myAnnotationSession;

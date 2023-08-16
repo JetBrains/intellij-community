@@ -17,7 +17,7 @@ import java.util.Objects;
 import java.util.function.Function;
 
 @ApiStatus.Internal
-public class AnnotationSessionImpl extends AnnotationSession {
+public final class AnnotationSessionImpl extends AnnotationSession {
   private final UserDataHolder myDataHolder = new UserDataHolderBase();
   private volatile TextRange myPriorityRange;
   private volatile HighlightSeverity myMinimumSeverity;
@@ -63,5 +63,4 @@ public class AnnotationSessionImpl extends AnnotationSession {
     AnnotationHolderImpl holder = new AnnotationHolderImpl(new AnnotationSessionImpl(psiFile), batchMode);
     return runnable.apply(holder);
   }
-
 }
