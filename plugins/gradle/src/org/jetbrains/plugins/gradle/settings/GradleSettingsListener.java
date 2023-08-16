@@ -16,7 +16,7 @@ public interface GradleSettingsListener extends ExternalSystemSettingsListener<G
   Topic<GradleSettingsListener> TOPIC = new Topic<>(GradleSettingsListener.class, Topic.BroadcastDirection.NONE);
 
   /**
-   * Is expected to be invoked when gradle home path is changed.
+   * Is expected to be invoked when a gradle home path is changed.
    * <p/>
    * <b>Note:</b> this callback is executed <b>after</b> the actual config change.
    *
@@ -27,8 +27,8 @@ public interface GradleSettingsListener extends ExternalSystemSettingsListener<G
   default void onGradleHomeChange(@Nullable String oldPath, @Nullable String newPath, @NotNull String linkedProjectPath) { }
 
   /**
-   * Is expected to be invoked when 'gradle distribution type' setting is changed (generally this
-   * switches tooling api to different gradle version).
+   * Is expected to be invoked when the "gradle distribution type" setting is changed (generally this
+   * switches tooling api to a different gradle version).
    * <p/>
    * <b>Note:</b> this callback is executed <b>after</b> the actual config change.
    *
@@ -38,7 +38,7 @@ public interface GradleSettingsListener extends ExternalSystemSettingsListener<G
   default void onGradleDistributionTypeChange(DistributionType currentValue, @NotNull String linkedProjectPath) { }
 
   /**
-   * Is expected to be invoked when service directory path is changed.
+   * Is expected to be invoked when a service directory path is changed.
    * <p/>
    * <b>Note:</b> this callback is executed <b>after</b> the actual config change.
    *
