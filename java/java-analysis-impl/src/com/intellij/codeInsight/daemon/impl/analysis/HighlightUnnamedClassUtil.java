@@ -38,7 +38,7 @@ public final class HighlightUnnamedClassUtil {
   static HighlightInfo.@Nullable Builder checkInitializersInUnnamedClass(@NotNull PsiClassInitializer initializer) {
     if (initializer.getContainingClass() instanceof PsiUnnamedClass && HighlightingFeature.UNNAMED_CLASSES.isAvailable(initializer)) {
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(initializer).descriptionAndTooltip(
-        JavaErrorBundle.message("text.initializers.are.not.allowed.in.unnamed.classes"));
+        JavaErrorBundle.message("error.initializers.are.not.allowed.in.unnamed.classes"));
     }
     return null;
   }
@@ -47,7 +47,7 @@ public final class HighlightUnnamedClassUtil {
                                                                               @NotNull PsiFile file) {
     if (HighlightingFeature.UNNAMED_CLASSES.isAvailable(file) && JavaUnnamedClassUtil.isFileWithUnnamedClass(file)) {
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(
-        JavaErrorBundle.message("text.package.statement.not.allowed.for.unnamed.class"));
+        JavaErrorBundle.message("error.package.statement.not.allowed.for.unnamed.class"));
     }
     return null;
   }
