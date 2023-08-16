@@ -8,11 +8,13 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.util.CommonProcessors
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
+import org.jetbrains.kotlin.descriptors.InvalidModuleException
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.diagnostics.Severity
@@ -32,6 +34,8 @@ import org.jetbrains.kotlin.resolve.BindingContext
 
 abstract class AbstractKotlinHighlightVisitor : HighlightVisitor {
     private var afterAnalysisVisitor: Array<AfterAnalysisHighlightingVisitor>? = null
+    @Volatile
+    private var attempt = 0
 
     override fun suitableForFile(file: PsiFile) = file is KtFile
 
@@ -50,13 +54,26 @@ abstract class AbstractKotlinHighlightVisitor : HighlightVisitor {
             analyze(file, holder)
 
             action.run()
+
+            attempt = 0
         } catch (e: Throwable) {
-            if (e is ControlFlowException) throw e
+            val unwrappedException = (e as? ProcessCanceledException)?.cause as? InvalidModuleException ?: e
+            if (unwrappedException is ControlFlowException) {
+                throw e
+            }
+
+            if (unwrappedException is InvalidModuleException) {
+                val currentAttempt = attempt
+                if (currentAttempt < ATTEMPT_THREASHOLD) {
+                    attempt = currentAttempt + 1
+                    throw e
+                }
+            }
 
             if (KotlinHighlightingSuspender.getInstance(file.project).suspend(file.virtualFile)) {
-                throw e
+                throw unwrappedException
             } else {
-                LOG.warn(e)
+                LOG.warn(unwrappedException)
             }
         } finally {
             afterAnalysisVisitor = null
@@ -172,6 +189,8 @@ abstract class AbstractKotlinHighlightVisitor : HighlightVisitor {
         private val UNRESOLVED_KEY = Key<Unit>("KotlinHighlightVisitor.UNRESOLVED_KEY")
 
         private val DO_NOT_HIGHLIGHT_KEY = Key<Unit>("DO_NOT_HIGHLIGHT_KEY")
+
+        private const val ATTEMPT_THREASHOLD = 10
 
         @JvmStatic
         fun KtElement.suppressHighlight() {
