@@ -1,6 +1,4 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment", "ReplaceNegatedIsEmptyWithIsNotEmpty", "LiftReturnOrAssignment")
-
 package org.jetbrains.intellij.build.devServer
 
 import com.intellij.openapi.util.io.NioFiles
@@ -133,7 +131,7 @@ internal suspend fun buildProduct(productConfiguration: ProductConfiguration, re
                                                           layout = plugin,
                                                           moduleNames = modules)
         for (name in modules) {
-          moduleNameToPluginBuildDescriptor.put(name, pluginBuildDescriptor)
+          moduleNameToPluginBuildDescriptor[name] = pluginBuildDescriptor
         }
         pluginBuildDescriptors.add(pluginBuildDescriptor)
       }
@@ -317,7 +315,7 @@ fun computeAdditionalModulesFingerprint(additionalModules: List<String>): String
   val string = additionalModules.sorted().joinToString(",")
   val result = Xx3UnencodedString.hashUnencodedString(string, 0).toString(26) +
                Xx3UnencodedString.hashUnencodedString(string, 301236010888646397L).toString(36)
-  // - maybe here due to negative number
+  // - maybe here due to a negative number
   return if (result.startsWith('-')) result else "-$result"
 }
 
