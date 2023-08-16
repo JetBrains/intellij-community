@@ -14,10 +14,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
+import java.nio.file.Path;
+import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
 
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
@@ -62,6 +60,8 @@ final class FilePageCache {
    */
   //@GuardedBy("storageById")
   private final Int2ObjectMap<PagedFileStorage> storageById = new Int2ObjectOpenHashMap<>();
+  //@GuardedBy("storageById")
+  private final Map<Path, PagedFileStorage> storageByPath = new HashMap<>();
 
   /**
    * In cases there both pagesAllocationLock and pagesAccessLock need to be acquired, pagesAllocationLock
@@ -99,7 +99,7 @@ final class FilePageCache {
   private int myFastCacheHits;
   /** How many times page was found in this cache */
   private int myHits;
-  /** How many pages were loaded so totalSizeCached become above the cacheCapacityBytes  */
+  /** How many pages were loaded so totalSizeCached become above the cacheCapacityBytes */
   private int myPageLoadsAboveSizeThreshold;
   /** How many pages were loaded without overthrowing cache capacity (cacheCapacityBytes) */
   private int myRegularPageLoads;
@@ -339,7 +339,11 @@ final class FilePageCache {
 
   void removeStorage(final long storageId) {
     synchronized (storageById) {
-      storageById.remove((int)(storageId >> 32));
+      PagedFileStorage removedStorage = storageById.remove((int)(storageId >> 32));
+      if (removedStorage != null) {
+        Path storageFile = removedStorage.getFile();
+        storageByPath.remove(storageFile);
+      }
     }
   }
 
@@ -378,16 +382,21 @@ final class FilePageCache {
    */
   long registerPagedFileStorage(@NotNull PagedFileStorage storage) {
     synchronized (storageById) {
-      //FIXME RC: why no check for !registered yet? Could be registered twice with different id
+      Path storageFile = storage.getFile();
+      PagedFileStorage alreadyRegisteredStorage = storageByPath.get(storageFile);
+      if (alreadyRegisteredStorage != null) {
+        throw new IllegalStateException("Storage for [" + storageFile.toAbsolutePath() + "] is already registered");
+      }
 
       //Generate unique 'id' (index) for a new storage: just find the number not occupied yet. Assume
-      // storages rarely closed, so start with currently registered storages count, and count up until
-      // 'index' is not in use yet:
+      // storages are rarely closed, so start with currently registered storages count, and count up
+      // until 'index' is not in use yet:
       int storageIndex = storageById.size();
       while (storageById.get(storageIndex) != null) {
         storageIndex++;
       }
       storageById.put(storageIndex, storage);
+      storageByPath.put(storageFile, storage);
       myMaxRegisteredFiles = Math.max(myMaxRegisteredFiles, storageById.size());
       return (long)storageIndex << 32;
     }
@@ -426,7 +435,8 @@ final class FilePageCache {
 
   /* ======================= implementation ==================================================================================== */
 
-  private @NotNull("Seems accessed storage has been closed") PagedFileStorage getRegisteredPagedFileStorageByIndex(long storageId) throws ClosedStorageException {
+  private @NotNull("Seems accessed storage has been closed") PagedFileStorage getRegisteredPagedFileStorageByIndex(long storageId)
+    throws ClosedStorageException {
     int storageIndex = (int)((storageId & FILE_INDEX_MASK) >> 32);
     synchronized (storageById) {
       PagedFileStorage storage = storageById.get(storageIndex);

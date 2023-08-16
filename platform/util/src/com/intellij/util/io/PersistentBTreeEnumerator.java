@@ -45,7 +45,8 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
   private static final int BTREE_PAGE_SIZE;
   private static final int DEFAULT_BTREE_PAGE_SIZE = 32768;
 
-  private static final boolean DO_EXPENSIVE_CHECKS = SystemProperties.getBooleanProperty("idea.persistent.enumerator.do.expensive.checks", false);
+  private static final boolean DO_EXPENSIVE_CHECKS =
+    SystemProperties.getBooleanProperty("idea.persistent.enumerator.do.expensive.checks", false);
   @VisibleForTesting
   public static final String DO_SELF_HEAL_PROP = "idea.persistent.enumerator.do.self.heal";
 
@@ -160,7 +161,7 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
       }
       catch (Throwable ignored) {
       }
-      throw new CorruptedException("PersistentEnumerator storage corrupted " + file);
+      throw new CorruptedException("PersistentEnumerator storage corrupted " + file, e);
     }
     finally {
       unlockStorageWrite();
@@ -275,6 +276,10 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
   }
 
   private void initBtree(boolean initial) throws IOException {
+    if (myBTree != null) {
+      myBTree.doClose();
+      myBTree = null;
+    }
     myBTree = new IntToIntBtree(BTREE_PAGE_SIZE, indexFile(myFile), myCollisionResolutionStorage.getStorageLockContext(), initial);
   }
 
@@ -308,7 +313,9 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
     assert offset + 4 < MAX_DATA_SEGMENT_LENGTH;
 
     if (toDisk) {
-      if (myFirstPageStart == -1 || myCollisionResolutionStorage.getInt(offset) != value) myCollisionResolutionStorage.putInt(offset, value);
+      if (myFirstPageStart == -1 || myCollisionResolutionStorage.getInt(offset) != value) {
+        myCollisionResolutionStorage.putInt(offset, value);
+      }
     }
     else {
       value = myCollisionResolutionStorage.getInt(offset);
@@ -706,7 +713,6 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
       catch (Throwable throwable) {
         LOG.info(throwable);
       }
-
     }
     finally {
       unlockStorageWrite();
