@@ -80,17 +80,22 @@ private fun <T : CommandChain> T.appendRawLine(line: String): T {
 fun <T : CommandChain> T.openFile(relativePath: String,
                                   timeoutInSeconds: Long = 0,
                                   suppressErrors: Boolean = false,
-                                  warmup: Boolean = false): T {
+                                  warmup: Boolean = false,
+                                  disableCodeAnalysis:Boolean = false, ): T {
   val command = mutableListOf("${CMD_PREFIX}openFile", "-file $relativePath")
   if (timeoutInSeconds != 0L) {
     command.add("-timeout $timeoutInSeconds")
   }
   if (suppressErrors) {
-    command.add("-suppressErrors true")
+    command.add("-suppressErrors")
+  }
+  if (disableCodeAnalysis) {
+    command.add("-dsa")
   }
   if (warmup) {
     command.add(WARMUP)
   }
+
   addCommand(*command.toTypedArray())
   return this
 }

@@ -24,7 +24,7 @@ import org.jetbrains.annotations.SystemIndependent
 
 /**
  * Command opens file.
- * Example: %openFile -file <filename from the root of the project> [-suppressError <true|false>] [-timeout <in seconds>] [WARMUP]
+ * Example: %openFile -file <filename from the root of the project> [-suppressErrors] [-timeout <in seconds>] [WARMUP] [-disableCodeAnalysis(-dsa) by default false]
  */
 class OpenFileCommand(text: String, line: Int) : PerformanceCommandCoroutineAdapter(text, line) {
   companion object {
@@ -71,14 +71,20 @@ class OpenFileCommand(text: String, line: Int) : PerformanceCommandCoroutineAdap
       ProjectUtil.focusProjectWindow(project, stealFocusIfAppInactive = true)
     }
 
-    FileEditorManagerEx.getInstanceEx(project).openFile(file = file,
-                                                        options = FileEditorOpenOptions(requestFocus = true)).waitForFullyLoaded()
+    val fileEditor = FileEditorManagerEx.getInstanceEx(project).openFile(file = file,
+                                                        options = FileEditorOpenOptions(requestFocus = true))
+    if(myOptions!=null && !myOptions.disableCodeAnalysis) {
+      fileEditor.waitForFullyLoaded()
+    }
 
     job.onError {
       spanRef.get()?.setAttribute("timeout", "true")
     }
     job.withErrorMessage("Timeout on open file ${file.path} more than $timeout seconds")
-    job.waitForComplete()
+
+    if(myOptions!=null && !myOptions.disableCodeAnalysis) {
+      job.waitForComplete()
+    }
   }
 
   private fun setFilePath(projectPath: @SystemIndependent @NonNls String?, span: Span, file: VirtualFile) {
