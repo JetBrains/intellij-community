@@ -11,7 +11,10 @@ group = "org.jetbrains.jewel"
 
 val gitHubRef: String? = System.getenv("GITHUB_REF")
 version = when {
-    gitHubRef?.startsWith("refs/tags/") == true -> gitHubRef.substringAfter("refs/tags/")
+    gitHubRef?.startsWith("refs/tags/") == true -> {
+        gitHubRef.substringAfter("refs/tags/")
+            .removePrefix("v")
+    }
     else -> "1.0.0-SNAPSHOT"
 }
 
