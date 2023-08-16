@@ -55,6 +55,8 @@ public interface PyElementTypes {
 
   PyElementType PRINT_TARGET = new PyElementType("PRINT_TARGET", node -> new PyPrintTargetImpl(node));
   PyElementType DECORATOR = new PyElementType("DECORATOR", node -> new PyDecoratorImpl(node));
+  PyElementType TYPE_PARAMETER = new PyElementType("TYPE_PARAMETER", node -> new PyTypeParameterImpl(node));
+  PyElementType TYPE_PARAMETER_LIST = new PyElementType("TYPE_PARAMETER_LIST", node -> new PyTypeParameterListImpl(node));
 
   // Statements
   PyElementType EXPRESSION_STATEMENT = new PyElementType("EXPRESSION_STATEMENT", node -> new PyExpressionStatementImpl(node));
@@ -171,4 +173,5 @@ public interface PyElementTypes {
   PyElementType KEYWORD_PATTERN = new PyElementType("KEYWORD_PATTERN", node -> new PyKeywordPatternImpl(node));
   PyElementType OR_PATTERN = new PyElementType("OR_PATTERN", node -> new PyOrPatternImpl(node));
   PyElementType AS_PATTERN = new PyElementType("AS_PATTERN", node -> new PyAsPatternImpl(node));
+  PyElementType TYPE_ALIAS_STATEMENT = new PyElementType("TYPE_ALIAS_STATEMENT", node -> new PyTypeAliasStatementImpl(node));
 }
