@@ -224,6 +224,8 @@ fun CoroutineScope.startApplication(args: List<String>,
       }
     }
 
+    // PluginManager uses logger
+    logDeferred.join()
     PluginManagerCore.scheduleDescriptorLoading(coroutineScope = asyncScope, zipFilePoolDeferred = zipFilePoolDeferred)
   }
 
