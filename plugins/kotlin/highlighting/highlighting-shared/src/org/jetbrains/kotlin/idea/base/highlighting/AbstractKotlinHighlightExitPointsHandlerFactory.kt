@@ -10,6 +10,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.elementType
 import com.intellij.psi.util.parentOfTypes
 import com.intellij.util.Consumer
 import org.jetbrains.kotlin.lexer.KtToken
@@ -39,10 +40,11 @@ abstract class AbstractKotlinHighlightExitPointsHandlerFactory : HighlightUsages
     private fun getOnBreakOrContinueUsageHandler(editor: Editor, file: PsiFile, target: PsiElement): HighlightUsagesHandlerBase<*>? {
         val expression = when (val parent = target.parent) {
             is KtBreakExpression, is KtContinueExpression -> parent
+            is KtDoWhileExpression -> parent.takeIf { target.elementType == KtTokens.DO_KEYWORD }
             is KtLoopExpression -> parent
             else -> null
         } as? KtExpression ?: return null
-        return OnLoopUsagesHandler(editor, file, expression, false)
+        return OnLoopUsagesHandler(editor, file, expression)
     }
 
     private fun getOnLambdaCallUsageHandler(editor: Editor, file: PsiFile, target: PsiElement): HighlightUsagesHandlerBase<*>? {
@@ -309,7 +311,7 @@ abstract class AbstractKotlinHighlightExitPointsHandlerFactory : HighlightUsages
         override fun highlightReferences(): Boolean = highlightReferences
     }
 
-    private inner class OnLoopUsagesHandler(editor: Editor, file: PsiFile, val target: KtExpression, val highlightReferences: Boolean) :
+    private inner class OnLoopUsagesHandler(editor: Editor, file: PsiFile, val target: KtExpression) :
         HighlightUsagesHandlerBase<PsiElement>(editor, file) {
         override fun getTargets(): List<KtExpression> = listOf(target)
 
