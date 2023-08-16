@@ -27,6 +27,8 @@ class TerminalOutputController(private val editor: EditorEx,
   private val terminalModel: TerminalModel = session.model
   private val blocksDecorator: TerminalBlocksDecorator = TerminalBlocksDecorator(editor)
   private val textHighlighter: TerminalTextHighlighter = TerminalTextHighlighter(outputModel)
+  private val caretModel: TerminalCaretModel = TerminalCaretModel(session, outputModel, editor)
+  private val caretPainter: TerminalCaretPainter = TerminalCaretPainter(caretModel, editor)
 
   private val palette: ColorPalette
     get() = settings.terminalColorPalette
@@ -166,6 +168,9 @@ class TerminalOutputController(private val editor: EditorEx,
       editor.setCaretEnabled(terminalModel.isCursorVisible)
       editor.caretModel.moveToOffset(block.endOffset)
       editor.scrollingModel.scrollToCaret(ScrollType.CENTER_DOWN)
+      // caret highlighter can be removed at this moment, because we replaced the text of the block
+      // so, call repaint manually
+      caretPainter.repaint()
     }
   }
 

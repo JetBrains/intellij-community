@@ -24,6 +24,7 @@ class BlockTerminalController(
     outputController.startCommandBlock(null)
     outputController.isFocused = true
     promptController.promptIsVisible = false
+    session.model.isCommandRunning = true
   }
 
   fun resize(newSize: TermSize) {
