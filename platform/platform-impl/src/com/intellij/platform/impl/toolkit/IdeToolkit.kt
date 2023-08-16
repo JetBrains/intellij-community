@@ -154,4 +154,8 @@ class IdeToolkit : SunToolkit() {
   //TODO(sviatoslav.vlasov): Pass parameters from original toolkit into constructor
   override fun areExtraMouseButtonsEnabled() = true
   override fun getNumberOfButtons() = 5
+
+  override fun initializeDesktopProperties() {
+    desktopProperties["jb.swing.avoid.text.layout"] = true // enables special mode of IME composed text painting in JBR (JBR-5946)
+  }
 }
