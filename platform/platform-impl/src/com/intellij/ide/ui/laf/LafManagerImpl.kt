@@ -1511,6 +1511,9 @@ private fun applyDensity(defaults: UIDefaults) {
     }
   }
   if (newDensity == UIDensity.COMPACT) {
+    // toolbars
+    defaults.put(JBUI.CurrentTheme.Toolbar.horizontalInsetsKey(), cmInsets(2, 4))
+    defaults.put(JBUI.CurrentTheme.Toolbar.verticalInsetsKey(), cmInsets(2, 4))
     // main toolbar
     defaults.put(JBUI.CurrentTheme.Toolbar.experimentalToolbarButtonSizeKey(), cmSize(30, 30))
     defaults.put(JBUI.CurrentTheme.Toolbar.experimentalToolbarButtonIconSizeKey(), 16)
