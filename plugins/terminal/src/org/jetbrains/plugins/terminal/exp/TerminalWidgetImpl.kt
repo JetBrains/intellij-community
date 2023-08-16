@@ -102,7 +102,7 @@ class TerminalWidgetImpl(private val project: Project,
   private class TerminalPlaceholder : TerminalContentController {
     private val panel: JPanel = object : JPanel() {
       override fun getBackground(): Color {
-        return UIUtil.getTextFieldBackground()
+        return TerminalUI.terminalBackground
       }
     }
 

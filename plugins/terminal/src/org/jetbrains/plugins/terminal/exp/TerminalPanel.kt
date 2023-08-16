@@ -73,7 +73,7 @@ class TerminalPanel(project: Project,
 
   private fun createBorder(isFullScreen: Boolean): Border {
     return if (!isFullScreen) {
-      val innerBorder = JBUI.Borders.customLine(UIUtil.getTextFieldBackground(), 6, 0, 6, 0)
+      val innerBorder = JBUI.Borders.customLine(TerminalUI.terminalBackground, 6, 0, 6, 0)
       val outerBorder = JBUI.Borders.customLineTop(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground())
       JBUI.Borders.compound(outerBorder, innerBorder)!!
     }

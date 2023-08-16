@@ -60,7 +60,7 @@ class BlockTerminalPanel(
   }
 
   override fun getBackground(): Color {
-    return UIUtil.getTextFieldBackground()
+    return TerminalUI.terminalBackground
   }
 
   override fun getTerminalSize(): TermSize? {
