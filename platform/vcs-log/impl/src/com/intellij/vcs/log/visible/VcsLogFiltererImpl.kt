@@ -301,19 +301,17 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
       commitCountToTry = commitCountToTry.next()
     }
 
-    val commitsFromVcs = filteredDetailsInVcs(logProviders, filters, commitCountToTry.count).toCommitIndexes()
+    val commitsFromVcs = filteredDetailsInVcs(filters, commitCountToTry.count).toCommitIndexes()
     return FilterByDetailsResult(commitsFromVcs, commitsFromVcs.size >= commitCountToTry.count, commitCountToTry)
   }
 
   @Throws(VcsException::class)
-  private fun filteredDetailsInVcs(providers: Map<VirtualFile, VcsLogProvider>,
-                                   filterCollection: VcsLogFilterCollection,
-                                   maxCount: Int): Collection<CommitId> {
+  private fun filteredDetailsInVcs(filterCollection: VcsLogFilterCollection, maxCount: Int): Collection<CommitId> {
     val commits = mutableListOf<CommitId>()
 
-    val visibleRoots = VcsLogUtil.getAllVisibleRoots(providers.keys, filterCollection)
+    val visibleRoots = VcsLogUtil.getAllVisibleRoots(logProviders.keys, filterCollection)
     for (root in visibleRoots) {
-      val provider = providers.getValue(root)
+      val provider = logProviders.getValue(root)
 
       val userFilter = filterCollection.get(VcsLogFilterCollection.USER_FILTER)
       if (userFilter != null && userFilter.getUsers(root).isEmpty()) {
