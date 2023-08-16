@@ -28,6 +28,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.DiskQueryRelay;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.impl.status.InlineProgressIndicator;
 import com.intellij.ui.TabbedPaneWrapper;
@@ -43,6 +44,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.HierarchyEvent;
+import java.awt.event.HierarchyListener;
 import java.io.File;
 import java.util.List;
 import java.util.*;
@@ -85,6 +88,7 @@ public class SdkEditor implements Configurable, Place.Navigator {
   private final Consumer<Boolean> myResetCallback = __ -> {
     if (!myIsDisposed) reset();
   };
+  private ProgressIndicator myHomePathValidityProgressIndicator;
 
   public SdkEditor(@NotNull Project project,
                    @NotNull ProjectSdksModel sdkModel,
@@ -257,6 +261,7 @@ public class SdkEditor implements Configurable, Place.Navigator {
     }
     myAdditionalDataConfigurables.clear();
     myAdditionalDataComponents.clear();
+    if (myHomePathValidityProgressIndicator != null) myHomePathValidityProgressIndicator.cancel();
 
     Disposer.dispose(myDisposable);
   }
@@ -275,18 +280,30 @@ public class SdkEditor implements Configurable, Place.Navigator {
     myHomeComponent.setText(absolutePath);
     JTextField textField = myHomeComponent.getTextField();
     if (absolutePath != null && !absolutePath.isEmpty() && mySdk.getSdkType().isLocalSdk(mySdk)) {
-      new Task.Backgroundable(myProject, ProjectBundle.message("sdk.configure.checking.home.path.validity"), false) {
+      textField.addHierarchyListener(new HierarchyListener() {
         @Override
-        public void run(@NotNull ProgressIndicator indicator) {
-          final File homeDir = new File(absolutePath);
-          boolean homeMustBeDirectory = ((SdkType)mySdk.getSdkType()).getHomeChooserDescriptor().isChooseFolders();
-          final boolean valid = homeDir.exists() && homeDir.isDirectory() == homeMustBeDirectory;
-          SwingUtilities.invokeLater(() -> {
-            textField.setForeground(valid ? UIUtil.getFieldForegroundColor()
-                                          : PathEditor.INVALID_COLOR);
-          });
+        public void hierarchyChanged(HierarchyEvent e) {
+          if (myHomePathValidityProgressIndicator != null) myHomePathValidityProgressIndicator.cancel();
+
+          if ((e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) == 0) {
+            return;
+          }
+
+          new Task.Backgroundable(myProject, ProjectBundle.message("sdk.configure.checking.home.path.validity"), true) {
+            @Override
+            public void run(@NotNull ProgressIndicator indicator) {
+              myHomePathValidityProgressIndicator = indicator;
+              final File homeDir = new File(absolutePath);
+              boolean homeMustBeDirectory = ((SdkType)mySdk.getSdkType()).getHomeChooserDescriptor().isChooseFolders();
+              final boolean valid = DiskQueryRelay.compute(() -> homeDir.exists() && homeDir.isDirectory() == homeMustBeDirectory);
+              SwingUtilities.invokeLater(() -> {
+                textField.setForeground(valid ? UIUtil.getFieldForegroundColor()
+                                              : PathEditor.INVALID_COLOR);
+              });
+            }
+          }.queue();
         }
-      }.queue();
+      });
     }
     else {
       textField.setForeground(UIUtil.getFieldForegroundColor());
