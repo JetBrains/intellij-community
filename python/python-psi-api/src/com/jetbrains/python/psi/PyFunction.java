@@ -3,7 +3,6 @@ package com.jetbrains.python.psi;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiNameIdentifierOwner;
-import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.StubBasedPsiElement;
 import com.intellij.util.ArrayFactory;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
@@ -20,7 +19,7 @@ import java.util.List;
  */
 public interface PyFunction extends StubBasedPsiElement<PyFunctionStub>, PsiNameIdentifierOwner, PyCompoundStatement,
                                     PyDecoratable, PyCallable, PyStatementListContainer, PyPossibleClassMember,
-                                    ScopeOwner, PyDocStringOwner, PyTypeCommentOwner, PyAnnotationOwner {
+                                    ScopeOwner, PyDocStringOwner, PyTypeCommentOwner, PyAnnotationOwner, PyTypeParameterListOwner {
 
   PyFunction[] EMPTY_ARRAY = new PyFunction[0];
   ArrayFactory<PyFunction> ARRAY_FACTORY = count -> count == 0 ? EMPTY_ARRAY : new PyFunction[count];

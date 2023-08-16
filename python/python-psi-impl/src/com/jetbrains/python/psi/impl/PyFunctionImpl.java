@@ -64,6 +64,12 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
     super(stub, nodeType);
   }
 
+  @Override
+  @Nullable
+  public PyTypeParameterList getTypeParameterList() {
+    return childToPsi(PyElementTypes.TYPE_PARAMETER_LIST);
+  }
+
   private class CachedStructuredDocStringProvider implements CachedValueProvider<StructuredDocString> {
     @Override
     public @Nullable Result<StructuredDocString> compute() {

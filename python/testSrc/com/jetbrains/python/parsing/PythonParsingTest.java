@@ -1230,6 +1230,80 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest(LanguageLevel.getLatest());
   }
 
+  public void testTypeAliasStatementWithoutTypeParameterList() {
+    doTest(LanguageLevel.PYTHON312);
+  }
+
+  public void testTypeAliasStatementWithTypeParameterList() {
+    doTest(LanguageLevel.PYTHON312);
+  }
+
+  public void testTypeAliasStatementWithTypeVarTuple() {
+    doTest(LanguageLevel.PYTHON312);
+  }
+
+  public void testTypeAliasStatementWithParamSpec() {
+    doTest(LanguageLevel.PYTHON312);
+  }
+
+  public void testTypeAliasStatementWithBoundedTypeParameter() {
+    doTest(LanguageLevel.PYTHON312);
+  }
+
+  public void testTypeAliasStatementWithTypeParameterBoundedWithExpression() {
+    doTest(LanguageLevel.PYTHON312);
+  }
+
+  public void testTypeAliasStatementWithTypeParameterAndDanglingComma() {
+    // Valid case
+    doTest(LanguageLevel.PYTHON312);
+  }
+
+  public void testTypeAliasStatementWithBoundedTypeParameterAndDanglingComma() {
+    // Valid case
+    doTest(LanguageLevel.PYTHON312);
+  }
+
+  public void testTypeAliasStatementRecoveryWithEmptyTypeParameterList() {
+    doTest(LanguageLevel.PYTHON312);
+  }
+
+  public void testTypeAliasStatementRecoveryWithNoAssignedType() {
+    doTest(LanguageLevel.PYTHON312);
+  }
+
+  public void testTypeAliasStatementRecoveryWithEqSignButNoAssignedType() {
+    doTest(LanguageLevel.PYTHON312);
+  }
+
+  public void testTypeParameterInTypeAliasStatementRecoveryIncompleteBound() {
+    doTest(LanguageLevel.PYTHON312);
+  }
+
+  public void testTypeParameterListInTypeAliasStatementRecoveryNotClosedRightBracket() {
+    doTest(LanguageLevel.PYTHON312);
+  }
+
+  public void testTypeParameterListInTypeAliasStatementRecoveryUnexpectedSymbolAfterComma() {
+    doTest(LanguageLevel.PYTHON312);
+  }
+
+  public void testTypeParameterListInFunctionDeclaration() {
+    doTest(LanguageLevel.PYTHON312);
+  }
+
+  public void testTypeParameterListInFunctionDeclarationRecoveryNotClosedRightBracket() {
+    doTest(LanguageLevel.PYTHON312);
+  }
+
+  public void testTypeParameterListInClassDeclaration() {
+    doTest(LanguageLevel.PYTHON312);
+  }
+
+  public void testTypeKeywordAsIdentifier() {
+    doTest(LanguageLevel.PYTHON312);
+  }
+
   public void doTest() {
     doTest(LanguageLevel.PYTHON26);
   }

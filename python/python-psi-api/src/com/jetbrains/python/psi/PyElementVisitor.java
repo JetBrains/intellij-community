@@ -385,4 +385,16 @@ public class PyElementVisitor extends PsiElementVisitor {
   public void visitPyCaseClause(@NotNull PyCaseClause node) {
     visitPyElement(node);
   }
+
+  public void visitPyTypeAliasStatement(@NotNull PyTypeAliasStatement node) {
+    visitPyStatement(node);
+  }
+
+  public void visitPyTypeParameter(@NotNull PyTypeParameter node) {
+    visitPyElement(node);
+  }
+
+  public void visitPyTypeParameterList(@NotNull PyTypeParameterList node) {
+    visitPyElement(node);
+  }
 }
