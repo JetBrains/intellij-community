@@ -48,7 +48,6 @@ import com.intellij.util.messages.MessageBusConnection;
 import icons.GradleIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.config.GradleSettingsListenerAdapter;
 import org.jetbrains.plugins.gradle.model.data.BuildParticipant;
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData;
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager;
@@ -333,7 +332,7 @@ public final class GradleManager
   public void runActivity(@NotNull final Project project) {
     // We want to automatically refresh linked projects on gradle service directory change.
     MessageBusConnection connection = project.getMessageBus().connect();
-    connection.subscribe(GradleSettings.getInstance(project).getChangesTopic(), new GradleSettingsListenerAdapter() {
+    connection.subscribe(GradleSettings.getInstance(project).getChangesTopic(), new GradleSettingsListener() {
 
       @Override
       public void onServiceDirectoryPathChange(@Nullable String oldPath, @Nullable String newPath) {

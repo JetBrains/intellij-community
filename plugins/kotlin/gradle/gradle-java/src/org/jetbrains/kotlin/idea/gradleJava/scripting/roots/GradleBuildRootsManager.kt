@@ -31,7 +31,6 @@ import org.jetbrains.kotlin.idea.gradleJava.scripting.*
 import org.jetbrains.kotlin.idea.gradleJava.scripting.importing.KotlinDslGradleBuildSync
 import org.jetbrains.kotlin.idea.gradleJava.scripting.roots.GradleBuildRoot.ImportingStatus.*
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.plugins.gradle.config.GradleSettingsListenerAdapter
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager
 import org.jetbrains.plugins.gradle.settings.DistributionType
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
@@ -249,7 +248,7 @@ class GradleBuildRootsManager(val project: Project) : GradleBuildRootsLocator(pr
         }
 
         // subscribe to linked gradle project modification
-        val listener = object : GradleSettingsListenerAdapter() {
+        val listener = object : GradleSettingsListener {
             override fun onProjectsLinked(settings: MutableCollection<GradleProjectSettings>) {
                 settings.forEach {
                     add(loadLinkedRoot(it))
