@@ -281,6 +281,10 @@ public final class FileSystemUtil {
         BasicFileAttributes attributes = NioFiles.readAttributes(path);
         return attributes == NioFiles.BROKEN_SYMLINK ? FileAttributes.BROKEN_SYMLINK : FileAttributes.fromNio(path, attributes);
       }
+      catch (NoSuchFileException e) {
+        LOG.trace(e.getClass().getName() + ": " + pathStr);
+        return null;
+      }
       catch (IOException | InvalidPathException e) {
         LOG.debug(pathStr, e);
         return null;
@@ -291,6 +295,10 @@ public final class FileSystemUtil {
     public String resolveSymLink(@NotNull String path) throws IOException {
       try {
         return Paths.get(path).toRealPath().toString();
+      }
+      catch (NoSuchFileException e) {
+        LOG.trace(e.getClass().getName() + ": " + path);
+        return null;
       }
       catch (FileSystemException e) {
         LOG.debug(path, e);
