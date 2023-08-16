@@ -688,7 +688,7 @@ public final class PythonSdkUpdater implements StartupActivity, DumbAware {
     ApplicationManager.getApplication().invokeAndWait(() -> {
       final SdkModificator effectiveModificator = sdk.getSdkModificator();
       if (processor.process(effectiveModificator)) {
-        effectiveModificator.commitChanges();
+        ApplicationManager.getApplication().runWriteAction(() -> effectiveModificator.commitChanges());
       }
     });
   }

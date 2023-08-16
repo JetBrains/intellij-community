@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.roots.OrderRootType;
@@ -62,7 +63,14 @@ public final class PythonMockSdk {
       sdkModificator.addRoot(vFile, OrderRootType.CLASSES);
     });
 
-    ApplicationManager.getApplication().runWriteAction(() -> sdkModificator.commitChanges());
+    Application application = ApplicationManager.getApplication();
+    Runnable runnable = () -> sdkModificator.commitChanges();
+    if (application.isDispatchThread()) {
+      application.runWriteAction(runnable);
+    } else {
+      application.invokeAndWait(() -> application.runWriteAction(runnable));
+    }
+
     return sdk;
 
     // com.jetbrains.python.psi.resolve.PythonSdkPathCache.getInstance() corrupts SDK, so have to clone
