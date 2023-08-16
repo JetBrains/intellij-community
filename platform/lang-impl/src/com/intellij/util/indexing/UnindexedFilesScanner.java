@@ -422,6 +422,7 @@ public class UnindexedFilesScanner implements FilesScanningTask {
       ProgressManager.checkCanceled(); // give a chance to suspend indexing
 
       return () -> {
+        long providerScanningStartTime = System.nanoTime();
         subTaskIndicator.setText(provider.getRootsScanningProgressText());
         try (PerProviderSink perProviderSink = project.getService(PerProjectIndexingQueue.class)
           .getSink(provider, projectScanningHistory.getScanningSessionId())) {
@@ -461,6 +462,7 @@ public class UnindexedFilesScanner implements FilesScanningTask {
                     "To reindex files under this origin IDEA has to be restarted", e);
         }
         finally {
+          scanningStatistics.setTotalCPUTimeWithPauses(System.nanoTime() - providerScanningStartTime);
           scanningStatistics.setNumberOfSkippedFiles(thisProviderDeduplicateFilter.getNumberOfSkippedFiles());
           synchronized (allTasksFinished) {
             if (!allTasksFinished.get()) {

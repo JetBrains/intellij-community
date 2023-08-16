@@ -93,7 +93,6 @@ final class SingleProviderIterator implements ContentIterator {
   }
 
   private void processFileRethrowExceptions(@NotNull VirtualFile fileOrDir) {
-    long scanningStart = System.nanoTime();
     if (pushers != null && pushedFilePropertiesUpdater instanceof PushedFilePropertiesUpdaterImpl) {
       ((PushedFilePropertiesUpdaterImpl)pushedFilePropertiesUpdater).applyPushersToFile(fileOrDir, pushers, moduleValues);
     }
@@ -116,6 +115,5 @@ final class SingleProviderIterator implements ContentIterator {
       }
       scanningStatistics.addStatus(fileOrDir, status, statusTime, project);
     }
-    scanningStatistics.addScanningTime(System.nanoTime() - scanningStart);
   }
 }

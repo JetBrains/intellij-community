@@ -881,8 +881,8 @@ fun JsonIndexDiagnostic.generateHtml(target: Appendable): String {
                 th("Number of files scheduled for indexing")
                 th("Number of files fully indexed by $INDEX_INFRA_EXTENSIONS")
                 th("Number of double-scanned skipped files")
+                th("Total CPU time with pauses")
                 th("Total time of getting files' statuses (part of scanning)")
-                th("Scanning time")
                 th("Time processing up-to-date files")
                 th("Time updating content-less indexes")
                 th("Time indexing without content")
@@ -897,14 +897,14 @@ fun JsonIndexDiagnostic.generateHtml(target: Appendable): String {
             tbody {
               for (scanningStats in projectIndexingHistory.scanningStatistics) {
                 tr(classes = getMinorDataClass(
-                  scanningStats.scanningTime.milliseconds < 100 && scanningStats.numberOfScannedFiles < 1000)) {
+                  scanningStats.totalCPUTimeWithPauses.milliseconds < 100 && scanningStats.numberOfScannedFiles < 1000)) {
                   td(scanningStats.providerName)
                   td(scanningStats.numberOfScannedFiles.toString())
                   td(scanningStats.numberOfFilesForIndexing.toString())
                   td(scanningStats.numberOfFilesFullyIndexedByInfrastructureExtensions.toString())
                   td(scanningStats.numberOfSkippedFiles.toString())
+                  td(scanningStats.totalCPUTimeWithPauses.presentableDuration())
                   td(scanningStats.statusTime.presentableDuration())
-                  td(scanningStats.scanningTime.presentableDuration())
                   td(scanningStats.timeProcessingUpToDateFiles.presentableDuration())
                   td(scanningStats.timeUpdatingContentLessIndexes.presentableDuration())
                   td(scanningStats.timeIndexingWithoutContentViaInfrastructureExtension.presentableDuration())
@@ -1146,13 +1146,13 @@ private fun JsonProjectScanningHistory.generateScanningHtml(target: Appendable,
             tbody {
               for (scanningStats in scanningStatistics) {
                 tr(classes = getMinorDataClass(
-                  scanningStats.scanningTime.milliseconds < 100 && scanningStats.numberOfScannedFiles < 1000)) {
+                  scanningStats.totalCPUTimeWithPauses.milliseconds < 100 && scanningStats.numberOfScannedFiles < 1000)) {
                   td(scanningStats.providerName)
                   td(scanningStats.numberOfScannedFiles.toString())
                   td(scanningStats.numberOfFilesForIndexing.toString())
                   td(scanningStats.numberOfFilesFullyIndexedByInfrastructureExtensions.toString())
                   td(scanningStats.numberOfSkippedFiles.toString())
-                  td(scanningStats.scanningTime.presentableDuration())
+                  td(scanningStats.totalCPUTimeWithPauses.presentableDuration())
                   td(scanningStats.statusTime.presentableDuration())
                   td(scanningStats.timeProcessingUpToDateFiles.presentableDuration())
                   td(scanningStats.timeUpdatingContentLessIndexes.presentableDuration())

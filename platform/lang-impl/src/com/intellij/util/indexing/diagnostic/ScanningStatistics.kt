@@ -22,7 +22,7 @@ class ScanningStatistics(val fileSetName: String) {
   var numberOfFilesFullyIndexedByInfrastructureExtension: Int = 0
   var listOfFilesFullyIndexedByInfrastructureExtension: ArrayList<String> = arrayListOf()
 
-  var scanningTime: TimeNano = 0
+  var totalCPUTimeWithPauses: TimeNano = 0
   var statusTime: TimeNano = 0
 
   var timeProcessingUpToDateFiles: TimeNano = 0
@@ -64,10 +64,6 @@ class ScanningStatistics(val fileSetName: String) {
   }
   catch (e: Exception) {
     PortableFilePath.AbsolutePath(file.url)
-  }
-
-  fun addScanningTime(time: Long) {
-    scanningTime += time
   }
 
   fun setNoRootsForRefresh() {

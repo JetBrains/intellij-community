@@ -16,7 +16,7 @@ data class JsonScanningStatistics(
   val numberOfFilesFullyIndexedByInfrastructureExtensions: Int = 0,
   val filesFullyIndexedByInfrastructureExtensions: List<String> = emptyList(),
   val statusTime: JsonDuration = JsonDuration(0),
-  val scanningTime: JsonDuration = JsonDuration(0),
+  val totalCPUTimeWithPauses: JsonDuration = JsonDuration(0),
   val timeProcessingUpToDateFiles: JsonDuration = JsonDuration(0),
   val timeUpdatingContentLessIndexes: JsonDuration = JsonDuration(0),
   val timeIndexingWithoutContentViaInfrastructureExtension: JsonDuration = JsonDuration(0),

@@ -38,7 +38,7 @@ class ProjectChangedFilesScanner {
       ScanningStatistics scanningStatistics = new ScanningStatistics(fileSetName);
       scanningStatistics.setNumberOfScannedFiles(files.size());
       scanningStatistics.setNumberOfFilesForIndexing(files.size());
-      scanningStatistics.setScanningTime(refreshedFilesCalcDuration);
+      scanningStatistics.setTotalCPUTimeWithPauses(refreshedFilesCalcDuration);
       scanningStatistics.setNoRootsForRefresh();
       projectIndexingHistory.addScanningStatistics(scanningStatistics);
       projectIndexingHistory.setScanFilesDuration(Duration.ofNanos(refreshedFilesCalcDuration));

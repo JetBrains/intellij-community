@@ -24,7 +24,7 @@ fun ScanningStatistics.toJsonStatistics(): JsonScanningStatistics {
     numberOfFilesFullyIndexedByInfrastructureExtensions = numberOfFilesFullyIndexedByInfrastructureExtension,
     filesFullyIndexedByInfrastructureExtensions = listOfFilesFullyIndexedByInfrastructureExtension,
     statusTime = JsonDuration(statusTime),
-    scanningTime = JsonDuration(scanningTime),
+    totalCPUTimeWithPauses = JsonDuration(totalCPUTimeWithPauses),
     timeProcessingUpToDateFiles = JsonDuration(timeProcessingUpToDateFiles),
     timeUpdatingContentLessIndexes = JsonDuration(timeUpdatingContentLessIndexes),
     timeIndexingWithoutContentViaInfrastructureExtension = JsonDuration(timeIndexingWithoutContentViaInfrastructureExtension),
@@ -154,7 +154,7 @@ fun ProjectIndexingHistoryImpl.toJson(): JsonProjectIndexingHistory {
     fileCount = getFileCount(),
     totalStatsPerFileType = aggregateStatsPerFileType().sortedByDescending { it.partOfTotalProcessingTime.doublePercentages },
     totalStatsPerIndexer = aggregateStatsPerIndexer().sortedByDescending { it.partOfTotalIndexingTime.doublePercentages },
-    scanningStatistics = scanningStatistics.sortedByDescending { it.scanningTime.nano },
+    scanningStatistics = scanningStatistics.sortedByDescending { it.totalCPUTimeWithPauses.nano },
     fileProviderStatistics = providerStatistics.sortedByDescending { it.totalIndexingVisibleTime.nano },
     visibleTimeToAllThreadTimeRatio = visibleTimeToAllThreadsTimeRatio
   )
@@ -171,7 +171,7 @@ private fun ProjectScanningHistoryImpl.changeToJson(): JsonProjectScanningHistor
   projectName = project.name,
   times = times.toJson(),
   fileCount = getFileCount(),
-  scanningStatistics = scanningStatistics.sortedByDescending { it.scanningTime.nano }
+  scanningStatistics = scanningStatistics.sortedByDescending { it.totalCPUTimeWithPauses.nano }
 )
 
 private fun ProjectDumbIndexingHistoryImpl.changeToJson(): JsonProjectDumbIndexingHistory {
