@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tabs;
 
 import com.intellij.ide.IdeBundle;
@@ -8,7 +8,6 @@ import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.ColorUtil;
-import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.FileColorManager;
 import com.intellij.ui.JBColor;
 import com.intellij.util.containers.ContainerUtil;
@@ -22,7 +21,6 @@ import java.util.*;
 public final class FileColorManagerImpl extends FileColorManager {
   private static final String FC_ENABLED = "FileColorsEnabled";
   private static final String FC_TABS_ENABLED = "FileColorsForTabsEnabled";
-  private static final String EXP_UI_FC_TABS_ENABLED = "ExpUIFileColorsForTabsEnabled";
   private static final String FC_PROJECT_VIEW_ENABLED = "FileColorsForProjectViewEnabled";
 
   private final Project myProject;
@@ -67,11 +65,7 @@ public final class FileColorManagerImpl extends FileColorManager {
 
   @ApiStatus.Internal
   public static void setEnabledForTabs(boolean enabled) {
-    if (ExperimentalUI.isNewUI()) {
-      PropertiesComponent.getInstance().setValue(EXP_UI_FC_TABS_ENABLED, Boolean.toString(enabled));
-    } else {
-      PropertiesComponent.getInstance().setValue(FC_TABS_ENABLED, Boolean.toString(enabled));
-    }
+    PropertiesComponent.getInstance().setValue(FC_TABS_ENABLED, Boolean.toString(enabled));
   }
 
   @Override
@@ -81,9 +75,6 @@ public final class FileColorManagerImpl extends FileColorManager {
 
   @ApiStatus.Internal
   public static boolean _isEnabledForTabs() {
-    if (ExperimentalUI.isNewUI()) {
-      return PropertiesComponent.getInstance().getBoolean(EXP_UI_FC_TABS_ENABLED, false);
-    }
     return PropertiesComponent.getInstance().getBoolean(FC_TABS_ENABLED, true);
   }
 
