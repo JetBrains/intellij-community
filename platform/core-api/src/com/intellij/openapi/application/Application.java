@@ -9,12 +9,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.concurrency.ThreadingAssertions;
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
-import com.intellij.util.concurrency.annotations.RequiresBlockingContext;
-import com.intellij.util.concurrency.annotations.RequiresEdt;
-import com.intellij.util.concurrency.annotations.RequiresReadLock;
-import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence;
-import com.intellij.util.concurrency.annotations.RequiresWriteLock;
+import com.intellij.util.concurrency.annotations.*;
 import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
@@ -221,7 +216,9 @@ public interface Application extends ComponentManager {
    * <h3>Obsolescence notice</h3>
    * <p>
    * This function is obsolete because the threading assertions should not depend on presence of the {@code Application}.
-   * Annotate the function with {@link RequiresReadLock} (in Java) or use {@link ThreadingAssertions#softAssertReadAccess} instead.
+   * Annotate the function with {@link RequiresReadLock} (in Java),
+   * or use {@link ThreadingAssertions#assertReadAccess()},
+   * or use {@link ThreadingAssertions#softAssertReadAccess} instead.
    * </p>
    * Asserts that read access is allowed.
    */
