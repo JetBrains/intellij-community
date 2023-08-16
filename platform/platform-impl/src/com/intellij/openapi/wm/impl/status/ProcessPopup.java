@@ -188,6 +188,7 @@ final class ProcessPopup {
       project = ideFrame.getProject();
     }
     builder.setDimensionServiceKey(project, DIMENSION_SERVICE_KEY, true);
+    builder.setLocateWithinScreenBounds(false);
 
     builder.setCancelButton(new MinimizeButton(IdeBundle.message("tooltip.hide")));
 
