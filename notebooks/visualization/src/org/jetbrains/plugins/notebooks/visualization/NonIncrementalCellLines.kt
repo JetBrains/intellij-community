@@ -53,7 +53,9 @@ class NonIncrementalCellLines private constructor(private val document: Document
         }.count()
 
         val trimAtEnd = oldCells.asReversed().zip(newCells.asReversed()).takeWhile { (oldCell, newCell) ->
-          oldCell.type == newCell.type && oldCell.size == newCell.size &&
+          oldCell.type == newCell.type &&
+          oldCell.language == newCell.language &&
+          oldCell.size == newCell.size &&
           oldCell != oldAffectedCells.lastOrNull() && newCell != newAffectedCells.lastOrNull()
         }.count()
 
