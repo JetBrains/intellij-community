@@ -104,6 +104,7 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
   };
 
   private final UserDataHolderBase myUserDataHolder = new UserDataHolderBase();
+  private volatile boolean myDisposed;
 
   protected FinderRecursivePanel(@NotNull FinderRecursivePanel<?> parent) {
     this(parent.getProject(), parent, parent.getGroupId());
@@ -422,13 +423,14 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
   public void dispose() {
     super.dispose();
     myMergingUpdateQueue.cancelAllUpdates();
+    myDisposed = true;
   }
 
   /**
    * @return true if already disposed.
    */
   protected boolean isDisposed() {
-    return Disposer.isDisposed(this);
+    return myDisposed;
   }
 
   public @Nullable T getSelectedValue() {
