@@ -1,5 +1,5 @@
 plugins {
-    `jewel-publish`
+    jewel
     alias(libs.plugins.composeDesktop)
 }
 
