@@ -30,6 +30,11 @@ internal fun MutableTWorkspace.generateK2DebuggerTests() {
             // TODO support "evaluation/multiplatform"
         }
 
+        testClass<AbstractInlineScopesAndK2IdeK2CodeEvaluateExpressionTest> {
+            model("evaluation/singleBreakpoint", testMethodName = "doSingleBreakpointTest", targetBackend = TargetBackend.JVM_IR_WITH_IR_EVALUATOR)
+            model("evaluation/multipleBreakpoints", testMethodName = "doMultipleBreakpointsTest", targetBackend = TargetBackend.JVM_IR_WITH_IR_EVALUATOR)
+        }
+
         testClass<AbstractK2SelectExpressionForDebuggerTest> {
             model("selectExpression")
         }

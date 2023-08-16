@@ -36,6 +36,7 @@ import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils.areLogErrorsIgnored
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils.isIgnoredTarget
 import org.jetbrains.kotlin.idea.debugger.KotlinPositionManager
+import org.jetbrains.kotlin.idea.debugger.core.stackFrame.InlineStackTraceCalculator
 import org.jetbrains.kotlin.idea.debugger.core.stackFrame.KotlinStackFrame
 import org.jetbrains.kotlin.idea.debugger.core.stepping.KotlinSteppingCommandProvider
 import org.jetbrains.kotlin.idea.debugger.getContainingMethod
@@ -89,19 +90,22 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
         myCommandProvider = JvmSteppingCommandProvider.EP_NAME.extensions.firstIsInstance<KotlinSteppingCommandProvider>()
     }
 
-    private fun SuspendContextImpl.getKotlinStackFrames(): List<KotlinStackFrame> {
-        if (myInProgress) {
-            val proxy = getFrameProxy(this) ?: return emptyList()
-            return KotlinPositionManager(debugProcess)
-              .createStackFrames(StackFrameDescriptorImpl(proxy, MethodsTracker())).orEmpty()
-              .filterIsInstance<KotlinStackFrame>()
+    private fun SuspendContextImpl.getFirstFrame(): KotlinStackFrame? {
+        val frameProxy = getFrameProxy(this) ?: return null
+        val descriptor = StackFrameDescriptorImpl(frameProxy, MethodsTracker())
+        val frames = if (myInProgress) {
+            KotlinPositionManager(debugProcess).createStackFrames(descriptor)
+        } else {
+            InlineStackTraceCalculator.calculateInlineStackTrace(descriptor)
         }
-        return emptyList()
+
+        return frames?.firstOrNull() as? KotlinStackFrame
     }
 
     override fun createEvaluationContext(suspendContext: SuspendContextImpl): EvaluationContextImpl? {
         return try {
-            val proxy = suspendContext.getKotlinStackFrames().firstOrNull()?.stackFrameProxy ?: suspendContext.frameProxy
+            val firstFrame = suspendContext.getFirstFrame()
+            val proxy = firstFrame?.stackFrameProxy ?: suspendContext.frameProxy
             assertNotNull(proxy)
             EvaluationContextImpl(suspendContext, proxy, proxy?.thisObject())
         } catch (e: EvaluateException) {
