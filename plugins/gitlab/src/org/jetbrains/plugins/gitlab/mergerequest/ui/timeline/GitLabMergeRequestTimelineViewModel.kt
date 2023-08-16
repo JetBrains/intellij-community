@@ -2,7 +2,10 @@
 package org.jetbrains.plugins.gitlab.mergerequest.ui.timeline
 
 import com.intellij.collaboration.async.*
+import com.intellij.collaboration.ui.codereview.issues.processIssueIdsMarkdown
+import com.intellij.collaboration.util.ChangesSelection
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.project.Project
 import com.intellij.util.childScope
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.*
@@ -10,7 +13,6 @@ import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.GitLabMergeRequestsPreferences
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
-import com.intellij.collaboration.util.ChangesSelection
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.GitLabMergeRequestViewModel
 import org.jetbrains.plugins.gitlab.ui.GitLabUIUtil
 import org.jetbrains.plugins.gitlab.ui.comment.DelegatingGitLabNoteEditingViewModel
@@ -36,6 +38,7 @@ interface GitLabMergeRequestTimelineViewModel : GitLabMergeRequestViewModel {
 private val LOG = logger<GitLabMergeRequestTimelineViewModel>()
 
 class LoadAllGitLabMergeRequestTimelineViewModel(
+  project: Project,
   parentCs: CoroutineScope,
   private val preferences: GitLabMergeRequestsPreferences,
   override val currentUser: GitLabUserDTO,
@@ -47,10 +50,11 @@ class LoadAllGitLabMergeRequestTimelineViewModel(
 
   override val number: String = "!${mergeRequest.iid}"
   override val author: GitLabUserDTO = mergeRequest.author
-  override val title: SharedFlow<String> = mergeRequest.details.map { it.title }
-    .modelFlow(cs, LOG)
-  override val descriptionHtml: SharedFlow<String> = mergeRequest.details.map { it.description }.map {
-    if (it.isNotBlank()) GitLabUIUtil.convertToHtml(it) else it
+  override val title: SharedFlow<String> = mergeRequest.details.map { it.title }.map { title ->
+    title.convertToHtmlWithIssues(project)
+  }.modelFlow(cs, LOG)
+  override val descriptionHtml: SharedFlow<String> = mergeRequest.details.map { it.description }.map { description ->
+    description.convertToHtmlWithIssues(project)
   }.modelFlow(cs, LOG)
   override val url: String = mergeRequest.url
 
@@ -155,6 +159,12 @@ class LoadAllGitLabMergeRequestTimelineViewModel(
           handleDiffRequests(it.diffVm, _diffRequests::emit)
         }
     }
+
+  private fun String.convertToHtmlWithIssues(project: Project): String {
+    if (isBlank()) return this
+    val processedText = processIssueIdsMarkdown(project, this)
+    return GitLabUIUtil.convertToHtml(processedText)
+  }
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)
