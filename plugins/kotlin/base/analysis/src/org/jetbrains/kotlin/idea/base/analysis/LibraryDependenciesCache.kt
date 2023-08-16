@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.base.analysis
 
 import com.intellij.ProjectTopics
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProgressManager.checkCanceled
@@ -19,11 +18,8 @@ import com.intellij.platform.backend.workspace.WorkspaceModelTopics
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.VersionedStorageChange
-import com.intellij.psi.util.CachedValueProvider
-import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresReadLock
-import com.intellij.util.containers.MultiMap
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
 import org.jetbrains.kotlin.idea.base.analysis.libraries.LibraryDependencyCandidate
 import org.jetbrains.kotlin.idea.base.projectStructure.*
@@ -85,6 +81,13 @@ private class LibraryDependencyCandidatesAndSdkInfosBuilder(
 class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDependenciesCache, Disposable {
     companion object {
         fun getInstance(project: Project): LibraryDependenciesCache = project.service()
+
+        /**
+         * @see filterForBuiltins
+         */
+        internal fun LibraryInfo.isSpecialKotlinCoreLibrary(project: Project): Boolean {
+            return !IdeBuiltInsLoadingState.isFromClassLoader && isCoreKotlinLibrary(project)
+        }
     }
 
     private val cache = LibraryDependenciesInnerCache()
@@ -185,7 +188,7 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
         libraryInfo: LibraryInfo,
         dependencyLibraries: MutableSet<LibraryDependencyCandidate>
     ): MutableSet<LibraryDependencyCandidate> {
-        return if (!IdeBuiltInsLoadingState.isFromClassLoader && libraryInfo.isCoreKotlinLibrary(project)) {
+        return if (libraryInfo.isSpecialKotlinCoreLibrary(project)) {
             dependencyLibraries.filterTo(mutableSetOf()) { dep ->
                 dep.libraries.any { it.isCoreKotlinLibrary(project) }
             }

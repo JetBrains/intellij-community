@@ -23,6 +23,7 @@ import org.jetbrains.kotlin.idea.caches.project.getModuleInfosFromIdeaModel
 import org.jetbrains.kotlin.idea.caches.trackers.ModuleModificationTracker
 import org.jetbrains.kotlin.progress.ProgressIndicatorAndCompilationCanceledStatus.checkCanceled
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
+import org.jetbrains.kotlin.idea.base.analysis.LibraryDependenciesCacheImpl.Companion.isSpecialKotlinCoreLibrary
 
 @State(name = "KotlinIdeAnchorService", storages = [Storage("anchors.xml")])
 class ResolutionAnchorCacheServiceImpl(
@@ -84,16 +85,16 @@ class ResolutionAnchorCacheServiceImpl(
         }
 
         val allTransitiveLibraryDependencies = LibraryDependenciesCache.getInstance(project).getTransitiveLibraryDependencyInfos(libraryInfo)
-
         val dependencyResolutionAnchors = allTransitiveLibraryDependencies.mapNotNullTo(mutableSetOf()) { resolutionAnchorsForLibraries[it] }
         resolutionAnchorDependenciesCache.putIfAbsent(libraryInfo, dependencyResolutionAnchors)?.let {
             // if value is already provided by the cache - no reasons for this thread to fill other values
             return it
         }
+
         val platform = libraryInfo.platform
         for (transitiveLibraryDependency in allTransitiveLibraryDependencies) {
             // it's safe to use same dependencyResolutionAnchors for the same platform libraries
-            if (transitiveLibraryDependency.platform == platform) {
+            if (transitiveLibraryDependency.platform == platform && !transitiveLibraryDependency.isSpecialKotlinCoreLibrary(project)) {
                 resolutionAnchorDependenciesCache.putIfAbsent(transitiveLibraryDependency, dependencyResolutionAnchors)
             }
         }
