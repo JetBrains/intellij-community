@@ -12,6 +12,7 @@ import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.impl.*
+import org.jetbrains.intellij.build.io.copyDir
 import org.jetbrains.jps.model.artifact.JpsArtifactService
 import org.jetbrains.xxh3.Xx3UnencodedString
 import java.lang.invoke.MethodHandles
@@ -146,6 +147,15 @@ internal suspend fun buildProduct(productConfiguration: ProductConfiguration, re
                    platformLayout = platformLayout.await(),
                    pluginCacheRootDir = pluginCacheRootDir,
                    context = context)
+
+      val additionalPluginPaths = context.productProperties.getAdditionalPluginPaths(context)
+      if (additionalPluginPaths.isNotEmpty()) {
+        withContext(Dispatchers.IO) {
+          for (sourceDir in additionalPluginPaths) {
+            copyDir(sourceDir, pluginRootDir.resolve(sourceDir.fileName))
+          }
+        }
+      }
     }
   }
 }
