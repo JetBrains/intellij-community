@@ -770,7 +770,7 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
 
   @Override
   public @NotNull List<ProjectImportModelProvider> getModelProviders() {
-    return ContainerUtil.prepend(super.getModelProviders(), new GradleExternalProjectModelProvider());
+    return ContainerUtil.append(super.getModelProviders(), new GradleExternalProjectModelProvider());
   }
 
   @Override
