@@ -21,5 +21,9 @@
     <codeInsight.gotoSuper
             language="kotlin"
             implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.KotlinGoToSuperDeclarationsHandler"/>
+
+    <applicationService
+            serviceInterface="org.jetbrains.kotlin.idea.base.codeInsight.KotlinOptimizeImportsFacility"
+            serviceImplementation="org.jetbrains.kotlin.idea.k2.codeinsight.K2OptimizeImportsFacility"/>
   </extensions>
 </idea-plugin>
