@@ -15,25 +15,24 @@
  */
 
 
-package org.jetbrains.plugins.gradle.tooling.util
+package org.jetbrains.plugins.gradle.tooling.util;
 
-import org.gradle.api.artifacts.Configuration
-import org.gradle.api.tasks.SourceSet
-import org.jetbrains.annotations.NotNull
-import org.jetbrains.annotations.Nullable
-import org.jetbrains.plugins.gradle.model.ExternalDependency
+import org.gradle.api.artifacts.Configuration;
+import org.gradle.api.tasks.SourceSet;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.model.ExternalDependency;
 
-/**
- * @author Vladislav.Soroka
- */
-interface DependencyResolver {
-  String COMPILE_SCOPE = "COMPILE"
-  String RUNTIME_SCOPE = "RUNTIME"
-  String PROVIDED_SCOPE = "PROVIDED"
+import java.util.Collection;
 
-  Collection<ExternalDependency> resolveDependencies(@Nullable String configurationName)
+public interface DependencyResolver {
+  String COMPILE_SCOPE = "COMPILE";
+  String RUNTIME_SCOPE = "RUNTIME";
+  String PROVIDED_SCOPE = "PROVIDED";
 
-  Collection<ExternalDependency> resolveDependencies(@Nullable Configuration configuration)
+  Collection<ExternalDependency> resolveDependencies(@Nullable String configurationName);
 
-  Collection<ExternalDependency> resolveDependencies(@NotNull SourceSet sourceSet)
+  Collection<ExternalDependency> resolveDependencies(@Nullable Configuration configuration);
+
+  Collection<ExternalDependency> resolveDependencies(@NotNull SourceSet sourceSet);
 }
