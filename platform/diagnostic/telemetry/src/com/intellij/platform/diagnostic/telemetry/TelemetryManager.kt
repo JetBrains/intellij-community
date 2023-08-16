@@ -62,7 +62,7 @@ interface TelemetryManager {
    * Looks like it is bad idea to use this method in production
    **/
   @TestOnly
-  fun forceFlushMetrics(): Unit
+  fun forceFlushMetrics()
 }
 
 private val instance = SynchronizedClearableLazy {
@@ -102,11 +102,11 @@ internal class NoopTelemetryManager : TelemetryManager {
   override fun getMeter(scope: Scope): Meter = OpenTelemetry.noop().getMeter(scope.toString())
 
   override fun addMetricsExporters(exporters: List<MetricsExporterEntry>) {
-    System.err.println("Noop telemetry manager is in use. No metrics exporters are defined.")
+    logger<NoopTelemetryManager>().info("Noop telemetry manager is in use. No metrics exporters are defined.")
   }
 
   override fun forceFlushMetrics() {
-    System.err.println("Cannot force flushing metrics for Noop telemetry manager")
+    logger<NoopTelemetryManager>().info("Cannot force flushing metrics for Noop telemetry manager")
   }
 }
 

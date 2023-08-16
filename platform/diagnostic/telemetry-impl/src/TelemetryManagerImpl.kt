@@ -15,14 +15,11 @@ import com.intellij.openapi.util.Ref
 import com.intellij.platform.diagnostic.telemetry.*
 import com.intellij.platform.diagnostic.telemetry.impl.otExporters.OpenTelemetryExporterProvider
 import com.intellij.util.childScope
-import io.opentelemetry.api.OpenTelemetry
 import io.opentelemetry.api.metrics.Meter
 import io.opentelemetry.api.trace.propagation.W3CTraceContextPropagator
 import io.opentelemetry.context.propagation.ContextPropagators
 import io.opentelemetry.sdk.OpenTelemetrySdk
-import io.opentelemetry.sdk.metrics.SdkMeterProvider
 import io.opentelemetry.sdk.resources.Resource
-import io.opentelemetry.sdk.trace.SdkTracerProvider
 import io.opentelemetry.semconv.resource.attributes.ResourceAttributes
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
@@ -38,7 +35,7 @@ import kotlin.coroutines.CoroutineContext
 @ApiStatus.Experimental
 @ApiStatus.Internal
 class TelemetryManagerImpl(app: Application) : TelemetryManager {
-  private val sdk: OpenTelemetry
+  private val sdk: OpenTelemetrySdk
 
   private val otlpService by lazy {
     ApplicationManager.getApplication().service<OtlpService>()
@@ -90,8 +87,8 @@ class TelemetryManagerImpl(app: Application) : TelemetryManager {
     logger<TelemetryManagerImpl>().info("Forcing metrics flushing ...")
 
     listOf(
-      (sdk.meterProvider as SdkMeterProvider).forceFlush(),
-      (sdk.tracerProvider as SdkTracerProvider).forceFlush()
+      sdk.sdkMeterProvider.forceFlush(),
+      sdk.sdkTracerProvider.forceFlush()
     ).forEach { it.join(10, TimeUnit.SECONDS) }
 
     aggregatedMetricExporter.flush().join(10, TimeUnit.SECONDS)
