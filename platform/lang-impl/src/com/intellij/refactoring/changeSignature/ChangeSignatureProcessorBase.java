@@ -161,8 +161,8 @@ public abstract class ChangeSignatureProcessorBase extends BaseRefactoringProces
     PsiElement method = changeInfo.getMethod();
     final RefactoringElementListener elementListener = transaction == null ? null : transaction.getElementListener(method);
     final String fqn = CopyReferenceAction.elementToFqn(method);
+    SmartPsiElementPointer<PsiElement> pointer = SmartPointerManager.createPointer(method);
     if (fqn != null) {
-      SmartPsiElementPointer<PsiElement> pointer = SmartPointerManager.createPointer(method);
       UndoableAction action = new BasicUndoableAction() {
         @Override
         public void undo() {
@@ -182,7 +182,8 @@ public abstract class ChangeSignatureProcessorBase extends BaseRefactoringProces
     }
     try {
       doChangeSignature(changeInfo, usages);
-      LOG.assertTrue(method.isValid());
+      method = pointer.getElement();
+      LOG.assertTrue(method != null && method.isValid());
       if (elementListener != null && changeInfo.isNameChanged()) {
         elementListener.elementRenamed(method);
       }
