@@ -3,11 +3,15 @@
 package org.jetbrains.kotlin.idea.highlighter
 
 import org.jetbrains.kotlin.idea.base.highlighting.AbstractKotlinHighlightExitPointsHandlerFactory
+import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyze
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.bindingContextUtil.getTargetFunction
 import org.jetbrains.kotlin.resolve.inline.InlineUtil
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
+import org.jetbrains.kotlin.types.typeUtil.isNothing
+import org.jetbrains.kotlin.types.typeUtil.isUnit
 
 class K1HighlightExitPointsHandlerFactory : AbstractKotlinHighlightExitPointsHandlerFactory() {
 
@@ -22,4 +26,11 @@ class K1HighlightExitPointsHandlerFactory : AbstractKotlinHighlightExitPointsHan
         declaration.safeAnalyzeNonSourceRootCode(BodyResolveMode.FULL),
         false
       )
+
+    override fun hasNonUnitReturnType(functionLiteral: KtFunctionLiteral): Boolean {
+        val bindingContext = functionLiteral.safeAnalyze(BodyResolveMode.PARTIAL)
+        val descriptor = bindingContext[BindingContext.FUNCTION, functionLiteral] ?: return false
+        val type = descriptor.returnType ?: return false
+        return !(type.isUnit() || type.isNothing())
+    }
 }

@@ -5,6 +5,7 @@ import org.jetbrains.kotlin.idea.base.highlighting.AbstractKotlinHighlightExitPo
 import org.jetbrains.kotlin.idea.codeinsight.utils.isInlinedArgument as utilsIsInlinedArgument
 import org.jetbrains.kotlin.psi.KtDeclarationWithBody
 import org.jetbrains.kotlin.psi.KtFunction
+import org.jetbrains.kotlin.psi.KtFunctionLiteral
 import org.jetbrains.kotlin.psi.KtReturnExpression
 
 class KotlinHighlightExitPointsHandlerFactory: AbstractKotlinHighlightExitPointsHandlerFactory() {
@@ -22,4 +23,9 @@ class KotlinHighlightExitPointsHandlerFactory: AbstractKotlinHighlightExitPoints
         }
     }
 
+    override fun hasNonUnitReturnType(functionLiteral: KtFunctionLiteral): Boolean =
+        analyze(functionLiteral) {
+            val returnType = functionLiteral.getAnonymousFunctionSymbol().returnType
+            !(returnType.isUnit || returnType.isNothing)
+        }
 }
