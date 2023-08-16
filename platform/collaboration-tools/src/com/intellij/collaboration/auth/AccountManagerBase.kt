@@ -137,6 +137,9 @@ abstract class AccountManagerBase<A : Account, Cred : Any>(
       }
     }.flowOn(Dispatchers.Default)
 
+  override fun canPersistCredentials(): Boolean =
+    persistentCredentials.canPersistCredentials()
+
   private sealed interface Event<A, Cred> {
     class AccountsRemoved<A, Cred>(val accounts: Set<A>) : Event<A, Cred>
     class AccountsAddedOrUpdated<A, Cred>(val map: Map<A, Cred?>) : Event<A, Cred>

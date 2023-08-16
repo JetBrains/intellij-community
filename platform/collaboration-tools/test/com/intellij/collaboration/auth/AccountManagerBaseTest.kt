@@ -26,6 +26,8 @@ class AccountManagerBaseTest {
     }
 
     override suspend fun retrieveCredentials(account: MockAccount): String? = map[account]
+
+    override fun canPersistCredentials(): Boolean = false
   }
 
   private lateinit var manager: AccountManagerBase<MockAccount, String>

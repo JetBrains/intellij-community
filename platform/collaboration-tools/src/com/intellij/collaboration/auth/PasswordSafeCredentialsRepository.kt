@@ -19,6 +19,8 @@ class PasswordSafeCredentialsRepository<A : Account, Cred : Any>(
   private val serviceName: String,
   private val mapper: CredentialsMapper<Cred>
 ) : CredentialsRepository<A, Cred> {
+  /** Settings for the password, lazily fetched. */
+  private val passwordSafeSettings by lazy { service<PasswordSafeSettings>() }
 
   private val passwordSafe
     get() = PasswordSafe.instance
@@ -35,6 +37,10 @@ class PasswordSafeCredentialsRepository<A : Account, Cred : Any>(
         ?.getPasswordAsString()
         ?.let(mapper::deserialize)
     }
+
+  // It is assumed all options other than MEMORY_ONLY persist to disk in some way.
+  override fun canPersistCredentials(): Boolean =
+    passwordSafeSettings.providerType != ProviderType.MEMORY_ONLY
 
   private fun A.credentialAttributes() = CredentialAttributes(generateServiceName(serviceName, id))
 

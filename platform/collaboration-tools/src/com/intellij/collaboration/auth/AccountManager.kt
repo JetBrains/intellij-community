@@ -51,4 +51,14 @@ interface AccountManager<A : Account, Cred> {
    * Credentials are acquired and updated under [scope]
    */
   suspend fun getCredentialsState(scope: CoroutineScope, account: A): StateFlow<Cred?>
+
+  /**
+   * Checks whether the account manager can persist credentials.
+   * If it cannot, one might need to notify the user of a way to
+   * fix this.
+   *
+   * @return `true` when the account manager is able to write
+   * credentials to persistent storage.
+   */
+  fun canPersistCredentials(): Boolean
 }
