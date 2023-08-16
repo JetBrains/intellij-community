@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.diagnostic
 
 import com.fasterxml.jackson.annotation.JsonIgnore
@@ -17,10 +17,7 @@ import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.indexing.ID
 import com.intellij.util.indexing.IndexInfrastructure
-import com.intellij.util.io.DirectByteBufferAllocator
-import com.intellij.util.io.PageCacheUtils
-import com.intellij.util.io.StorageLockContext
-import com.intellij.util.io.delete
+import com.intellij.util.io.*
 import com.intellij.util.io.stats.FilePageCacheStatistics
 import com.intellij.util.io.stats.PersistentEnumeratorStatistics
 import com.intellij.util.io.stats.PersistentHashMapStatistics
@@ -269,8 +266,12 @@ object StorageDiagnosticData {
     if (PageCacheUtils.LOCK_FREE_PAGE_CACHE_ENABLED) {
       setupFilePageCacheLockFreeReporting(otelMeter)
     }
-  }
 
+
+    otelMeter.counterBuilder("FileChannelInterruptsRetryer.totalRetriedAttempts").buildWithCallback {
+      it.record(FileChannelInterruptsRetryer.totalRetriedAttempts())
+    }
+  }
 
   private fun setupFilePageCacheLockFreeReporting(otelMeter: Meter) {
     val totalNativeBytesAllocated = otelMeter.counterBuilder("FilePageCacheLockFree.totalNativeBytesAllocated").buildObserver()
