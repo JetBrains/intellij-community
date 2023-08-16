@@ -18,6 +18,7 @@ import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.uast.*
+import org.jetbrains.uast.expressions.UInjectionHost
 
 fun literalExpression(): ULiteralExpressionPattern = ULiteralExpressionPattern()
 
@@ -88,6 +89,17 @@ open class UElementPattern<T : UElement, Self : UElementPattern<T, Self>>(clazz:
 
   fun withUastParentOrSelf(parentPattern: ElementPattern<out UElement>): Self = filterWithContext { it, context ->
     parentPattern.accepts(it, context) || it.uastParent?.let { parentPattern.accepts(it, context) } ?: false
+  }
+
+  fun withStringRoomExpressionOrSelf(parentPattern: ElementPattern<out UElement>): Self = filterWithContext { it, context ->
+    if (it !is UInjectionHost) return@filterWithContext false
+
+    if (parentPattern.accepts(it, context)) return@filterWithContext true
+
+    val room = it.getStringRoomExpression()
+    if (room === it) return@filterWithContext false
+
+    parentPattern.accepts(room, context)
   }
 
   class Capture<T : UElement>(clazz: Class<T>) : UElementPattern<T, Capture<T>>(clazz)
