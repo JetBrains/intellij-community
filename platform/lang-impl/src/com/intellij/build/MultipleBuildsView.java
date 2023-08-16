@@ -268,19 +268,15 @@ public class MultipleBuildsView implements BuildProgressListener, Disposable {
           tb.getComponent().setBorder(JBUI.Borders.merge(tb.getComponent().getBorder(), JBUI.Borders.customLine(OnePixelDivider.BACKGROUND, 0, 0, 0, 1), true));
           consoleComponent.add(tb.getComponent(), BorderLayout.WEST);
 
-          myContent = new ContentImpl(consoleComponent, myViewManager.getViewName(), true);
-          Disposer.register(myContent, new Disposable() {
+          myContent = new ContentImpl(consoleComponent, myViewManager.getViewName(), true) {
             @Override
             public void dispose() {
+              super.dispose();
               Disposer.dispose(MultipleBuildsView.this);
-            }
-          });
-          Disposer.register(myContent, new Disposable() {
-            @Override
-            public void dispose() {
               myViewManager.onBuildsViewRemove(MultipleBuildsView.this);
             }
-          });
+          };
+
           Icon contentIcon = myViewManager.getContentIcon();
           if (contentIcon != null) {
             myContent.setIcon(contentIcon);
