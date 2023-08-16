@@ -1,5 +1,6 @@
 // "Optimize imports" "true"
 // WITH_STDLIB
+// IGNORE_K2
 
 <caret>import java.io.*
 import java.util.*

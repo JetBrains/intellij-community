@@ -6,6 +6,8 @@ import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.idea.quickfix.AbstractQuickFixTest
 import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
+import org.jetbrains.kotlin.test.utils.IgnoreTests
+import kotlin.io.path.Path
 
 abstract class AbstractK2SharedQuickFixTest : AbstractQuickFixTest() {
     override fun checkForUnexpectedErrors() {}
@@ -21,5 +23,11 @@ abstract class AbstractK2SharedQuickFixTest : AbstractQuickFixTest() {
           { project.invalidateCaches() },
           { super.tearDown() }
         )
+    }
+
+    override fun doTest(beforeFileName: String) {
+        IgnoreTests.runTestIfNotDisabledByFileDirective(Path(beforeFileName), IgnoreTests.DIRECTIVES.IGNORE_K2) {
+            super.doTest(beforeFileName)
+        }
     }
 }
