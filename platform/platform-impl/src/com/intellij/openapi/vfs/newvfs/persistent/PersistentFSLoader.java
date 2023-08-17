@@ -572,7 +572,7 @@ public final class PersistentFSLoader {
       //avg record size is ~60b, hence I've chosen minCapacity=64 bytes, and defaultCapacity= 2*minCapacity
       final SpaceAllocationStrategy allocationStrategy = new SpaceAllocationStrategy.DataLengthPlusFixedPercentStrategy(128, 64, 30);
       final StreamlinedBlobStorage blobStorage;
-      if (FSRecordsImpl.USE_ATTRIBUTES_OVER_NEW_FILE_PAGE_CACHE) {
+      if (FSRecordsImpl.USE_ATTRIBUTES_OVER_NEW_FILE_PAGE_CACHE && PageCacheUtils.LOCK_FREE_PAGE_CACHE_ENABLED) {
         LOG.info("VFS uses streamlined attributes storage (over new FilePageCache)");
         blobStorage = new StreamlinedBlobStorageOverLockFreePagesStorage(
           new PagedFileStorageWithRWLockedPageContent(
@@ -648,7 +648,7 @@ public final class PersistentFSLoader {
 
   private static @NotNull RefCountingContentStorage createContentStorage_makeStorage(@NotNull Path contentsFile) throws IOException {
     // sources usually zipped with 4x ratio
-    if (FSRecordsImpl.USE_CONTENT_STORAGE_OVER_NEW_FILE_PAGE_CACHE) {
+    if (FSRecordsImpl.USE_CONTENT_STORAGE_OVER_NEW_FILE_PAGE_CACHE && PageCacheUtils.LOCK_FREE_PAGE_CACHE_ENABLED) {
       LOG.info("VFS uses content storage over new FilePageCache");
       return new RefCountingContentStorageImplLF(
         contentsFile,
