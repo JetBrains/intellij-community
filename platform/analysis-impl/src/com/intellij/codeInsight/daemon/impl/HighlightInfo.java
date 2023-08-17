@@ -17,6 +17,7 @@ import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.annotation.ProblemGroup;
 import com.intellij.modcommand.ModCommandAction;
+import com.intellij.modcommand.ModCommandService;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -876,10 +877,15 @@ public class HighlightInfo implements Segment {
     public String toString() {
       ModCommandAction modCommandAction = getAction().asModCommandAction();
       LocalQuickFix fix = QuickFixWrapper.unwrap(getAction());
-      Object action = fix != null ? fix : 
-                      modCommandAction != null ? modCommandAction : 
+      if (fix != null) {
+        modCommandAction = ModCommandService.getInstance().unwrap(fix);
+      }
+      Object action = modCommandAction != null ? modCommandAction :
+                      fix != null ? fix : 
                       IntentionActionDelegate.unwrap(getAction());
-      return "IntentionActionDescriptor: " + action.getClass();
+      String name =
+        action instanceof CommonIntentionAction intentionAction ? intentionAction.getFamilyName() : ((LocalQuickFix)action).getFamilyName();
+      return "IntentionActionDescriptor: " + name + " (" + action.getClass().getName() + ")";
     }
 
     @Nullable
