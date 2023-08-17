@@ -77,12 +77,13 @@ internal class IconDeferrerImpl : IconDeferrer() {
       DeferredIconImpl(baseIcon = base,
                        param = param,
                        needReadAction = true,
-                       evaluator = evaluator) { source, icon ->
-        // check if our result is not outdated yet
-        if (started == lastClearTimestamp.sum()) {
-          iconCache.put(source.param!!, icon)
-        }
-      }
+                       evaluator = evaluator,
+                       listener = { source, icon ->
+                         // check if our result is not outdated yet
+                         if (started == lastClearTimestamp.sum()) {
+                           iconCache.put(source.param!!, icon)
+                         }
+                       })
     }
   }
 }

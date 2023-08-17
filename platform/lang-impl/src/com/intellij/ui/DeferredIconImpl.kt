@@ -99,18 +99,11 @@ class DeferredIconImpl<T> : JBScalableIcon, DeferredIcon, RetrievableIcon, IconW
   }
 
   constructor(baseIcon: Icon?, param: T, needReadAction: Boolean, evaluator: com.intellij.util.Function<in T, out Icon>) :
-    this(baseIcon = baseIcon,
-         param = param,
-         needReadAction = needReadAction,
-         evaluator = evaluator::`fun`,
-         listener = null)
+    this(baseIcon = baseIcon, param = param, needReadAction = needReadAction, evaluator = evaluator::`fun`, listener = null)
 
 
   @ApiStatus.Internal
-  constructor(baseIcon: Icon?,
-              param: T,
-              asyncEvaluator: suspend (T) -> Icon,
-              listener: ((DeferredIconImpl<T>, Icon) -> Unit)?) {
+  constructor(baseIcon: Icon?, param: T, asyncEvaluator: suspend (T) -> Icon) {
     this.param = param
     delegateIcon = baseIcon ?: EMPTY_ICON
     scaledDelegateIcon = delegateIcon
@@ -118,7 +111,7 @@ class DeferredIconImpl<T> : JBScalableIcon, DeferredIcon, RetrievableIcon, IconW
     this.evaluator = null
     this.asyncEvaluator = asyncEvaluator
     isNeedReadAction = false
-    evalListener = listener
+    evalListener = null
     checkDelegationDepth()
   }
 
