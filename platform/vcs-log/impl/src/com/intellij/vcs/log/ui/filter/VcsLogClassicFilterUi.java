@@ -650,7 +650,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
       return ContainerUtil.map(filter.getRoots(), VirtualFile::getPath);
     }
 
-    static @NotNull List<String> getFilterValues(@NotNull VcsLogStructureFilter filter) {
+    public static @NotNull List<String> getFilterValues(@NotNull VcsLogStructureFilter filter) {
       return ContainerUtil.map(filter.getFiles(), path -> (path.isDirectory() ? DIR : FILE) + path.getPath());
     }
 

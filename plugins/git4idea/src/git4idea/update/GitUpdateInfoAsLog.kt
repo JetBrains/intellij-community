@@ -24,6 +24,7 @@ import com.intellij.vcs.log.ui.MainVcsLogUi
 import com.intellij.vcs.log.ui.VcsLogColorManager
 import com.intellij.vcs.log.ui.VcsLogUiEx
 import com.intellij.vcs.log.ui.VcsLogUiImpl
+import com.intellij.vcs.log.ui.filter.VcsLogClassicFilterUi
 import com.intellij.vcs.log.util.containsAll
 import com.intellij.vcs.log.visible.VcsLogFiltererImpl
 import com.intellij.vcs.log.visible.VisiblePack
@@ -212,8 +213,9 @@ class GitUpdateInfoAsLog(private val project: Project,
     override fun getFilterValues(filterName: String): List<String>? {
       when (filterName) {
         RANGE_FILTER.name -> return ArrayList(rangeFilter.getTextPresentation())
-        USER_FILTER.name -> return userFilter?.valuesAsText?.toList()
-        STRUCTURE_FILTER.name -> if (pathFilter != null) return pathFilter.files.map { it.path } else return getPathsFilterValues(filterName)
+        USER_FILTER.name -> return userFilter?.valuesAsText?.toList() ?: filters[filterName]
+        STRUCTURE_FILTER.name -> return pathFilter?.let { VcsLogClassicFilterUi.FileFilterModel.getFilterValues(it) }
+                                        ?: getPathsFilterValues(filterName)
         ROOT_FILTER.name -> return getPathsFilterValues(filterName)
         else -> return filters[filterName]
       }
