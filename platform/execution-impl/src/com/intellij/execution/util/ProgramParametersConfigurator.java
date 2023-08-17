@@ -29,10 +29,7 @@ import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PathUtil;
 import com.intellij.util.execution.ParametersListUtil;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.SystemIndependent;
+import org.jetbrains.annotations.*;
 import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
 import java.nio.file.Files;
@@ -86,7 +83,8 @@ public class ProgramParametersConfigurator {
     myValidation = validation;
   }
 
-  private static @NotNull DataContext projectContext(@NotNull Project project, @Nullable Module module, @Nullable Boolean validationMode) {
+  @ApiStatus.Internal
+  public static @NotNull DataContext projectContext(@NotNull Project project, @Nullable Module module, @Nullable Boolean validationMode) {
     return dataId -> {
       if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) return project.getBaseDir();
       if (CommonDataKeys.PROJECT.is(dataId)) return project;
