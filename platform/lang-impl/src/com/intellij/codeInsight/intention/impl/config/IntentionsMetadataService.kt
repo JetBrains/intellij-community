@@ -26,14 +26,13 @@ internal class IntentionsMetadataService {
   }
 
   // guarded by this
-  private val extensionMetaMap: MutableMap<IntentionActionBean, IntentionActionMetaData>
+  private val extensionMetaMap: MutableMap<IntentionActionBean, IntentionActionMetaData> =
+    LinkedHashMap(IntentionManagerImpl.EP_INTENTION_ACTIONS.point.size())
 
   // guarded by this, used only for legacy programmatically registered intentions
-  private val dynamicRegistrationMeta: MutableList<IntentionActionMetaData>
+  private val dynamicRegistrationMeta: MutableList<IntentionActionMetaData> = ArrayList()
 
   init {
-    dynamicRegistrationMeta = ArrayList()
-    extensionMetaMap = LinkedHashMap(IntentionManagerImpl.EP_INTENTION_ACTIONS.point.size())
     IntentionManagerImpl.EP_INTENTION_ACTIONS.forEachExtensionSafe { registerMetaDataForEp(it) }
     IntentionManagerImpl.EP_INTENTION_ACTIONS.addExtensionPointListener(object : ExtensionPointListener<IntentionActionBean> {
       override fun extensionAdded(extension: IntentionActionBean, pluginDescriptor: PluginDescriptor) {

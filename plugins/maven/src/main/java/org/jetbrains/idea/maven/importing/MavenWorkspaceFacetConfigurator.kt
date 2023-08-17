@@ -125,11 +125,7 @@ interface MavenWorkspaceFacetConfigurator : MavenWorkspaceConfigurator {
 
   class FacetPackagingModel(private val myArtifactModel: ModifiableArtifactModel,
                             private val myResolvingContext: PackagingElementResolvingContext) : PackagingModel {
-    private val myDependenciesImporter: ArtifactExternalDependenciesImporter
-
-    init {
-      myDependenciesImporter = ArtifactExternalDependenciesImporterImpl()
-    }
+    private val myDependenciesImporter: ArtifactExternalDependenciesImporter = ArtifactExternalDependenciesImporterImpl()
 
     override fun getModifiableArtifactModel(): ModifiableArtifactModel {
       return myArtifactModel

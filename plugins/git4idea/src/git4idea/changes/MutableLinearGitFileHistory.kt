@@ -5,7 +5,7 @@ import com.intellij.openapi.diff.impl.patch.TextFilePatch
 
 class MutableLinearGitFileHistory(private val commitHashes: List<String>) : GitFileHistory {
 
-  private val history: MutableMap<String, Entry>
+  private val history: MutableMap<String, Entry> = LinkedHashMap()
 
   private val firstKnownFilePath: String?
     get() = (history.values.find { it.patch != null }?.patch ?: error("Empty history")).beforeName
@@ -17,7 +17,6 @@ class MutableLinearGitFileHistory(private val commitHashes: List<String>) : GitF
     }
 
   init {
-    history = LinkedHashMap()
     for (sha in commitHashes) {
       history[sha] = Entry(null)
     }

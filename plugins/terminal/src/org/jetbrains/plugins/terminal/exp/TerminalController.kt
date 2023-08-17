@@ -728,10 +728,9 @@ class TerminalController(private val model: TerminalModel,
 
   private class DefaultTabulator(private var myWidth: Int,
                                  private val myTabLength: Int = TAB_LENGTH) : Tabulator {
-    private val myTabStops: SortedSet<Int>
+    private val myTabStops: SortedSet<Int> = TreeSet()
 
     init {
-      myTabStops = TreeSet()
       initTabStops(myWidth, myTabLength)
     }
 
