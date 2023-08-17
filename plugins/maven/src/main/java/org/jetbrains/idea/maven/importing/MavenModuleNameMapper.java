@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.importing;
 
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenId;
@@ -13,13 +12,13 @@ import static java.util.Locale.ROOT;
 
 public final class MavenModuleNameMapper {
   public static void resolveModuleNames(Collection<MavenProject> projects,
-                                        Map<MavenProject, Module> mavenProjectToModule,
+                                        Map<MavenProject, String> existingMavenProjectToModuleName,
                                         Map<MavenProject, String> mavenProjectToModuleName) {
     NameItem[] names = new NameItem[projects.size()];
 
     int i = 0;
     for (MavenProject each : projects) {
-      names[i++] = new NameItem(each, mavenProjectToModule.get(each));
+      names[i++] = new NameItem(each, existingMavenProjectToModuleName.get(each));
     }
 
     Arrays.sort(names);
@@ -45,13 +44,13 @@ public final class MavenModuleNameMapper {
     Set<String> existingNames = new HashSet<>();
 
     for (NameItem name : names) {
-      if (name.module != null) {
+      if (name.existingName != null) {
         existingNames.add(name.getResultName());
       }
     }
 
     for (NameItem nameItem : names) {
-      if (nameItem.module == null) {
+      if (nameItem.existingName == null) {
 
         Integer c = nameCountersLowerCase.get(nameItem.originalName.toLowerCase(ROOT));
 
@@ -78,7 +77,7 @@ public final class MavenModuleNameMapper {
 
   private static class NameItem implements Comparable<NameItem> {
     public final MavenProject project;
-    public final Module module;
+    public final String existingName;
 
     public final String originalName;
     public final String groupId;
@@ -86,9 +85,9 @@ public final class MavenModuleNameMapper {
     public int number = -1; // has no duplicates
     public boolean hasDuplicatedGroup;
 
-    private NameItem(MavenProject project, @Nullable Module module) {
+    private NameItem(MavenProject project, @Nullable String existingName) {
       this.project = project;
-      this.module = module;
+      this.existingName = existingName;
       originalName = calcOriginalName();
 
       String group = project.getMavenId().getGroupId();
@@ -96,7 +95,7 @@ public final class MavenModuleNameMapper {
     }
 
     private String calcOriginalName() {
-      if (module != null) return module.getName();
+      if (existingName != null) return existingName;
 
       String name = project.getMavenId().getArtifactId();
       if (!isValidName(name)) name = project.getDirectoryFile().getName();
@@ -104,7 +103,7 @@ public final class MavenModuleNameMapper {
     }
 
     public String getResultName() {
-      if (module != null) return module.getName();
+      if (existingName != null) return existingName;
 
       if (number == -1) return originalName;
       String result = originalName + " (" + (number + 1) + ")";
