@@ -34,6 +34,7 @@ import com.intellij.platform.workspace.storage.EntityChange
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.io.URLUtil
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.findLibraryBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
@@ -44,7 +45,6 @@ import org.jetbrains.kotlin.analysis.providers.analysisMessageBus
 import org.jetbrains.kotlin.analysis.providers.topics.KotlinModuleStateModificationKind
 import org.jetbrains.kotlin.analysis.providers.topics.KotlinTopics
 import org.jetbrains.kotlin.idea.base.projectStructure.getBinaryAndSourceModuleInfos
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.IdeaModuleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.toKtModule
 import org.jetbrains.kotlin.idea.util.AbstractSingleFileModuleBeforeFileEventListener
 import org.jetbrains.kotlin.idea.util.toKtModulesForModificationEvents
@@ -55,28 +55,6 @@ private val STDLIB_PATTERN = Pattern.compile("kotlin-stdlib-(\\d*)\\.(\\d*)\\.(\
 
 @Service(Service.Level.PROJECT)
 class FirIdeModuleStateModificationService(val project: Project) : Disposable {
-    private fun invalidateSourceModule(
-        module: Module,
-        modificationKind: KotlinModuleStateModificationKind = KotlinModuleStateModificationKind.UPDATE,
-    ) {
-        module.toKtModulesForModificationEvents().forEach { ktModule ->
-            project.publishModuleStateModification(ktModule, modificationKind)
-        }
-    }
-
-    private fun invalidateLibraryModule(
-        library: Library,
-        modificationKind: KotlinModuleStateModificationKind = KotlinModuleStateModificationKind.UPDATE,
-    ) {
-        invalidateByModuleInfos(library.getBinaryAndSourceModuleInfos(project), modificationKind)
-    }
-
-    private fun invalidateByModuleInfos(moduleInfos: Iterable<IdeaModuleInfo>, modificationKind: KotlinModuleStateModificationKind) {
-        moduleInfos.forEach { moduleInfo ->
-            project.publishModuleStateModification(moduleInfo.toKtModule(), modificationKind)
-        }
-    }
-
     /**
      * Publishes a module state modification event for a script or not-under-content-root [KtModule] whose file is being moved or deleted.
      *
@@ -96,14 +74,12 @@ class FirIdeModuleStateModificationService(val project: Project) : Disposable {
                 is VFileDeleteEvent -> KotlinModuleStateModificationKind.REMOVAL
                 else -> KotlinModuleStateModificationKind.UPDATE
             }
-            project.publishModuleStateModification(module, modificationKind)
+            module.publishModuleStateModification(modificationKind)
         }
     }
 
     internal class LibraryUpdatesListener(private val project: Project) : BulkFileListener {
         val index = ProjectRootManager.getInstance(project).fileIndex
-
-        private val moduleStateModificationService: FirIdeModuleStateModificationService get() = getInstance(project)
 
         override fun before(events: List<VFileEvent>) {
             if (mayBuiltinsHaveChanged(events)) {
@@ -120,7 +96,7 @@ class FirIdeModuleStateModificationService(val project: Project) : Disposable {
                 if (!file.extension.equals("jar", ignoreCase = true)) return@mapNotNull null  //react only on jars
                 val jarRoot = StandardFileSystems.jar().findFileByPath(file.path + URLUtil.JAR_SEPARATOR) ?: return@mapNotNull null
                 (index.getOrderEntriesForFile(jarRoot).firstOrNull { it is LibraryOrderEntry } as? LibraryOrderEntry)?.library
-            }.distinct().forEach { moduleStateModificationService.invalidateLibraryModule(it) }
+            }.distinct().forEach { it.publishModuleStateModification(project) }
         }
 
         private fun mayBuiltinsHaveChanged(events: List<VFileEvent>): Boolean {
@@ -202,7 +178,7 @@ class FirIdeModuleStateModificationService(val project: Project) : Disposable {
     private fun handleChangesInsideModule(event: VersionedStorageChange, alreadyInvalidatedModules: Set<Module>) {
         for (changedModule in event.getChangesInsideModules()) {
             if (changedModule in alreadyInvalidatedModules) continue
-            invalidateSourceModule(changedModule)
+            changedModule.publishModuleStateModification()
         }
     }
 
@@ -270,12 +246,12 @@ class FirIdeModuleStateModificationService(val project: Project) : Disposable {
                 is EntityChange.Removed -> {
                     change.oldEntity
                         .findLibraryBridge(event.storageBefore)
-                        ?.let { invalidateLibraryModule(it, KotlinModuleStateModificationKind.REMOVAL) }
+                        ?.let { it.publishModuleStateModification(project, KotlinModuleStateModificationKind.REMOVAL) }
                 }
 
                 is EntityChange.Replaced -> {
                     val changedLibrary = change.getReplacedEntity(event, LibraryEntity::findLibraryBridge) ?: continue
-                    invalidateLibraryModule(changedLibrary)
+                    changedLibrary.publishModuleStateModification(project)
                 }
             }
         }
@@ -293,14 +269,14 @@ class FirIdeModuleStateModificationService(val project: Project) : Disposable {
                     is EntityChange.Added -> {}
                     is EntityChange.Removed -> {
                         change.oldEntity.findModule(event.storageBefore)?.let { module ->
-                            invalidateSourceModule(module, KotlinModuleStateModificationKind.REMOVAL)
+                            module.publishModuleStateModification(KotlinModuleStateModificationKind.REMOVAL)
                             add(module)
                         }
                     }
 
                     is EntityChange.Replaced -> {
                         val changedModule = change.getReplacedEntity(event, ModuleEntity::findModule) ?: continue
-                        invalidateSourceModule(changedModule)
+                        changedModule.publishModuleStateModification()
                         add(changedModule)
                     }
                 }
@@ -328,6 +304,25 @@ private fun <C : WorkspaceEntity, E> EntityChange.Replaced<C>.getReplacedEntity(
     return new
 }
 
-private fun Project.publishModuleStateModification(module: KtModule, modificationKind: KotlinModuleStateModificationKind) {
-    analysisMessageBus.syncPublisher(KotlinTopics.MODULE_STATE_MODIFICATION).onModification(module, modificationKind)
+private fun Module.publishModuleStateModification(
+    modificationKind: KotlinModuleStateModificationKind = KotlinModuleStateModificationKind.UPDATE,
+) {
+    toKtModulesForModificationEvents().forEach { ktModule ->
+        ktModule.publishModuleStateModification(modificationKind)
+    }
+}
+
+private fun Library.publishModuleStateModification(
+    project: Project,
+    modificationKind: KotlinModuleStateModificationKind = KotlinModuleStateModificationKind.UPDATE,
+) {
+    getBinaryAndSourceModuleInfos(project).forEach { moduleInfo ->
+        moduleInfo.toKtModule().publishModuleStateModification(modificationKind)
+    }
+}
+
+private fun KtModule.publishModuleStateModification(modificationKind: KotlinModuleStateModificationKind) {
+    ThreadingAssertions.assertWriteAccess()
+
+    project.analysisMessageBus.syncPublisher(KotlinTopics.MODULE_STATE_MODIFICATION).onModification(this, modificationKind)
 }
