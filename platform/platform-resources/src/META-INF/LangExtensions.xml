@@ -1752,6 +1752,8 @@
               topic="com.intellij.ide.SaveAndSyncHandlerListener"/>
     <listener class="com.intellij.codeInsight.daemon.impl.DaemonFusReporter"
               topic="com.intellij.codeInsight.daemon.DaemonCodeAnalyzer$DaemonListener"/>
+    <listener class="com.intellij.codeInsight.inline.completion.InlineCompletionLookupManagerListener"
+              topic="com.intellij.codeInsight.lookup.LookupManagerListener"/>
     <listener class="com.intellij.psi.impl.file.impl.PsiVFSListener$MyModuleRootListener"
               topic="com.intellij.openapi.roots.ModuleRootListener"/>
   </projectListeners>
