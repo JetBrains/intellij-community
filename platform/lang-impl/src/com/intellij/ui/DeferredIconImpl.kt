@@ -257,13 +257,14 @@ class DeferredIconImpl<T> : JBScalableIcon, DeferredIcon, RetrievableIcon, IconW
   }
 
   private suspend fun setDone(result: Icon) {
+    val deferredIconListener = ApplicationManager.getApplication().messageBus.syncPublisher(DeferredIconListener.TOPIC)
     withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
       evalListener?.invoke(this@DeferredIconImpl, result)
       isDone = true
       evaluator = null
       asyncEvaluator = null
       scheduledRepaints = null
-      ApplicationManager.getApplication().messageBus.syncPublisher(DeferredIconListener.TOPIC).evaluated(this@DeferredIconImpl, result)
+      deferredIconListener.evaluated(this@DeferredIconImpl, result)
     }
   }
 
