@@ -22,6 +22,7 @@ import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettingsTracker
 import org.jetbrains.kotlin.idea.core.script.ScriptRelatedModuleNameFile
+import org.jetbrains.kotlin.idea.core.script.scriptingDebugLog
 import org.jetbrains.kotlin.idea.facet.KotlinFacetModificationTracker
 import org.jetbrains.kotlin.platform.CommonPlatforms
 import org.jetbrains.kotlin.platform.TargetPlatform
@@ -42,6 +43,12 @@ private data class ScriptLanguageSettings(
 
 internal class ScriptingTargetPlatformDetector : TargetPlatformDetector {
     companion object {
+        private val gradleTemplatesClasses = setOf(
+          "org.gradle.kotlin.dsl.KotlinBuildScript",
+          "org.gradle.kotlin.dsl.KotlinSettingsScript",
+          "org.gradle.kotlin.dsl.KotlinInitScript"
+        )
+
         fun getLanguageVersionSettings(project: Project, virtualFile: VirtualFile, definition: ScriptDefinition): LanguageVersionSettings {
             return getScriptSettings(project, virtualFile, definition).languageVersionSettings
         }
@@ -77,9 +84,9 @@ internal class ScriptingTargetPlatformDetector : TargetPlatformDetector {
         }
 
         private fun getScriptSettings(project: Project, virtualFile: VirtualFile, definition: ScriptDefinition): ScriptLanguageSettings {
-            val environmentCompilerOptions = definition.defaultCompilerOptions
-            val args = definition.compilerOptions
-            return if (environmentCompilerOptions.none() && args.none()) {
+            val compilerOptions = definition.defaultCompilerOptions + definition.compilerOptions.addGradleSpecificsIfNeeded(definition)
+
+            return if (compilerOptions.isEmpty()) {
                 val scriptModule = getScriptModule(project, virtualFile)
                 val languageVersionSettings = scriptModule?.languageVersionSettings ?: project.languageVersionSettings
                 val platformVersion = detectDefaultTargetPlatformVersion(scriptModule?.platform)
@@ -88,10 +95,9 @@ internal class ScriptingTargetPlatformDetector : TargetPlatformDetector {
                 val settings = definition.getUserData(SCRIPT_LANGUAGE_SETTINGS) ?: createCachedValue(project) {
                     val compilerArguments = K2JVMCompilerArguments()
 
-                    parseCommandLineArguments(environmentCompilerOptions.toList(), compilerArguments)
-                    parseCommandLineArguments(args.toList(), compilerArguments)
+                    parseCommandLineArguments(compilerOptions, compilerArguments)
+                    scriptingDebugLog(virtualFile) { "compiler options: $compilerOptions" }
 
-                    // TODO: reporting
                     val languageVersionSettings = compilerArguments.toLanguageVersionSettings(
                         MessageCollector.NONE,
                         mapOf(AnalysisFlags.ideMode to true)
@@ -104,6 +110,18 @@ internal class ScriptingTargetPlatformDetector : TargetPlatformDetector {
                 }.also { definition.putUserData(SCRIPT_LANGUAGE_SETTINGS, it) }
                 settings.value
             }
+        }
+
+        private fun Iterable<String>.addGradleSpecificsIfNeeded(definition: ScriptDefinition): Iterable<String> {
+            if (!none() || (definition.baseClassType.typeName !in gradleTemplatesClasses)) return this
+
+            return listOf(
+                    "-java-parameters",
+                    "-Xjvm-default=all",
+                    "-Xjsr305=strict",
+                    "-Xsam-conversions=class",
+                    "-XXLanguage:+DisableCompatibilityModeForNewInference",
+                    "-XXLanguage:-TypeEnhancementImprovementsInStrictMode")
         }
 
         private fun getScriptModule(project: Project, virtualFile: VirtualFile): Module? {
