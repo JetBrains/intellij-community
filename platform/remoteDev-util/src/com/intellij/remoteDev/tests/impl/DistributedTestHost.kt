@@ -124,7 +124,7 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
                             lifetime = lifetime)
     val model = protocol.distributedTestModel
 
-    LOG.info("Advise for session...")
+    LOG.info("Advise for session. Current state: ${model.session.value}...")
     model.session.viewNotNull(lifetime) { sessionLifetime, session ->
       val isNotRdHost = !(session.agentInfo.productTypeType == RdProductType.REMOTE_DEVELOPMENT && session.agentInfo.agentType == RdAgentType.HOST)
 
