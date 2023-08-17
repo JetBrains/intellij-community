@@ -7,7 +7,6 @@ import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
-import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.idea.actions.KotlinAddImportAction
 import org.jetbrains.kotlin.idea.actions.createGroupedImportsAction
@@ -17,8 +16,6 @@ import org.jetbrains.kotlin.idea.core.targetDescriptors
 import org.jetbrains.kotlin.idea.highlighter.Fe10QuickFixProvider
 import org.jetbrains.kotlin.idea.quickfix.ImportFixBase
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.name.parentOrNull
-import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
@@ -77,27 +74,8 @@ abstract class AbstractKotlinReferenceImporter : ReferenceImporter {
                     }
                 }
             }
-        }.firstNotNullOfOrNull { action ->
-            val suggestions = filterSuggestions(file, action.suggestions())
-            val singlePackage = suggestions.groupBy { it.parentOrNull() ?: FqName.ROOT }.size == 1
-            if (!singlePackage) {
-                null
-            } else {
-                val suggestion = suggestions.first()
-                val descriptors = file.resolveImportReference(suggestion)
-
-                // we do not auto-import nested classes because this will probably add qualification into the text and this will confuse the user
-                if (descriptors.any { it is ClassDescriptor && it.containingDeclaration is ClassDescriptor }) {
-                    null
-                } else {
-                    val element = action.element
-                    if (element is KtElement) {
-                        createGroupedImportsAction(file.project, editor, element, "", suggestions)
-                    } else {
-                        null
-                    }
-                }
-            }
+        }.firstNotNullOfOrNull { importFix ->
+            importFix.createAutoImportAction(editor, file) { suggestions -> filterSuggestions(file, suggestions) }
         }
     }
 

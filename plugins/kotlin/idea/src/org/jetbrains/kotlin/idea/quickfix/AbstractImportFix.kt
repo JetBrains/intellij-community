@@ -37,6 +37,7 @@ import org.jetbrains.kotlin.idea.base.utils.fqname.isImported
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeInContext
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
+import org.jetbrains.kotlin.idea.caches.resolve.resolveImportReference
 import org.jetbrains.kotlin.idea.caches.resolve.util.getResolveScope
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
 import org.jetbrains.kotlin.idea.codeInsight.KotlinAutoImportsFilter
@@ -111,8 +112,6 @@ abstract class ImportFixBase<T : KtExpression> protected constructor(
         suggestions = collectSuggestions(suggestionDescriptors)
         text = calculateText(suggestionDescriptors)
     }
-
-    internal fun suggestions() = suggestions
 
     protected open val supportedErrors = factory.supportedErrors.toSet()
 
@@ -203,9 +202,26 @@ abstract class ImportFixBase<T : KtExpression> protected constructor(
 
     private fun isOutdated() = modificationCountOnCreate != PsiModificationTracker.getInstance(project).modificationCount
 
-    open fun createAction(project: Project, editor: Editor, element: KtExpression): KotlinAddImportAction {
+    protected open fun createAction(project: Project, editor: Editor, element: KtExpression): KotlinAddImportAction {
         return createSingleImportAction(project, editor, element, suggestions)
     }
+
+    fun createAutoImportAction(
+        editor: Editor,
+        file: KtFile,
+        filterSuggestions: (Collection<FqName>) -> Collection<FqName> = { suggestions -> suggestions },
+    ): KotlinAddImportAction? {
+        val suggestions = filterSuggestions(suggestions)
+        if (suggestions.isEmpty() || !ImportFixHelper.suggestionsAreFromSameParent(suggestions)) return null
+
+        // we do not auto-import nested classes because this will probably add qualification into the text and this will confuse the user
+        if (suggestions.any { suggestion -> file.resolveImportReference(suggestion).any(::isNestedClassifier) }) return null
+
+        return element?.let { createGroupedImportsAction(file.project, editor, it, autoImportDescription = "", suggestions) }
+    }
+
+    private fun isNestedClassifier(declaration: DeclarationDescriptor): Boolean =
+        declaration is ClassifierDescriptor && declaration.containingDeclaration is ClassifierDescriptor
 
     private fun createActionWithAutoImportsFilter(project: Project, editor: Editor, element: KtExpression): KotlinAddImportAction {
         val filteredSuggestions =
