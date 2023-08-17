@@ -280,6 +280,7 @@ class DeferredIconImpl<T> : JBScalableIcon, DeferredIcon, RetrievableIcon, IconW
 
     val app = ApplicationManager.getApplication()
     if (app != null && app.isUnitTestMode) {
+      @Suppress("TestOnlyProblems")
       checkDoesntReferenceThis(result)
     }
     return adjustResultWithScale(result)
