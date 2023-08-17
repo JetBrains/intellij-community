@@ -10,9 +10,12 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.InputValidator
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.TimeoutUtil
+import java.awt.event.ActionEvent.CTRL_MASK
 import java.awt.event.ActionEvent.SHIFT_MASK
+import java.io.RandomAccessFile
 import java.util.*
 
 private const val TEST_LOGGER = "TEST.LOGGER"
@@ -43,13 +46,28 @@ internal class DropAnErrorAction : DumbAwareAction("Drop an Error", "Hold down S
 internal class DropAnErrorWithAttachmentsAction : DumbAwareAction("Drop an Error with Attachments", "Hold down SHIFT for multiple attachments", null) {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
   override fun actionPerformed(e: AnActionEvent) {
-    val attachments = if (e.modifiers and SHIFT_MASK == 0) {
+    val attachments = if (e.modifiers and SHIFT_MASK == 0 && e.modifiers and CTRL_MASK == 0) {
       arrayOf(Attachment("attachment.txt", "content"))
     }
-    else {
+    else if (e.modifiers and SHIFT_MASK != 0) {
       arrayOf(Attachment("first.txt", "content"), Attachment("second.txt", "more content"), Attachment("third.txt", "even more content"))
     }
+    else if (e.modifiers and CTRL_MASK != 0) {
+      getLargeAttachment()
+    }
+    else {
+      emptyArray<Attachment>()
+    }
     Logger.getInstance(TEST_LOGGER).error(TEST_MESSAGE, Exception(randomString()), *attachments)
+  }
+
+  private fun getLargeAttachment(): Array<Attachment> {
+    val size = 1024 * 1024 * 1024
+    RandomAccessFile(FileUtil.createTempFile("large-attachment", ".bin", true), "rw")
+      .apply { setLength(size.toLong()) }
+
+    return arrayOf(Attachment("large.txt", FileUtil.createTempFile("large-attachment", ".bin", true),
+                              "A large attachment of size: $size bytes").apply { isIncluded = true })
   }
 }
 
