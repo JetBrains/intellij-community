@@ -10,13 +10,15 @@ import com.intellij.openapi.ui.ComponentContainer
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.ui.LanguageTextField
-import com.intellij.util.ui.JBDimension
+import com.intellij.ui.components.panels.ListLayout
 import com.intellij.util.ui.JBUI
 import org.jetbrains.plugins.terminal.TerminalProjectOptionsProvider
 import org.jetbrains.plugins.terminal.exp.TerminalPromptController.PromptStateListener
 import org.jetbrains.plugins.terminal.exp.completion.TerminalShellSupport
 import java.awt.Color
-import javax.swing.*
+import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.JPanel
 
 class TerminalPromptPanel(
   private val project: Project,
@@ -48,9 +50,8 @@ class TerminalPromptPanel(
     val outerBorder = JBUI.Borders.customLineTop(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground())
     border = JBUI.Borders.compound(outerBorder, innerBorder)
 
-    layout = BoxLayout(this, BoxLayout.Y_AXIS)
+    layout = ListLayout.vertical(TerminalUI.promptToCommandInset)
     add(promptLabel)
-    add(Box.createRigidArea(JBDimension(0, TerminalUI.promptToCommandInset)))
     add(editorTextField)
   }
 

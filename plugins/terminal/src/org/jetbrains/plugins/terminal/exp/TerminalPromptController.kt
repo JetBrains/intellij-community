@@ -1,7 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.exp
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
@@ -74,6 +76,13 @@ class TerminalPromptController(
 
   fun onCommandHistoryClosed() {
     listeners.forEach { it.commandHistoryStateChanged(showing = false) }
+  }
+
+  fun addDocumentListener(listener: DocumentListener, disposable: Disposable? = null) {
+    if (disposable != null) {
+      editor.document.addDocumentListener(listener, disposable)
+    }
+    else editor.document.addDocumentListener(listener)
   }
 
   interface PromptStateListener {

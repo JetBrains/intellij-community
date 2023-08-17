@@ -2,10 +2,13 @@
 package org.jetbrains.plugins.terminal.exp
 
 import com.intellij.openapi.application.invokeLater
+import com.intellij.openapi.editor.event.DocumentEvent
+import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
+import com.intellij.ui.util.preferredHeight
 import com.intellij.util.ui.JBInsets
 import com.jediterm.core.util.TermSize
 import org.jetbrains.plugins.terminal.exp.TerminalPromptController.PromptStateListener
@@ -37,6 +40,23 @@ class BlockTerminalPanel(
         revalidate()
         invokeLater {
           IdeFocusManager.getInstance(project).requestFocus(preferredFocusableComponent, true)
+        }
+      }
+    })
+
+    promptPanel.controller.addDocumentListener(object : DocumentListener {
+      override fun documentChanged(event: DocumentEvent) {
+        if (promptPanel.component.preferredHeight != promptPanel.component.height) {
+          revalidate()
+        }
+      }
+    })
+
+    outputPanel.controller.addDocumentListener(object : DocumentListener {
+      override fun documentChanged(event: DocumentEvent) {
+        if (outputPanel.component.height < this@BlockTerminalPanel.height    // do not revalidate if output already occupied all height
+            && outputPanel.component.preferredHeight > outputPanel.component.height) { // revalidate if output no more fit in current bounds
+          revalidate()
         }
       }
     })

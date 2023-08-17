@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.editor.ScrollType
+import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.markup.EffectType
 import com.intellij.openapi.editor.markup.TextAttributes
@@ -206,6 +207,13 @@ class TerminalOutputController(private val editor: EditorEx,
             foreground.alpha)
     }
     else AwtTransformers.toAwtColor(foreground)!!
+  }
+
+  fun addDocumentListener(listener: DocumentListener, disposable: Disposable? = null) {
+    if (disposable != null) {
+      editor.document.addDocumentListener(listener, disposable)
+    }
+    else editor.document.addDocumentListener(listener)
   }
 
   private data class TerminalContent(val text: String, val highlightings: List<HighlightingInfo>)
