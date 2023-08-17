@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.base.projectStructure
 import com.intellij.ide.highlighter.JavaClassFileType
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileTypes.FileType
-import org.jetbrains.kotlin.analysis.decompiler.psi.KlibMetaFileType
+import org.jetbrains.kotlin.analysis.decompiler.konan.KlibMetaFileType
 import org.jetbrains.kotlin.analysis.decompiler.psi.KotlinBuiltInFileType
 import org.jetbrains.kotlin.idea.KotlinModuleFileType
 import org.jetbrains.kotlin.idea.base.psi.fileTypes.KotlinJavaScriptMetaFileType

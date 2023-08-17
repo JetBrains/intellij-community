@@ -3,7 +3,7 @@
 package org.jetbrains.kotlin.ide.konan
 
 import com.intellij.openapi.components.service
-import org.jetbrains.kotlin.analysis.decompiler.psi.CachingIdeKlibMetadataLoader
+import org.jetbrains.kotlin.analysis.decompiler.konan.CachingIdeKlibMetadataLoader
 import org.jetbrains.kotlin.analyzer.*
 import org.jetbrains.kotlin.builtins.DefaultBuiltIns
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns

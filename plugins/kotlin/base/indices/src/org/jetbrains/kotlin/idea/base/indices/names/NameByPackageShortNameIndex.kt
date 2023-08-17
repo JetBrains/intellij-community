@@ -9,8 +9,8 @@ import com.intellij.util.indexing.*
 import com.intellij.util.io.DataExternalizer
 import com.intellij.util.io.IOUtil
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.analysis.decompiler.psi.FileWithMetadata
-import org.jetbrains.kotlin.analysis.decompiler.psi.KlibMetaFileType
+import org.jetbrains.kotlin.analysis.decompiler.konan.FileWithMetadata
+import org.jetbrains.kotlin.analysis.decompiler.konan.KlibMetaFileType
 import org.jetbrains.kotlin.analysis.decompiler.psi.KotlinBuiltInFileType
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.vfilefinder.FqNameKeyDescriptor
