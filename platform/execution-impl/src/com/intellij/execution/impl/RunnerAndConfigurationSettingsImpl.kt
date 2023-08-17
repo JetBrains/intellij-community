@@ -14,9 +14,7 @@ import com.intellij.execution.configuration.PersistentAwareRunConfiguration
 import com.intellij.execution.configurations.*
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.runners.ProgramRunner
-import com.intellij.ide.DataManager
-import com.intellij.ide.ui.IdeUiService
-import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.execution.util.ProgramParametersConfigurator
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.components.PathMacroManager
@@ -24,14 +22,12 @@ import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.impl.ProjectPathMacroManager
 import com.intellij.openapi.options.Scheme
 import com.intellij.openapi.options.SchemeState
-import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.util.*
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.PathUtilRt
 import com.intellij.util.SmartList
 import com.intellij.util.text.nullize
 import org.jdom.Element
-import org.jetbrains.concurrency.asCompletableFuture
 import org.jetbrains.jps.model.serialization.PathMacroUtil
 
 private const val RUNNER_ID = "RunnerId"
@@ -343,14 +339,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(
   override fun checkSettings(executor: Executor?) {
     val configuration = configuration
     var warning: RuntimeConfigurationException? = null
-
-    var dataContext = DataContext.EMPTY_CONTEXT
-    if (!ApplicationManager.getApplication().isHeadlessEnvironment) {
-      val dataContextFromFocusAsync = DataManager.getInstance().dataContextFromFocusAsync.onSuccess {
-        dataContext = IdeUiService.getInstance().createAsyncDataContext(it)
-      }
-      ProgressIndicatorUtils.awaitWithCheckCanceled(dataContextFromFocusAsync.asCompletableFuture())
-    }
+    val dataContext = ProgramParametersConfigurator.projectContext(configuration.project, null, null)
 
      ReadAction.nonBlocking {
       try {
