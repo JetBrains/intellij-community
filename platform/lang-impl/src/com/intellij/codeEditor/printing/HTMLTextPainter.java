@@ -4,6 +4,7 @@ package com.intellij.codeEditor.printing;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.ide.highlighter.HighlighterFactory;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -57,11 +58,9 @@ public final class HTMLTextPainter {
   private final Project myProject;
   private final HtmlStyleManager htmlStyleManager;
 
-  HTMLTextPainter(@NotNull PsiFile psiFile, @NotNull Project project, boolean printLineNumbers) {
-    this(psiFile, project, new HtmlStyleManager(false), printLineNumbers, true);
-  }
-
   public HTMLTextPainter(@NotNull PsiFile psiFile, @NotNull Project project, @NotNull HtmlStyleManager htmlStyleManager, boolean printLineNumbers, boolean useMethodSeparators) {
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
+    ApplicationManager.getApplication().assertReadAccessAllowed();
     myProject = project;
     myPsiFile = psiFile;
     this.htmlStyleManager = htmlStyleManager;
