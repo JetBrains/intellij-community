@@ -4,7 +4,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 
 internal interface ElementKeyForIdProvider {
   companion object {
-    private val EP_NAME = ExtensionPointName.create<ElementKeyForIdProvider>("com.intellij.searcheverywhere.ml.elementKeyForIdProvider")
+    internal val EP_NAME = ExtensionPointName.create<ElementKeyForIdProvider>("com.intellij.searcheverywhere.ml.elementKeyForIdProvider")
 
     /**
      * Returns key that will be used by [SearchEverywhereMlOrderedItemIdProvider].
