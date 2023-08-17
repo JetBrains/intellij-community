@@ -93,6 +93,9 @@ class AppendLogStorage(
     }
 
     override fun write(position: Long, buf: ByteBuffer, offset: Int, length: Int) {
+      require(position >= 0 && position + length <= expectedSize) {
+        "[$position..${position+length}) is not contained in [0..$expectedSize)"
+      }
       storageIO.write(position + advanceToken.position, buf, offset, length)
     }
   }
