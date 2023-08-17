@@ -120,35 +120,24 @@ class VfsLogImpl(
       compactionController.close()
 
       operationLogStorage.closeWriteQueue()
-      // Warning: there is a tiny window for a race condition here: a thread may pass the "write queue is not closed" check and be preempted,
-      // thus appending an entry after it's awakened and when write queue is already closed and when we've already awaited all pending writes.
-      // But in an ideal world there are no writes that happen concurrently with disposal, so such events, if they tend to happen,
-      // should be noticeable even with this race (and fixed?).
-      // What this race can break: the modification will be applied to VFS, but won't be written in log (meaning that after restart we won't be
-      // able to find it in log), or we won't save it at flush. We'll probably notice it with the following checks, but in case we won't,
-      // we'll say that VfsLog was correctly disposed (false-positive CLOSED_PROPERLY).
-      // We don't want to pay for synchronization regardless.
       awaitPendingWrites(
         timeout = Duration.INFINITE // we _must_ write down every pending operation, otherwise VfsLog and VFS will be out of sync.
       )
-
-      var lostAnything = false
-      if (operationLogStorage.size() != operationLogStorage.emergingSize()) {
-        LOG.error("VfsLog didn't manage to write all data before disposal. Some data about the last operations will be lost: " +
-                  "size=${operationLogStorage.size()}, emergingSize=${operationLogStorage.emergingSize()}")
-        lostAnything = true
+      check(operationLogStorage.size() == operationLogStorage.emergingSize()) {
+        "VfsLog operation storage runtime pointers didn't converge: " +
+        "size=${operationLogStorage.size()}, emergingSize=${operationLogStorage.emergingSize()}"
       }
+
       coroutineScope.cancel("dispose")
       flush()
-      if (operationLogStorage.persistentSize() != operationLogStorage.emergingSize()) {
-        // If it happens, then there are active writers at disposal (VFS is still working and interceptors enqueue operations)
-        LOG.error("after cancellation: " +
-                  "persistentSize=${operationLogStorage.persistentSize()}, emergingSize=${operationLogStorage.emergingSize()}")
-        lostAnything = true
+      check(operationLogStorage.persistentSize() == operationLogStorage.emergingSize()) {
+        "VfsLog operations storage persistent pointers didn't converge: " +
+        "persistentSize=${operationLogStorage.persistentSize()}, emergingSize=${operationLogStorage.emergingSize()}"
       }
+
       operationLogStorage.dispose()
       payloadStorage.dispose()
-      if (!readOnly && !lostAnything) {
+      if (!readOnly) {
         properlyClosedMarker = CLOSED_PROPERLY
       }
       versionHandler.close()

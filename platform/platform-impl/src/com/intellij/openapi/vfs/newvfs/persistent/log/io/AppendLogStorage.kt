@@ -3,8 +3,8 @@ package com.intellij.openapi.vfs.newvfs.persistent.log.io
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.newvfs.persistent.log.util.AdvancingPositionTracker
 import com.intellij.openapi.vfs.newvfs.persistent.log.util.AdvancingPositionTracker.AdvanceToken
+import com.intellij.openapi.vfs.newvfs.persistent.log.util.CloseableAdvancingPositionTracker
 import com.intellij.openapi.vfs.newvfs.persistent.log.util.LockFreeAdvancingPositionTracker
 import com.intellij.util.io.ResilientFileChannel
 import java.io.Closeable
@@ -36,9 +36,7 @@ class AppendLogStorage(
   private val persistentStartOffsetHandler: PersistentVar<Long> = PersistentVar.long(storagePath / "startOffset")
   private var persistentStartOffset by persistentStartOffsetHandler
   private val storageIO: ChunkedMemoryMappedIO
-  private val positionTracker: AdvancingPositionTracker
-  @Volatile
-  private var closedForAppending: Boolean = false
+  private val positionTracker: CloseableAdvancingPositionTracker
 
   init {
     require(chunkSize > 0 && (chunkSize and (chunkSize - 1)) == 0) { "chunkSize must be a power of 2" }
@@ -68,9 +66,6 @@ class AppendLogStorage(
   }
 
   fun appendEntry(size: Long): AppendContext {
-    check(!closedForAppending) {
-      "AppendLogStorage is already closed for new appends" //  there is a disposal in progress
-    }
     val token = positionTracker.beginAdvance(size)
     return AppendContextImpl(token, size)
   }
@@ -149,7 +144,7 @@ class AppendLogStorage(
   }
 
   fun forbidNewAppends() {
-    closedForAppending = true
+    positionTracker.close()
   }
 
   override fun close() {
