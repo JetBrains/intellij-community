@@ -84,7 +84,9 @@ class SdkBridgeImpl(private var sdkEntityBuilder: SdkMainEntity.Builder) : UserD
   }
 
   internal fun fireRootSetChanged() {
-    dispatcher.multicaster.rootSetChanged(this)
+    if (dispatcher.hasListeners()) {
+      dispatcher.multicaster.rootSetChanged(this)
+    }
   }
 
   override fun getSdkAdditionalData(): SdkAdditionalData? = additionalData

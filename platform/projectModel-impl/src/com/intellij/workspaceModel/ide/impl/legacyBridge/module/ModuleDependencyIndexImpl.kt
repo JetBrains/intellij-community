@@ -153,8 +153,12 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
         eventDispatcher.multicaster.referencedLibraryChanged(wrapper)
       }
       else {
-        require(wrapper is Supplier<*>) { "Unexpected root provider $wrapper does not implement Supplier<Sdk>" }
-        val value = wrapper.get()
+        val value = if (wrapper is Sdk) {
+          wrapper
+        } else {
+          require(wrapper is Supplier<*>) { "Unexpected root provider $wrapper does not implement Supplier<Sdk>" }
+          wrapper.get()
+        }
         require(value is Sdk) { "Unexpected root provider $wrapper does not implement Supplier<Sdk>" }
         eventDispatcher.multicaster.referencedSdkChanged(value)
       }

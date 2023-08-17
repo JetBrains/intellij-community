@@ -127,6 +127,7 @@ class SdkModificatorBridgeImpl(private val originalEntity: SdkMainEntity.Builder
 
     originalEntity.applyChangesFrom(modifiedSdkEntity)
     originalSdkBridge.reloadAdditionalData()
+    originalSdkBridge.fireRootSetChanged()
     isCommitted = true
   }
 
