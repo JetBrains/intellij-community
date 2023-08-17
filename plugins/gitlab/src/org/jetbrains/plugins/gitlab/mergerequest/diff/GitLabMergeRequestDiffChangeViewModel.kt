@@ -10,10 +10,14 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diff.impl.patch.PatchHunk
 import com.intellij.openapi.diff.impl.patch.PatchHunkUtil
 import com.intellij.openapi.diff.impl.patch.TextFilePatch
+import com.intellij.openapi.project.Project
 import com.intellij.util.childScope
 import git4idea.changes.GitTextFilePatchWithHistory
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.DiffPathsInput
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabDiffPositionInput
@@ -41,6 +45,7 @@ internal interface GitLabMergeRequestDiffChangeViewModel {
 private val LOG = logger<GitLabMergeRequestDiffChangeViewModel>()
 
 internal class GitLabMergeRequestDiffChangeViewModelImpl(
+  project: Project,
   parentCs: CoroutineScope,
   private val currentUser: GitLabUserDTO,
   private val mergeRequest: GitLabMergeRequest,
@@ -57,7 +62,8 @@ internal class GitLabMergeRequestDiffChangeViewModelImpl(
     .mapCaching(
       GitLabDiscussion::id,
       { disc ->
-        GitLabMergeRequestDiffDiscussionViewModelImpl(this, diffData, currentUser, disc, discussionsViewOption, mergeRequest.glProject)
+        GitLabMergeRequestDiffDiscussionViewModelImpl(project, this, diffData, currentUser, disc, discussionsViewOption,
+                                                      mergeRequest.glProject)
       },
       GitLabMergeRequestDiffDiscussionViewModelImpl::destroy
     )
@@ -68,7 +74,7 @@ internal class GitLabMergeRequestDiffChangeViewModelImpl(
     .mapFiltered { it.discussionId == null }
     .mapCaching(
       GitLabNote::id,
-      { note -> GitLabMergeRequestDiffDraftDiscussionViewModel(this, diffData, note, mergeRequest.glProject) },
+      { note -> GitLabMergeRequestDiffDraftDiscussionViewModel(project, this, diffData, note, mergeRequest.glProject) },
       GitLabMergeRequestDiffDraftDiscussionViewModel::destroy
     )
     .modelFlow(cs, LOG)

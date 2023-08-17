@@ -7,6 +7,7 @@ import com.intellij.collaboration.async.mapScoped
 import com.intellij.collaboration.async.modelFlow
 import com.intellij.collaboration.ui.codereview.timeline.CollapsibleTimelineItemViewModel
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.project.Project
 import com.intellij.util.childScope
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -44,6 +45,7 @@ private val LOG = logger<GitLabMergeRequestTimelineDiscussionViewModel>()
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class GitLabMergeRequestTimelineDiscussionViewModelImpl(
+  project: Project,
   parentCs: CoroutineScope,
   currentUser: GitLabUserDTO,
   private val mr: GitLabMergeRequest,
@@ -55,7 +57,7 @@ class GitLabMergeRequestTimelineDiscussionViewModelImpl(
   override val mainNote: Flow<GitLabNoteViewModel> = discussion.notes
     .map { it.first() }
     .distinctUntilChangedBy { it.id }
-    .mapScoped { GitLabNoteViewModelImpl(this, it, flowOf(true), mr.glProject) }
+    .mapScoped { GitLabNoteViewModelImpl(project, this, it, flowOf(true), mr.glProject) }
     .modelFlow(cs, LOG)
 
   override val id: String = discussion.id
@@ -69,7 +71,7 @@ class GitLabMergeRequestTimelineDiscussionViewModelImpl(
     .map { it.drop(1) }
     .mapCaching(
       GitLabNote::id,
-      { note -> GitLabNoteViewModelImpl(this, note, flowOf(false), mr.glProject) },
+      { note -> GitLabNoteViewModelImpl(project, this, note, flowOf(false), mr.glProject) },
       GitLabNoteViewModelImpl::destroy
     )
     .modelFlow(cs, LOG)
@@ -120,6 +122,7 @@ class GitLabMergeRequestTimelineDiscussionViewModelImpl(
 }
 
 class GitLabMergeRequestTimelineDraftDiscussionViewModel(
+  project: Project,
   parentCs: CoroutineScope,
   currentUser: GitLabUserDTO,
   private val mr: GitLabMergeRequest,
@@ -129,7 +132,7 @@ class GitLabMergeRequestTimelineDraftDiscussionViewModel(
   private val cs = parentCs.childScope(CoroutineExceptionHandler { _, e -> LOG.warn(e) })
 
   override val mainNote: Flow<GitLabNoteViewModel> =
-    flowOf(GitLabNoteViewModelImpl(cs, draftNote, flowOf(true), mr.glProject))
+    flowOf(GitLabNoteViewModelImpl(project, cs, draftNote, flowOf(true), mr.glProject))
 
   override val id: String = draftNote.id
   override val serverUrl: URL = mr.glProject.serverPath.toURL()

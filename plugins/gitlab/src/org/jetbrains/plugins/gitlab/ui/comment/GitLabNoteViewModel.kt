@@ -4,9 +4,11 @@ package org.jetbrains.plugins.gitlab.ui.comment
 import com.intellij.collaboration.async.cancelAndJoinSilently
 import com.intellij.collaboration.async.modelFlow
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.project.Project
 import com.intellij.util.asSafely
 import com.intellij.util.childScope
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
@@ -14,7 +16,7 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.*
-import org.jetbrains.plugins.gitlab.ui.GitLabUIUtil
+import org.jetbrains.plugins.gitlab.mergerequest.ui.issues.IssuesUtil
 import java.net.URL
 import java.util.*
 
@@ -36,6 +38,7 @@ interface GitLabNoteViewModel {
 private val LOG = logger<GitLabNoteViewModel>()
 
 class GitLabNoteViewModelImpl(
+  project: Project,
   parentCs: CoroutineScope,
   note: GitLabNote,
   isMainNote: Flow<Boolean>,
@@ -54,7 +57,7 @@ class GitLabNoteViewModelImpl(
     if (note is MutableGitLabNote && note.canAdmin) GitLabNoteAdminActionsViewModelImpl(cs, note) else null
 
   override val body: Flow<String> = note.body
-  override val bodyHtml: Flow<String> = body.map { GitLabUIUtil.convertToHtml(it) }.modelFlow(cs, LOG)
+  override val bodyHtml: Flow<String> = body.map { IssuesUtil.convertMarkdownToHtmlWithIssues(project, it) }.modelFlow(cs, LOG)
 
   override val discussionState: Flow<GitLabDiscussionStateContainer> = isMainNote.map {
     if (it) {

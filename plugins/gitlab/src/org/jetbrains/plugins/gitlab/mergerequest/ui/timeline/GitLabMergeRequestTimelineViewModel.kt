@@ -37,7 +37,7 @@ interface GitLabMergeRequestTimelineViewModel : GitLabMergeRequestViewModel {
 private val LOG = logger<GitLabMergeRequestTimelineViewModel>()
 
 class LoadAllGitLabMergeRequestTimelineViewModel(
-  project: Project,
+  private val project: Project,
   parentCs: CoroutineScope,
   private val preferences: GitLabMergeRequestsPreferences,
   override val currentUser: GitLabUserDTO,
@@ -150,11 +150,11 @@ class LoadAllGitLabMergeRequestTimelineViewModel(
       is GitLabMergeRequestTimelineItem.Immutable ->
         GitLabMergeRequestTimelineItemViewModel.Immutable(item)
       is GitLabMergeRequestTimelineItem.UserDiscussion ->
-        GitLabMergeRequestTimelineItemViewModel.Discussion(cs, currentUser, mr, item.discussion).also {
+        GitLabMergeRequestTimelineItemViewModel.Discussion(project, cs, currentUser, mr, item.discussion).also {
           handleDiffRequests(it.diffVm, _diffRequests::emit)
         }
       is GitLabMergeRequestTimelineItem.DraftNote ->
-        GitLabMergeRequestTimelineItemViewModel.DraftDiscussion(cs, currentUser, mr, item.note).also {
+        GitLabMergeRequestTimelineItemViewModel.DraftDiscussion(project, cs, currentUser, mr, item.note).also {
           handleDiffRequests(it.diffVm, _diffRequests::emit)
         }
     }
