@@ -2917,6 +2917,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("anonymousFunctionReturnType.kt")
+            public void testAnonymousFunctionReturnType() throws Exception {
+                runTest("../idea/tests/testData/quickfix/typeMismatch/typeMismatchOnReturnedExpression/anonymousFunctionReturnType.kt");
+            }
+
             @TestMetadata("assignmentTypeMismatch.kt")
             public void testAssignmentTypeMismatch() throws Exception {
                 runTest("../idea/tests/testData/quickfix/typeMismatch/typeMismatchOnReturnedExpression/assignmentTypeMismatch.kt");
