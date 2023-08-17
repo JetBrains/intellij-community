@@ -224,7 +224,9 @@ fun CoroutineScope.startApplication(args: List<String>,
       }
     }
 
-    PluginManagerCore.scheduleDescriptorLoading(coroutineScope = asyncScope, zipFilePoolDeferred = zipFilePoolDeferred)
+    PluginManagerCore.scheduleDescriptorLoading(coroutineScope = asyncScope,
+                                                zipFilePoolDeferred = zipFilePoolDeferred,
+                                                logDeferred = logDeferred)
   }
 
   val isInternal = java.lang.Boolean.getBoolean(ApplicationManagerEx.IS_INTERNAL_PROPERTY)

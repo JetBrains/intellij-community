@@ -358,16 +358,19 @@ object PluginManagerCore {
     return applied
   }
 
+  @Internal
   fun scheduleDescriptorLoading(coroutineScope: CoroutineScope) {
-    scheduleDescriptorLoading(coroutineScope = coroutineScope, zipFilePoolDeferred = null)
+    scheduleDescriptorLoading(coroutineScope = coroutineScope, zipFilePoolDeferred = null, logDeferred = null)
   }
 
   @Internal
   @Synchronized
-  fun scheduleDescriptorLoading(coroutineScope: CoroutineScope, zipFilePoolDeferred: Deferred<ZipFilePool>?): Deferred<PluginSet> {
+  fun scheduleDescriptorLoading(coroutineScope: CoroutineScope,
+                                zipFilePoolDeferred: Deferred<ZipFilePool>?,
+                                logDeferred: Deferred<Logger>?): Deferred<PluginSet> {
     var result = initFuture
     if (result == null) {
-      result = coroutineScope.scheduleLoading(zipFilePoolDeferred)
+      result = coroutineScope.scheduleLoading(zipFilePoolDeferred, logDeferred)
       initFuture = result
     }
     return result

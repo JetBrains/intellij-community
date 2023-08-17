@@ -381,7 +381,8 @@ private fun CoroutineScope.loadDescriptorsFromProperty(context: DescriptorListLo
 }
 
 @Suppress("DeferredIsResult")
-internal fun CoroutineScope.scheduleLoading(zipFilePoolDeferred: Deferred<ZipFilePool>?): Deferred<PluginSet> {
+internal fun CoroutineScope.scheduleLoading(zipFilePoolDeferred: Deferred<ZipFilePool>?,
+                                            logDeferred: Deferred<Logger>?): Deferred<PluginSet> {
   val resultDeferred = async(CoroutineName("plugin descriptor loading")) {
     val isUnitTestMode = PluginManagerCore.isUnitTestMode
     val isRunningFromSources = PluginManagerCore.isRunningFromSources()
@@ -407,14 +408,22 @@ internal fun CoroutineScope.scheduleLoading(zipFilePoolDeferred: Deferred<ZipFil
   // logging is not as a part of plugin set job for performance reasons
   launch {
     val pair = resultDeferred.await()
-    logPlugins(plugins = pluginSetDeferred.await().allPlugins, context = pair.first, loadingResult = pair.second)
+    logPlugins(plugins = pluginSetDeferred.await().allPlugins,
+               context = pair.first,
+               loadingResult = pair.second,
+               logSupplier = {
+                 // make sure that logger is ready to use (not a console logger)
+                 logDeferred?.await()
+                 LOG
+               })
   }
   return pluginSetDeferred
 }
 
-private fun logPlugins(plugins: Collection<IdeaPluginDescriptorImpl>,
-                       context: DescriptorListLoadingContext,
-                       loadingResult: PluginLoadingResult) {
+private suspend fun logPlugins(plugins: Collection<IdeaPluginDescriptorImpl>,
+                               context: DescriptorListLoadingContext,
+                               loadingResult: PluginLoadingResult,
+                               logSupplier: suspend () -> Logger) {
   if (AppMode.isDisableNonBundledPlugins()) {
     LOG.info("Running with disableThirdPartyPlugins argument, third-party plugins will be disabled")
   }
@@ -449,7 +458,7 @@ private fun logPlugins(plugins: Collection<IdeaPluginDescriptorImpl>,
     }
   }
 
-  val log = LOG
+  val log = logSupplier()
   log.info("Loaded bundled plugins: $bundled")
   if (custom.isNotEmpty()) {
     log.info("Loaded custom plugins: $custom")
