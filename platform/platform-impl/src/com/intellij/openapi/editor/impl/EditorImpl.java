@@ -3380,7 +3380,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     while (!isGlobal && !isBounded && scheme instanceof DelegateColorScheme) {
       scheme = ((DelegateColorScheme)scheme).getDelegate();
       if (scheme == globalScheme) isGlobal = true;
-      if (scheme instanceof MyColorSchemeDelegate) isBounded = true;
+      if (scheme instanceof MyColorSchemeDelegate) {
+        isBounded = true;
+      }
     }
 
     if (isGlobal && !isBounded) {
@@ -4579,13 +4581,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       String editorFontName = getEditorFontName();
       float editorFontSize = getEditorFontSize2D();
       if (!myFontPreferencesAreSetExplicitly) {
-        updatePreferences(myFontPreferences, editorFontName, editorFontSize, myUseLigatures,
-                          delegate == null ? null : delegate.getFontPreferences());
+        updatePreferences(myFontPreferences, editorFontName, editorFontSize, myUseLigatures, delegate.getFontPreferences());
       }
       String consoleFontName = getConsoleFontName();
       float consoleFontSize = getConsoleFontSize2D();
-      updatePreferences(myConsoleFontPreferences, consoleFontName, consoleFontSize, myUseLigatures,
-                        delegate == null ? null : delegate.getConsoleFontPreferences());
+      updatePreferences(myConsoleFontPreferences, consoleFontName, consoleFontSize, myUseLigatures, delegate.getConsoleFontPreferences());
 
       myFontsMap = new EnumMap<>(EditorFontType.class);
       setFont(EditorFontType.PLAIN, editorFontName, Font.PLAIN, editorFontSize, myFontPreferences);
@@ -4614,22 +4614,18 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                                           @NotNull String fontName,
                                           float fontSize,
                                           Boolean useLigatures,
-                                          @Nullable FontPreferences delegatePreferences) {
+                                          @NotNull FontPreferences delegatePreferences) {
       preferences.clear();
       preferences.register(fontName, fontSize);
-      if (delegatePreferences != null) {
-        boolean first = true; //skip delegate's primary font
-        for (String font : delegatePreferences.getRealFontFamilies()) {
-          if (!first) {
-            preferences.register(font, fontSize);
-          }
-          first = false;
-        }
+      List<String> families = delegatePreferences.getRealFontFamilies();
+      //skip delegate's primary font
+      for (int i = 1; i < families.size(); i++) {
+        String font = families.get(i);
+        preferences.register(font, fontSize);
       }
-      preferences.setUseLigatures(
-        useLigatures != null ? useLigatures : (delegatePreferences != null && delegatePreferences.useLigatures()));
-      preferences.setRegularSubFamily(delegatePreferences == null ? null : delegatePreferences.getRegularSubFamily());
-      preferences.setBoldSubFamily(delegatePreferences == null ? null : delegatePreferences.getBoldSubFamily());
+      preferences.setUseLigatures(useLigatures != null ? useLigatures : delegatePreferences.useLigatures());
+      preferences.setRegularSubFamily(delegatePreferences.getRegularSubFamily());
+      preferences.setBoldSubFamily(delegatePreferences.getBoldSubFamily());
     }
 
     private void reinitFontsAndSettings() {

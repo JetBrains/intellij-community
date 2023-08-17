@@ -14,10 +14,11 @@ public abstract class DelegateColorScheme implements EditorColorsScheme {
 
   private EditorColorsScheme myDelegate;
 
-  public DelegateColorScheme(final @NotNull EditorColorsScheme delegate) {
+  public DelegateColorScheme(@NotNull EditorColorsScheme delegate) {
     myDelegate = delegate;
   }
 
+  @NotNull
   public EditorColorsScheme getDelegate() {
     return myDelegate;
   }
