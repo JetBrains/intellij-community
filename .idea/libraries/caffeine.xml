@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="caffeine" type="repository">
-    <properties include-transitive-deps="false" jar-repository-id="central-proxy" maven-id="com.github.ben-manes.caffeine:caffeine:3.1.7">
+    <properties include-transitive-deps="false" jar-repository-id="central-proxy" maven-id="com.github.ben-manes.caffeine:caffeine:3.1.8">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/com/github/ben-manes/caffeine/caffeine/3.1.7/caffeine-3.1.7.jar">
-          <sha256sum>38f88410e26d62f6319e7f477f0aaef0328187e676cfa139db8a7b182a7cd590</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/github/ben-manes/caffeine/caffeine/3.1.8/caffeine-3.1.8.jar">
+          <sha256sum>7dd15f9df1be238ffaa367ce6f556737a88031de4294dad18eef57c474ddf1d3</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/github/ben-manes/caffeine/caffeine/3.1.7/caffeine-3.1.7.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/github/ben-manes/caffeine/caffeine/3.1.8/caffeine-3.1.8.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/github/ben-manes/caffeine/caffeine/3.1.7/caffeine-3.1.7-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/github/ben-manes/caffeine/caffeine/3.1.8/caffeine-3.1.8-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

@@ -73,7 +73,7 @@
     <dependency>
       <groupId>io.opentelemetry</groupId>
       <artifactId>opentelemetry-extension-kotlin</artifactId>
-      <version>1.28.0</version>
+      <version>1.29.0</version>
     </dependency>
     <dependency>
       <groupId>com.jetbrains.intellij.platform</groupId>

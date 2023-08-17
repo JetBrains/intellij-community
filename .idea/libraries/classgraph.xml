@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="classgraph" type="repository">
-    <properties jar-repository-id="central-proxy" maven-id="io.github.classgraph:classgraph:4.8.161">
+    <properties jar-repository-id="central-proxy" maven-id="io.github.classgraph:classgraph:4.8.162">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/io/github/classgraph/classgraph/4.8.161/classgraph-4.8.161.jar">
-          <sha256sum>548977dbbab5df88cbdd35668798ab1ad02a4a880b48d4372648be638d9172e3</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/github/classgraph/classgraph/4.8.162/classgraph-4.8.162.jar">
+          <sha256sum>ea30b2d5e29e89d52706bcecf7a6ae3b44682d4a1566a5f22b9453f9be2a970c</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/io/github/classgraph/classgraph/4.8.161/classgraph-4.8.161.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/github/classgraph/classgraph/4.8.162/classgraph-4.8.162.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/io/github/classgraph/classgraph/4.8.161/classgraph-4.8.161-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/github/classgraph/classgraph/4.8.162/classgraph-4.8.162-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

@@ -1,28 +1,28 @@
 <component name="libraryTable">
   <library name="bouncy-castle-provider" type="repository">
-    <properties jar-repository-id="central-proxy" maven-id="org.bouncycastle:bcpkix-jdk18on:1.75">
+    <properties jar-repository-id="central-proxy" maven-id="org.bouncycastle:bcpkix-jdk18on:1.76">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/bouncycastle/bcpkix-jdk18on/1.75/bcpkix-jdk18on-1.75.jar">
-          <sha256sum>9e2c1db5a6ed29fbc36b438d39ca9feb901bb69bad0ce8d7bc735264bea79bd3</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/bouncycastle/bcpkix-jdk18on/1.76/bcpkix-jdk18on-1.76.jar">
+          <sha256sum>935a388854c329f9a6f32708f30c90045d2f91294fa687281273145d4cf9834a</sha256sum>
         </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/bouncycastle/bcprov-jdk18on/1.75/bcprov-jdk18on-1.75.jar">
-          <sha256sum>7f24018e9212dbda61c69212f8d7b1524c28efb978f10df590df3b4ccac47bd5</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/bouncycastle/bcprov-jdk18on/1.76/bcprov-jdk18on-1.76.jar">
+          <sha256sum>fda85d777aaae168015860b23a77cad9b8d3a1d5c904fda875313427bd560179</sha256sum>
         </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/bouncycastle/bcutil-jdk18on/1.75/bcutil-jdk18on-1.75.jar">
-          <sha256sum>027f36578c1ffdf08878c1cc2aa1e191f4b9da119c1e8f113299c53f298fa664</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/bouncycastle/bcutil-jdk18on/1.76/bcutil-jdk18on-1.76.jar">
+          <sha256sum>1a65ad02958223a3f31373bd72eea942cafd1b1877a3ed0b492c2487e77c3c27</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/bouncycastle/bcpkix-jdk18on/1.75/bcpkix-jdk18on-1.75.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/bouncycastle/bcprov-jdk18on/1.75/bcprov-jdk18on-1.75.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/bouncycastle/bcutil-jdk18on/1.75/bcutil-jdk18on-1.75.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/bouncycastle/bcpkix-jdk18on/1.76/bcpkix-jdk18on-1.76.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/bouncycastle/bcprov-jdk18on/1.76/bcprov-jdk18on-1.76.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/bouncycastle/bcutil-jdk18on/1.76/bcutil-jdk18on-1.76.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/bouncycastle/bcpkix-jdk18on/1.75/bcpkix-jdk18on-1.75-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/bouncycastle/bcprov-jdk18on/1.75/bcprov-jdk18on-1.75-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/bouncycastle/bcutil-jdk18on/1.75/bcutil-jdk18on-1.75-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/bouncycastle/bcpkix-jdk18on/1.76/bcpkix-jdk18on-1.76-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/bouncycastle/bcprov-jdk18on/1.76/bcprov-jdk18on-1.76-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/bouncycastle/bcutil-jdk18on/1.76/bcutil-jdk18on-1.76-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

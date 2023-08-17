@@ -1,12 +1,12 @@
 <component name="libraryTable">
   <library name="jackson-databind" type="repository">
-    <properties maven-id="com.fasterxml.jackson.core:jackson-databind:2.15.0">
+    <properties jar-repository-id="central-proxy" maven-id="com.fasterxml.jackson.core:jackson-databind:2.15.2">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-databind/2.15.0/jackson-databind-2.15.0.jar">
-          <sha256sum>00c5a5d5ae71ac8e8d5b8da606841e2251c806355939cb5d51c4cdc6b644a0dc</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-databind/2.15.2/jackson-databind-2.15.2.jar">
+          <sha256sum>0eb2fdad6e40ab8832a78c9b22f58196dd970594e8d3d5a26ead87847c4f3a96</sha256sum>
         </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-annotations/2.15.0/jackson-annotations-2.15.0.jar">
-          <sha256sum>91adcd3dcf5fd9a16499934e7536a23d456692a0093e3d4fd52f138c3936348c</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-annotations/2.15.2/jackson-annotations-2.15.2.jar">
+          <sha256sum>04e21f94dcfee4b078fa5a5f53047b785aaba69d19de392f616e7a7fe5d3882f</sha256sum>
         </artifact>
       </verification>
       <exclude>
@@ -14,13 +14,13 @@
       </exclude>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-databind/2.15.0/jackson-databind-2.15.0.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-annotations/2.15.0/jackson-annotations-2.15.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-databind/2.15.2/jackson-databind-2.15.2.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-annotations/2.15.2/jackson-annotations-2.15.2.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-databind/2.15.0/jackson-databind-2.15.0-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-annotations/2.15.0/jackson-annotations-2.15.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-databind/2.15.2/jackson-databind-2.15.2-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-annotations/2.15.2/jackson-annotations-2.15.2-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
