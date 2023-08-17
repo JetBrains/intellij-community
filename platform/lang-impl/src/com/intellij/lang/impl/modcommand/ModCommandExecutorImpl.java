@@ -440,7 +440,7 @@ public class ModCommandExecutorImpl implements ModCommandExecutor {
 
   @Nullable
   private static Editor getEditor(@NotNull Project project, @Nullable Editor editor, VirtualFile file) {
-    Editor finalEditor = editor == null || !editor.getVirtualFile().equals(file) ? getEditor(project, file) : editor;
+    Editor finalEditor = editor == null || !file.equals(editor.getVirtualFile()) ? getEditor(project, file) : editor;
     if (finalEditor == null) return null;
     return finalEditor;
   }
