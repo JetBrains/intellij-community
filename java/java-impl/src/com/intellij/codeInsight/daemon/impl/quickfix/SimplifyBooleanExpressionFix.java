@@ -8,9 +8,11 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.intention.impl.SplitConditionUtil;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.dataFlow.NullabilityProblemKind;
+import com.intellij.codeInspection.dataFlow.fix.DeleteSwitchLabelFix;
 import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.java.JavaBundle;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.Presentation;
@@ -87,6 +89,9 @@ public class SimplifyBooleanExpressionFix extends PsiUpdateModCommandAction<PsiE
       return constantValue ?
              CommonQuickFixBundle.message("fix.unwrap.statement", PsiKeyword.IF) :
              CommonQuickFixBundle.message("fix.remove.statement", PsiKeyword.IF);
+    }
+    if (parent instanceof PsiSwitchLabelStatementBase && !constantValue) {
+      return JavaAnalysisBundle.message("remove.switch.label");
     }
     if (!constantValue) {
       if (parent instanceof PsiWhileStatement) return CommonQuickFixBundle.message("fix.remove.statement", PsiKeyword.WHILE);
@@ -357,11 +362,15 @@ public class SimplifyBooleanExpressionFix extends PsiUpdateModCommandAction<PsiE
   public static void simplifyExpression(PsiExpression expression) throws IncorrectOperationException {
     final PsiExpression result = createSimplifiedReplacement(expression);
     PsiExpression newExpression = (PsiExpression)new CommentTracker().replaceAndRestoreComments(expression, result);
-    if (newExpression instanceof PsiLiteralExpression) {
+    if (newExpression instanceof PsiLiteralExpression literal) {
       final PsiElement parent = newExpression.getParent();
-      if (parent instanceof PsiAssertStatement && ((PsiLiteralExpression)newExpression).getValue() == Boolean.TRUE) {
+      Object value = literal.getValue();
+      if (parent instanceof PsiAssertStatement && Boolean.TRUE.equals(value)) {
         parent.delete();
         return;
+      }
+      if (parent instanceof PsiSwitchLabelStatementBase label && Boolean.FALSE.equals(value)) {
+        DeleteSwitchLabelFix.deleteLabel(label);
       }
     }
     if (!simplifyIfOrLoopStatement(newExpression)) {
