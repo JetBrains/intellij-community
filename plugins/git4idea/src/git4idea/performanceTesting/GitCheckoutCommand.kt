@@ -6,7 +6,6 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.ui.playback.commands.AbstractCommand
 import com.intellij.openapi.util.ActionCallback
@@ -14,10 +13,6 @@ import com.intellij.openapi.wm.IdeFocusManager
 import com.jetbrains.performancePlugin.utils.ActionCallbackProfilerStopper
 import git4idea.branch.GitBranchUtil
 import git4idea.branch.GitBrancher
-import git4idea.commands.Git
-import git4idea.commands.GitCommand
-import git4idea.commands.GitCommandResult
-import git4idea.commands.GitLineHandler
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.concurrency.Promise
@@ -33,7 +28,6 @@ import org.jetbrains.concurrency.toPromise
 class GitCheckoutCommand(text: String, line: Int) : AbstractCommand(text, line, true) {
   companion object {
     const val PREFIX = "${CMD_PREFIX}gitCheckout"
-    private val LOG = Logger.getInstance(GitCheckoutCommand::class.java)
   }
 
   // For the simplified com.intellij.driver call
@@ -52,7 +46,6 @@ class GitCheckoutCommand(text: String, line: Int) : AbstractCommand(text, line, 
 
   fun checkout(project: Project,
                branchName: String): Promise<Any?> {
-    LOG.info("GitCheckoutCommand starts its execution")
     val actionCallback: ActionCallback = ActionCallbackProfilerStopper()
 
     try {
@@ -73,21 +66,6 @@ class GitCheckoutCommand(text: String, line: Int) : AbstractCommand(text, line, 
   override fun _execute(context: PlaybackContext): Promise<Any?> {
     val branchName = extractCommandArgument(PREFIX).replace("\"".toRegex(), "")
     return checkout(project = context.project, branchName = branchName)
-  }
-
-  private fun hardReset(context: PlaybackContext): GitCommandResult {
-    val handler = GitLineHandler(
-      context.project,
-      (context.project.guessProjectDir() ?: throw RuntimeException("Can't find root project dir")),
-      GitCommand.RESET
-    )
-    handler.addParameters("--hard")
-    handler.endOptions()
-    val result: GitCommandResult = Git.getInstance().runCommand(handler)
-    if (!result.success()) {
-      throw RuntimeException("Can't reset changes: ${result.errorOutputAsJoinedString}")
-    }
-    return result
   }
 
 }
