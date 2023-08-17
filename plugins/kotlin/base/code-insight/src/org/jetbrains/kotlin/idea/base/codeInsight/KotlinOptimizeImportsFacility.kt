@@ -2,8 +2,10 @@
 package org.jetbrains.kotlin.idea.base.codeInsight
 
 import com.intellij.openapi.components.service
+import com.intellij.psi.PsiDocumentManager
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtImportDirective
+import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.resolve.ImportPath
 
 /**
@@ -21,7 +23,27 @@ interface KotlinOptimizeImportsFacility {
      */
     fun prepareOptimizedImports(file: KtFile, data: ImportData): List<ImportPath>?
 
-    fun replaceImports(file: KtFile, imports: Iterable<ImportPath>)
+    // TODO Consider moving it to companion object
+    fun replaceImports(file: KtFile, imports: Iterable<ImportPath>) {
+        val manager = PsiDocumentManager.getInstance(file.project)
+        manager.getDocument(file)?.let { manager.commitDocument(it) }
+        val importList = file.importList ?: return
+        val oldImports = importList.imports
+        val psiFactory = KtPsiFactory(file.project)
+        for (importPath in imports) {
+            val newImport = importList.addBefore(
+                psiFactory.createImportDirective(importPath),
+                oldImports.lastOrNull()
+            ) // insert into the middle to keep collapsed state
+
+            importList.addAfter(psiFactory.createWhiteSpace("\n"), newImport)
+        }
+
+        // remove old imports after adding new ones to keep imports folding state
+        for (import in oldImports) {
+            import.delete()
+        }
+    }
 
     companion object {
         fun getInstance(): KotlinOptimizeImportsFacility = service()
