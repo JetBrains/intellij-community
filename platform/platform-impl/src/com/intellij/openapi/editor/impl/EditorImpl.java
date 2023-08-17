@@ -2004,8 +2004,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       header = headerPanel;
     }
     if (header != null) {
-      myPropertyChangeSupport.firePropertyChange(PROP_HEADER_COMPONENT, oldComponent, header);
       myHeaderPanel.add(header);
+      myPropertyChangeSupport.firePropertyChange(PROP_HEADER_COMPONENT, oldComponent, header);
     }
 
     myHeaderPanel.revalidate();
