@@ -111,7 +111,8 @@ public abstract class ShowRelatedElementsActionBase extends DumbAwareAction impl
                                      boolean invokedFromEditor,
                                      boolean invokedByShortcut) {
     List<ImplementationViewElement> impls = session.getImplementationElements();
-    if (impls.size() == 0) return;
+    if (impls.isEmpty()) return;
+
     Project project = session.getProject();
     triggerFeatureUsed(project);
     VirtualFile virtualFile = session.getFile();
@@ -127,11 +128,9 @@ public abstract class ShowRelatedElementsActionBase extends DumbAwareAction impl
     }
 
     ImplementationPopupManager.getInstance()
-      .showImplementationsPopup(session,
-                                impls, index, getPopupTitle(session),
-                                couldPinPopup(),
-                                invokedFromEditor,
-                                invokedByShortcut,
+      .showImplementationsPopup(session, impls, index,
+                                getPopupTitle(session), couldPinPopup(),
+                                invokedFromEditor, invokedByShortcut,
                                 lookupItemObject -> {
                                   updateElementImplementations(lookupItemObject, session);
                                   return Unit.INSTANCE;

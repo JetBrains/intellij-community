@@ -44,12 +44,12 @@ class ImplementationPopupManager {
                                invokedFromEditor: Boolean,
                                invokedByShortcut: Boolean,
                                updatePopup: (lookupItemObject: Any) -> Unit) {
-    val project = session.project
-
     val usageView = Ref<UsageView?>()
-    val processor = if (couldPinPopup) Consumer<ImplementationViewComponent> { component: ImplementationViewComponent ->
-      usageView.set(component.showInUsageView())
-      currentTask = null
+    val showInFindWindowProcessor = if (couldPinPopup) {
+      Consumer<ImplementationViewComponent> { component ->
+        usageView.set(component.showInUsageView())
+        currentTask = null
+      }
     }
     else {
       null
@@ -60,8 +60,8 @@ class ImplementationPopupManager {
       val component = popup.component as? ImplementationViewComponent
       if (component != null) {
         component.update(implementationElements, elementIndex)
-        component.setShowInFindWindowProcessor(processor)
-        updateInBackground(session, component, (popup as AbstractPopup?)!!, usageView)
+        component.setShowInFindWindowProcessor(showInFindWindowProcessor)
+        updateInBackground(session, component, popup, usageView)
         if (invokedByShortcut) {
           popup.focusPreferredComponent()
         }
@@ -69,47 +69,61 @@ class ImplementationPopupManager {
       }
     }
 
-    val component = ImplementationViewComponent(implementationElements, elementIndex)
-    component.setShowInFindWindowProcessor(processor)
+    val component = ImplementationViewComponent(implementationElements, elementIndex).apply {
+      setShowInFindWindowProcessor(showInFindWindowProcessor)
+    }
     if (component.hasElementsToShow()) {
-      val updateProcessor: PopupUpdateProcessor = object : PopupUpdateProcessor(project) {
-        override fun updatePopup(lookupItemObject: Any) {
-          updatePopup(lookupItemObject)
-        }
-
-        override fun onClosed(event: LightweightWindowEvent) {
-          component.cleanup()
-        }
-      }
-      val popupBuilder = JBPopupFactory.getInstance()
-        .createComponentPopupBuilder(component, component.preferredFocusableComponent)
-        .setProject(project)
-        .addListener(updateProcessor)
-        .addUserData(updateProcessor)
-        .setDimensionServiceKey(project, DocumentationManager.JAVADOC_LOCATION_AND_SIZE, false)
-        .setResizable(true)
-        .setMovable(true)
-        .setRequestFocus(invokedFromEditor && LookupManager.getActiveLookup(session.editor) == null)
-        .setCancelCallback {
-          SoftReference.dereference(currentTask)?.cancelTask()
-          true
-        }
-
-      val listener = WindowMoveListener()
-      listener.installTo(component)
-      popup = popupBuilder.createPopup()
-      Disposer.register(popup, session)
-      Disposer.register(popup, Disposable { listener.uninstallFrom(component) })
-      updateInBackground(session, component, (popup as? AbstractPopup)!!, usageView)
-      PopupPositionManager.positionPopupInBestPosition(popup, session.editor, DataManager.getInstance().getDataContext())
+      popup = createPopup(session, component, invokedFromEditor, updatePopup)
+      updateInBackground(session, component, popup, usageView)
       component.setHint(popup, title)
+
+      PopupPositionManager.positionPopupInBestPosition(popup, session.editor, DataManager.getInstance().getDataContext())
       currentPopup = WeakReference(popup)
     }
   }
 
+  private fun createPopup(session: ImplementationViewSession,
+                          component: ImplementationViewComponent,
+                          invokedFromEditor: Boolean,
+                          updatePopup: (lookupItemObject: Any) -> Unit
+  ): JBPopup {
+    val updateProcessor: PopupUpdateProcessor = object : PopupUpdateProcessor(session.project) {
+      override fun updatePopup(lookupItemObject: Any) {
+        updatePopup(lookupItemObject)
+      }
+
+      override fun onClosed(event: LightweightWindowEvent) {
+        component.cleanup()
+      }
+    }
+
+    val popupBuilder = JBPopupFactory.getInstance()
+      .createComponentPopupBuilder(component, component.preferredFocusableComponent)
+      .setProject(session.project)
+      .addListener(updateProcessor)
+      .addUserData(updateProcessor)
+      .setDimensionServiceKey(session.project, DocumentationManager.JAVADOC_LOCATION_AND_SIZE, false)
+      .setResizable(true)
+      .setMovable(true)
+      .setRequestFocus(invokedFromEditor && LookupManager.getActiveLookup(session.editor) == null)
+      .setCancelCallback {
+        SoftReference.dereference(currentTask)?.cancelTask()
+        true
+      }
+
+    val listener = WindowMoveListener()
+    listener.installTo(component)
+
+    val popup = popupBuilder.createPopup()
+    Disposer.register(popup, session)
+    Disposer.register(popup, Disposable { listener.uninstallFrom(component) })
+
+    return popup
+  }
+
   private fun updateInBackground(session: ImplementationViewSession,
                                  component: ImplementationViewComponent,
-                                 popup: AbstractPopup,
+                                 popup: JBPopup,
                                  usageView: Ref<UsageView?>) {
     SoftReference.dereference(currentTask)?.cancelTask()
 
@@ -121,12 +135,6 @@ class ImplementationPopupManager {
     }
     currentTask = WeakReference(task)
     ProgressManager.getInstance().runProcessWithProgressAsynchronously(task, BackgroundableProcessIndicator(task))
-  }
-
-  companion object {
-
-    @JvmStatic
-    fun getInstance(): ImplementationPopupManager = service()
   }
 
   private class ImplementationsUpdaterTask(private val mySession: ImplementationViewSession,
@@ -143,18 +151,18 @@ class ImplementationPopupManager {
 
     override fun run(indicator: ProgressIndicator) {
       super.run(indicator)
-      myElements = mySession.searchImplementationsInBackground(indicator) { element ->
-        this.updateComponent(element)
+      myElements = mySession.searchImplementationsInBackground(indicator) {
+        updateComponent(it)
       }
     }
 
     override fun getCurrentSize(): Int {
-      return if (myElements != null) myElements!!.size else super.getCurrentSize()
+      return myElements?.size ?: super.getCurrentSize()
     }
 
     override fun onSuccess() {
       if (!cancelTask()) {
-        myComponent.update(myElements!!, myComponent.index)
+        myElements?.let { myComponent.update(it, myComponent.index) }
       }
       super.onSuccess()
     }
@@ -175,5 +183,10 @@ class ImplementationPopupManager {
       result.addAll(data.subList(startIdx, data.size))
       myComponent.update(result, myComponent.index)
     }
+  }
+
+  companion object {
+    @JvmStatic
+    fun getInstance(): ImplementationPopupManager = service()
   }
 }

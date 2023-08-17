@@ -194,29 +194,10 @@ public final class ImplementationViewComponent extends JPanel {
     EditSourceActionBase edit = new EditSourceAction();
     edit.registerCustomShortcutSet(new CompositeShortcutSet(CommonShortcuts.getEditSource(), CommonShortcuts.ENTER), this);
     gearActions.add(edit);
-    Icon icon = ToolWindowManager.getInstance(project).getLocationIcon(ToolWindowId.FIND, AllIcons.General.Pin_tab);
-    gearActions.add(new AnAction(() -> IdeBundle.message("show.in.find.window.button.name"), icon) {
-      @Override
-      public @NotNull ActionUpdateThread getActionUpdateThread() {
-        return ActionUpdateThread.BGT;
-      }
 
-      @Override
-      public void update(@NotNull AnActionEvent e) {
-        e.getPresentation().setEnabledAndVisible(myShowInFindWindowProcessor != null);
-      }
+    ShowInFindWindowAction showInWindow = new ShowInFindWindowAction();
+    gearActions.add(showInWindow);
 
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        Consumer<? super ImplementationViewComponent> processor = myShowInFindWindowProcessor;
-        if (processor != null) {
-          processor.accept(ImplementationViewComponent.this);
-        }
-        if (myHint.isVisible()) {
-          myHint.cancel();
-        }
-      }
-    });
     return gearActions;
   }
 
@@ -695,6 +676,34 @@ public final class ImplementationViewComponent extends JPanel {
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       myElements[myIndex].navigate(myFocusEditor);
+    }
+  }
+
+  private class ShowInFindWindowAction extends AnAction {
+    ShowInFindWindowAction() {
+      super(() -> IdeBundle.message("show.in.find.window.button.name"),
+            ToolWindowManager.getInstance(project).getLocationIcon(ToolWindowId.FIND, AllIcons.General.Pin_tab));
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      e.getPresentation().setEnabledAndVisible(myShowInFindWindowProcessor != null);
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      Consumer<? super ImplementationViewComponent> processor = myShowInFindWindowProcessor;
+      if (processor != null) {
+        processor.accept(ImplementationViewComponent.this);
+      }
+      if (myHint.isVisible()) {
+        myHint.cancel();
+      }
     }
   }
 
