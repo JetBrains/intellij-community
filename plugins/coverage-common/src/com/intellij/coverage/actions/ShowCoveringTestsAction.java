@@ -81,7 +81,8 @@ public class ShowCoveringTestsAction extends AnAction {
       final ComponentPopupBuilder popupBuilder;
       if (!elements.isEmpty()) {
         Consumer<ImplementationViewComponent> processor = viewComponent -> viewComponent.showInUsageView();
-        component = new ImplementationViewComponent(ContainerUtil.map(elements, PsiImplementationViewElement::new), 0, processor);
+        component = new ImplementationViewComponent(ContainerUtil.map(elements, PsiImplementationViewElement::new), 0);
+        component.setShowInFindWindowProcessor(processor);
         popupBuilder = JBPopupFactory.getInstance().createComponentPopupBuilder(component, component.getPreferredFocusableComponent())
           .setDimensionServiceKey(project, "ShowTestsPopup", false)
           .addListener(new JBPopupListener() {

@@ -47,19 +47,6 @@ class ImplementationPopupManager {
     val project = session.project
 
     val usageView = Ref<UsageView?>()
-    var popup = SoftReference.dereference(currentPopup)
-    if (popup is AbstractPopup && popup.isVisible()) {
-      val component = popup.component as? ImplementationViewComponent
-      if (component != null) {
-        component.update(implementationElements, elementIndex)
-        updateInBackground(session, component, (popup as AbstractPopup?)!!, usageView)
-        if (invokedByShortcut) {
-          popup.focusPreferredComponent()
-        }
-        return
-      }
-    }
-
     val processor = if (couldPinPopup) Consumer<ImplementationViewComponent> { component: ImplementationViewComponent ->
       usageView.set(component.showInUsageView())
       currentTask = null
@@ -68,7 +55,22 @@ class ImplementationPopupManager {
       null
     }
 
-    val component = ImplementationViewComponent(implementationElements, elementIndex, processor)
+    var popup = SoftReference.dereference(currentPopup)
+    if (popup is AbstractPopup && popup.isVisible()) {
+      val component = popup.component as? ImplementationViewComponent
+      if (component != null) {
+        component.update(implementationElements, elementIndex)
+        component.setShowInFindWindowProcessor(processor)
+        updateInBackground(session, component, (popup as AbstractPopup?)!!, usageView)
+        if (invokedByShortcut) {
+          popup.focusPreferredComponent()
+        }
+        return
+      }
+    }
+
+    val component = ImplementationViewComponent(implementationElements, elementIndex)
+    component.setShowInFindWindowProcessor(processor)
     if (component.hasElementsToShow()) {
       val updateProcessor: PopupUpdateProcessor = object : PopupUpdateProcessor(project) {
         override fun updatePopup(lookupItemObject: Any) {
