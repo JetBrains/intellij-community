@@ -237,9 +237,25 @@ public class UnindexedFilesScanner implements FilesScanningTask {
                                            @NotNull ProjectScanningHistoryImpl scanningHistory,
                                            @NotNull ProgressIndicator indicator,
                                            @NotNull Ref<? super StatusMark> markRef) {
-    if (!IndexInfrastructure.hasIndices()) {
-      return;
+    try {
+      if (!IndexInfrastructure.hasIndices()) {
+        return;
+      }
+      scanUnindexedFiles(projectIndexingHistory, scanningHistory, indicator, markRef);
     }
+    finally {
+      // scanning may throw exception (or error). In this case we should either clear or flush indexing queue,
+      // otherwise dumb mode will not end in the project.
+      if (flushQueueAfterScanning) {
+        flushPerProjectIndexingQueue(projectIndexingHistory, indicator);
+      }
+    }
+  }
+
+  private void scanUnindexedFiles(@NotNull ProjectIndexingHistoryImpl projectIndexingHistory,
+                                  @NotNull ProjectScanningHistoryImpl scanningHistory,
+                                  @NotNull ProgressIndicator indicator,
+                                  @NotNull Ref<? super StatusMark> markRef) {
     LOG.info("Started scanning for indexing of " + myProject.getName() + ". Reason: " + myIndexingReason);
 
     ProgressSuspender suspender = ProgressSuspender.getSuspender(indicator);
@@ -293,10 +309,6 @@ public class UnindexedFilesScanner implements FilesScanningTask {
     if (myOnProjectOpen && !isUnitTestMode && !skipInitialRefresh) {
       // the full VFS refresh makes sense only after it's loaded, i.e. after scanning files to index is finished
       InitialRefreshKt.scheduleInitialVfsRefresh(myProject, LOG);
-    }
-
-    if (flushQueueAfterScanning) {
-      flushPerProjectIndexingQueue(projectIndexingHistory, indicator);
     }
   }
 
