@@ -35,6 +35,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
+import com.intellij.workspaceModel.ide.JpsProjectLoadingManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
@@ -91,19 +92,22 @@ public final class FrameworkDetectionManager implements FrameworkDetectionIndexL
     }, project);
   }
 
-  private void projectOpened() {
-    @NotNull Collection<String> ids = FrameworkDetectorRegistry.getInstance().getAllDetectorIds();
-    synchronized (myLock) {
-      myDetectorsToProcess.clear();
-      myDetectorsToProcess.addAll(ids);
-    }
-    queueDetection();
+  private void projectOpened(@NotNull Project project) {
+    JpsProjectLoadingManager.getInstance(project).jpsProjectLoaded(() -> {
+      LOG.debug("Queue frameworks detection after opening the project");
+      @NotNull Collection<String> ids = FrameworkDetectorRegistry.getInstance().getAllDetectorIds();
+      synchronized (myLock) {
+        myDetectorsToProcess.clear();
+        myDetectorsToProcess.addAll(ids);
+      }
+      queueDetection();
+    });
   }
 
   static final class MyPostStartupActivity implements StartupActivity.DumbAware {
     @Override
     public void runActivity(@NotNull Project project) {
-      getInstance(project).projectOpened();
+      getInstance(project).projectOpened(project);
     }
   }
 
