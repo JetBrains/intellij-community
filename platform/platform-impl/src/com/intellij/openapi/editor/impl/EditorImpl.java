@@ -1104,16 +1104,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myEditorComponent.setTransferHandler(new MyTransferHandler());
     myEditorComponent.setAutoscrolls(false); // we have our own auto-scrolling code
 
-    myPanel.add(myScrollPane, BorderLayout.CENTER);
+    JLayeredPane layeredPane = new PanelWithFloatingToolbar();
+    layeredPane.add(myScrollPane, JLayeredPane.DEFAULT_LAYER);
     UiNotifyConnector.doWhenFirstShown(myPanel, () -> {
       if (mayShowToolbar()) {
-        myPanel.remove(myScrollPane);
-        JLayeredPane layeredPane = new PanelWithFloatingToolbar();
-        layeredPane.add(myScrollPane, JLayeredPane.DEFAULT_LAYER);
         layeredPane.add(new EditorFloatingToolbar(this), JLayeredPane.POPUP_LAYER);
-        myPanel.add(layeredPane, BorderLayout.CENTER);
       }
     }, getDisposable());
+    myPanel.add(layeredPane, BorderLayout.CENTER);
 
     myEditorComponent.addKeyListener(new KeyListener() {
       @Override
@@ -5405,9 +5403,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       final Rectangle r = getBounds();
       for (Component c : components) {
         if (c instanceof JScrollPane) {
+          // Main scroll panel: MyScrollPane
           c.setBounds(0, 0, r.width, r.height);
         }
         else {
+          // Floating toolbar: EditorFloatingToolbar
           final Dimension d = c.getPreferredSize();
           int rightInsets = getVerticalScrollBar().getWidth() + (isMirrored() ? myGutterComponent.getWidth() : 0);
           c.setBounds(r.width - d.width - rightInsets - 20, 20, d.width, d.height);
