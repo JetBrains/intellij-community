@@ -22,7 +22,7 @@ class LockFreeAdvancingPositionTracker(initialPosition: Long) : CloseableAdvanci
     readyNode = AtomicReference<Node>(initNode)
   }
 
-  override fun beginAdvance(size: Long): AdvanceToken {
+  override fun startAdvance(size: Long): AdvanceToken {
     while (true) {
       val closeMarkHolder = booleanArrayOf(false)
       val currentAdvance: Node = advanceNode.get(closeMarkHolder)

@@ -66,7 +66,7 @@ class AppendLogStorage(
   }
 
   fun appendEntry(size: Long): AppendContext {
-    val token = positionTracker.beginAdvance(size)
+    val token = positionTracker.startAdvance(size)
     return AppendContextImpl(token, size)
   }
 

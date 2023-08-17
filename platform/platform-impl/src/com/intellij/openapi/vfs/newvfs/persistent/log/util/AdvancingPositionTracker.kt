@@ -9,7 +9,7 @@ interface AdvancingPositionTracker {
    * Following advances are guaranteed to have [AdvanceToken.position] at least `position+size`, meaning that the range `[position, position+size)`
    * is allocated only once. Acquired [AdvanceToken] must be [finished][finishAdvance] after processing is finished.
    */
-  fun beginAdvance(size: Long): AdvanceToken
+  fun startAdvance(size: Long): AdvanceToken
   fun finishAdvance(token: AdvanceToken)
 
   /**
@@ -18,7 +18,7 @@ interface AdvancingPositionTracker {
   fun getReadyPosition(): Long
 
   /**
-   * @return position that is yet to be allocated via [beginAdvance]
+   * @return position that is yet to be allocated via [startAdvance]
    */
   fun getCurrentAdvancePosition(): Long
 
@@ -29,14 +29,14 @@ interface AdvancingPositionTracker {
 
 interface CloseableAdvancingPositionTracker : AdvancingPositionTracker {
   /**
-   * @see [AdvancingPositionTracker.beginAdvance]
+   * @see [AdvancingPositionTracker.startAdvance]
    * @throws IllegalStateException in case [CloseableAdvancingPositionTracker] is closed
    */
-  override fun beginAdvance(size: Long): AdvanceToken
+  override fun startAdvance(size: Long): AdvanceToken
 
   /**
    * Forbids new advance attempts
-   * @see [beginAdvance]
+   * @see [startAdvance]
    */
   fun close()
 }
@@ -45,7 +45,7 @@ interface CloseableAdvancingPositionTracker : AdvancingPositionTracker {
  * @param body in case exception is thrown, it is expected that state is correct & consistent anyway
  */
 inline fun <R> AdvancingPositionTracker.trackAdvance(size: Long, body: (position: Long) -> R): R {
-  val token = beginAdvance(size)
+  val token = startAdvance(size)
   return try {
     body(token.position)
   }
