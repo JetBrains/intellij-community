@@ -13,195 +13,153 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.diff.tools.fragmented;
+package com.intellij.diff.tools.fragmented
 
-import com.intellij.diff.fragments.LineFragment;
-import com.intellij.diff.util.LineRange;
-import com.intellij.diff.util.Side;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.util.TextRange;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.diff.fragments.LineFragment
+import com.intellij.diff.util.LineRange
+import com.intellij.diff.util.Side
+import com.intellij.openapi.editor.Document
+import com.intellij.openapi.util.TextRange
+import kotlin.math.max
 
-import java.util.ArrayList;
-import java.util.List;
+open class UnifiedFragmentBuilder(protected val fragments: List<LineFragment>,
+                                  val document1: Document,
+                                  val document2: Document,
+                                  val masterSide: Side) {
+  private val myBuilder = StringBuilder()
+  private val myChanges: MutableList<UnifiedDiffChange> = ArrayList()
+  private val myRanges: MutableList<HighlightRange> = ArrayList()
+  private val myConvertor1 = LineNumberConvertor.Builder()
+  private val myConvertor2 = LineNumberConvertor.Builder()
+  private val myChangedLines: MutableList<LineRange> = ArrayList()
 
-public class UnifiedFragmentBuilder {
-  @NotNull protected final List<? extends LineFragment> myFragments;
-  @NotNull private final Document myDocument1;
-  @NotNull private final Document myDocument2;
-  @NotNull private final Side myMasterSide;
+  private var lastProcessedLine1 = -1
+  private var lastProcessedLine2 = -1
+  private var totalLines = 0
 
-  @NotNull private final StringBuilder myBuilder = new StringBuilder();
-  @NotNull private final List<UnifiedDiffChange> myChanges = new ArrayList<>();
-  @NotNull private final List<HighlightRange> myRanges = new ArrayList<>();
-  @NotNull private final LineNumberConvertor.Builder myConvertor1 = new LineNumberConvertor.Builder();
-  @NotNull private final LineNumberConvertor.Builder myConvertor2 = new LineNumberConvertor.Builder();
-  @NotNull private final List<LineRange> myChangedLines = new ArrayList<>();
-
-  public UnifiedFragmentBuilder(@NotNull List<? extends LineFragment> fragments,
-                                @NotNull Document document1,
-                                @NotNull Document document2,
-                                @NotNull Side masterSide) {
-    myFragments = fragments;
-    myDocument1 = document1;
-    myDocument2 = document2;
-    myMasterSide = masterSide;
+  init {
   }
 
-  private int lastProcessedLine1 = -1;
-  private int lastProcessedLine2 = -1;
-  private int totalLines = 0;
-
-  @NotNull
-  public Side getMasterSide() {
-    return myMasterSide;
-  }
-
-  public UnifiedFragmentBuilder exec() {
-    if (myFragments.isEmpty()) {
-      appendTextMaster(0, 0, getLineCount(myDocument1) - 1, getLineCount(myDocument2) - 1);
-      return this;
+  fun exec(): UnifiedFragmentBuilder {
+    if (fragments.isEmpty()) {
+      appendTextMaster(0, 0, getLineCount(document1) - 1, getLineCount(document2) - 1)
+      return this
     }
 
-    for (int i = 0; i < myFragments.size(); i++) {
-      LineFragment fragment = myFragments.get(i);
-      processEquals(fragment.getStartLine1() - 1, fragment.getStartLine2() - 1);
-      processChanged(fragment, i);
+    for (i in fragments.indices) {
+      val fragment = fragments[i]
+      processEquals(fragment.getStartLine1() - 1, fragment.getStartLine2() - 1)
+      processChanged(fragment, i)
     }
-    processEquals(getLineCount(myDocument1) - 1, getLineCount(myDocument2) - 1);
+    processEquals(getLineCount(document1) - 1, getLineCount(document2) - 1)
 
-    return this;
+    return this
   }
 
-  private void processEquals(int endLine1, int endLine2) {
-    int startLine1 = lastProcessedLine1 + 1;
-    int startLine2 = lastProcessedLine2 + 1;
+  private fun processEquals(endLine1: Int, endLine2: Int) {
+    val startLine1 = lastProcessedLine1 + 1
+    val startLine2 = lastProcessedLine2 + 1
 
-    appendTextMaster(startLine1, startLine2, endLine1, endLine2);
+    appendTextMaster(startLine1, startLine2, endLine1, endLine2)
   }
 
-  private void processChanged(@NotNull LineFragment fragment, int fragmentIndex) {
-    int startLine1 = fragment.getStartLine1();
-    int endLine1 = fragment.getEndLine1() - 1;
-    int lines1 = endLine1 - startLine1;
+  private fun processChanged(fragment: LineFragment, fragmentIndex: Int) {
+    val startLine1 = fragment.getStartLine1()
+    val endLine1 = fragment.getEndLine1() - 1
+    val lines1 = endLine1 - startLine1
 
-    int startLine2 = fragment.getStartLine2();
-    int endLine2 = fragment.getEndLine2() - 1;
-    int lines2 = endLine2 - startLine2;
+    val startLine2 = fragment.getStartLine2()
+    val endLine2 = fragment.getEndLine2() - 1
+    val lines2 = endLine2 - startLine2
 
-    int linesBefore = totalLines;
-    int linesAfter;
+    val linesBefore = totalLines
 
     if (lines1 >= 0) {
-      int startOffset1 = myDocument1.getLineStartOffset(startLine1);
-      int endOffset1 = myDocument1.getLineEndOffset(endLine1);
-      appendText(Side.LEFT, startOffset1, endOffset1, lines1, lines2, startLine1, -1);
+      val startOffset1 = document1.getLineStartOffset(startLine1)
+      val endOffset1 = document1.getLineEndOffset(endLine1)
+      appendText(Side.LEFT, startOffset1, endOffset1, lines1, lines2, startLine1, -1)
     }
 
-    int linesBetween = totalLines;
+    val linesBetween = totalLines
 
     if (lines2 >= 0) {
-      int startOffset2 = myDocument2.getLineStartOffset(startLine2);
-      int endOffset2 = myDocument2.getLineEndOffset(endLine2);
-      appendText(Side.RIGHT, startOffset2, endOffset2, lines2, lines2, -1, startLine2);
+      val startOffset2 = document2.getLineStartOffset(startLine2)
+      val endOffset2 = document2.getLineEndOffset(endLine2)
+      appendText(Side.RIGHT, startOffset2, endOffset2, lines2, lines2, -1, startLine2)
     }
 
-    linesAfter = totalLines;
+    val linesAfter = totalLines
 
-    UnifiedDiffChange change = createDiffChange(linesBefore, linesBetween, linesAfter, fragmentIndex);
-    myChanges.add(change);
-    if (!change.isSkipped()) {
-      myChangedLines.add(new LineRange(linesBefore, linesAfter));
+    val change = createDiffChange(linesBefore, linesBetween, linesAfter, fragmentIndex)
+    myChanges.add(change)
+    if (!change.isSkipped) {
+      myChangedLines.add(LineRange(linesBefore, linesAfter))
     }
 
-    lastProcessedLine1 = endLine1;
-    lastProcessedLine2 = endLine2;
+    lastProcessedLine1 = endLine1
+    lastProcessedLine2 = endLine2
   }
 
-  @NotNull
-  protected UnifiedDiffChange createDiffChange(int blockStart,
-                                               int insertedStart,
-                                               int blockEnd,
-                                               int fragmentIndex) {
-    return new UnifiedDiffChange(blockStart, insertedStart, blockEnd, myFragments.get(fragmentIndex));
+  protected open fun createDiffChange(blockStart: Int,
+                                      insertedStart: Int,
+                                      blockEnd: Int,
+                                      fragmentIndex: Int): UnifiedDiffChange {
+    return UnifiedDiffChange(blockStart, insertedStart, blockEnd, fragments[fragmentIndex])
   }
 
-  private void appendTextMaster(int startLine1, int startLine2, int endLine1, int endLine2) {
+  private fun appendTextMaster(startLine1: Int, startLine2: Int, endLine1: Int, endLine2: Int) {
     // The slave-side line matching might be incomplete for non-fair line fragments (@see FairDiffIterable)
     // If it ever became an issue, it could be fixed by explicit fair by-line comparing of "equal" regions
 
-    int lines1 = endLine1 - startLine1;
-    int lines2 = endLine2 - startLine2;
-    if (myMasterSide.select(lines1, lines2) >= 0) {
-      int startOffset = myMasterSide.isLeft() ? myDocument1.getLineStartOffset(startLine1) : myDocument2.getLineStartOffset(startLine2);
-      int endOffset = myMasterSide.isLeft() ? myDocument1.getLineEndOffset(endLine1) : myDocument2.getLineEndOffset(endLine2);
+    val lines1 = endLine1 - startLine1
+    val lines2 = endLine2 - startLine2
+    if (masterSide.select(lines1, lines2) >= 0) {
+      val startOffset = if (masterSide.isLeft) document1.getLineStartOffset(startLine1) else document2.getLineStartOffset(startLine2)
+      val endOffset = if (masterSide.isLeft) document1.getLineEndOffset(endLine1) else document2.getLineEndOffset(endLine2)
 
-      appendText(myMasterSide, startOffset, endOffset, lines1, lines2, startLine1, startLine2);
+      appendText(masterSide, startOffset, endOffset, lines1, lines2, startLine1, startLine2)
     }
   }
 
-  private void appendText(@NotNull Side side, int offset1, int offset2, int lines1, int lines2, int startLine1, int startLine2) {
-    int lines = side.select(lines1, lines2);
-    boolean notEmpty = lines >= 0;
+  private fun appendText(side: Side, offset1: Int, offset2: Int, lines1: Int, lines2: Int, startLine1: Int, startLine2: Int) {
+    val lines = side.select(lines1, lines2)
+    val notEmpty = lines >= 0
 
-    int appendix = notEmpty ? 1 : 0;
+    val appendix = if (notEmpty) 1 else 0
     if (startLine1 != -1) {
-      myConvertor1.put(totalLines, startLine1, lines + appendix, lines1 + appendix);
+      myConvertor1.put(totalLines, startLine1, lines + appendix, lines1 + appendix)
     }
     if (startLine2 != -1) {
-      myConvertor2.put(totalLines, startLine2, lines + appendix, lines2 + appendix);
+      myConvertor2.put(totalLines, startLine2, lines + appendix, lines2 + appendix)
     }
 
     if (notEmpty) {
-      Document document = side.select(myDocument1, myDocument2);
+      val document = side.selectNotNull(document1, document2)
 
-      int newline = document.getTextLength() > offset2 + 1 ? 1 : 0;
-      TextRange base = new TextRange(myBuilder.length(), myBuilder.length() + offset2 - offset1 + newline);
-      TextRange changed = new TextRange(offset1, offset2 + newline);
-      myRanges.add(new HighlightRange(side, base, changed));
+      val newline = if (document.textLength > offset2 + 1) 1 else 0
+      val base = TextRange(myBuilder.length, myBuilder.length + offset2 - offset1 + newline)
+      val changed = TextRange(offset1, offset2 + newline)
+      myRanges.add(HighlightRange(side, base, changed))
 
-      myBuilder.append(document.getCharsSequence().subSequence(offset1, offset2));
-      myBuilder.append('\n');
+      myBuilder.append(document.charsSequence.subSequence(offset1, offset2))
+      myBuilder.append('\n')
 
-      totalLines += lines + 1;
+      totalLines += lines + 1
     }
   }
 
-  private static int getLineCount(@NotNull Document document) {
-    return Math.max(document.getLineCount(), 1);
+  private fun getLineCount(document: Document): Int {
+    return max(document.getLineCount().toDouble(), 1.0).toInt()
   }
 
   //
   // Result
   //
 
-  @NotNull
-  public CharSequence getText() {
-    return myBuilder;
-  }
-
-  @NotNull
-  public List<UnifiedDiffChange> getChanges() {
-    return myChanges;
-  }
-
-  @NotNull
-  public List<HighlightRange> getRanges() {
-    return myRanges;
-  }
-
-  @NotNull
-  public LineNumberConvertor getConvertor1() {
-    return myConvertor1.build();
-  }
-
-  @NotNull
-  public LineNumberConvertor getConvertor2() {
-    return myConvertor2.build();
-  }
-
-  @NotNull
-  public List<LineRange> getChangedLines() {
-    return myChangedLines;
-  }
+  val text: CharSequence get() = myBuilder
+  val changes: List<UnifiedDiffChange> get() = myChanges
+  val ranges: List<HighlightRange> get() = myRanges
+  val convertor1: LineNumberConvertor get() = myConvertor1.build()
+  val convertor2: LineNumberConvertor get() = myConvertor2.build()
+  val changedLines: List<LineRange> get() = myChangedLines
 }

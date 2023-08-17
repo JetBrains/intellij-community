@@ -245,7 +245,7 @@ public class UnifiedLocalChangeListDiffViewer extends UnifiedDiffViewer {
                                                  int insertedStart,
                                                  int blockEnd,
                                                  int fragmentIndex) {
-      LineFragment fragment = myFragments.get(fragmentIndex);
+      LineFragment fragment = getFragments().get(fragmentIndex);
       LineFragmentData data = myFragmentsData.get(fragmentIndex);
       boolean isSkipped = data.isSkipped();
       boolean isExcluded = data.isExcluded(myAllowExcludeChangesFromCommit);
