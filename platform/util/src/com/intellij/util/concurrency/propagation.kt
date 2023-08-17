@@ -20,13 +20,7 @@ import java.util.concurrent.Callable
 import java.util.concurrent.FutureTask
 import java.util.function.BiConsumer
 import java.util.function.Function
-import kotlin.Any
-import kotlin.Boolean
-import kotlin.Long
-import kotlin.OptIn
 import kotlin.Pair
-import kotlin.Suppress
-import kotlin.Unit
 import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.CoroutineContext
@@ -134,7 +128,7 @@ internal fun <V> captureCallableThreadContext(callable: Callable<V>): Callable<V
   return callable
 }
 
-private fun isContextAwareComputation(runnable: Any) : Boolean {
+private fun isContextAwareComputation(runnable: Any): Boolean {
   return runnable is Continuation<*> || runnable is ContextAwareRunnable || runnable is ContextAwareCallable<*> || runnable is CancellationFutureTask<*>
 }
 
@@ -157,14 +151,15 @@ private fun isContextAwareComputation(runnable: Any) : Boolean {
 @Internal
 @OptIn(DelicateCoroutinesApi::class, ExperimentalCoroutinesApi::class)
 fun <T> runAsCoroutine(job: CompletableJob, completeOnFinish: Boolean = true, action: () -> T): T {
-  val originalPCE : Ref<ProcessCanceledException> = Ref(null)
+  val originalPCE: Ref<ProcessCanceledException> = Ref(null)
   val deferred = GlobalScope.async(
     // we need to have a job in CoroutineContext so that `Deferred` becomes its child and properly delays cancellation
     context = job,
     start = CoroutineStart.UNDISPATCHED) {
     try {
       action()
-    } catch (e : ProcessCanceledException) {
+    }
+    catch (e: ProcessCanceledException) {
       // A raw PCE scares coroutine framework. Instead, we should message coroutines that we intend to cancel an activity, not fail it.
       originalPCE.set(e)
       throw CancellationException("Masking ProcessCancelledException: ${e.message}", e)
@@ -324,6 +319,6 @@ internal fun capturePropagationAndCancellationContext(
   }
 }
 
-fun contextAwareCallable(r : Runnable) : Callable<*> = ContextAwareCallable {
+fun contextAwareCallable(r: Runnable): Callable<*> = ContextAwareCallable {
   r.run()
 }

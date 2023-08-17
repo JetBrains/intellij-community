@@ -463,7 +463,8 @@ public final class ProgressRunner<R> {
         try (AccessToken ignored = ThreadContext.installThreadContext(effectiveContext, false)) {
           if (childJob != null) {
             Propagation.runAsCoroutine(childJob, runnable);
-          } else {
+          }
+          else {
             runnable.run();
           }
         }

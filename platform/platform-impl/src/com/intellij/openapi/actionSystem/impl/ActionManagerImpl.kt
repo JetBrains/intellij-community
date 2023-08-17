@@ -201,7 +201,9 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
     }
 
     if (LOG.assertTrue(timer != null)) {
-      timer!!.listeners.removeIf { it == listener || (it is CapturingListener && it.timerListener == listener)  }
+      timer!!.listeners.removeIf {
+        it == listener || (it is CapturingListener && it.timerListener == listener)
+      }
     }
   }
 

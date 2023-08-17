@@ -330,11 +330,13 @@ public class MergingTaskQueue<T extends MergeableQueueTask<T>> {
           CompletableJob job = Cancellation.getJob(myContext);
           if (job != null) {
             Propagation.runAsCoroutine(job, () -> myTask.perform(indicator));
-          } else {
+          }
+          else {
             myTask.perform(indicator);
           }
         }
-      } else {
+      }
+      else {
         myTask.perform(indicator);
       }
     }

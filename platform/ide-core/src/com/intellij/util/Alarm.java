@@ -372,7 +372,8 @@ public class Alarm implements Disposable {
               try (AccessToken ignored2 = ThreadContext.installThreadContext(myContext, true)) {
                 QueueProcessor.runSafely(myJob == null ? task : () -> Propagation.runAsCoroutine(myJob, task));
               }
-            } else {
+            }
+            else {
               QueueProcessor.runSafely(task);
             }
           }

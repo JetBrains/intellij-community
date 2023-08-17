@@ -3,16 +3,11 @@ package com.intellij.util.ui.update;
 
 import com.intellij.concurrency.ThreadContext;
 import com.intellij.openapi.application.AccessToken;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.Propagation;
 import kotlin.Pair;
 import kotlin.coroutines.CoroutineContext;
 import kotlinx.coroutines.CompletableJob;
-import com.intellij.concurrency.ThreadContext;
-import com.intellij.openapi.application.AccessToken;
-import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.concurrency.Propagation;
-import kotlin.coroutines.CoroutineContext;
-import kotlinx.coroutines.Job;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -107,11 +102,15 @@ public abstract class Update extends ComparableObject.Impl implements Runnable {
   final void runUpdate() {
     if (myContext == null) {
       run();
-    } else try (AccessToken ignored = ThreadContext.installThreadContext(myContext, true)) {
-      if (myJob != null) {
-        Propagation.runAsCoroutine(myJob, this);
-      } else {
-        run();
+    }
+    else {
+      try (AccessToken ignored = ThreadContext.installThreadContext(myContext, true)) {
+        if (myJob != null) {
+          Propagation.runAsCoroutine(myJob, this);
+        }
+        else {
+          run();
+        }
       }
     }
   }
