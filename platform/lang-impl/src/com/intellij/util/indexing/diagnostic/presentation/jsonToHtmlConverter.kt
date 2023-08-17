@@ -479,6 +479,9 @@ private const val SECTION_INDEXING_INFO_ID = "id-indexing-info"
 private const val SECTION_INDEXING_INFO_TITLE = "Indexing info"
 private const val SECTION_OVERVIEW_TITLE = "Overview"
 
+private const val SECTION_SCANNING_CONCURRENT_PART_ID = "id-scanning-concurrent-part"
+private const val SECTION_SCANNING_CONCURRENT_PART_TITLE = "Concurrent part of scanning"
+
 private const val SECTION_SLOW_FILES_ID = "id-slow-files"
 private const val SECTION_SLOW_FILES_TITLE = "Slowly indexed files"
 
@@ -1028,6 +1031,11 @@ private fun JsonProjectScanningHistory.generateScanningHtml(target: Appendable,
             }
           }
           li {
+            a("#$SECTION_SCANNING_CONCURRENT_PART_ID") {
+              text(SECTION_SCANNING_CONCURRENT_PART_TITLE)
+            }
+          }
+          li {
             a("#$SECTION_SCANNING_ID") {
               text(SECTION_SCANNING_PER_PROVIDER_TITLE)
             }
@@ -1093,18 +1101,11 @@ private fun JsonProjectScanningHistory.generateScanningHtml(target: Appendable,
               tr { td("Total time w/o pauses"); td(times.totalWallTimeWithoutPauses.presentableDuration()) }
               tr { td("Dumb mode time with pauses"); td(times.dumbWallTimeWithPauses.presentableDuration()) }
               tr { td("Dumb mode time w/o pauses"); td(times.dumbWallTimeWithoutPauses.presentableDuration()) }
-              tr {
-                td("Time of collecting files to compute index values (w/o pauses)")
-                td(times.collectingIndexableFilesTime.presentableDuration())
-              }
-              tr {
-                td("Time of running $INDEX_INFRA_EXTENSIONS (without loading content; sum of durations on many threads)"); td(times.indexExtensionsTime.presentableDuration())
-              }
 
               tr { td(TITLE_NUMBER_OF_FILE_PROVIDERS); td(fileCount.numberOfFileProviders.toString()) }
               tr { td(TITLE_NUMBER_OF_SCANNED_FILES); td(fileCount.numberOfScannedFiles.toString()) }
               tr {
-                td("Number of files indexed by $INDEX_INFRA_EXTENSIONS (without loading content)")
+                td("Number of files indexed by $INDEX_INFRA_EXTENSIONS (without loading content, part of checking files)")
                 td(fileCount.numberOfFilesIndexedByInfrastructureExtensionsDuringScan.toString())
               }
               tr {
@@ -1115,32 +1116,78 @@ private fun JsonProjectScanningHistory.generateScanningHtml(target: Appendable,
           }
         }
 
+        div(id = SECTION_SCANNING_CONCURRENT_PART_ID) {
+          text("Time in this table is sum of CPU times on threads with pauses unless stated otherwise.")
+          table(classes = "two-columns table-with-margin narrow-activity-table") {
+            thead {
+              tr { th(SECTION_SCANNING_CONCURRENT_PART_TITLE) { colSpan = "2" } }
+            }
+            tbody {
+              tr {
+                td("Wall time w/o pauses")
+                td(times.concurrentHandlingWallTimeWithoutPauses.presentableDuration())
+              }
+              tr {
+                td("Wall time with pauses")
+                td(times.concurrentHandlingWallTimeWithoutPauses.presentableDuration())
+              }
+              tr {
+                td("Total time (sum of CPU times with pauses on many threads)")
+                td(times.concurrentHandlingCPUTimeWithPauses.presentableDuration())
+              }
+              tr {
+                td("Time of iterating VFS and applying scanners")
+                td(times.concurrentIterationAndScannersApplicationCPUTimeWithPauses.presentableDuration())
+              }
+              tr {
+                td("Time of checking files")
+                td(times.concurrentFileCheckCPUTimeWithPauses.presentableDuration())
+              }
+              tr {
+                td("Time of running $INDEX_INFRA_EXTENSIONS (without loading content, part of checking files)")
+                td(times.indexExtensionsTime.presentableDuration())
+              }
+            }
+          }
+        }
+
         val shouldPrintScannedFiles = scanningStatistics.any { it.scannedFiles.orEmpty().isNotEmpty() }
         val shouldPrintProviderRoots = scanningStatistics.any { it.roots.isNotEmpty() }
         div(id = SECTION_SCANNING_ID) {
           h1 { text(SECTION_SCANNING_PER_PROVIDER_TITLE) }
-          text("Total time consists of pushing and getting files' statuses. " +
-               "Processing up-to-date files, updating content-less indexes, indexing by $INDEX_INFRA_EXTENSIONS without content " +
-               "happens during getting files' statuses.")
+          text("Providers are handled during concurrent part of scanning, however each provider is handled in a single thread.")
           table(classes = "table-with-margin activity-table") {
             thead {
+              var rowHeaderNumber = 3
+              var timeColumnsNumber = 7
               tr {
-                th("Provider name")
-                th("Number of scanned files")
-                th("Number of files scheduled for indexing")
-                th("Number of files fully indexed by $INDEX_INFRA_EXTENSIONS")
-                th("Number of double-scanned skipped files")
-                th { text("Total"); unsafe { raw("&nbsp;") }; text("time") }
-                th("Time of getting files' statuses")
-                th("Time processing up-to-date files")
-                th("Time updating content-less indexes")
-                th("Time indexing by $INDEX_INFRA_EXTENSIONS without content")
+                fun thNonTime(text: String) = th(text) { rowSpan = rowHeaderNumber.toString() }
+                thNonTime("Provider name")
+                thNonTime("Number of scanned files")
+                thNonTime("Number of files scheduled for indexing")
+                thNonTime("Number of files fully indexed by $INDEX_INFRA_EXTENSIONS")
+                thNonTime("Number of double-scanned skipped files")
+                th("Time") { colSpan = timeColumnsNumber.toString() }
                 if (shouldPrintProviderRoots) {
-                  th("Roots")
+                  thNonTime("Roots")
                 }
                 if (shouldPrintScannedFiles) {
-                  th("Scanned files")
+                  thNonTime("Scanned files")
                 }
+              }
+              tr {
+                rowHeaderNumber--
+                timeColumnsNumber -= 2
+                th("Total time") { rowSpan = rowHeaderNumber.toString() }
+                th("VFS iteration and scanners application") { rowSpan = rowHeaderNumber.toString() }
+                th("Files' check") { colSpan = timeColumnsNumber.toString() }
+              }
+              tr {
+                th("Total time")
+                th("Getting files' statuses")
+                th("Processing up-to-date files")
+                th("Updating content-less indexes")
+                th("Indexing by $INDEX_INFRA_EXTENSIONS without content")
               }
             }
             tbody {
@@ -1153,6 +1200,8 @@ private fun JsonProjectScanningHistory.generateScanningHtml(target: Appendable,
                   td(scanningStats.numberOfFilesFullyIndexedByInfrastructureExtensions.toString())
                   td(scanningStats.numberOfSkippedFiles.toString())
                   td(scanningStats.totalCPUTimeWithPauses.presentableDuration())
+                  td(scanningStats.iterationAndScannersApplicationTime.presentableDuration())
+                  td(scanningStats.filesCheckTime.presentableDuration())
                   td(scanningStats.statusTime.presentableDuration())
                   td(scanningStats.timeProcessingUpToDateFiles.presentableDuration())
                   td(scanningStats.timeUpdatingContentLessIndexes.presentableDuration())
@@ -1322,7 +1371,7 @@ private fun JsonProjectDumbIndexingHistory.generateDumbIndexingHtml(target: Appe
                   text("Time of retrieving list of the files changed in VFS")
                   br()
                   small { text("Indexing handles both files found by scanning(s) and files reported as changed by VFS") }
-                };
+                }
                 td(times.retrievingChangedDuringIndexingFilesTime.presentableDuration())
               }
               tr { td("Content loading time"); td(times.contentLoadingVisibleTime.presentableDuration()) }

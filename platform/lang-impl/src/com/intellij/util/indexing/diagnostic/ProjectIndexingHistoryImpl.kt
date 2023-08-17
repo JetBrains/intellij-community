@@ -425,9 +425,11 @@ data class ProjectScanningHistoryImpl(override val project: Project,
     }
 
     writeStagesToDurations()
-    timesImpl.indexExtensionsDuration = scanningStatistics.sumOf { stat -> stat.timeIndexingWithoutContentViaInfrastructureExtension.nano }.let {
-      Duration.ofNanos(it)
-    }
+    timesImpl.concurrentHandlingCPUTimeWithPauses = Duration.ofNanos(scanningStatistics.sumOf { stat -> stat.totalCPUTimeWithPauses.nano })
+    timesImpl.concurrentIterationAndScannersApplicationCPUTimeWithPauses = Duration.ofNanos(scanningStatistics.sumOf { stat -> stat.iterationAndScannersApplicationTime.nano })
+    timesImpl.concurrentFileCheckCPUTimeWithPauses = Duration.ofNanos(scanningStatistics.sumOf { stat -> stat.filesCheckTime.nano })
+    timesImpl.indexExtensionsDuration = Duration.ofNanos(
+      scanningStatistics.sumOf { stat -> stat.timeIndexingWithoutContentViaInfrastructureExtension.nano })
   }
 
   fun setWasInterrupted() {
@@ -531,6 +533,22 @@ data class ProjectScanningHistoryImpl(override val project: Project,
         stage.getProperty().set(timesImpl, durationMap[stage]!!)
       }
     }
+
+    var start: Instant? = null
+    var concurrentHandlingWallTimeWithPauses = Duration.ZERO
+    for (event in normalizedEvents) {
+      if (event !is Event.StageEvent || event.stage != ScanningStage.CollectingIndexableFiles) {
+        continue
+      }
+      if (event.started) {
+        start = event.instant
+      }
+      else {
+        log.assertTrue(start != null, "Concurrent handling is not started, tries to stop. Events $normalizedEvents")
+        concurrentHandlingWallTimeWithPauses += Duration.between(start, event.instant)
+      }
+    }
+    timesImpl.concurrentHandlingWallTimeWithPauses = concurrentHandlingWallTimeWithPauses
     timesImpl.pausedDuration = pausedDuration
   }
 
@@ -540,7 +558,7 @@ data class ProjectScanningHistoryImpl(override val project: Project,
       override fun getProperty(): KMutableProperty1<ScanningTimesImpl, Duration> = ScanningTimesImpl::creatingIteratorsDuration
     },
     CollectingIndexableFiles {
-      override fun getProperty(): KMutableProperty1<ScanningTimesImpl, Duration> = ScanningTimesImpl::collectingIndexableFilesDuration
+      override fun getProperty(): KMutableProperty1<ScanningTimesImpl, Duration> = ScanningTimesImpl::concurrentHandlingWallTimeWithoutPauses
     },
     DelayedPushProperties {
       override fun getProperty(): KMutableProperty1<ScanningTimesImpl, Duration> = ScanningTimesImpl::delayedPushPropertiesStageDuration
@@ -564,7 +582,11 @@ data class ProjectScanningHistoryImpl(override val project: Project,
     override var dumbModeWithoutPausesDuration: Duration = Duration.ZERO,
     override var delayedPushPropertiesStageDuration: Duration = Duration.ZERO,
     override var creatingIteratorsDuration: Duration = Duration.ZERO,
-    override var collectingIndexableFilesDuration: Duration = Duration.ZERO,
+    override var concurrentHandlingWallTimeWithoutPauses: Duration = Duration.ZERO,
+    override var concurrentHandlingWallTimeWithPauses: Duration = Duration.ZERO,
+    override var concurrentHandlingCPUTimeWithPauses: Duration = Duration.ZERO,
+    override var concurrentIterationAndScannersApplicationCPUTimeWithPauses: Duration = Duration.ZERO,
+    override var concurrentFileCheckCPUTimeWithPauses: Duration = Duration.ZERO,
     override var indexExtensionsDuration: Duration = Duration.ZERO,
     override var pausedDuration: Duration = Duration.ZERO,
     override var wasInterrupted: Boolean = false

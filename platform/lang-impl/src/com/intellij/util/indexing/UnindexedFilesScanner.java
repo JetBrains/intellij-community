@@ -438,10 +438,11 @@ public class UnindexedFilesScanner implements FilesScanningTask {
             };
           };
 
-          // TODO: add VFS+fileScannerVisitors time to statistics
+          scanningStatistics.startVfsIterationAndScanningApplication();
           provider.iterateFilesInRoots(project, singleProviderIteratorFactory, thisProviderDeduplicateFilter);
+          scanningStatistics.tryFinishVfsIterationAndScanningApplication();
 
-          // TODO: add scanning self-time to statistics
+          scanningStatistics.startFileChecking();
           for (Pair<VirtualFile, List<VirtualFile>> rootAndFiles : rootsAndFiles) {
             UnindexedFilesFinder finder = new UnindexedFilesFinder(project, sharedExplanationLogger, myIndex, getForceReindexingTrigger(),
                                                                    rootAndFiles.getFirst());
@@ -449,6 +450,7 @@ public class UnindexedFilesScanner implements FilesScanningTask {
                                                           scanningStatistics, perProviderSink);
             rootAndFiles.getSecond().forEach(it -> rootIterator.processFile(it));
           }
+          scanningStatistics.tryFinishFilesChecking();
 
           perProviderSink.commit();
         }
@@ -462,6 +464,8 @@ public class UnindexedFilesScanner implements FilesScanningTask {
                     "To reindex files under this origin IDEA has to be restarted", e);
         }
         finally {
+          scanningStatistics.tryFinishVfsIterationAndScanningApplication();
+          scanningStatistics.tryFinishFilesChecking();
           scanningStatistics.setTotalCPUTimeWithPauses(System.nanoTime() - providerScanningStartTime);
           scanningStatistics.setNumberOfSkippedFiles(thisProviderDeduplicateFilter.getNumberOfSkippedFiles());
           synchronized (allTasksFinished) {

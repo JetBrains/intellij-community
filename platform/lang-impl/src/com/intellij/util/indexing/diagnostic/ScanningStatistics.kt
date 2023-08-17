@@ -32,7 +32,34 @@ class ScanningStatistics(val fileSetName: String) {
   var providerRoots: List<String> = emptyList()
   val scannedFiles: ArrayList<ScannedFile> = arrayListOf()
 
+  var timeConcurrentVfsIterationAndScanningApplication: TimeNano = 0
+  private var startConcurrentVfsIterationAndScanningApplication: Long = -1
+  var timeConcurrentFilesChecking: TimeNano = 0
+  private var startConcurrentFilesChecking: Long = -1
+
   data class ScannedFile(val portableFilePath: PortableFilePath, val isUpToDate: Boolean, val wasFullyIndexedByInfrastructureExtension: Boolean)
+
+  fun startVfsIterationAndScanningApplication() {
+    startConcurrentVfsIterationAndScanningApplication = System.nanoTime()
+  }
+
+  fun tryFinishVfsIterationAndScanningApplication() {
+    if (startConcurrentVfsIterationAndScanningApplication != -1L) {
+      timeConcurrentVfsIterationAndScanningApplication = System.nanoTime() - startConcurrentVfsIterationAndScanningApplication
+      startConcurrentVfsIterationAndScanningApplication = -1
+    }
+  }
+
+  fun startFileChecking() {
+    startConcurrentFilesChecking = System.nanoTime()
+  }
+
+  fun tryFinishFilesChecking() {
+    if (startConcurrentFilesChecking != -1L) {
+      timeConcurrentFilesChecking = System.nanoTime() - startConcurrentFilesChecking
+      startConcurrentFilesChecking = -1
+    }
+  }
 
   fun addStatus(fileOrDir: VirtualFile, unindexedFileStatus: UnindexedFileStatus, statusTime: Long, project: Project) {
     if (fileOrDir.isDirectory) return
