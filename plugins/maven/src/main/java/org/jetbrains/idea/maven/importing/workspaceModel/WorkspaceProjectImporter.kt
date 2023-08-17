@@ -213,7 +213,7 @@ internal class WorkspaceProjectImporter(
 
   private fun buildModuleNameMap(projectToImport: Map<MavenProject, MavenProjectChanges>): HashMap<MavenProject, String> {
     val mavenProjectToModuleName = HashMap<MavenProject, String>()
-    MavenModuleNameMapper.map(projectToImport.keys, emptyMap(), mavenProjectToModuleName, HashMap(), null)
+    MavenModuleNameMapper.resolveModuleNames(projectToImport.keys, emptyMap(), mavenProjectToModuleName)
     return mavenProjectToModuleName
   }
 

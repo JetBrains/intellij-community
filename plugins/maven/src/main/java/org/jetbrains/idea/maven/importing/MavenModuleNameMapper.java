@@ -1,40 +1,20 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.importing;
 
-import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.text.StringUtil;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenProject;
 
-import java.io.File;
 import java.util.*;
 
 import static java.util.Locale.ROOT;
 
 public final class MavenModuleNameMapper {
-
-  public static void map(Collection<MavenProject> projects,
-                         Map<MavenProject, Module> mavenProjectToModule,
-                         Map<MavenProject, String> mavenProjectToModuleName,
-                         Map<MavenProject, String> mavenProjectToModulePath,
-                         String dedicatedModuleDir) {
-    resolveModuleNames(projects,
-                       mavenProjectToModule,
-                       mavenProjectToModuleName);
-    resolveModulePaths(projects,
-                       mavenProjectToModule,
-                       mavenProjectToModuleName,
-                       mavenProjectToModulePath,
-                       dedicatedModuleDir);
-  }
-
-  private static void resolveModuleNames(Collection<MavenProject> projects,
-                                         Map<MavenProject, Module> mavenProjectToModule,
-                                         Map<MavenProject, String> mavenProjectToModuleName) {
+  public static void resolveModuleNames(Collection<MavenProject> projects,
+                                        Map<MavenProject, Module> mavenProjectToModule,
+                                        Map<MavenProject, String> mavenProjectToModuleName) {
     NameItem[] names = new NameItem[projects.size()];
 
     int i = 0;
@@ -152,49 +132,5 @@ public final class MavenModuleNameMapper {
       }
     }
     return true;
-  }
-
-  private static void resolveModulePaths(Collection<MavenProject> projects,
-                                         Map<MavenProject, Module> mavenProjectToModule,
-                                         Map<MavenProject, String> mavenProjectToModuleName,
-                                         Map<MavenProject, String> mavenProjectToModulePath,
-                                         String dedicatedModuleDir) {
-    for (MavenProject each : projects) {
-      Module module = mavenProjectToModule.get(each);
-      String path = getPath(mavenProjectToModuleName.get(each), each, dedicatedModuleDir, module);
-      mavenProjectToModulePath.put(each, path);
-    }
-  }
-
-  @NotNull
-  public static @NonNls String getPath(@NotNull String moduleName,
-                                       @NotNull MavenProject each,
-                                       @Nullable String dedicatedModuleDir,
-                                       @Nullable Module module) {
-    return module != null
-           ? module.getModuleFilePath()
-           : generateModulePath(each, moduleName, dedicatedModuleDir);
-  }
-
-  @NotNull
-  public static String generateModulePath(MavenProject project,
-                                          String moduleName,
-                                          String dedicatedModuleDir) {
-    String dir = StringUtil.isEmptyOrSpaces(dedicatedModuleDir)
-                 ? project.getDirectory()
-                 : dedicatedModuleDir;
-    String fileName = moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION;
-    return new File(dir, fileName).getPath();
-  }
-
-  @NotNull
-  public static String generateModulePath(String directory,
-                                          String moduleName,
-                                          String dedicatedModuleDir) {
-    String dir = StringUtil.isEmptyOrSpaces(dedicatedModuleDir)
-                 ? directory
-                 : dedicatedModuleDir;
-    String fileName = moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION;
-    return new File(dir, fileName).getPath();
   }
 }

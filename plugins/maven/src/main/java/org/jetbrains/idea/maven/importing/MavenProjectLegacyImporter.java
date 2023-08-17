@@ -364,11 +364,12 @@ public class MavenProjectLegacyImporter extends MavenProjectImporterLegacyBase {
       }
     }
 
-    MavenModuleNameMapper.map(myAllProjects,
-                              myMavenProjectToModule,
-                              myMavenProjectToModuleName,
-                              myMavenProjectToModulePath,
-                              myImportingSettings.getDedicatedModuleDir());
+    MavenModuleNameMapper.resolveModuleNames(myAllProjects, myMavenProjectToModule, myMavenProjectToModuleName);
+    MavenModulePathMapper.resolveModulePaths(myAllProjects,
+                                             myMavenProjectToModule,
+                                             myMavenProjectToModuleName,
+                                             myMavenProjectToModulePath,
+                                             myImportingSettings.getDedicatedModuleDir());
   }
 
   private List<MavenLegacyModuleImporter.ExtensionImporter> importModules() {
