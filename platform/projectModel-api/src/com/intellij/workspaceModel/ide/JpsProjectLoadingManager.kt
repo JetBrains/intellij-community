@@ -3,6 +3,11 @@ package com.intellij.workspaceModel.ide
 
 import com.intellij.openapi.project.Project
 
+/**
+ * Discussion about this manager: IDEA-330045
+ *
+ * If possible, try not to use this manager as it's related to the JPS model, and we may try to get rid of JPS in non-IJ IDEs in the future.
+ */
 interface JpsProjectLoadingManager {
   /**
    * Schedule a task that should be executed after JPS project model will be loaded.
