@@ -219,12 +219,12 @@ as an example
     /* open/close markers */
     div > div.caption::before {
       content: '-';
-      font-family: monospaced,monospace;
+      font-family: monospaced, monospace;
     }
 
     div.hidden > div.caption::before {
       content: '+';
-      font-family: monospaced,monospace;
+      font-family: monospaced, monospace;
     }
 
     div.plot {
@@ -343,8 +343,8 @@ as an example
       mulScalar(scalar) {
         return new TimeSeries(this.points.map(p => new Point(p.time, p.value * scalar)))
       },
-      cumSum(){
-        let sum = 0;
+      cumSum() {
+        let sum = 0
         return new TimeSeries(this.points.map(p => {
           sum += p.value
           return new Point(p.time, sum)
@@ -495,7 +495,7 @@ as an example
       })
 
       domElement.plot = plot
-      if(!document.plots.includes(domElement)) {
+      if (!document.plots.includes(domElement)) {
         document.plots.push(domElement)
       }
 
@@ -622,7 +622,7 @@ as an example
         [{
           name: 'JVM CPU time, sec',
           color: 'blue',
-          series: totalCpuTimesMs.mulScalar(1.0/1000)
+          series: totalCpuTimesMs.mulScalar(1.0 / 1000)
         }],
         /*yaxis:*/ {
           title: 'sec'
@@ -976,8 +976,8 @@ as an example
         'DirectBufferAllocator: native memory usage',
         $("#directBufferAllocator_Bytes_Chart"),
         [
-          {name: 'ByteBuffers allocated, Mb', color: 'red', series: totalSizeOfBuffersAllocatedBytes.mulScalar(1/1024/1024)},
-          {name: 'ByteBuffers in cache, Mb', color: 'green', series: totalSizeOfBuffersInCacheBytes.mulScalar(1/1024/1024)}
+          {name: 'ByteBuffers allocated, Mb', color: 'red', series: totalSizeOfBuffersAllocatedBytes.mulScalar(1 / 1024 / 1024)},
+          {name: 'ByteBuffers in cache, Mb', color: 'green', series: totalSizeOfBuffersInCacheBytes.mulScalar(1 / 1024 / 1024)}
         ],
         /*yaxis: */ {
           title: 'Mb',
@@ -1060,14 +1060,34 @@ as an example
         'Data flows',
         $("#filePageCacheLockFree_PageBytes"),
         [
-          {name: 'Total bytes requested by app', color: 'blue', series: totalBytesRequested.mulScalar(1e-6),
-            visible: 'legendonly'},//usually not representative
+          {
+            name: 'Total bytes requested by app', color: 'blue', series: totalBytesRequested.mulScalar(1e-6),
+            visible: 'legendonly'
+          },//usually not representative
           {name: 'Total bytes read', color: 'green', series: totalBytesRead.mulScalar(1e-6)},
           {name: 'Total bytes written', color: 'red', series: totalBytesWritten.mulScalar(1e-6)}
         ],
         /*yaxis: */ {
           title: 'Mb',
           autorange: true
+        }
+      )
+
+      plotTimeSeries(
+        'Caching efficiency',
+        $("#filePageCacheLockFree_Caching"),
+        [
+          {name: 'Cache hits', color: 'green',
+            series: totalPagesRequested.minus(totalPagesAllocated).div(totalPagesRequested).mulScalar(100)
+          },
+          {name: 'Cache misses', color: 'red',
+            series: totalPagesAllocated.div(totalPagesRequested).mulScalar(100)
+          }
+        ],
+        /*yaxis: */ {
+          title: '%',
+          autorange: false,
+          range: [0, 100]
         }
       )
 
@@ -1155,6 +1175,7 @@ as an example
       }).filter((dataRow) => {
         return dataRow.series != null
       })
+
       plotTimeSeries(
         title,
         canvasElementToPlotOn,
@@ -1184,15 +1205,7 @@ as an example
       plotReadWriteActionsChart,
       plotIndexesCharts,
       plotFilePageCacheCharts,
-      plotFilePageCacheLockFreeCharts,
-      () => {//Initialize 'custom plot' with something, so it doesn't look empty:
-        const names = document.loadedAndParsedData.names
-        //TODO check #timeSeriesChooser selected options, and if there are options present in names --
-        //     plot them. 
-        if (names && names.length > 0) {
-          extractAndPlotCustomTimeSeries([names[0]])
-        }
-      }
+      plotFilePageCacheLockFreeCharts
     ]
   </script>
 
@@ -1324,20 +1337,30 @@ as an example
 
       //Enhance default html <select multi> with nice UI:
       const timeSeriesChooser = $("#timeSeriesChooser")
-      //TODO: keep 'selected' options if there are some (i.e. if it is not the first file loaded in a session)
+      const previouslySelectedValues = timeSeriesChooser.val()
       timeSeriesChooser.html("")
       for (const name of names.sort()) {
         timeSeriesChooser.append(`<option value="${name}">${name}</option>`)
       }
-      timeSeriesChooser.SumoSelect({
-        placeholder: 'Choose time series to plot...',
-        max: 6,
-        csvDispCount: 6,
 
-        search: true
+      if (timeSeriesChooser[0].sumo) {
+        timeSeriesChooser[0].sumo.reload()
+        for (const valueToSelect of previouslySelectedValues) {
+          timeSeriesChooser[0].sumo.selectItem(valueToSelect)
+        }
+      }
+      else {
+        timeSeriesChooser.SumoSelect({
+          placeholder: 'Choose time series to plot...',
+          max: 6,
+          csvDispCount: 6,
 
-        // clearAll: true -- has some issues
-      })
+          search: true
+
+          // clearAll: true -- has some issues
+        })
+        timeSeriesChooser[0].sumo.selectItem(0)
+      }
 
 
       //TODO RC: Unfinished work: setup _time-range_ chooser -- so user could limit plots to subset
@@ -1503,6 +1526,8 @@ as an example
 
     <div id="filePageCacheLockFree_PageTimings" class="plot hideable"></div>
     <div id="filePageCacheLockFree_PageBytes" class="plot hideable"></div>
+
+    <div id="filePageCacheLockFree_Caching" class="plot hideable"></div>
 
     <div id="filePageCacheLockFree_HeapVsNativeMemoryUsed" class="plot hideable"></div>
 
