@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.fir.analysis.providers.sessions
 
 import com.google.gson.JsonObject
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import org.jetbrains.kotlin.analysis.low.level.api.fir.LLFirResolveSessionService
@@ -15,13 +16,13 @@ import org.jetbrains.kotlin.idea.base.projectStructure.sourceModuleInfos
 import org.jetbrains.kotlin.idea.base.projectStructure.toKtModule
 import org.jetbrains.kotlin.idea.fir.analysis.providers.TestProjectModule
 import org.jetbrains.kotlin.idea.fir.analysis.providers.TestProjectStructure
-import org.jetbrains.kotlin.idea.fir.analysis.providers.publishOutOfBlockModification
 import org.jetbrains.kotlin.idea.jsonUtils.getString
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import java.io.File
 import org.jetbrains.kotlin.idea.fir.analysis.providers.AbstractProjectStructureTest
 import org.jetbrains.kotlin.idea.fir.analysis.providers.TestProjectLibrary
 import org.jetbrains.kotlin.idea.fir.analysis.providers.TestProjectStructureParser
+import org.jetbrains.kotlin.idea.util.publishModuleOutOfBlockModification
 
 abstract class AbstractSessionsInvalidationTest : AbstractProjectStructureTest<SessionInvalidationTestProjectStructure>() {
     override fun isFirPlugin(): Boolean = true
@@ -39,7 +40,11 @@ abstract class AbstractSessionsInvalidationTest : AbstractProjectStructureTest<S
         val sessionsBeforeOOBM = getAllModuleSessions(rootModule)
 
         val modulesToMakeOOBM = testStructure.modulesToMakeOOBM.map(modulesByNames::getValue)
-        modulesToMakeOOBM.forEach { it.publishOutOfBlockModification() }
+        runWriteAction {
+            modulesToMakeOOBM.forEach { module ->
+                module.publishModuleOutOfBlockModification()
+            }
+        }
 
         val sessionsAfterOOBM = getAllModuleSessions(rootModule)
 

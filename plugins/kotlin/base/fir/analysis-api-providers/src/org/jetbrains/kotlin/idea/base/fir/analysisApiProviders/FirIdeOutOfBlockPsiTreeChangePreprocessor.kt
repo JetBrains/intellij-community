@@ -15,6 +15,8 @@ import org.jetbrains.kotlin.analysis.low.level.api.fir.file.structure.invalidate
 import org.jetbrains.kotlin.analysis.project.structure.ProjectStructureProvider
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.base.util.module
+import org.jetbrains.kotlin.idea.util.publishGlobalSourceOutOfBlockModification
+import org.jetbrains.kotlin.idea.util.publishModuleOutOfBlockModification
 import org.jetbrains.kotlin.psi.KtAnnotated
 import org.jetbrains.kotlin.psi.KtCodeFragment
 
@@ -28,7 +30,8 @@ internal class FirIdeOutOfBlockPsiTreeChangePreprocessor(private val project: Pr
         }
 
         if (event.isGlobalChange()) {
-            FirIdeOutOfBlockModificationService.getInstance(project).publishGlobalSourceOutOfBlockModification()
+            // We should not invalidate binary module content here, because global PSI tree changes have no effect on binary modules.
+            project.publishGlobalSourceOutOfBlockModification()
             return
         }
 
@@ -68,14 +71,12 @@ internal class FirIdeOutOfBlockPsiTreeChangePreprocessor(private val project: Pr
         if (element.containingFile == null) {
             // PSI elements without a containing file, such as `PsiJavaDirectory`, are not supported by `ProjectStructureProvider`
             // and have no corresponding meaningful `KtModule`.
-            element.module?.let { module ->
-                FirIdeOutOfBlockModificationService.getInstance(project).publishModuleAndProjectOutOfBlockModification(module)
-            }
+            element.module?.publishModuleOutOfBlockModification()
             return
         }
 
         val module = ProjectStructureProvider.getModule(project, element, contextualModule = null)
-        FirIdeOutOfBlockModificationService.getInstance(project).publishModuleAndProjectOutOfBlockModification(module)
+        module.publishModuleOutOfBlockModification()
     }
 }
 
