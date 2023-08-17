@@ -338,9 +338,10 @@ public class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
             <extensionPoint name="myService" beanClass="foo.MyServiceDescriptor"/>
         </extensionPoints>
     """);
-    myFixture.addClass("package foo;\n" +
-                       "import com.intellij.util.xmlb.annotations.Attribute;\n" +
-                       "public class MyServiceDescriptor { @Attribute public String serviceImplementation; }");
+    myFixture.addClass("""
+                         package foo;
+                         import com.intellij.util.xmlb.annotations.Attribute;
+                         public class MyServiceDescriptor { @Attribute public String serviceImplementation; }""");
     myFixture.addClass("package foo; public class Foo { public static class Fubar {} }");
     myFixture.configureByFile(getTestName(false) + ".xml");
     myFixture.completeBasic();

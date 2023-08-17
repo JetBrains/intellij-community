@@ -14,9 +14,6 @@ public interface DependencyGraph extends Graph {
 
   /**
    * Merge data from the Delta into this dependency storage
-   *
-   * @param delta
-   * @param diffResult
    */
   void integrate (@NotNull DifferentiateResult diffResult);
 }

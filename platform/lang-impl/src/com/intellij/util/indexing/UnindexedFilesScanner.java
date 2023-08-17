@@ -534,7 +534,7 @@ public class UnindexedFilesScanner implements FilesScanningTask {
   public static void scanAndIndexProjectAfterOpen(@NotNull Project project,
                                                   boolean startSuspended,
                                                   @Nullable @NonNls String indexingReason) {
-    ((FileBasedIndexImpl)FileBasedIndex.getInstance()).loadIndexes();
+    FileBasedIndex.getInstance().loadIndexes();
     project.putUserData(FIRST_SCANNING_REQUESTED, true);
     if (TestModeFlags.is(INDEX_PROJECT_WITH_MANY_UPDATERS_TEST_KEY)) {
       LOG.assertTrue(ApplicationManager.getApplication().isUnitTestMode());

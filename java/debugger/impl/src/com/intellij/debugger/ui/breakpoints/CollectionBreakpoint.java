@@ -76,7 +76,7 @@ public final class CollectionBreakpoint extends BreakpointWithHighlighter<JavaCo
   private String myClsTypeDesc = null;
 
 
-  protected CollectionBreakpoint(Project project, XBreakpoint breakpoint) {
+  CollectionBreakpoint(Project project, XBreakpoint breakpoint) {
     super(project, breakpoint);
     initProperties();
   }

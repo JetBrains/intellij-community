@@ -864,7 +864,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
       });
 
       // Duplicate CFG for finally (-fail and -success) only if there are some successful exits from the
-      // try part. Otherwise a single CFG for finally provides the correct control flow
+      // try part. Otherwise, a single CFG for finally provides the correct control flow
       final Instruction finallyInstruction;
       if (!pendingNormalExits.isEmpty()) {
         // Finally-success part handling
@@ -889,7 +889,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
 
         myBuilder.addEdge(instruction, finallyInstruction);
 
-        // When instruction continues outside of try-except statement scope
+        // When instruction continues outside try-except statement scope
         // the last instruction in finally-block is marked as pointing to that continuation
         if (PsiTreeUtil.isAncestor(pendingScope, node, true)) {
           myBuilder.addPendingEdge(pendingScope, myBuilder.prevInstruction);
@@ -905,8 +905,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     List<Instruction> iterators = new ArrayList<>();
 
     for (PyComprehensionComponent component : node.getComponents()) {
-      if (component instanceof PyComprehensionForComponent) {
-        final PyComprehensionForComponent c = (PyComprehensionForComponent)component;
+      if (component instanceof PyComprehensionForComponent c) {
         final PyExpression iteratedList = c.getIteratedList();
         final PyExpression iteratorVariable = c.getIteratorVariable();
         if (prevCondition != null) {
@@ -930,8 +929,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
         // Inner "for" and "if" constructs will be linked to all outer iterators
         iterators.add(iterator);
       }
-      else if (component instanceof PyComprehensionIfComponent) {
-        final PyComprehensionIfComponent c = (PyComprehensionIfComponent)component;
+      else if (component instanceof PyComprehensionIfComponent c) {
         final PyExpression condition = c.getTest();
         if (condition == null) {
           continue;
@@ -1087,7 +1085,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
   private interface CallTypeKind { }
 
   private static class NoReturnCallKind implements CallTypeKind {
-    private NoReturnCallKind() {};
+    private NoReturnCallKind() {}
     public static final NoReturnCallKind INSTANCE = new NoReturnCallKind();
   }
 

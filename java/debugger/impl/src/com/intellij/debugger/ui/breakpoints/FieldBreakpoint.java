@@ -53,7 +53,7 @@ public final class FieldBreakpoint extends BreakpointWithHighlighter<JavaFieldBr
 
   @NonNls public static final Key<FieldBreakpoint> CATEGORY = BreakpointCategory.lookup("field_breakpoints");
 
-  protected FieldBreakpoint(Project project, XBreakpoint breakpoint) {
+  FieldBreakpoint(Project project, XBreakpoint breakpoint) {
     super(project, breakpoint);
   }
 

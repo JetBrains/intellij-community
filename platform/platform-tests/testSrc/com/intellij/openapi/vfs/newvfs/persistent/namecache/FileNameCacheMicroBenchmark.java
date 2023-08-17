@@ -199,7 +199,7 @@ public final class FileNameCacheMicroBenchmark {
 
   private static void checkNames(Int2ObjectMap<CharSequence> map, int[] ids) {
     for (int id : ids) {
-      Assert.assertEquals(map.get(id), FSRecords.getInstance().getNameByNameId(id).toString());
+      Assert.assertEquals(map.get(id), FSRecords.getInstance().getNameByNameId(id));
     }
   }
 

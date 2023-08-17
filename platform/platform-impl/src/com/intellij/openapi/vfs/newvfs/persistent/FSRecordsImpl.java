@@ -530,7 +530,7 @@ public final class FSRecordsImpl {
   void forEachRoot(@NotNull ObjIntConsumer<? super String> rootConsumer) {
     try {
       treeAccessor.forEachRoot((rootId, rootUrlId) -> {
-        String rootUrl = getNameByNameId(rootUrlId).toString();
+        String rootUrl = getNameByNameId(rootUrlId);
         rootConsumer.accept(rootUrl, rootId);
       });
     }

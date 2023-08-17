@@ -576,7 +576,7 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
           new MavenResumeAction(res.getProcessHandler(), runner, getEnvironment(), eventProcessor.getParsingContext());
         restartActions.add(resumeAction);
       }
-      res.setRestartActions(restartActions.toArray(new AnAction[0]));
+      res.setRestartActions(restartActions.toArray(AnAction.EMPTY_ARRAY));
       return res;
     }
 
