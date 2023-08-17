@@ -292,7 +292,7 @@ public final class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
       if (slashFound) {
         slashFound = false;
         if (ch == '\\' || ch == '\"' || ch == 'b' || ch == 't' || ch == 'n' || ch == 'f' || ch == 'r') {
-          if (buf.length() > 0) {
+          if (!buf.isEmpty()) {
             descriptorText.append(buf.toString(), attribs);
             buf.setLength(0);
           }
@@ -325,13 +325,13 @@ public final class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
         }
       }
     }
-    if (buf.length() > 0) {
+    if (!buf.isEmpty()) {
       descriptorText.append(buf.toString(), attribs);
     }
   }
 
   private static String[] breakString(String source, String substr) {
-    if (substr != null && substr.length() > 0) {
+    if (substr != null && !substr.isEmpty()) {
       int index = Math.max(source.indexOf(substr), 0);
       String prefix = (index > 0) ? source.substring(0, index) : null;
       index += substr.length();

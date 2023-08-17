@@ -238,7 +238,7 @@ public class WildcardMethodBreakpoint extends Breakpoint<JavaMethodBreakpointPro
   private boolean matchesMethod(Method method) {
     StringBuilder sb = new StringBuilder();
     for (String mask : StringUtil.split(getMethodName(), ",")) {
-      if (sb.length() > 0) {
+      if (!sb.isEmpty()) {
         sb.append('|');
       }
       sb.append('(').append(PatternUtil.convertToRegex(mask)).append(')');

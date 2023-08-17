@@ -38,11 +38,11 @@ public class AddWildcardBreakpointDialog extends DialogWrapper {
 
   @Override
   protected void doOKAction() {
-    if (getClassPattern().length() == 0) {
+    if (getClassPattern().isEmpty()) {
       Messages.showErrorDialog(myPanel, JavaDebuggerBundle.message("class.pattern.not.specified"));
       return;
     }
-    if (getMethodName().length() == 0) {
+    if (getMethodName().isEmpty()) {
       Messages.showErrorDialog(myPanel, JavaDebuggerBundle.message("method.name.not.specified"));
       return;
     }

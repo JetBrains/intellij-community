@@ -333,7 +333,7 @@ public class LineBreakpoint<P extends JavaBreakpointProperties> extends Breakpoi
     if (isValid()) {
       final int lineNumber = getLineIndex() + 1;
       String className = getClassName();
-      final boolean hasClassInfo = className != null && className.length() > 0;
+      final boolean hasClassInfo = className != null && !className.isEmpty();
       final String methodName = getMethodName();
       final String displayName = methodName != null ? methodName + "()" : null;
       final boolean hasMethodInfo = displayName != null;

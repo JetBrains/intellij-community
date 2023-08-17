@@ -366,7 +366,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     myThreadDumpsCount++;
     Disposer.register(content, consoleView);
     ui.selectAndFocus(content, true, false);
-    if (threads.size() > 0) {
+    if (!threads.isEmpty()) {
       panel.selectStackFrame(0);
     }
   }

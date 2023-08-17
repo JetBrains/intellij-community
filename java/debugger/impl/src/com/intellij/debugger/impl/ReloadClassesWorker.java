@@ -274,7 +274,7 @@ class ReloadClassesWorker {
     }
 
     public void processPending() throws LinkageError, UnsupportedOperationException {
-      if (myRedefineMap.size() > 0) {
+      if (!myRedefineMap.isEmpty()) {
         processChunk();
       }
     }

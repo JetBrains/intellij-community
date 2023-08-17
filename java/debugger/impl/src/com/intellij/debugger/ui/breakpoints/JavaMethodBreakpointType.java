@@ -86,7 +86,7 @@ public class JavaMethodBreakpointType extends JavaLineBreakpointTypeBase<JavaMet
     final StringBuilder buffer = new StringBuilder();
     //if (isValid()) {
     final String className = breakpoint.getProperties().myClassPattern;
-    final boolean classNameExists = className != null && className.length() > 0;
+    final boolean classNameExists = className != null && !className.isEmpty();
     if (classNameExists) {
       buffer.append(className);
     }

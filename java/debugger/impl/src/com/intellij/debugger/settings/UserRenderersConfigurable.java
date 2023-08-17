@@ -161,7 +161,7 @@ public final class UserRenderersConfigurable extends JPanel implements Configura
     rendererConfiguration.iterateRenderers(renderer -> {
       final NodeRenderer clonedRenderer = (NodeRenderer)renderer.clone();
       myRendererChooser.addElement(clonedRenderer, clonedRenderer.isEnabled());
-      if (elementsToSelect.size() == 0) {
+      if (elementsToSelect.isEmpty()) {
         elementsToSelect.add(clonedRenderer);
       }
       return true;

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * Class NodeComparator
@@ -18,8 +18,8 @@ public class NodeComparator implements Comparator<DebuggerTreeNode> {
   public int compare(final DebuggerTreeNode node1, final DebuggerTreeNode node2) {
     final String name1 = node1.getDescriptor().getName();
     final String name2 = node2.getDescriptor().getName();
-    final boolean invalid1 = (name1 == null || (name1.length() > 0 && Character.isDigit(name1.charAt(0))));
-    final boolean invalid2 = (name2 == null || (name2.length() > 0 && Character.isDigit(name2.charAt(0))));
+    final boolean invalid1 = (name1 == null || (!name1.isEmpty() && Character.isDigit(name1.charAt(0))));
+    final boolean invalid2 = (name2 == null || (!name2.isEmpty() && Character.isDigit(name2.charAt(0))));
     if (invalid1) {
       return invalid2 ? 0 : 1;
     }

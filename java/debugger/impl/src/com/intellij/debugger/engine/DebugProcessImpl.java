@@ -595,7 +595,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       portArg.setValue(address);
 
       // to allow connector to listen on several auto generated addresses
-      if (address.length() == 0 || address.equals("0")) {
+      if (address.isEmpty() || address.equals("0")) {
         EmptyConnectorArgument uniqueArg = new EmptyConnectorArgument("argForUniqueness");
         myArguments.put(uniqueArg.name(), uniqueArg);
       }
@@ -2145,7 +2145,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
           executionResult.getProcessHandler().addProcessListener(processListener);
         }
         myProcessListeners.clear();
-        if (myTextBeforeStart.length() > 0) {
+        if (!myTextBeforeStart.isEmpty()) {
           printToConsoleImpl(myTextBeforeStart.toString());
           myTextBeforeStart.setLength(0);
         }

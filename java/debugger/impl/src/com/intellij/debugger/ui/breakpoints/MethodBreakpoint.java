@@ -400,7 +400,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
     final @Nls StringBuilder buffer = new StringBuilder();
     if (isValid()) {
       final String className = getClassName();
-      final boolean classNameExists = className != null && className.length() > 0;
+      final boolean classNameExists = className != null && !className.isEmpty();
       if (classNameExists) {
         buffer.append(className);
       }
