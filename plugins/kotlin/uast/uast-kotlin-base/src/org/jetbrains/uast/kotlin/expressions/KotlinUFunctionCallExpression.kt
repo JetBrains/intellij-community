@@ -250,10 +250,11 @@ class KotlinUFunctionCallExpression(
             ktFile: KtFile,
             actualNames: Collection<String>,
         ): Set<String> {
-            if (ktFile.importDirectives.all { it.alias == null }) return emptySet()
+            val importList = ktFile.importList
+            if (importList?.hasImportAlias() != true) return emptySet()
 
             return buildSet {
-                for (importDirective in ktFile.importDirectives) {
+                for (importDirective in importList.imports) {
                     val aliasName = importDirective.aliasName ?: continue
                     val importedName = importDirective.importedFqName?.pathSegments()?.lastOrNull()?.asString() ?: continue
                     if (importedName in actualNames) {
@@ -290,4 +291,17 @@ class KotlinUFunctionCallExpression(
             add(SpecialNames.INIT.asString())
         }
     }
+}
+
+private fun KtImportList.hasImportAlias(): Boolean {
+    var child: PsiElement? = firstChild
+    while (child != null) {
+        if (child is KtImportDirective && child.alias != null) {
+            return true
+        }
+
+        child = child.nextSibling
+    }
+
+    return false
 }
