@@ -102,7 +102,7 @@ class DeferredIconImpl<T> : JBScalableIcon, DeferredIcon, RetrievableIcon, IconW
     this(baseIcon = baseIcon,
          param = param,
          needReadAction = needReadAction,
-         evaluator = { evaluator.`fun`(it) },
+         evaluator = evaluator::`fun`,
          listener = null)
 
 
