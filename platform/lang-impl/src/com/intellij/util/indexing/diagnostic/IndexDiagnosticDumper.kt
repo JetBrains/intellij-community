@@ -179,7 +179,22 @@ class IndexDiagnosticDumper : Disposable {
       return directory
     }
 
-    private fun getDiagnosticNumberLimitWithinSizeLimit(existingDiagnostics: List<ExistingDiagnostic>, sizeLimit: Long): Pair<Int, Long> {
+    private fun getOldDiagnosticNumberLimitWithinSizeLimit(existingDiagnostics: List<ExistingDiagnostic>, sizeLimit: Long): Pair<Int, Long> {
+      thisLogger().assertTrue(sizeLimit > 0)
+      var sizeLimitLevel = sizeLimit
+      var number = 0
+      for (diagnostic in existingDiagnostics) {
+        sizeLimitLevel -= diagnostic.jsonFile.fileSizeSafe()
+        sizeLimitLevel -= diagnostic.htmlFile.fileSizeSafe()
+        if (sizeLimitLevel <= 0) {
+          break
+        }
+        number++
+      }
+      return Pair(min(indexingDiagnosticsLimitOfFiles, number), sizeLimitLevel)
+    }
+
+    private fun getDiagnosticNumberLimitWithinSizeLimit(existingDiagnostics: List<ExistingIndexingActivityDiagnostic>, sizeLimit: Long): Pair<Int, Long> {
       thisLogger().assertTrue(sizeLimit > 0)
       var sizeLimitLevel = sizeLimit
       var number = 0
@@ -211,7 +226,7 @@ class IndexDiagnosticDumper : Disposable {
     }
 
     @TestOnly
-    fun getDiagnosticNumberLimitWithinSizeLimit(existingDiagnostics: List<ExistingDiagnostic>): Int =
+    fun getDiagnosticNumberLimitWithinSizeLimit(existingDiagnostics: List<ExistingIndexingActivityDiagnostic>): Int =
       getDiagnosticNumberLimitWithinSizeLimit(existingDiagnostics,
                                               indexingDiagnosticsSizeLimitOfFilesInMiBPerProject * 1024 * 1024.toLong()).first
 
@@ -438,7 +453,7 @@ class IndexDiagnosticDumper : Disposable {
       numberLimit = existingDiagnostics.size
     }
     else if (sizeLimit > 0) {
-      val pair = getDiagnosticNumberLimitWithinSizeLimit(existingDiagnostics, sizeLimit)
+      val pair = getOldDiagnosticNumberLimitWithinSizeLimit(existingDiagnostics, sizeLimit)
       numberLimit = pair.first
       sizeLimit = pair.second
     }
