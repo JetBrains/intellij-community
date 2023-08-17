@@ -205,27 +205,29 @@ public final class FilePageCacheLockFree implements AutoCloseable {
         int pagesRemainedToReclaim = pagesToProbablyReclaimQueue.size();
 
         //Is there work to do: Commands to process? Page allocation pressure to keep up with?
-        if ((memoryManager.nativeBytesUsed() > 4 * memoryManager.nativeCapacityBytes() / 5
-             && pagesRemainedToReclaim <= pagesPreparedToReclaim / 2)
-            || !commandsQueue.isEmpty()
-            || memoryManager.hasOverflow()) {
+        boolean pageAllocationRateIsHigh = pagesRemainedToReclaim <= pagesPreparedToReclaim / 2;
+        boolean memoryBudgetIsAboutToExhaust = memoryManager.nativeBytesUsed() > 4 * memoryManager.nativeCapacityBytes() / 5;
+        if ((pageAllocationRateIsHigh && memoryBudgetIsAboutToExhaust)
+            || memoryManager.hasOverflow()
+            || !commandsQueue.isEmpty()) {
 
           doCacheMaintenanceTurn(storagesToScanPerTurn.value());
 
           long timeSpentNs = System.nanoTime() - startedAtNs;
           statistics.cacheMaintenanceTurnDone(timeSpentNs);
+
+          synchronized (housekeeperTurnLock) {
+            housekeeperTurnLock.notifyAll();
+          }
         }
         else {
           long timeSpentNs = System.nanoTime() - startedAtNs;
           statistics.cacheMaintenanceTurnSkipped(timeSpentNs);
         }
 
-        synchronized (housekeeperTurnLock) {
-          housekeeperTurnLock.notifyAll();
-        }
 
         //assess allocation pressure and adjust our efforts
-        if (pagesRemainedToReclaim > pagesPreparedToReclaim / 2) {
+        if (!pageAllocationRateIsHigh) {
           //allocation pressure low: could collect less and sleep more
           pagesForReclaimCollector.collectLessAggressively();
           storagesToScanPerTurn.dec();
