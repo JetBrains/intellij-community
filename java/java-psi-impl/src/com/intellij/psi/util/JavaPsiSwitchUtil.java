@@ -56,7 +56,7 @@ public final class JavaPsiSwitchUtil {
 
   public static boolean isEnhancedSwitch(@NotNull List<? extends PsiCaseLabelElement> labelElements, boolean selectorIsTypeOrClass) {
     if (selectorIsTypeOrClass) return true;
-    return ContainerUtil.exists(labelElements, st -> st instanceof PsiPattern || st instanceof PsiPatternGuard || isNullType(st));
+    return ContainerUtil.exists(labelElements, st -> st instanceof PsiPattern || isNullType(st));
   }
 
 

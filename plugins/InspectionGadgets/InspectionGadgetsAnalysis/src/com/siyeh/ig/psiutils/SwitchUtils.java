@@ -623,10 +623,9 @@ public final class SwitchUtils {
     PsiCaseLabelElementList labelElementList = label.getCaseLabelElementList();
     if (labelElementList == null) return false;
     return StreamEx.of(labelElementList.getElements())
-      .filter(element -> element instanceof PsiPattern || element instanceof PsiPatternGuard)
+      .select(PsiPattern.class)
       .anyMatch(pattern -> JavaPsiPatternUtil.isUnconditionalForType(pattern, type));
   }
-
 
   /**
    * Finds the removable unreachable branches in a switch statement.

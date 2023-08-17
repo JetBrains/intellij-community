@@ -303,8 +303,6 @@ public abstract class JavaElementVisitor extends PsiElementVisitor {
     visitElement(pattern);
   }
 
-  public void visitPatternGuard(@NotNull PsiPatternGuard guard) { visitElement(guard); }
-
   public void visitPatternVariable(@NotNull PsiPatternVariable variable) {
     visitParameter(variable);
   }

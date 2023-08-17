@@ -58,7 +58,7 @@ class X {
 
   void unconditionalGuardAndDefault(Object obj) {
     switch (obj) {
-      case <error descr="'switch' has both an unconditional pattern and a default label">Object o when true</error> -> {}
+      case <error descr="'switch' has both an unconditional pattern and a default label">Object o</error> when true -> {}
       <error descr="'switch' has both an unconditional pattern and a default label">default</error> -> {}
     }
   }
@@ -73,7 +73,7 @@ class X {
   void dd7(String str) {
     switch (str) {
       case String i -> System.out.println(2);
-      case <error descr="Label is dominated by a preceding case label 'String i'">String i when i.length() == 2</error> -> System.out.println(2);
+      case <error descr="Label is dominated by a preceding case label 'String i'">String i</error> when i.length() == 2 -> System.out.println(2);
     }
   }
 

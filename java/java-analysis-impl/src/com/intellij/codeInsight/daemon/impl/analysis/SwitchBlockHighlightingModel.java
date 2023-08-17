@@ -9,6 +9,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInsight.intention.impl.PriorityIntentionActionWrapper;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
 import com.intellij.pom.java.LanguageLevel;
@@ -25,6 +26,7 @@ import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.SwitchUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
@@ -240,8 +242,8 @@ public class SwitchBlockHighlightingModel {
           HighlightInfo.Builder info = createError(defaultElement, JavaErrorBundle.message("default.label.must.not.contains.case.keyword"));
           holder.add(info.create());
         }
-        else if (labelElement instanceof PsiPattern || labelElement instanceof PsiPatternGuard) {
-          // ignore patterns/guarded patterns. If they appear here, insufficient language level will be reported
+        else if (labelElement instanceof PsiPattern) {
+          // ignore patterns. If they appear here, insufficient language level will be reported
         }
       }
     }
@@ -428,7 +430,7 @@ public class SwitchBlockHighlightingModel {
   }
 
   @NotNull
-  static HighlightInfo.Builder createError(@NotNull PsiElement range, @NlsSafe @NotNull String message) {
+  static HighlightInfo.Builder createError(@NotNull PsiElement range, @NlsContexts.DetailedDescription @NotNull String message) {
     return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range).descriptionAndTooltip(message);
   }
 
@@ -473,11 +475,10 @@ public class SwitchBlockHighlightingModel {
 
 
   static @Nullable PsiPattern extractPattern(PsiCaseLabelElement element) {
-    if (element instanceof PsiPatternGuard patternGuard) {
-      Object constVal = ExpressionUtils.computeConstantExpression(patternGuard.getGuardingExpression());
-      return Boolean.TRUE.equals(constVal) ? patternGuard.getPattern() : null;
+    if (element instanceof PsiPattern pattern && !JavaPsiPatternUtil.isGuarded(pattern)) {
+      return pattern;
     }
-    return ObjectUtils.tryCast(element, PsiPattern.class);
+    return null;
   }
 
   static Set<PsiClass> returnAllPermittedClasses(@NotNull PsiClass psiClass) {
@@ -715,11 +716,6 @@ public class SwitchBlockHighlightingModel {
         }
         return;
       }
-      if (label instanceof PsiPatternGuard patternGuard) {
-        PsiPattern pattern = patternGuard.getPattern();
-        checkLabelAndSelectorCompatibility(pattern, holder);
-        return;
-      }
       if (label instanceof PsiPattern) {
         PsiPattern elementToReport = JavaPsiPatternUtil.getTypedPattern(label);
         if (elementToReport == null) return;
@@ -867,9 +863,8 @@ public class SwitchBlockHighlightingModel {
     }
 
     public static boolean isDominated(@NotNull PsiCaseLabelElement overWhom,
-                                @NotNull PsiElement who,
-                                @NotNull PsiType selectorType) {
-      boolean dominated = false;
+                                      @NotNull PsiElement who,
+                                      @NotNull PsiType selectorType) {
       if (!JavaPsiPatternUtil.isUnconditionalForType(overWhom, selectorType) &&
           ((!(overWhom instanceof PsiExpression expression) || ExpressionUtils.isNullLiteral(expression)) &&
            who instanceof PsiKeyword &&
@@ -878,21 +873,24 @@ public class SwitchBlockHighlightingModel {
         // A 'default' label dominates a case label with a case pattern,
         // and it also dominates a case label with a null case constant.
         // A 'case null, default' label dominates all other switch labels.
-        dominated =true;
+        return true;
       }
-      else if (who instanceof PsiCaseLabelElement currentElement) {
+      if (who instanceof PsiCaseLabelElement currentElement) {
+        if (JavaPsiPatternUtil.isGuarded(currentElement)) return false;
         if (isConstantLabelElement(overWhom)) {
           PsiExpression constExpr = ObjectUtils.tryCast(overWhom, PsiExpression.class);
           assert constExpr != null;
           if (JavaPsiPatternUtil.dominatesOverConstant(currentElement, constExpr.getType())) {
-            dominated =true;
+            return true;
           }
         }
-        else if (JavaPsiPatternUtil.dominates(currentElement, overWhom)) {
-          dominated =true;
+        else {
+          if (JavaPsiPatternUtil.dominates(currentElement, overWhom)) {
+            return true;
+          }
         }
       }
-      return dominated;
+      return false;
     }
 
     private static boolean isInCaseNullDefaultLabel(@NotNull PsiElement element) {
@@ -944,16 +942,6 @@ public class SwitchBlockHighlightingModel {
             addIllegalFallThroughError(problem.element(), problem.message(), holder, alreadyFallThroughElements);
           }
           else {
-            if (elements.length > 1) {
-              for (int i = 0; i < elements.length - 1; i++) {
-                if (elements[i] instanceof PsiPatternGuard guard) {
-                  PsiExpression expression = guard.getGuardingExpression();
-                  if (expression != null) {
-                    holder.add(createError(expression, "Guard expression is allowed only after the last label element").create());
-                  }
-                }
-              }
-            }
             if (JavaPsiPatternUtil.containsNamedPatternVariable(first)) {
               PsiElement nextNotLabel = PsiTreeUtil.skipSiblingsForward(switchLabelElement, PsiWhiteSpace.class, PsiComment.class,
                                                                         PsiSwitchLabelStatement.class);
@@ -1011,7 +999,7 @@ public class SwitchBlockHighlightingModel {
           nullIndex = i;
           break;
         }
-        else if (elements[i] instanceof PsiPattern || elements[i] instanceof PsiPatternGuard) {
+        else if (elements[i] instanceof PsiPattern) {
           patternIndex = i;
         }
       }
@@ -1025,8 +1013,8 @@ public class SwitchBlockHighlightingModel {
       if (firstElement instanceof PsiExpression && patternIndex != -1) {
         return new CaseLabelCombinationProblem(elements[patternIndex], "invalid.case.label.combination.constants.and.patterns");
       }
-      else if (firstElement instanceof PsiPattern || firstElement instanceof PsiPatternGuard) {
-        if (elements[1] instanceof PsiPattern || elements[1] instanceof PsiPatternGuard) {
+      else if (firstElement instanceof PsiPattern) {
+        if (elements[1] instanceof PsiPattern) {
           if (ContainerUtil.exists(elements, JavaPsiPatternUtil::containsNamedPatternVariable)) {
             String messageKey = HighlightingFeature.UNNAMED_PATTERNS_AND_VARIABLES.isAvailable(firstElement)
                              ? "invalid.case.label.combination.several.patterns.unnamed"
@@ -1224,7 +1212,7 @@ public class SwitchBlockHighlightingModel {
 
     private static void fillElementsToCheckDominance(@NotNull List<? super PsiCaseLabelElement> elements,
                                                      @NotNull PsiCaseLabelElement labelElement) {
-      if (labelElement instanceof PsiPattern || labelElement instanceof PsiPatternGuard) {
+      if (labelElement instanceof PsiPattern) {
         elements.add(labelElement);
       }
       else if (labelElement instanceof PsiExpression) {
@@ -1429,8 +1417,7 @@ public class SwitchBlockHighlightingModel {
     List<PsiCaseLabelElement> dominanceCheckingCandidates = new SmartList<>();
     labelElements.forEach(label -> PatternsInSwitchBlockHighlightingModel.fillElementsToCheckDominance(dominanceCheckingCandidates, label));
     if (dominanceCheckingCandidates.isEmpty()) return result;
-    return StreamEx.ofKeys(patternInSwitchModel.findDominatedLabels(dominanceCheckingCandidates), value -> value instanceof PsiPattern ||
-                                                                                                           value instanceof PsiPatternGuard)
+    return StreamEx.ofKeys(patternInSwitchModel.findDominatedLabels(dominanceCheckingCandidates), value -> value instanceof PsiPattern)
       .into(result);
   }
 }

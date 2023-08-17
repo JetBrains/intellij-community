@@ -820,7 +820,7 @@ public final class RedundantCastUtil {
                 // 14.30.3 A type pattern that declares a pattern variable of a reference type U is
                 // applicable at another reference type T if T is checkcast convertible to U (JEP 427)
                 // There is no rule that says that a reference type applies to a primitive type
-                if (branch instanceof PsiPattern || branch instanceof PsiPatternGuard) return;
+                if (branch instanceof PsiPattern) return;
               }
             }
             else if (HighlightingFeature.PATTERNS_IN_SWITCH.isAvailable(switchBlock)) {
