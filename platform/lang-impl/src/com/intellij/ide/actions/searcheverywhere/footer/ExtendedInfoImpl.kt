@@ -8,6 +8,7 @@ import com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrappe
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereExtendedInfoProvider
 import com.intellij.lang.LangBundle
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
@@ -60,7 +61,7 @@ class ExtendedInfoComponent(val project: Project?, val advertisement: ExtendedIn
     component.add(actionLink, BorderLayout.EAST)
   }
 
-  fun updateElement(element: Any) {
+  fun updateElement(element: Any, disposable: Disposable) {
     //preserve vertical space
     text.text = DEFAULT_TEXT
     actionLink.text = DEFAULT_TEXT
@@ -80,6 +81,7 @@ class ExtendedInfoComponent(val project: Project?, val advertisement: ExtendedIn
                             text.toolTipText = leftText
                           }
                         })
+      .expireWith(disposable)
       .submit(AppExecutorUtil.getAppExecutorService())
   }
 

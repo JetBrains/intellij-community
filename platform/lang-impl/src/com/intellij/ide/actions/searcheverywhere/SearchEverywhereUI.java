@@ -824,7 +824,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
       showDescriptionForIndex(myResultsList.getSelectedIndex());
       if (isExtendedInfoEnabled()) {
         if (selectedValue != null && myExtendedInfoComponent != null) {
-          myExtendedInfoComponent.updateElement(selectedValue);
+          myExtendedInfoComponent.updateElement(selectedValue, this);
         }
       }
     });
