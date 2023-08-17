@@ -391,7 +391,6 @@ private fun doDrawHiDpi(userWidth: Int,
                         image: Image,
                         srcBounds: Rectangle?,
                         observer: ImageObserver?) {
-  var g1 = g
   var scale1 = scale
   var dx1 = dx
   var dy1 = dy
@@ -409,8 +408,13 @@ private fun doDrawHiDpi(userWidth: Int,
     }
   }
 
-  val tx = (g1 as Graphics2D).transform
+  if (g !is Graphics2D) {
+    return
+  }
+
+  val tx = g.transform
   var invG: Graphics2D? = null
+  var g1 = g
   if ((tx.type and AffineTransform.TYPE_MASK_ROTATION) == 0 &&
       abs(scale1 - tx.scaleX) <= delta) {
     scale1 = tx.scaleX

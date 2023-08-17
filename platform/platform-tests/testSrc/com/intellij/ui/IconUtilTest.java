@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.command.WriteCommandAction;
@@ -49,15 +49,18 @@ public class IconUtilTest extends HeavyPlatformTestCase {
     assertTrue(icon instanceof DeferredIcon);
 
     Graphics g = IconTestUtil.createMockGraphics();
-    icon.paintIcon(new JLabel(), g, 0, 0);  // force to eval
-    TimeoutUtil.sleep(1000); // give chance to evaluate
+    // force to eval
+    icon.paintIcon(new JLabel(), g, 0, 0);
+    // give chance to evaluate
+    TimeoutUtil.sleep(1000);
 
     Icon icon2 = IconUtil.getIcon(file, Iconable.ICON_FLAG_VISIBILITY, getProject());
-    assertSame(icon, icon2);
+    assertThat(icon2).isNotInstanceOf(DeferredIcon.class);
+    assertThat(icon).isNotSameAs(icon2);
 
     FileContentUtilCore.reparseFiles(file);
     Icon icon3 = IconUtil.getIcon(file, Iconable.ICON_FLAG_VISIBILITY, getProject());
-    assertNotSame(icon2, icon3);
+    assertThat(icon2).isNotSameAs(icon3);
   }
 
   public void testLockedPatchSmallIconAppliedOnlyOnceToJavaFile() throws IOException {

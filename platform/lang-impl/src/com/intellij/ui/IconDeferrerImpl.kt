@@ -15,12 +15,14 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.SameThreadExecutor
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.asContextElement
+import kotlinx.coroutines.job
 import kotlinx.coroutines.withContext
 import java.util.concurrent.atomic.LongAdder
 import javax.swing.Icon
 
-internal class IconDeferrerImpl : IconDeferrer() {
+internal class IconDeferrerImpl(coroutineScope: CoroutineScope) : IconDeferrer() {
   companion object {
     private val isEvaluationInProgress = ThreadLocal.withInitial { false }
 
@@ -42,10 +44,10 @@ internal class IconDeferrerImpl : IconDeferrer() {
     .executor(SameThreadExecutor.INSTANCE)
     .build<Any, Icon>()
 
-  private var lastClearTimestamp = LongAdder()
+  private val lastClearTimestamp = LongAdder()
 
   init {
-    val connection = ApplicationManager.getApplication().messageBus.connect()
+    val connection = ApplicationManager.getApplication().messageBus.simpleConnect()
     connection.subscribe(PsiModificationTracker.TOPIC, PsiModificationTracker.Listener(::clearCache))
     // update "locked" icon
     connection.subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
@@ -59,12 +61,17 @@ internal class IconDeferrerImpl : IconDeferrer() {
       }
     })
     connection.subscribe(VirtualFileAppearanceListener.TOPIC, VirtualFileAppearanceListener { clearCache() })
-    LowMemoryWatcher.register(::clearCache, connection)
+
+    val lowMemoryWatcher = LowMemoryWatcher.register(::clearCache)
+    coroutineScope.coroutineContext.job.invokeOnCompletion {
+      connection.disconnect()
+      lowMemoryWatcher.stop()
+    }
   }
 
   override fun clearCache() {
-    iconCache.invalidateAll()
     lastClearTimestamp.increment()
+    iconCache.invalidateAll()
   }
 
   override fun <T> defer(base: Icon?, param: T, evaluator: (T) -> Icon?): Icon {

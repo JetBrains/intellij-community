@@ -107,7 +107,7 @@ open class CachedImageIcon internal constructor(
       return
     }
 
-    val gc = c?.graphicsConfiguration ?: (g as Graphics2D).deviceConfiguration
+    val gc = c?.graphicsConfiguration ?: (g as? Graphics2D)?.deviceConfiguration
     synchronized(scaledIconCache) {
       checkPathTransform()
       scaledIconCache.getCachedIcon(host = this, gc = gc) ?: EMPTY_ICON
