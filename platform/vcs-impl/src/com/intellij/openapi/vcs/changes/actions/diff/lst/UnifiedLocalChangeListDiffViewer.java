@@ -184,7 +184,7 @@ public class UnifiedLocalChangeListDiffViewer extends UnifiedDiffViewer {
         fragmentsData.addAll(Collections.nCopies(rangeFragments.size(), range.getFragmentData()));
       }
 
-      UnifiedFragmentBuilder builder = ReadAction.compute(() -> {
+      UnifiedDiffState builder = ReadAction.compute(() -> {
         myIndicator.checkCanceled();
         return new MyUnifiedFragmentBuilder(fragments, fragmentsData, myDocument1, myDocument2).exec();
       });
@@ -272,7 +272,7 @@ public class UnifiedLocalChangeListDiffViewer extends UnifiedDiffViewer {
     myGutterCheckboxMouseMotionListener.destroyHoverHighlighter();
   }
 
-  private @NotNull Runnable applyGutterOperations(@NotNull UnifiedFragmentBuilder builder,
+  private @NotNull Runnable applyGutterOperations(@NotNull UnifiedDiffState builder,
                                                   @NotNull List<ToggleableLineRange> toggleableLineRanges) {
     return () -> {
       if (myAllowExcludeChangesFromCommit) {
@@ -291,7 +291,7 @@ public class UnifiedLocalChangeListDiffViewer extends UnifiedDiffViewer {
     };
   }
 
-  private @NotNull List<RangeHighlighter> createGutterToggleRenderers(@NotNull UnifiedFragmentBuilder builder,
+  private @NotNull List<RangeHighlighter> createGutterToggleRenderers(@NotNull UnifiedDiffState builder,
                                                                       @NotNull ToggleableLineRange toggleableLineRange) {
     LineFragmentData fragmentData = toggleableLineRange.getFragmentData();
     if (!fragmentData.isFromActiveChangelist()) return Collections.emptyList();
@@ -326,7 +326,7 @@ public class UnifiedLocalChangeListDiffViewer extends UnifiedDiffViewer {
   }
 
   @NotNull
-  private RangeHighlighter createBlockCheckboxToggleHighlighter(@NotNull UnifiedFragmentBuilder builder,
+  private RangeHighlighter createBlockCheckboxToggleHighlighter(@NotNull UnifiedDiffState builder,
                                                                 @NotNull ToggleableLineRange toggleableLineRange) {
     Side side = Side.RIGHT;
     int line = LocalTrackerDiffUtil.getSingleCheckBoxLine(toggleableLineRange, side);
@@ -341,7 +341,7 @@ public class UnifiedLocalChangeListDiffViewer extends UnifiedDiffViewer {
   }
 
   @NotNull
-  private RangeHighlighter createLineCheckboxToggleHighlighter(@NotNull UnifiedFragmentBuilder builder,
+  private RangeHighlighter createLineCheckboxToggleHighlighter(@NotNull UnifiedDiffState builder,
                                                                int line, @NotNull Side side, boolean isExcludedFromCommit) {
     LineNumberConvertor lineConvertor = side.select(builder.getConvertor1(), builder.getConvertor2());
     int editorLine = lineConvertor.convertApproximateInv(line);
@@ -352,7 +352,7 @@ public class UnifiedLocalChangeListDiffViewer extends UnifiedDiffViewer {
   }
 
   @Nullable
-  private RangeHighlighter createToggleAreaThumb(@NotNull UnifiedFragmentBuilder builder,
+  private RangeHighlighter createToggleAreaThumb(@NotNull UnifiedDiffState builder,
                                                  @NotNull ToggleableLineRange toggleableLineRange) {
     Range lineRange = toggleableLineRange.getLineRange();
     int line1 = builder.getConvertor1().convertApproximateInv(lineRange.start1);
@@ -367,7 +367,7 @@ public class UnifiedLocalChangeListDiffViewer extends UnifiedDiffViewer {
     });
   }
 
-  private @Nullable RangeHighlighter createClientIdHighlighter(@NotNull UnifiedFragmentBuilder builder,
+  private @Nullable RangeHighlighter createClientIdHighlighter(@NotNull UnifiedDiffState builder,
                                                                @NotNull ToggleableLineRange range) {
     List<ClientId> clientIds = range.getFragmentData().getClientIds();
     if (clientIds.isEmpty()) return null;

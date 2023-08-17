@@ -23,9 +23,9 @@ import com.intellij.openapi.util.TextRange
 import kotlin.math.max
 
 open class UnifiedFragmentBuilder(protected val fragments: List<LineFragment>,
-                                  val document1: Document,
-                                  val document2: Document,
-                                  val masterSide: Side) {
+                                  protected val document1: Document,
+                                  protected val document2: Document,
+                                  protected val masterSide: Side) {
   private val myBuilder = StringBuilder()
   private val myChanges: MutableList<UnifiedDiffChange> = ArrayList()
   private val myRanges: MutableList<HighlightRange> = ArrayList()
@@ -37,13 +37,10 @@ open class UnifiedFragmentBuilder(protected val fragments: List<LineFragment>,
   private var lastProcessedLine2 = -1
   private var totalLines = 0
 
-  init {
-  }
-
-  fun exec(): UnifiedFragmentBuilder {
+  fun exec(): UnifiedDiffState {
     if (fragments.isEmpty()) {
       appendTextMaster(0, 0, getLineCount(document1) - 1, getLineCount(document2) - 1)
-      return this
+      return finish()
     }
 
     for (i in fragments.indices) {
@@ -53,7 +50,11 @@ open class UnifiedFragmentBuilder(protected val fragments: List<LineFragment>,
     }
     processEquals(getLineCount(document1) - 1, getLineCount(document2) - 1)
 
-    return this
+    return finish()
+  }
+
+  private fun finish(): UnifiedDiffState {
+    return UnifiedDiffState(masterSide, myBuilder, myChanges, myRanges, myConvertor1.build(), myConvertor2.build(), myChangedLines)
   }
 
   private fun processEquals(endLine1: Int, endLine2: Int) {
@@ -151,15 +152,14 @@ open class UnifiedFragmentBuilder(protected val fragments: List<LineFragment>,
   private fun getLineCount(document: Document): Int {
     return max(document.getLineCount().toDouble(), 1.0).toInt()
   }
-
-  //
-  // Result
-  //
-
-  val text: CharSequence get() = myBuilder
-  val changes: List<UnifiedDiffChange> get() = myChanges
-  val ranges: List<HighlightRange> get() = myRanges
-  val convertor1: LineNumberConvertor get() = myConvertor1.build()
-  val convertor2: LineNumberConvertor get() = myConvertor2.build()
-  val changedLines: List<LineRange> get() = myChangedLines
 }
+
+class UnifiedDiffState(
+  val masterSide: Side,
+  val text: CharSequence,
+  val changes: List<UnifiedDiffChange>,
+  val ranges: List<HighlightRange>,
+  val convertor1: LineNumberConvertor,
+  val convertor2: LineNumberConvertor,
+  val changedLines: List<LineRange>
+)

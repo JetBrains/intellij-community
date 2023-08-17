@@ -56,8 +56,7 @@ class UnifiedFragmentBuilderAutoTest : DiffTestCase() {
 
     val fragments = MANAGER.compareLinesInner(sequence1, sequence2, policy, DumbProgressIndicator.INSTANCE)
 
-    val builder = UnifiedFragmentBuilder(fragments, document1, document2, masterSide)
-    builder.exec()
+    val builder = UnifiedFragmentBuilder(fragments, document1, document2, masterSide).exec()
 
     val ignoreWhitespaces = policy !== ComparisonPolicy.DEFAULT
     val text = builder.text
