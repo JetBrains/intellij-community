@@ -4,16 +4,15 @@ import com.intellij.ide.actions.searcheverywhere.SearchRestartReason
 import com.intellij.searchEverywhereMl.ranking.SearchEverywhereMLStatisticsCollector.Companion.REBUILD_REASON_KEY
 import com.intellij.searchEverywhereMl.ranking.SearchEverywhereMLStatisticsCollector.Companion.SEARCH_RESTARTED
 import com.intellij.searchEverywhereMl.ranking.SearchEverywhereMLStatisticsCollector.Companion.SESSION_FINISHED
-import com.intellij.testFramework.LightPlatformTestCase
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
 @RunWith(JUnit4::class)
-class SearchEverywhereMlStatisticsCollectorTest : LightPlatformTestCase() {
+class SearchEverywhereMlStatisticsCollectorTest : SearchEverywhereLoggingTestCase() {
   @Test
   fun `SE open and instant close results in only session finished event`() {
-    val events = runSearchEverywhereLoggingTest(project) {
+    val events = runSearchEverywhereAndCollectLogEvents {
       sendStatisticsAndClose()
     }
 
@@ -23,7 +22,7 @@ class SearchEverywhereMlStatisticsCollectorTest : LightPlatformTestCase() {
 
   @Test
   fun `search start event is reported`() {
-    val events = runSearchEverywhereLoggingTest(project) {
+    val events = runSearchEverywhereAndCollectLogEvents {
       // we need to type at least one character, otherwise opening and closing SE
       // will result in just a single session-finished event
       type("r")
@@ -36,7 +35,7 @@ class SearchEverywhereMlStatisticsCollectorTest : LightPlatformTestCase() {
 
   @Test
   fun `search finished event is reported`() {
-    val events = runSearchEverywhereLoggingTest(project) {
+    val events = runSearchEverywhereAndCollectLogEvents {
       type("reg")
       selectFirst()
     }
@@ -46,7 +45,7 @@ class SearchEverywhereMlStatisticsCollectorTest : LightPlatformTestCase() {
 
   @Test
   fun `the number of events is correct`() {
-    val events = runSearchEverywhereLoggingTest(project) {
+    val events = runSearchEverywhereAndCollectLogEvents {
       type("reg")
       selectFirst()
     }
