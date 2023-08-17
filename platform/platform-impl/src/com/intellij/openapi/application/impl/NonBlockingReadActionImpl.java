@@ -38,13 +38,12 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.RunnableCallable;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.ChildContext;
 import com.intellij.util.concurrency.Propagation;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import io.opentelemetry.api.metrics.Meter;
-import kotlin.Pair;
-import kotlin.coroutines.CoroutineContext;
 import kotlin.reflect.KClass;
 import kotlinx.coroutines.CompletableJob;
 import org.jetbrains.annotations.*;
@@ -243,8 +242,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
     private @Nullable Submission<?> myReplacement;
     private final @Nullable ProgressIndicator myProgressIndicator;
     private final @NotNull NonBlockingReadActionImpl<T> builder;
-    private final @NotNull CoroutineContext myContext;
-    private final @Nullable CompletableJob myJob;
+    private final @NotNull ChildContext myChildContext;
 
     // a sum composed of: 1 for non-done promise, 1 for each currently running thread,
     // so 0 means that the process is marked completed or canceled, and it has no running not-yet-finished threads
@@ -256,9 +254,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
     Submission(@NotNull NonBlockingReadActionImpl<T> builder,
                @NotNull Executor backgroundThreadExecutor,
                @Nullable ProgressIndicator outerIndicator) {
-      Pair<CoroutineContext, CompletableJob> pair = Propagation.createChildContext();
-      myContext = pair.getFirst();
-      myJob = pair.getSecond();
+      myChildContext = Propagation.createChildContext();
       backendExecutor = backgroundThreadExecutor;
       this.builder = builder;
       if (builder.myCoalesceEquality != null) {
@@ -462,7 +458,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
           try {
             boolean computationSuccessful;
             if (AppExecutorUtil.propagateContextOrCancellation()) {
-              try (AccessToken ignored = ThreadContext.installThreadContext(myContext, false)) {
+              try (AccessToken ignored = ThreadContext.installThreadContext(myChildContext.getContext(), false)) {
                 computationSuccessful = attemptComputation();
               }
             } else {
@@ -636,7 +632,11 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
 
     @Override
     public boolean isCancelled() {
-      return super.isCancelled() || (myJob != null && myJob.isCancelled());
+      if (super.isCancelled()) {
+        return true;
+      }
+      CompletableJob job = myChildContext.getJob();
+      return job != null && job.isCancelled();
     }
 
     private boolean shouldFinishOnEdt() {
@@ -644,20 +644,23 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
     }
 
     private void cancelJob(@Nullable CancellationException e) {
-      if (myJob != null) {
-        myJob.cancel(e);
+      CompletableJob job = myChildContext.getJob();
+      if (job != null) {
+        job.cancel(e);
       }
     }
 
     private void completeJob() {
-      if (myJob != null) {
-        myJob.complete();
+      CompletableJob job = myChildContext.getJob();
+      if (job != null) {
+        job.complete();
       }
     }
 
     private void failJob(@NotNull Throwable reason) {
-      if (myJob != null) {
-        myJob.completeExceptionally(reason);
+      CompletableJob job = myChildContext.getJob();
+      if (job != null) {
+        job.completeExceptionally(reason);
       }
     }
 
@@ -703,7 +706,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
         if (isSucceeded()) { // in case when another thread managed to cancel it just before `setResult`
           try {
             if (AppExecutorUtil.propagateContextOrCancellation()) {
-              try (AccessToken ignored = ThreadContext.installThreadContext(myContext, false)) {
+              try (AccessToken ignored = ThreadContext.installThreadContext(myChildContext.getContext(), false)) {
                 builder.myUiThreadAction.accept(result);
               }
             } else {

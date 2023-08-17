@@ -58,6 +58,7 @@ import com.intellij.util.DefaultBundleService
 import com.intellij.util.ReflectionUtil
 import com.intellij.util.childScope
 import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.util.concurrency.ChildContext
 import com.intellij.util.concurrency.createChildContext
 import com.intellij.util.concurrency.runAsCoroutine
 import com.intellij.util.containers.ContainerUtil
@@ -89,7 +90,6 @@ import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.KeyStroke
 import javax.swing.SwingUtilities
-import kotlin.coroutines.CoroutineContext
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -193,7 +193,7 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
 
   override fun removeTimerListener(listener: TimerListener) {
     if (listener is CapturingListener) {
-      listener.job?.cancel(null)
+      listener.childContext.job?.cancel(null)
     }
 
     if (ApplicationManager.getApplication().isUnitTestMode) {
@@ -1307,18 +1307,11 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
 
 
   private class CapturingListener(@JvmField val timerListener: TimerListener) : TimerListener by timerListener {
-    private val context: CoroutineContext
-
-    val job: CompletableJob?
-
-    init {
-      val (context, job) = createChildContext()
-      this.context = context
-      this.job = job
-    }
+    val childContext: ChildContext = createChildContext()
 
     override fun run() {
-      installThreadContext(context).use {
+      installThreadContext(childContext.context).use {
+        val job = childContext.job
         if (job == null) {
           timerListener.run()
         }

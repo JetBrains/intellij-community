@@ -16,10 +16,10 @@ import com.intellij.openapi.progress.*;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.ChildContext;
 import com.intellij.util.concurrency.Propagation;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.ui.EDT;
-import kotlin.Pair;
 import kotlin.Unit;
 import kotlin.coroutines.CoroutineContext;
 import kotlin.coroutines.EmptyCoroutineContext;
@@ -440,9 +440,9 @@ public final class ProgressRunner<R> {
     @NotNull CompletableFuture<? extends @NotNull ProgressIndicator> progressIndicatorFuture
   ) {
     CompletableFuture<R> resultFuture = new CompletableFuture<>();
-    Pair<CoroutineContext, CompletableJob> childContextAndJob = Propagation.createChildContext();
-    CoroutineContext childContext = childContextAndJob.getFirst();
-    CompletableJob childJob = childContextAndJob.getSecond();
+    ChildContext childContextAndJob = Propagation.createChildContext();
+    CoroutineContext childContext = childContextAndJob.getContext();
+    CompletableJob childJob = childContextAndJob.getJob();
     if (childJob != null) {
       // cancellation of the Job cancels the future
       childJob.invokeOnCompletion(true, true, (throwable) -> {
