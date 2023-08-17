@@ -18,6 +18,7 @@ import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ClientProperty;
@@ -697,15 +698,18 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
     }
 
     static @NotNull VcsLogStructureFilter createStructureFilter(@NotNull List<String> values) {
-      return VcsLogFilterObject.fromPaths(ContainerUtil.map(values, path -> {
-        if (path.startsWith(DIR)) {
-          return VcsUtil.getFilePath(path.substring(DIR.length()), true);
-        }
-        else if (path.startsWith(FILE)) {
-          return VcsUtil.getFilePath(path.substring(FILE.length()), false);
-        }
-        return VcsUtil.getFilePath(path);
-      }));
+      return VcsLogFilterObject.fromPaths(ContainerUtil.map(values, FileFilterModel::extractPath));
+    }
+
+    @NotNull
+    public static FilePath extractPath(String path) {
+      if (path.startsWith(DIR)) {
+        return VcsUtil.getFilePath(path.substring(DIR.length()), true);
+      }
+      else if (path.startsWith(FILE)) {
+        return VcsUtil.getFilePath(path.substring(FILE.length()), false);
+      }
+      return VcsUtil.getFilePath(path);
     }
   }
 

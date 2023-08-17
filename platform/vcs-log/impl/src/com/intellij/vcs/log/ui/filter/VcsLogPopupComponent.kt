@@ -8,6 +8,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.ListPopup
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.util.ui.FilterComponent
+import java.awt.Component
 import java.util.function.Supplier
 
 internal abstract class VcsLogPopupComponent(displayName: Supplier<@NlsContexts.Label String>) : FilterComponent(displayName) {
@@ -17,8 +18,10 @@ internal abstract class VcsLogPopupComponent(displayName: Supplier<@NlsContexts.
 
   fun showPopupMenu() {
     val popup = createPopupMenu()
-    popup.showUnderneathOf(this)
+    popup.showUnderneathOf(getTargetComponent())
   }
+
+  open fun getTargetComponent(): Component = this
 
   /**
    * Create popup actions available under this filter.

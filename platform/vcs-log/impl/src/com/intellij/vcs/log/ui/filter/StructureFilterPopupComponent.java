@@ -242,7 +242,13 @@ public class StructureFilterPopupComponent
   }
 
   private @NotNull @NlsSafe String path2Text(@NotNull FilePath filePath, boolean systemDependent) {
-    VirtualFile commonAncestor = VfsUtil.getCommonAncestor(getAllRoots());
+    return path2Text(filePath, systemDependent, getAllRoots());
+  }
+
+  @NotNull
+  @NlsSafe
+  public static String path2Text(@NotNull FilePath filePath, boolean systemDependent, Set<VirtualFile> roots) {
+    VirtualFile commonAncestor = VfsUtil.getCommonAncestor(roots);
     String path = null;
     if (commonAncestor != null) {
       path = FileUtil.getRelativePath(commonAncestor.getPath(), filePath.getPath(), '/');
@@ -411,7 +417,7 @@ public class StructureFilterPopupComponent
           }
         }
       });
-      popup.showUnderneathOf(StructureFilterPopupComponent.this);
+      popup.showUnderneathOf(getTargetComponent());
     }
 
     @Override
