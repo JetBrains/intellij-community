@@ -3,7 +3,10 @@ package com.intellij.diff.editor
 
 import com.intellij.diff.impl.DiffRequestProcessor
 import com.intellij.diff.impl.DiffRequestProcessorListener
+import com.intellij.diff.util.DiffUserDataKeysEx
+import com.intellij.diff.util.DiffUtil
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import javax.swing.JComponent
 
@@ -18,6 +21,13 @@ open class DiffRequestProcessorEditor(
 
   init {
     processor.addListener(MyProcessorListener(), this)
+  }
+
+  override fun dispose() {
+    if (!DiffUtil.isUserDataFlagSet(DiffUserDataKeysEx.DIFF_IN_EDITOR_WITH_EXPLICIT_DISPOSABLE, processor.context)) {
+      Disposer.dispose(processor)
+    }
+    super.dispose()
   }
 
   override fun getPreferredFocusedComponent(): JComponent? = processor.preferredFocusedComponent

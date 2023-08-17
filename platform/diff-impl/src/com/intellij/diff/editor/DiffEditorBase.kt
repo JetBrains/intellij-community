@@ -2,8 +2,6 @@
 package com.intellij.diff.editor
 
 import com.intellij.diff.DiffContext
-import com.intellij.diff.util.DiffUserDataKeysEx
-import com.intellij.diff.util.DiffUtil
 import com.intellij.diff.util.FileEditorBase
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
@@ -22,7 +20,7 @@ import javax.swing.JPanel
 abstract class DiffEditorBase(
   private val file: DiffVirtualFileBase,
   component: JComponent,
-  private val disposable: CheckedDisposable,
+  private val contentDisposable: CheckedDisposable,
   private val context: DiffContext
 ) : FileEditorBase() {
   companion object {
@@ -32,7 +30,7 @@ abstract class DiffEditorBase(
   private val panel = MyPanel(component)
 
   init {
-    Disposer.register(disposable, Disposable {
+    Disposer.register(contentDisposable, Disposable {
       firePropertyChange(FileEditor.PROP_VALID, true, false)
     })
 
@@ -41,14 +39,7 @@ abstract class DiffEditorBase(
 
   override fun getComponent(): JComponent = panel
 
-  override fun dispose() {
-    if (!DiffUtil.isUserDataFlagSet(DiffUserDataKeysEx.DIFF_IN_EDITOR_WITH_EXPLICIT_DISPOSABLE, context)) {
-      Disposer.dispose(disposable)
-    }
-    super.dispose()
-  }
-
-  override fun isValid(): Boolean = !isDisposed && !disposable.isDisposed
+  override fun isValid(): Boolean = !isDisposed && !contentDisposable.isDisposed
   override fun getFile(): VirtualFile = file
   override fun getName(): String = DiffBundle.message("diff.file.editor.name")
 
