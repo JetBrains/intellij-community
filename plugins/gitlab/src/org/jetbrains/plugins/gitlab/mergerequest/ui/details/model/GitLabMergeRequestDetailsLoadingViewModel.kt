@@ -9,14 +9,13 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
-import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestId
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabProject
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestDetailsLoadingViewModel.LoadingState
 
 private val LOG = logger<GitLabMergeRequestDetailsLoadingViewModel>()
 
 internal interface GitLabMergeRequestDetailsLoadingViewModel {
-  val mergeRequestId: GitLabMergeRequestId
+  val mergeRequestId: String
   val mergeRequestLoadingFlow: Flow<LoadingState>
 
   fun requestLoad()
@@ -36,7 +35,7 @@ internal class GitLabMergeRequestDetailsLoadingViewModelImpl(
   parentScope: CoroutineScope,
   currentUser: GitLabUserDTO,
   private val projectData: GitLabProject,
-  override val mergeRequestId: GitLabMergeRequestId
+  override val mergeRequestId: String
 ) : GitLabMergeRequestDetailsLoadingViewModel {
   private val scope = parentScope.childScope(Dispatchers.Default)
 

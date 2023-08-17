@@ -12,14 +12,13 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.gitlab.api.GitLabProjectConnection
-import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestId
 
 interface GitLabMergeRequestsFilesController {
   @RequiresEdt
-  fun openTimeline(mr: GitLabMergeRequestId, focus: Boolean)
+  fun openTimeline(mrIid: String, focus: Boolean)
 
   @RequiresEdt
-  fun openDiff(mr: GitLabMergeRequestId, focus: Boolean)
+  fun openDiff(mrIid: String, focus: Boolean)
 
   suspend fun closeAllFiles()
 }
@@ -29,16 +28,16 @@ class GitLabMergeRequestsFilesControllerImpl(
   private val connection: GitLabProjectConnection
 ) : GitLabMergeRequestsFilesController {
 
-  override fun openTimeline(mr: GitLabMergeRequestId, focus: Boolean) {
+  override fun openTimeline(mrIid: String, focus: Boolean) {
     val fs = GitLabVirtualFileSystem.getInstance()
-    val path = fs.getPath(connection.id, project, connection.repo.repository, mr)
+    val path = fs.getPath(connection.id, project, connection.repo.repository, mrIid)
     val file = fs.refreshAndFindFileByPath(path) ?: return
     FileEditorManager.getInstance(project).openFile(file, focus)
   }
 
-  override fun openDiff(mr: GitLabMergeRequestId, focus: Boolean) {
+  override fun openDiff(mrIid: String, focus: Boolean) {
     val fs = GitLabVirtualFileSystem.getInstance()
-    val path = fs.getPath(connection.id, project, connection.repo.repository, mr, true)
+    val path = fs.getPath(connection.id, project, connection.repo.repository, mrIid, true)
     val file = fs.refreshAndFindFileByPath(path) ?: return
     VcsEditorTabFilesManager.getInstance().openFile(project, file, focus)
   }

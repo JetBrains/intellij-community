@@ -8,7 +8,6 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gitlab.GitlabIcons
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestDetails
-import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestId
 import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabToolWindowViewModel
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import javax.swing.Icon
@@ -16,16 +15,15 @@ import javax.swing.Icon
 internal class GitLabMergeRequestTimelineFile(connectionId: String,
                                               project: Project,
                                               glProject: GitLabProjectCoordinates,
-                                              val mergeRequestId: GitLabMergeRequestId)
+                                              val mergeRequestId: String)
   : GitLabProjectVirtualFile(connectionId, project, glProject) {
 
-  override fun getName() = "!${mergeRequestId.iid}"
-  override fun getPresentableName(): @Nls String = GitLabBundle.message("merge.request.timeline.file.name", mergeRequestId.iid)
+  override fun getName() = "!${mergeRequestId}"
+  override fun getPresentableName(): @Nls String = GitLabBundle.message("merge.request.timeline.file.name", mergeRequestId)
 
-  override fun getPath(): String = (fileSystem as GitLabVirtualFileSystem).getPath(connectionId, project, glProject,
-                                                                                   GitLabMergeRequestId.Simple(mergeRequestId))
+  override fun getPath(): String = (fileSystem as GitLabVirtualFileSystem).getPath(connectionId, project, glProject, mergeRequestId)
 
-  override fun getPresentablePath() = findDetails()?.webUrl ?: "$glProject/mergerequests/${mergeRequestId.iid}"
+  override fun getPresentablePath() = findDetails()?.webUrl ?: "$glProject/mergerequests/${mergeRequestId}"
 
   override fun getFileType(): FileType = GitLabTimelineFileType.instance
 

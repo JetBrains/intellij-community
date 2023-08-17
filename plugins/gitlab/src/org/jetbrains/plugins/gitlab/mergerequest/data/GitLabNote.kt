@@ -142,7 +142,7 @@ class GitLabMergeRequestDraftNoteImpl(
     withContext(cs.coroutineContext) {
       operationsGuard.withLock {
         withContext(Dispatchers.IO) {
-          api.rest.updateDraftNote(project, mr.id, noteData.id, newText)
+          api.rest.updateDraftNote(project, mr.iid, noteData.id, newText)
         }
       }
       data.update { it.copy(note = newText) }
@@ -153,7 +153,7 @@ class GitLabMergeRequestDraftNoteImpl(
     withContext(cs.coroutineContext) {
       operationsGuard.withLock {
         withContext(Dispatchers.IO) {
-          api.rest.deleteDraftNote(project, mr.id, noteData.id)
+          api.rest.deleteDraftNote(project, mr.iid, noteData.id)
         }
       }
       eventSink(GitLabNoteEvent.Deleted(noteData.id.toString()))

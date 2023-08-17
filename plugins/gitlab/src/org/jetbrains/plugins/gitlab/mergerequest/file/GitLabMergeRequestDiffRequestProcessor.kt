@@ -25,7 +25,6 @@ import git4idea.changes.getDiffComputer
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collectLatest
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestChanges
-import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestId
 import com.intellij.collaboration.util.ChangesSelection
 import org.jetbrains.plugins.gitlab.mergerequest.diff.GitLabMergeRequestDiffViewModel
 import com.intellij.collaboration.util.equalChanges
@@ -33,14 +32,14 @@ import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabToolWindowProjectViewM
 
 internal fun createMergeRequestDiffRequestProcessor(project: Project,
                                                     projectVm: GitLabToolWindowProjectViewModel,
-                                                    mergeRequestId: GitLabMergeRequestId): DiffRequestProcessor {
+                                                    mergeRequestIid: String): DiffRequestProcessor {
   val job = SupervisorJob()
   val uiCs = CoroutineScope(job + Dispatchers.Main.immediate + CoroutineName("GitLab Merge Request Review Diff UI"))
   val processor = MutableDiffRequestChainProcessor(project, SimpleDiffRequestChain(LoadingDiffRequest()))
   job.cancelOnDispose(processor)
 
   uiCs.launchNow {
-    projectVm.getDiffViewModel(mergeRequestId).collectLatest {
+    projectVm.getDiffViewModel(mergeRequestIid).collectLatest {
       val diffVm = it.getOrNull() ?: return@collectLatest
 
       processor.putContextUserData(GitLabMergeRequestDiffViewModel.KEY, diffVm)

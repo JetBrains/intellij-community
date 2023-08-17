@@ -11,7 +11,6 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.vcs.editor.ComplexPathVirtualFileSystem
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
-import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestId
 
 internal class GitLabVirtualFileSystem : ComplexPathVirtualFileSystem<GitLabVirtualFileSystem.FilePath>(PathSerializer()) {
 
@@ -24,9 +23,9 @@ internal class GitLabVirtualFileSystem : ComplexPathVirtualFileSystem<GitLabVirt
 
     return filesCache.getOrPut(path) {
       if(path.isDiff == true) {
-        GitLabMergeRequestDiffFile(path.sessionId, project, path.repository, path.mrId)
+        GitLabMergeRequestDiffFile(path.sessionId, project, path.repository, path.mrIid)
       } else {
-        GitLabMergeRequestTimelineFile(path.sessionId, project, path.repository, path.mrId)
+        GitLabMergeRequestTimelineFile(path.sessionId, project, path.repository, path.mrIid)
       }
     }
   }
@@ -34,14 +33,14 @@ internal class GitLabVirtualFileSystem : ComplexPathVirtualFileSystem<GitLabVirt
   fun getPath(sessionId: String,
               project: Project,
               repository: GitLabProjectCoordinates,
-              id: GitLabMergeRequestId,
+              mrIid: String,
               isDiff: Boolean = false): String =
-    getPath(FilePath(sessionId, project.locationHash, repository, GitLabMergeRequestId.Simple(id), isDiff))
+    getPath(FilePath(sessionId, project.locationHash, repository, mrIid, isDiff))
 
   internal data class FilePath(override val sessionId: String,
                                override val projectHash: String,
                                val repository: GitLabProjectCoordinates,
-                               val mrId: GitLabMergeRequestId.Simple,
+                               val mrIid: String,
                                val isDiff: Boolean? = null) : ComplexPath
 
   companion object {

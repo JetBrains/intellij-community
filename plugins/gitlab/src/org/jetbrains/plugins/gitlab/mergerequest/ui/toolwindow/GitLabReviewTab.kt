@@ -2,13 +2,11 @@
 package org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow
 
 import com.intellij.collaboration.ui.toolwindow.ReviewTab
-import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.annotations.NonNls
-import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestId
 
 internal sealed interface GitLabReviewTab : ReviewTab {
-  data class ReviewSelected(val reviewId: GitLabMergeRequestId) : GitLabReviewTab {
-    override val id: @NonNls String = "ReviewDetails!${reviewId.iid}"
+  data class ReviewSelected(val mrIid: String) : GitLabReviewTab {
+    override val id: @NonNls String = "ReviewDetails!${mrIid}"
     override val reuseTabOnRequest: Boolean = true
   }
 }

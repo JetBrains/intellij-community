@@ -45,7 +45,7 @@ class LoadAllGitLabMergeRequestTimelineViewModel(
   private val cs = parentCs.childScope(Dispatchers.Default)
   private val loadingRequests = MutableSharedFlow<Unit>(1)
 
-  override val number: String = "!${mergeRequest.number}"
+  override val number: String = "!${mergeRequest.iid}"
   override val author: GitLabUserDTO = mergeRequest.author
   override val title: SharedFlow<String> = mergeRequest.details.map { it.title }
     .modelFlow(cs, LOG)

@@ -18,6 +18,7 @@ import org.jetbrains.plugins.gitlab.api.GitLabApi
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.api.request.getCurrentUser
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestDTO
+import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestIidDTO
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.findMergeRequestsByBranch
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.loadMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.data.loaders.GitLabMergeRequestsListLoader
@@ -32,22 +33,22 @@ interface GitLabProjectMergeRequestsStore {
   /**
    * @return a handle for result of loading a shared MR model
    */
-  fun getShared(id: GitLabMergeRequestId): SharedFlow<Result<GitLabMergeRequest>>
+  fun getShared(iid: String): SharedFlow<Result<GitLabMergeRequest>>
 
   /**
    * @return cached short MR details
    */
-  fun findCachedDetails(id: GitLabMergeRequestId): GitLabMergeRequestDetails?
+  fun findCachedDetails(iid: String): GitLabMergeRequestDetails?
 
   /**
    * Update shared merge request
    */
-  suspend fun reloadMergeRequest(id: GitLabMergeRequestId)
+  suspend fun reloadMergeRequest(iid: String)
 
   /**
    * Find merge requests on a remote branch with name [branchName]
    */
-  suspend fun findByBranch(branchName: String): Set<GitLabMergeRequestId>
+  suspend fun findByBranch(branchName: String): Set<String>
 }
 
 class CachingGitLabProjectMergeRequestsStore(private val project: Project,
@@ -62,11 +63,11 @@ class CachingGitLabProjectMergeRequestsStore(private val project: Project,
 
   private val detailsCache = Caffeine.newBuilder()
     .weakValues()
-    .build<GitLabMergeRequestId, GitLabMergeRequestDetails>()
+    .build<String, GitLabMergeRequestDetails>()
 
-  private val models = ConcurrentHashMap<GitLabMergeRequestId, SharedFlow<Result<GitLabMergeRequest>>>()
+  private val models = ConcurrentHashMap<String, SharedFlow<Result<GitLabMergeRequest>>>()
 
-  private val reloadMergeRequest: MutableSharedFlow<GitLabMergeRequestId> = MutableSharedFlow(1)
+  private val reloadMergeRequest: MutableSharedFlow<String> = MutableSharedFlow(1)
 
   override fun getListLoader(searchQuery: String): SequentialListLoader<GitLabMergeRequestDetails> = CachingListLoader(searchQuery)
 
@@ -78,12 +79,11 @@ class CachingGitLabProjectMergeRequestsStore(private val project: Project,
     }
   }
 
-  override fun getShared(id: GitLabMergeRequestId): SharedFlow<Result<GitLabMergeRequest>> {
-    val simpleId = GitLabMergeRequestId.Simple(id)
-    return models.getOrPut(simpleId) {
+  override fun getShared(iid: String): SharedFlow<Result<GitLabMergeRequest>> {
+    return models.getOrPut(iid) {
       reloadMergeRequest
-        .filter { requestedId -> requestedId.iid == id.iid }
-        .withInitial(id)
+        .filter { requestedId -> requestedId == iid }
+        .withInitial(iid)
         .mapScoped { mrId ->
           runCatching {
             // TODO: create from cached details
@@ -96,21 +96,22 @@ class CachingGitLabProjectMergeRequestsStore(private val project: Project,
     }
   }
 
-  override suspend fun findByBranch(branchName: String): Set<GitLabMergeRequestId> =
+  override suspend fun findByBranch(branchName: String): Set<String> =
     withContext(Dispatchers.IO) {
-      api.graphQL.findMergeRequestsByBranch(projectMapping.repository, branchName).body()!!.nodes.toSet()
+      api.graphQL.findMergeRequestsByBranch(projectMapping.repository, branchName).body()!!.nodes
+        .mapTo(mutableSetOf(), GitLabMergeRequestIidDTO::iid)
     }
 
-  override fun findCachedDetails(id: GitLabMergeRequestId): GitLabMergeRequestDetails? = detailsCache.getIfPresent(id)
+  override fun findCachedDetails(iid: String): GitLabMergeRequestDetails? = detailsCache.getIfPresent(iid)
 
-  override suspend fun reloadMergeRequest(id: GitLabMergeRequestId) {
-    reloadMergeRequest.emit(id)
+  override suspend fun reloadMergeRequest(iid: String) {
+    reloadMergeRequest.emit(iid)
   }
 
   @Throws(HttpStatusErrorException::class, GitLabMergeRequestDataException.EmptySourceProject::class, IllegalStateException::class)
-  private suspend fun loadMergeRequest(id: GitLabMergeRequestId): GitLabMergeRequestDTO {
+  private suspend fun loadMergeRequest(iid: String): GitLabMergeRequestDTO {
     return withContext(Dispatchers.IO) {
-      val body = api.graphQL.loadMergeRequest(glProject, id).body()
+      val body = api.graphQL.loadMergeRequest(glProject, iid).body()
       if (body == null) {
         api.rest.getCurrentUser(glProject.serverPath) // Exception is generated automatically if status code >= 400
         error(CollaborationToolsBundle.message("graphql.errors", "empty response"))
@@ -129,7 +130,7 @@ class CachingGitLabProjectMergeRequestsStore(private val project: Project,
     override suspend fun loadNext(): SequentialListLoader.ListBatch<GitLabMergeRequestDetails> {
       return actualLoader.loadNext().also { (data, _) ->
         data.forEach {
-          detailsCache.put(GitLabMergeRequestId.Simple(it), it)
+          detailsCache.put(it.iid, it)
         }
       }
     }

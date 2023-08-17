@@ -11,15 +11,14 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFilePathWrapper
 import com.intellij.openapi.vfs.VirtualFileSystem
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
-import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestId
 import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabToolWindowViewModel
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 
 class GitLabMergeRequestDiffFile(override val connectionId: String,
                                  private val project: Project,
                                  private val glProject: GitLabProjectCoordinates,
-                                 val mergeRequestId: GitLabMergeRequestId)
-  : DiffVirtualFile(GitLabBundle.message("merge.request.diff.file.name", mergeRequestId.iid)),
+                                 val mergeRequestIid: String)
+  : DiffVirtualFile(GitLabBundle.message("merge.request.diff.file.name", mergeRequestIid)),
     VirtualFilePathWrapper,
     GitLabVirtualFile {
 
@@ -32,9 +31,9 @@ class GitLabMergeRequestDiffFile(override val connectionId: String,
   override fun isValid(): Boolean = findProjectVm() != null
 
   override fun getPath(): String =
-    (fileSystem as GitLabVirtualFileSystem).getPath(connectionId, project, glProject, mergeRequestId, true)
+    (fileSystem as GitLabVirtualFileSystem).getPath(connectionId, project, glProject, mergeRequestIid, true)
 
-  override fun getPresentablePath(): String = "$glProject/mergerequests/${mergeRequestId.iid}.diff"
+  override fun getPresentablePath(): String = "$glProject/mergerequests/${mergeRequestIid}.diff"
 
   private fun findProjectVm() = project.serviceIfCreated<GitLabToolWindowViewModel>()
     ?.projectVm?.value?.takeIf { it.connectionId == connectionId }
@@ -43,7 +42,7 @@ class GitLabMergeRequestDiffFile(override val connectionId: String,
     val projectVm = findProjectVm() ?: error("Missing project view model for $this")
     return createMergeRequestDiffRequestProcessor(project,
                                                   projectVm,
-                                                  mergeRequestId)
+                                                  mergeRequestIid)
   }
 
   override fun getFileSystem(): VirtualFileSystem = GitLabVirtualFileSystem.getInstance()
@@ -61,17 +60,17 @@ class GitLabMergeRequestDiffFile(override val connectionId: String,
     if (connectionId != other.connectionId) return false
     if (project != other.project) return false
     if (glProject != other.glProject) return false
-    return mergeRequestId == other.mergeRequestId
+    return mergeRequestIid == other.mergeRequestIid
   }
 
   override fun hashCode(): Int {
     var result = connectionId.hashCode()
     result = 31 * result + project.hashCode()
     result = 31 * result + glProject.hashCode()
-    result = 31 * result + mergeRequestId.hashCode()
+    result = 31 * result + mergeRequestIid.hashCode()
     return result
   }
 
   override fun toString(): String =
-    "GitLabMergeRequestDiffFile(connectionId='$connectionId', project=$project, glProject=$glProject, mergeRequestId=$mergeRequestId)"
+    "GitLabMergeRequestDiffFile(connectionId='$connectionId', project=$project, glProject=$glProject, mergeRequestId=$mergeRequestIid)"
 }

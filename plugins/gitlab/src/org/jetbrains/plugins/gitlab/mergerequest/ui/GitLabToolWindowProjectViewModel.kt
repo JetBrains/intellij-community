@@ -28,7 +28,6 @@ import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountViewModel
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountViewModelImpl
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestDetails
-import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestId
 import org.jetbrains.plugins.gitlab.mergerequest.diff.GitLabMergeRequestDiffBridge
 import org.jetbrains.plugins.gitlab.mergerequest.diff.GitLabMergeRequestDiffViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.diff.GitLabMergeRequestDiffViewModelImpl
@@ -59,15 +58,15 @@ private constructor(parentCs: CoroutineScope,
 
   private val diffBridgeStore = Caffeine.newBuilder()
     .weakValues()
-    .build<GitLabMergeRequestId.Simple, GitLabMergeRequestDiffBridge>()
+    .build<String, GitLabMergeRequestDiffBridge>()
 
   private val timelineVms = Caffeine.newBuilder()
     .weakValues()
-    .build<GitLabMergeRequestId.Simple, SharedFlow<Result<LoadAllGitLabMergeRequestTimelineViewModel>>>()
+    .build<String, SharedFlow<Result<LoadAllGitLabMergeRequestTimelineViewModel>>>()
 
   private val diffVms = Caffeine.newBuilder()
     .weakValues()
-    .build<GitLabMergeRequestId.Simple, SharedFlow<Result<GitLabMergeRequestDiffViewModel>>>()
+    .build<String, SharedFlow<Result<GitLabMergeRequestDiffViewModel>>>()
 
   val filesController: GitLabMergeRequestsFilesController = GitLabMergeRequestsFilesControllerImpl(project, connection)
 
@@ -103,9 +102,9 @@ private constructor(parentCs: CoroutineScope,
 
   private val tabsGuard = Mutex()
 
-  fun show(mr: GitLabMergeRequestId) {
+  fun show(mrIid: String) {
     cs.launch {
-      showTab(GitLabReviewTab.ReviewSelected(mr))
+      showTab(GitLabReviewTab.ReviewSelected(mrIid))
     }
   }
 
@@ -126,8 +125,8 @@ private constructor(parentCs: CoroutineScope,
 
   private fun createVm(tab: GitLabReviewTab): GitLabReviewTabViewModel = when (tab) {
     is GitLabReviewTab.ReviewSelected -> GitLabReviewTabViewModel.Details(project, cs, connection.currentUser, connection.projectData,
-                                                                          tab.reviewId,
-                                                                          getDiffBridge(tab.reviewId), filesController)
+                                                                          tab.mrIid,
+                                                                          getDiffBridge(tab.mrIid), filesController)
   }
 
   override fun selectTab(tab: GitLabReviewTab?) {
@@ -154,7 +153,7 @@ private constructor(parentCs: CoroutineScope,
   }
 
   @OptIn(ExperimentalCoroutinesApi::class)
-  val mergeRequestOnCurrentBranch: StateFlow<GitLabMergeRequestId?> by lazy {
+  val mergeRequestOnCurrentBranch: StateFlow<String?> by lazy {
     val remote = connection.repo.remote.remote
     val gitRepo = connection.repo.remote.repository
     gitRepo.changesSignalFlow().withInitial(Unit).map {
@@ -178,24 +177,23 @@ private constructor(parentCs: CoroutineScope,
     }
   }
 
-  private fun getDiffBridge(mr: GitLabMergeRequestId): GitLabMergeRequestDiffBridge =
-    diffBridgeStore.get(GitLabMergeRequestId.Simple(mr)) {
+  private fun getDiffBridge(mrIid: String): GitLabMergeRequestDiffBridge =
+    diffBridgeStore.get(mrIid) {
       GitLabMergeRequestDiffBridge()
     }
 
-  fun getTimelineViewModel(mergeRequestId: GitLabMergeRequestId): SharedFlow<Result<LoadAllGitLabMergeRequestTimelineViewModel>> {
-    val simpleId = GitLabMergeRequestId.Simple(mergeRequestId)
-    return timelineVms.get(simpleId) {
-      connection.projectData.mergeRequests.getShared(simpleId).mapScoped { mrResult ->
+  fun getTimelineViewModel(mrIid: String): SharedFlow<Result<LoadAllGitLabMergeRequestTimelineViewModel>> {
+    return timelineVms.get(mrIid) {
+      connection.projectData.mergeRequests.getShared(mrIid).mapScoped { mrResult ->
         val cs = this
-        val diffBridge = getDiffBridge(simpleId)
+        val diffBridge = getDiffBridge(mrIid)
         mrResult.mapCatching {
           LoadAllGitLabMergeRequestTimelineViewModel(cs, project.service(), connection.currentUser, it).also {
             cs.launchNow {
               it.diffRequests.collect { change ->
                 diffBridge.setChanges(change)
                 withContext(Dispatchers.EDT) {
-                  filesController.openDiff(simpleId, true)
+                  filesController.openDiff(mrIid, true)
                 }
               }
             }
@@ -205,12 +203,11 @@ private constructor(parentCs: CoroutineScope,
     }
   }
 
-  fun getDiffViewModel(mergeRequestId: GitLabMergeRequestId): SharedFlow<Result<GitLabMergeRequestDiffViewModel>> {
-    val simpleId = GitLabMergeRequestId.Simple(mergeRequestId)
-    return diffVms.get(simpleId) {
-      connection.projectData.mergeRequests.getShared(simpleId).mapScoped { mrResult ->
+  fun getDiffViewModel(mrIid: String): SharedFlow<Result<GitLabMergeRequestDiffViewModel>> {
+    return diffVms.get(mrIid) {
+      connection.projectData.mergeRequests.getShared(mrIid).mapScoped { mrResult ->
         val cs = this
-        val diffBridge = getDiffBridge(simpleId)
+        val diffBridge = getDiffBridge(mrIid)
         mrResult.mapCatching {
           GitLabMergeRequestDiffViewModelImpl(cs, connection.currentUser, it, diffBridge, avatarIconProvider)
         }
@@ -218,8 +215,8 @@ private constructor(parentCs: CoroutineScope,
     }
   }
 
-  fun findMergeRequestDetails(mergeRequestId: GitLabMergeRequestId): GitLabMergeRequestDetails? =
-    connection.projectData.mergeRequests.findCachedDetails(mergeRequestId)
+  fun findMergeRequestDetails(mrIid: String): GitLabMergeRequestDetails? =
+    connection.projectData.mergeRequests.findCachedDetails(mrIid)
 
   init {
     cs.awaitCancellationAndInvoke { filesController.closeAllFiles() }

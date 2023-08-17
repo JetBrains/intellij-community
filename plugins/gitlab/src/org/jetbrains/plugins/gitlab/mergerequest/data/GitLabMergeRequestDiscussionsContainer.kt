@@ -71,7 +71,7 @@ class GitLabMergeRequestDiscussionsContainerImpl(
       val discussionsGuard = Mutex()
       var lastCursor: String? = null
       ApiPageUtil.createGQLPagesFlow {
-        api.graphQL.loadMergeRequestDiscussions(glProject, mr.id, it)
+        api.graphQL.loadMergeRequestDiscussions(glProject, mr.iid, it)
       }.collect { page ->
         discussionsGuard.withLock {
           for (dto in page.nodes.filter { it.notes.isNotEmpty() }) {
@@ -83,7 +83,7 @@ class GitLabMergeRequestDiscussionsContainerImpl(
       if (lastCursor != null) {
         launchNow {
           updateRequests.collect {
-            val page = api.graphQL.loadMergeRequestDiscussions(glProject, mr.id, GraphQLRequestPagination(lastCursor!!))
+            val page = api.graphQL.loadMergeRequestDiscussions(glProject, mr.iid, GraphQLRequestPagination(lastCursor!!))
             val newDiscussions = page?.nodes
             if (newDiscussions != null) {
               discussionsGuard.withLock {
@@ -166,7 +166,7 @@ class GitLabMergeRequestDiscussionsContainerImpl(
       val draftNotes = LinkedHashMap<String, GitLabMergeRequestDraftNoteRestDTO>()
 
       var lastETag: String? = null
-      val uri = getMergeRequestDraftNotesUri(glProject, mr.id)
+      val uri = getMergeRequestDraftNotesUri(glProject, mr.iid)
       ApiPageUtil.createPagesFlowByLinkHeader(uri) {
         api.rest.loadUpdatableJsonList<GitLabMergeRequestDraftNoteRestDTO>(
           glProject.serverPath, GitLabApiRequestName.REST_GET_DRAFT_NOTES, it
@@ -276,7 +276,7 @@ class GitLabMergeRequestDiscussionsContainerImpl(
   override suspend fun submitDraftNotes() {
     withContext(cs.coroutineContext) {
       withContext(Dispatchers.IO) {
-        api.rest.submitDraftNotes(glProject, mr.id)
+        api.rest.submitDraftNotes(glProject, mr.iid)
       }
       withContext(NonCancellable) {
         draftNotesEvents.emit(GitLabNoteEvent.AllDeleted())

@@ -5,7 +5,7 @@ import com.intellij.collaboration.ui.toolwindow.ReviewToolwindowDataKeys
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
-import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestId
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestDetails
 import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabToolWindowProjectViewModel
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 
@@ -17,7 +17,7 @@ class GitLabShowMergeRequestAction : DumbAwareAction(GitLabBundle.messagePointer
   override fun update(e: AnActionEvent) {
     val twVm = e.getData(ReviewToolwindowDataKeys.REVIEW_TOOLWINDOW_PROJECT_VM) as? GitLabToolWindowProjectViewModel
     val filesController = e.getData(GitLabMergeRequestsActionKeys.FILES_CONTROLLER)
-    val selection: GitLabMergeRequestId? = e.getData(GitLabMergeRequestsActionKeys.SELECTED)
+    val selection: GitLabMergeRequestDetails? = e.getData(GitLabMergeRequestsActionKeys.SELECTED)
 
     e.presentation.isEnabledAndVisible = twVm != null && filesController != null && selection != null
   }
@@ -25,9 +25,9 @@ class GitLabShowMergeRequestAction : DumbAwareAction(GitLabBundle.messagePointer
   override fun actionPerformed(e: AnActionEvent) {
     val twVm = e.getRequiredData(ReviewToolwindowDataKeys.REVIEW_TOOLWINDOW_PROJECT_VM) as GitLabToolWindowProjectViewModel
     val filesController = e.getRequiredData(GitLabMergeRequestsActionKeys.FILES_CONTROLLER)
-    val selection: GitLabMergeRequestId = e.getRequiredData(GitLabMergeRequestsActionKeys.SELECTED)
+    val selection: GitLabMergeRequestDetails = e.getRequiredData(GitLabMergeRequestsActionKeys.SELECTED)
 
-    twVm.show(selection)
-    filesController.openTimeline(selection, false)
+    twVm.show(selection.iid)
+    filesController.openTimeline(selection.iid, false)
   }
 }

@@ -6,22 +6,20 @@ import org.jetbrains.plugins.gitlab.api.GitLabApi
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.api.restApiUri
 import org.jetbrains.plugins.gitlab.api.withErrorStats
-import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestId
 import org.jetbrains.plugins.gitlab.util.GitLabApiRequestName
 import java.net.URI
 import java.net.http.HttpRequest.BodyPublishers
 import java.net.http.HttpResponse
-import java.net.http.HttpResponse.BodyHandlers
 
-fun getMergeRequestDraftNotesUri(project: GitLabProjectCoordinates, mr: GitLabMergeRequestId): URI =
-  project.restApiUri.resolveRelative("merge_requests").resolveRelative(mr.iid).resolveRelative("draft_notes")
+fun getMergeRequestDraftNotesUri(project: GitLabProjectCoordinates, mrIid: String): URI =
+  project.restApiUri.resolveRelative("merge_requests").resolveRelative(mrIid).resolveRelative("draft_notes")
 
 suspend fun GitLabApi.Rest.updateDraftNote(project: GitLabProjectCoordinates,
-                                           mr: GitLabMergeRequestId,
+                                           mrIid: String,
                                            noteId: Long,
                                            body: String)
   : HttpResponse<out Unit> {
-  val uri = getMergeRequestDraftNotesUri(project, mr).resolveRelative(noteId.toString())
+  val uri = getMergeRequestDraftNotesUri(project, mrIid).resolveRelative(noteId.toString())
   val request = request(uri)
     .withJsonContent()
     .PUT(jsonBodyPublisher(uri, mapOf(
@@ -34,10 +32,10 @@ suspend fun GitLabApi.Rest.updateDraftNote(project: GitLabProjectCoordinates,
 }
 
 suspend fun GitLabApi.Rest.deleteDraftNote(project: GitLabProjectCoordinates,
-                                           mr: GitLabMergeRequestId,
+                                           mrIid: String,
                                            noteId: Long)
   : HttpResponse<out Unit> {
-  val uri = getMergeRequestDraftNotesUri(project, mr).resolveRelative(noteId.toString())
+  val uri = getMergeRequestDraftNotesUri(project, mrIid).resolveRelative(noteId.toString())
   val request = request(uri).DELETE().build()
   return withErrorStats(project.serverPath, GitLabApiRequestName.REST_DELETE_DRAFT_NOTE) {
     sendAndAwaitCancellable(request)
@@ -45,9 +43,9 @@ suspend fun GitLabApi.Rest.deleteDraftNote(project: GitLabProjectCoordinates,
 }
 
 suspend fun GitLabApi.Rest.submitDraftNotes(project: GitLabProjectCoordinates,
-                                            mr: GitLabMergeRequestId)
+                                            mrIid: String)
   : HttpResponse<out Unit> {
-  val uri = getMergeRequestDraftNotesUri(project, mr).resolveRelative("bulk_publish")
+  val uri = getMergeRequestDraftNotesUri(project, mrIid).resolveRelative("bulk_publish")
   val request = request(uri).POST(BodyPublishers.noBody()).build()
   return withErrorStats(project.serverPath, GitLabApiRequestName.REST_SUBMIT_DRAFT_NOTES) {
     sendAndAwaitCancellable(request)

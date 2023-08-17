@@ -12,16 +12,15 @@ import org.jetbrains.plugins.gitlab.api.dto.GitLabDiscussionDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabGraphQLMutationResultDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabNoteDTO
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabDiffPositionInput
-import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestId
 import java.net.http.HttpResponse
 
 suspend fun GitLabApi.GraphQL.loadMergeRequestDiscussions(project: GitLabProjectCoordinates,
-                                                          mr: GitLabMergeRequestId,
+                                                          mrIid: String,
                                                           pagination: GraphQLRequestPagination? = null)
   : GraphQLConnectionDTO<GitLabDiscussionDTO>? {
   val parameters = pagination.orDefault().asParameters() + mapOf(
     "projectId" to project.projectPath.fullPath(),
-    "mriid" to mr.iid
+    "mriid" to mrIid
   )
   val request = gitLabQuery(project.serverPath, GitLabGQLQuery.GET_MERGE_REQUEST_DISCUSSIONS, parameters)
   return withErrorStats(project.serverPath, GitLabGQLQuery.GET_MERGE_REQUEST_DISCUSSIONS) {

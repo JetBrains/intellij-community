@@ -46,7 +46,7 @@ internal class GitLabMergeRequestDetailsViewModelImpl(
 
   private val cs = parentCs.childScope()
 
-  override val number: String = "!${mergeRequest.number}"
+  override val number: String = "!${mergeRequest.iid}"
   override val url: String = mergeRequest.url
   override val author: GitLabUserDTO = mergeRequest.author
 

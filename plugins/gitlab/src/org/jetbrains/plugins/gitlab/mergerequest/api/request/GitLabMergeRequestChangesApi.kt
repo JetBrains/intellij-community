@@ -7,7 +7,6 @@ import com.intellij.collaboration.util.resolveRelative
 import org.jetbrains.plugins.gitlab.api.*
 import org.jetbrains.plugins.gitlab.api.dto.GitLabCommitRestDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabDiffDTO
-import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestId
 import org.jetbrains.plugins.gitlab.util.GitLabApiRequestName
 import java.net.URI
 import java.net.http.HttpResponse
@@ -19,10 +18,10 @@ suspend fun GitLabApi.Rest.loadMergeRequestDiffs(serverPath: GitLabServerPath, u
   }
 }
 
-fun getMergeRequestDiffsURI(project: GitLabProjectCoordinates, mergeRequest: GitLabMergeRequestId): URI =
+fun getMergeRequestDiffsURI(project: GitLabProjectCoordinates, mrIid: String): URI =
   project.restApiUri
     .resolveRelative("merge_requests")
-    .resolveRelative(mergeRequest.iid)
+    .resolveRelative(mrIid)
     .resolveRelative("diffs")
 
 suspend fun GitLabApi.Rest.loadCommitDiffs(serverPath: GitLabServerPath, uri: URI): HttpResponse<out List<GitLabDiffDTO>> {

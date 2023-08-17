@@ -17,7 +17,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.GitlabIcons
-import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestId
 import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabToolWindowViewModel
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 
@@ -25,18 +24,18 @@ import org.jetbrains.plugins.gitlab.util.GitLabBundle
 class GitLabMergeRequestOnCurrentBranchService(project: Project, cs: CoroutineScope) {
 
   @OptIn(ExperimentalCoroutinesApi::class)
-  private val mergeRequestIdState: StateFlow<GitLabMergeRequestId?> =
+  private val mergeRequestIdState: StateFlow<String?> =
     project.service<GitLabToolWindowViewModel>().projectVm.flatMapLatest {
       it?.mergeRequestOnCurrentBranch ?: flowOf(null)
     }.stateIn(cs, SharingStarted.Eagerly, null)
 
   class BranchPresenter : GitCurrentBranchPresenter {
     override fun getPresentation(repository: GitRepository): GitCurrentBranchPresenter.Presentation? {
-      val mergeRequest = repository.project.service<GitLabMergeRequestOnCurrentBranchService>().mergeRequestIdState.value ?: return null
+      val mergeRequestIid = repository.project.service<GitLabMergeRequestOnCurrentBranchService>().mergeRequestIdState.value ?: return null
       val currentBranchName = StringUtil.escapeMnemonics(GitBranchUtil.getDisplayableBranchText(repository) { branchName ->
         GitBranchPopupActions.truncateBranchName(branchName, repository.project)
       })
-      val text = GitLabBundle.message("merge.request.on.branch", mergeRequest.iid, currentBranchName)
+      val text = GitLabBundle.message("merge.request.on.branch", mergeRequestIid, currentBranchName)
       return GitCurrentBranchPresenter.Presentation(
         GitlabIcons.GitLabLogo,
         text,

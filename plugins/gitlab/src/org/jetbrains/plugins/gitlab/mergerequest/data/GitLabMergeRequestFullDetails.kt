@@ -8,7 +8,7 @@ import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestDTO
 import java.util.*
 
 data class GitLabMergeRequestFullDetails(
-  override val iid: String,
+  val iid: String,
   val title: @NlsSafe String,
   val createdAt: Date,
   val author: GitLabUserDTO,
@@ -34,7 +34,7 @@ data class GitLabMergeRequestFullDetails(
   val userPermissions: GitLabMergeRequestPermissionsDTO,
   val shouldBeRebased: Boolean,
   val rebaseInProgress: Boolean
-) : GitLabMergeRequestId {
+) {
 
   companion object {
     fun fromGraphQL(dto: GitLabMergeRequestDTO) = GitLabMergeRequestFullDetails(

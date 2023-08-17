@@ -75,7 +75,7 @@ class GitLabMergeRequestChangesImpl(
       }
     }
     val headPatches = withContext(Dispatchers.IO) {
-      ApiPageUtil.createPagesFlowByLinkHeader(getMergeRequestDiffsURI(glProject, mergeRequestDetails)) {
+      ApiPageUtil.createPagesFlowByLinkHeader(getMergeRequestDiffsURI(glProject, mergeRequestDetails.iid)) {
         api.rest.loadMergeRequestDiffs(glProject.serverPath, it)
       }.map { it.body() }.foldToList(GitLabDiffDTO::toPatch)
     }
