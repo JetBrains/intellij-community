@@ -34,9 +34,11 @@ import org.jetbrains.kotlin.idea.facet.KotlinFacet
 import org.jetbrains.kotlin.idea.statistic.FilterableTestStatisticsEventLoggerProvider
 import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.test.utils.IgnoreTests
 import org.junit.Assert
 import org.junit.ComparisonFailure
 import java.io.File
+import java.nio.file.Paths
 
 abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), QuickFixTest {
     companion object {
@@ -93,6 +95,10 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
         )
     }
 
+    protected open val disableTestDirective: String
+        get() = if (isFirPlugin) IgnoreTests.DIRECTIVES.IGNORE_FIR else IgnoreTests.DIRECTIVES.IGNORE_FE10
+
+
     protected open fun doTest(beforeFileName: String) {
         val beforeFile = File(beforeFileName)
         val beforeFileText = FileUtil.loadFile(beforeFile)
@@ -100,16 +106,23 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
         withCustomCompilerOptions(beforeFileText, project, module) {
             loadScriptConfiguration()
 
-            val inspections = parseInspectionsToEnable(beforeFileName, beforeFileText).toTypedArray()
-            try {
-                myFixture.enableInspections(*inspections)
+            IgnoreTests.runTestIfNotDisabledByFileDirective(Paths.get(beforeFileName), disableTestDirective) {
+                val inspections = parseInspectionsToEnable(beforeFileName, beforeFileText).toTypedArray()
 
-                doKotlinQuickFixTest(beforeFileName)
-                checkForUnexpectedErrors()
+                try {
+                    myFixture.enableInspections(*inspections)
+
+                    doKotlinQuickFixTest(beforeFileName)
+                    checkForUnexpectedErrors()
+                } finally {
+                    myFixture.disableInspections(*inspections)
+                }
+            }
+            // if `disableTestDirective` is present in the file and `runTestIfNotDisabledByFileDirective` doesn't throw an exception
+            // (meaning that the test indeed doesn't pass), don't run other checks
+            if (beforeFileText.lines().none { it.startsWith(disableTestDirective) }) {
                 checkFusEvents(beforeFile, beforeFileText)
                 PsiTestUtil.checkPsiStructureWithCommit(file, PsiTestUtil::checkPsiMatchesTextIgnoringNonCode)
-            } finally {
-                myFixture.disableInspections(*inspections)
             }
         }
     }

@@ -17,11 +17,7 @@ abstract class AbstractFe10BindingQuickFixTest : AbstractQuickFixTest() {
         return KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
     }
 
-    override fun doTest(beforeFileName: String) {
-        IgnoreTests.runTestIfNotDisabledByFileDirective(mainFile().toPath(), IgnoreTests.DIRECTIVES.IGNORE_FE10_BINDING_BY_FIR, "after") {
-            super.doTest(beforeFileName)
-        }
-    }
+    override val disableTestDirective: String get() = IgnoreTests.DIRECTIVES.IGNORE_FE10_BINDING_BY_FIR
 
     override fun setUp() {
         super.setUp()
