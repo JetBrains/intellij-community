@@ -440,12 +440,12 @@ public final class ProgressRunner<R> {
     @NotNull CompletableFuture<? extends @NotNull ProgressIndicator> progressIndicatorFuture
   ) {
     CompletableFuture<R> resultFuture = new CompletableFuture<>();
-    ChildContext childContextAndJob = Propagation.createChildContext();
-    CoroutineContext childContext = childContextAndJob.getContext();
-    CompletableJob childJob = childContextAndJob.getJob();
-    if (childJob != null) {
+    ChildContext childContext = Propagation.createChildContext();
+    CoroutineContext context = childContext.getContext();
+    CompletableJob job = childContext.getJob();
+    if (job != null) {
       // cancellation of the Job cancels the future
-      childJob.invokeOnCompletion(true, true, (throwable) -> {
+      job.invokeOnCompletion(true, true, (throwable) -> {
         if (throwable != null) {
           resultFuture.completeExceptionally(throwable);
         }
@@ -458,11 +458,11 @@ public final class ProgressRunner<R> {
         return;
       }
       Runnable runnable = new ProgressRunnable<>(resultFuture, task, progressIndicator);
-      Runnable contextRunnable = childContext.equals(EmptyCoroutineContext.INSTANCE) ? runnable : (ContextAwareRunnable)() -> {
-        CoroutineContext effectiveContext = childContext.plus(asContextElement(progressIndicator.getModalityState()));
+      Runnable contextRunnable = context.equals(EmptyCoroutineContext.INSTANCE) ? runnable : (ContextAwareRunnable)() -> {
+        CoroutineContext effectiveContext = context.plus(asContextElement(progressIndicator.getModalityState()));
         try (AccessToken ignored = ThreadContext.installThreadContext(effectiveContext, false)) {
-          if (childJob != null) {
-            Propagation.runAsCoroutine(childJob, runnable);
+          if (job != null) {
+            Propagation.runAsCoroutine(job, runnable);
           }
           else {
             runnable.run();
