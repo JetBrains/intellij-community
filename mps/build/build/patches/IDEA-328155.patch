@@ -1,0 +1,17 @@
+Index: platform/lang-impl/src/com/intellij/codeInsight/codeVision/settings/CodeVisionGroupSettingProvider.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/platform/lang-impl/src/com/intellij/codeInsight/codeVision/settings/CodeVisionGroupSettingProvider.kt b/platform/lang-impl/src/com/intellij/codeInsight/codeVision/settings/CodeVisionGroupSettingProvider.kt
+--- a/platform/lang-impl/src/com/intellij/codeInsight/codeVision/settings/CodeVisionGroupSettingProvider.kt	(revision 89fc0bfc19af35dc228bbc7d07dd247a069a85a1)
++++ b/platform/lang-impl/src/com/intellij/codeInsight/codeVision/settings/CodeVisionGroupSettingProvider.kt	(date 1688119692629)
+@@ -31,7 +31,7 @@
+ 
+   private fun getLanguageSpecificDescriptionOrDefault(): @Nls String {
+     val languageId = previewLanguage?.id ?: return defaultDescription
+-    val ep = CodeVisionSettingsPreviewLanguage.EP_NAME.extensionList.first { it.language == languageId } ?: return defaultDescription
++    val ep = CodeVisionSettingsPreviewLanguage.EP_NAME.extensionList.firstOrNull { it.language == languageId } ?: return defaultDescription
+     val bundle = ep.findBundle() ?: return defaultDescription
+     return BundleBase.messageOrDefault(bundle, "$languageId.codeLens.$groupId.description", defaultDescription)!!
+   }
