@@ -32,10 +32,6 @@ public final class MavenModuleNameMapper {
                        dedicatedModuleDir);
   }
 
-  public static String resolveModuleName(MavenProject project) {
-    return new NameItem(project, null).getResultName();
-  }
-
   private static void resolveModuleNames(Collection<MavenProject> projects,
                                          Map<MavenProject, Module> mavenProjectToModule,
                                          Map<MavenProject, String> mavenProjectToModuleName) {
@@ -99,8 +95,6 @@ public final class MavenModuleNameMapper {
     for (NameItem each : names) {
       mavenProjectToModuleName.put(each.project, each.getResultName());
     }
-
-    //assert new HashSet<String>(mavenProjectToModuleName.values()).size() == mavenProjectToModuleName.size() : new HashMap<MavenProject, String>(mavenProjectToModuleName);
   }
 
   private static class NameItem implements Comparable<NameItem> {
