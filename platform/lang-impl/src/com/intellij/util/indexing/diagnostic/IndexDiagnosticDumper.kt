@@ -29,10 +29,13 @@ import com.intellij.util.io.directoryStreamIfExists
 import com.intellij.util.io.fileSizeSafe
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
+import java.io.BufferedReader
+import java.io.Reader
 import java.nio.file.Files
 import java.nio.file.Path
 import java.time.LocalDateTime
 import java.util.concurrent.TimeUnit
+import java.util.function.Supplier
 import kotlin.io.path.*
 import kotlin.math.min
 import kotlin.streams.asSequence
@@ -140,15 +143,19 @@ class IndexDiagnosticDumper : Disposable {
       jacksonMapper.readValue(file.toFile(), JsonIndexDiagnostic::class.java)
 
     fun readJsonIndexingActivityDiagnostic(file: Path): JsonIndexingActivityDiagnostic? {
-      val appInfo = fastReadAppInfo(file) ?: return null
-      val runtimeInfo = fastReadRuntimeInfo(file) ?: return null
+      return readJsonIndexingActivityDiagnostic { file.bufferedReader() }
+    }
 
-      val diagnosticType = fastReadJsonField(file, "type", IndexingActivityType::class.java) ?: return null
+    fun readJsonIndexingActivityDiagnostic(supplier: Supplier<Reader>): JsonIndexingActivityDiagnostic? {
+      val appInfo = fastReadAppInfo(supplier.get()) ?: return null
+      val runtimeInfo = fastReadRuntimeInfo(supplier.get()) ?: return null
+
+      val diagnosticType = fastReadJsonField(supplier.get(), "type", IndexingActivityType::class.java) ?: return null
       val historyClass: Class<out JsonProjectIndexingActivityHistory> = when (diagnosticType) {
         IndexingActivityType.Scanning -> JsonProjectScanningHistory::class.java
         IndexingActivityType.DumbIndexing -> JsonProjectDumbIndexingHistory::class.java
       }
-      val history: JsonProjectIndexingActivityHistory = fastReadJsonField(file, "projectIndexingActivityHistory", historyClass)
+      val history: JsonProjectIndexingActivityHistory = fastReadJsonField(supplier.get(), "projectIndexingActivityHistory", historyClass)
                                                         ?: return null
       return JsonIndexingActivityDiagnostic(appInfo = appInfo, runtimeInfo = runtimeInfo, type = diagnosticType,
                                             projectIndexingActivityHistory = history)
@@ -231,8 +238,12 @@ class IndexDiagnosticDumper : Disposable {
                                               indexingDiagnosticsSizeLimitOfFilesInMiBPerProject * 1024 * 1024.toLong()).first
 
     private fun <T> fastReadJsonField(jsonFile: Path, propertyName: String, type: Class<T>): T? {
+      return fastReadJsonField(jsonFile.bufferedReader(), propertyName, type)
+    }
+
+    private fun <T> fastReadJsonField(bufferedReader: Reader, propertyName: String, type: Class<T>): T? {
       try {
-        jsonFile.bufferedReader().use { reader ->
+        bufferedReader.use { reader ->
           jacksonMapper.factory.createParser(reader).use { parser ->
             while (parser.nextToken() != null) {
               val property = parser.currentName
@@ -250,10 +261,10 @@ class IndexDiagnosticDumper : Disposable {
       return null
     }
 
-    private fun fastReadAppInfo(jsonFile: Path): JsonIndexDiagnosticAppInfo? =
+    private fun fastReadAppInfo(jsonFile: Reader): JsonIndexDiagnosticAppInfo? =
       fastReadJsonField(jsonFile, "appInfo", JsonIndexDiagnosticAppInfo::class.java)
 
-    private fun fastReadRuntimeInfo(jsonFile: Path): JsonRuntimeInfo? =
+    private fun fastReadRuntimeInfo(jsonFile: Reader): JsonRuntimeInfo? =
       fastReadJsonField(jsonFile, "runtimeInfo", JsonRuntimeInfo::class.java)
   }
 
@@ -441,7 +452,7 @@ class IndexDiagnosticDumper : Disposable {
   private fun fastReadIndexingHistoryTimes(jsonFile: Path): JsonProjectIndexingHistoryTimes? =
     fastReadJsonField(jsonFile, "times", JsonProjectIndexingHistoryTimes::class.java)
 
-  private fun fastReadFileCount(jsonFile: Path): JsonProjectIndexingFileCount? =
+  private fun fastReadFileCount(jsonFile: BufferedReader): JsonProjectIndexingFileCount? =
     fastReadJsonField(jsonFile, "fileCount", JsonProjectIndexingFileCount::class.java)
 
   private fun deleteOutdatedDiagnostics(existingDiagnostics: List<ExistingDiagnostic>): List<ExistingDiagnostic> {
@@ -511,9 +522,9 @@ class IndexDiagnosticDumper : Disposable {
         .filter { file -> file.fileName.toString().startsWith(FILE_NAME_PREFIX) && file.extension == "json" }
         .mapNotNull { jsonFile ->
           val times = fastReadIndexingHistoryTimes(jsonFile) ?: return@mapNotNull null
-          val appInfo = fastReadAppInfo(jsonFile) ?: return@mapNotNull null
-          val runtimeInfo = fastReadRuntimeInfo(jsonFile) ?: return@mapNotNull null
-          val fileCount = fastReadFileCount(jsonFile)
+          val appInfo = fastReadAppInfo(jsonFile.bufferedReader()) ?: return@mapNotNull null
+          val runtimeInfo = fastReadRuntimeInfo(jsonFile.bufferedReader()) ?: return@mapNotNull null
+          val fileCount = fastReadFileCount(jsonFile.bufferedReader())
 
           val htmlFile = jsonFile.resolveSibling(jsonFile.nameWithoutExtension + ".html")
           if (!htmlFile.exists()) {
@@ -529,8 +540,8 @@ class IndexDiagnosticDumper : Disposable {
       files.asSequence()
         .filter { file -> file.fileName.toString().startsWith(FILE_NAME_PREFIX) && file.extension == "json" }
         .mapNotNull { jsonFile ->
-          val appInfo = fastReadAppInfo(jsonFile) ?: return@mapNotNull null
-          val runtimeInfo = fastReadRuntimeInfo(jsonFile) ?: return@mapNotNull null
+          val appInfo = fastReadAppInfo(jsonFile.bufferedReader()) ?: return@mapNotNull null
+          val runtimeInfo = fastReadRuntimeInfo(jsonFile.bufferedReader()) ?: return@mapNotNull null
 
           val htmlFile = jsonFile.resolveSibling(jsonFile.nameWithoutExtension + ".html")
           if (!htmlFile.exists()) {
