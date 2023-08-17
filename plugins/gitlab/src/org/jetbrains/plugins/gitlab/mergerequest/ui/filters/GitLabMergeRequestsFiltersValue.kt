@@ -5,6 +5,7 @@ import com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchValu
 import com.intellij.openapi.util.NlsSafe
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
+import org.jetbrains.plugins.gitlab.api.SinceGitLab
 import java.net.URLEncoder
 
 @Serializable
@@ -21,6 +22,7 @@ data class GitLabMergeRequestsFiltersValue(
   @Transient
   override val filterCount: Int = calcFilterCount()
 
+  @SinceGitLab("10.4")
   fun toSearchQuery(): String {
     val result = mutableListOf("scope=all")
     if (searchQuery != null) {

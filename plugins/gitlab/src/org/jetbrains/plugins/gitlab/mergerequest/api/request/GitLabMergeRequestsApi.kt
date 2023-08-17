@@ -21,6 +21,7 @@ import java.net.URI
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 
+@SinceGitLab("7.0", note = "?search available since 10.4, ?scope since 9.5")
 suspend fun GitLabApi.Rest.loadMergeRequests(project: GitLabProjectCoordinates,
                                              searchQuery: String): HttpResponse<out List<GitLabMergeRequestShortRestDTO>> {
   val uri = project.restApiUri.resolveRelative("merge_requests").withQuery(searchQuery)
@@ -56,18 +57,23 @@ suspend fun GitLabApi.GraphQL.findMergeRequestsByBranch(project: GitLabProjectCo
   }
 }
 
-private class MergeRequestsConnection(pageInfo: GraphQLCursorPageInfoDTO, nodes: List<GitLabMergeRequestIidDTO>)
-  : GraphQLConnectionDTO<GitLabMergeRequestIidDTO>(pageInfo, nodes)
-
+@SinceGitLab("13.2")
 fun getMergeRequestStateEventsUri(project: GitLabProjectCoordinates, mrIid: String): URI =
   project.restApiUri.resolveRelative("merge_requests").resolveRelative(mrIid).resolveRelative("resource_state_events")
 
+private class MergeRequestsConnection(pageInfo: GraphQLCursorPageInfoDTO, nodes: List<GitLabMergeRequestIidDTO>)
+  : GraphQLConnectionDTO<GitLabMergeRequestIidDTO>(pageInfo, nodes)
+
+@SinceGitLab("11.4", note = "Maybe released in 11.3-rc5")
 fun getMergeRequestLabelEventsUri(project: GitLabProjectCoordinates, mrIid: String): URI =
   project.restApiUri.resolveRelative("merge_requests").resolveRelative(mrIid).resolveRelative("resource_label_events")
 
+@SinceGitLab("13.1")
 fun getMergeRequestMilestoneEventsUri(project: GitLabProjectCoordinates, mrIid: String): URI =
   project.restApiUri.resolveRelative("merge_requests").resolveRelative(mrIid).resolveRelative("resource_milestone_events")
 
+@SinceGitLab("10.6", editions = [GitLabEdition.Enterprise])
+@SinceGitLab("13.3", editions = [GitLabEdition.Community], note = "Maybe released in 13.2-rc42 or so")
 suspend fun GitLabApi.Rest.mergeRequestApprove(
   project: GitLabProjectCoordinates,
   mrIid: String
@@ -82,6 +88,8 @@ suspend fun GitLabApi.Rest.mergeRequestApprove(
   }
 }
 
+@SinceGitLab("10.6", editions = [GitLabEdition.Enterprise])
+@SinceGitLab("13.3", editions = [GitLabEdition.Community], note = "Maybe released in 13.2-rc42 or so")
 suspend fun GitLabApi.Rest.mergeRequestUnApprove(
   project: GitLabProjectCoordinates,
   mrIid: String
