@@ -32,6 +32,7 @@ import com.intellij.workspaceModel.ide.EntitiesOrphanage
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
 import com.intellij.platform.backend.workspace.WorkspaceModelTopics
+import com.intellij.platform.backend.workspace.WorkspaceModelUnloadedStorageChangeListener
 import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMs
 import com.intellij.platform.workspace.jps.*
 import com.intellij.platform.workspace.jps.serialization.impl.*
@@ -273,7 +274,11 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
       }
     }
     connection.subscribe(WorkspaceModelTopics.CHANGED, listener)
-    connection.subscribe(WorkspaceModelTopics.UNLOADED_ENTITIES_CHANGED, listener)
+    connection.subscribe(WorkspaceModelTopics.UNLOADED_ENTITIES_CHANGED, object : WorkspaceModelUnloadedStorageChangeListener {
+      override fun changed(event: VersionedStorageChange) {
+        listener.changed(event)
+      }
+    })
   }
 
   suspend fun loadProjectToEmptyStorage(project: Project): LoadedProjectEntities? {
