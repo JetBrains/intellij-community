@@ -133,9 +133,8 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       CancellablePromise<List<AnAction>> promise = toolbar.myLastUpdate;
       toolbar.myLastUpdate = null;
       if (promise != null) promise.cancel();
-      toolbar.myVisibleActions.clear();
       Image image = !isTestMode && toolbar.isShowing() ? paintToImage(toolbar) : null;
-      toolbar.removeAll();
+      toolbar.reset();
       if (image != null) toolbar.myCachedImage = image;
       else if (!isTestMode) toolbar.addLoadingIcon();
     }
@@ -1873,8 +1872,16 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     return myPresentationFactory.getPresentation(action);
   }
 
-  public void clearPresentationCache() {
+  /**
+   * Clear internal caches.
+   * <p>
+   * This method can be called after updating {@link ActionToolbarImpl#myActionGroup}
+   * to make sure toolbar does not reference old {@link AnAction} instances.
+   */
+  public void reset() {
     myPresentationFactory.reset();
+    myVisibleActions.clear();
+    removeAll();
   }
 
   public interface SecondaryGroupUpdater {

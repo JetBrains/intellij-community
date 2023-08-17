@@ -187,12 +187,12 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, goToChangeFactory
 
   private fun buildToolbar(viewerActions: List<AnAction?>?) {
     collectToolbarActions(viewerActions)
-    (leftToolbar as ActionToolbarImpl).clearPresentationCache()
+    (leftToolbar as ActionToolbarImpl).reset()
     leftToolbar.updateActionsImmediately()
     leftToolbar.background = CombinedDiffUI.MAIN_HEADER_BACKGROUND
     leftToolbar.border = JBUI.Borders.empty()
     DiffUtil.recursiveRegisterShortcutSet(leftToolbarGroup, mainPanel, null)
-    (rightToolbar as ActionToolbarImpl).clearPresentationCache()
+    (rightToolbar as ActionToolbarImpl).reset()
     rightToolbar.updateActionsImmediately()
     rightToolbar.background = CombinedDiffUI.MAIN_HEADER_BACKGROUND
     rightToolbar.border = JBUI.Borders.empty()

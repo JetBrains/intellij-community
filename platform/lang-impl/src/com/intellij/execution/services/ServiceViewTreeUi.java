@@ -164,7 +164,7 @@ class ServiceViewTreeUi implements ServiceViewUi {
     }
     ActionToolbar serviceActionToolbar = myServiceActionToolbar;
     if (serviceActionToolbar != null) {
-      ((ActionToolbarImpl)serviceActionToolbar).clearPresentationCache();
+      ((ActionToolbarImpl)serviceActionToolbar).reset();
       serviceActionToolbar.updateActionsImmediately();
     }
     ApplicationManager.getApplication().invokeLater(() -> {

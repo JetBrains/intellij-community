@@ -610,12 +610,12 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
   protected void buildToolbar(@Nullable List<? extends AnAction> viewerActions) {
     collectToolbarActions(viewerActions);
 
-    ((ActionToolbarImpl)myToolbar).clearPresentationCache();
+    ((ActionToolbarImpl)myToolbar).reset(); // do not leak previous DiffViewer via caches
     myToolbar.updateActionsImmediately();
     recursiveRegisterShortcutSet(myToolbarGroup, myMainPanel, null);
 
     if (myIsNewToolbar) {
-      ((ActionToolbarImpl)myRightToolbar).clearPresentationCache();
+      ((ActionToolbarImpl)myRightToolbar).reset();
       myRightToolbar.updateActionsImmediately();
       recursiveRegisterShortcutSet(myRightToolbarGroup, myMainPanel, null);
     }
