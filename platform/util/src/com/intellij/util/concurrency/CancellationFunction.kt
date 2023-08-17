@@ -7,17 +7,17 @@ import java.util.function.Function
 
 @ApiStatus.Internal
 class CancellationFunction<T, U> internal constructor(
-  private val myJob: CompletableJob,
-  private val myFunction: Function<T, U>,
-  ) : Function<T, U> {
+  private val job: CompletableJob,
+  private val function: Function<T, U>,
+) : Function<T, U> {
 
   override fun apply(t: T): U {
-    return runAsCoroutine(myJob) {
-      myFunction.apply(t)
+    return runAsCoroutine(job) {
+      function.apply(t)
     }
   }
 
   override fun toString(): String {
-    return myFunction.toString()
+    return function.toString()
   }
 }
