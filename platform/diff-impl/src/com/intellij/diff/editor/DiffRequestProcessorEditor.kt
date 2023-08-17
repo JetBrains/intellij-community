@@ -4,7 +4,6 @@ package com.intellij.diff.editor
 import com.intellij.diff.impl.DiffRequestProcessor
 import com.intellij.diff.impl.DiffRequestProcessorListener
 import com.intellij.diff.util.DiffUserDataKeysEx
-import com.intellij.diff.util.DiffUtil
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
@@ -24,9 +23,14 @@ open class DiffRequestProcessorEditor(
   }
 
   override fun dispose() {
-    if (!DiffUtil.isUserDataFlagSet(DiffUserDataKeysEx.DIFF_IN_EDITOR_WITH_EXPLICIT_DISPOSABLE, processor.context)) {
+    val explicitDisposable = processor.getContextUserData(DiffUserDataKeysEx.DIFF_IN_EDITOR_WITH_EXPLICIT_DISPOSABLE)
+    if (explicitDisposable != null) {
+      explicitDisposable.run()
+    }
+    else {
       Disposer.dispose(processor)
     }
+
     super.dispose()
   }
 
