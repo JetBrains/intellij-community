@@ -55,9 +55,8 @@ public class ColorIcon extends EmptyIcon {
     myArc = icon.myArc;
   }
 
-  @NotNull
   @Override
-  public ColorIcon copy() {
+  public @NotNull ColorIcon copy() {
     return new ColorIcon(this);
   }
 

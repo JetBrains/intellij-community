@@ -150,8 +150,7 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
     return myViewFactory;
   }
 
-  @NotNull
-  private static List<LinkController> filterLinkControllerListeners(Object @NotNull [] listeners) {
+  private static @NotNull List<LinkController> filterLinkControllerListeners(Object @NotNull [] listeners) {
     return ContainerUtil.mapNotNull(listeners, o -> ObjectUtils.tryCast(o, LinkController.class));
   }
 
@@ -339,9 +338,8 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
         myDelegate = delegate;
       }
 
-      @NotNull
       @Override
-      public Iterator<HTMLDocument.Iterator> iterator() {
+      public @NotNull Iterator<HTMLDocument.Iterator> iterator() {
         return new Iterator<>() {
           @Override
           public boolean hasNext() {

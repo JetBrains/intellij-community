@@ -18,8 +18,8 @@ import java.awt.*;
 
 public class TitlePanel extends CaptionPanel {
   private final JLabel myLabel;
-  @Nullable private Icon myRegular;
-  @Nullable private Icon myInactive;
+  private @Nullable Icon myRegular;
+  private @Nullable Icon myInactive;
   private boolean obeyPreferredWidth;
   private boolean isPopup = false;
   private boolean useHeaderInsets = false;
@@ -111,8 +111,7 @@ public class TitlePanel extends CaptionPanel {
     return preferredSize;
   }
 
-  @NotNull
-  public JLabel getLabel() {
+  public @NotNull JLabel getLabel() {
     return myLabel;
   }
 

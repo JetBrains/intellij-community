@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
 import com.intellij.openapi.util.SystemInfo;
@@ -72,8 +72,7 @@ public class JBFont extends Font {
     return UIManager.getFont("Label.font");
   }
 
-  @NotNull
-  public static JBFont label() {
+  public static @NotNull JBFont label() {
     return create(labelFont(), false);
   }
 
@@ -81,8 +80,7 @@ public class JBFont extends Font {
     return create(font, true);
   }
 
-  @NotNull
-  public static JBFont create(@NotNull Font font, boolean tryToScale) {
+  public static @NotNull JBFont create(@NotNull Font font, boolean tryToScale) {
     if (font instanceof JBFont) {
       return ((JBFont)font);
     }

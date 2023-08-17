@@ -13,8 +13,7 @@ import java.util.Collections;
 /**
  * see <a href="http://developer.apple.com/documentation/Cocoa/Reference/ObjCRuntimeRef/Reference/reference.html">Documentation</a>
  */
-@NonNls
-public final class CoreGraphics {
+public final @NonNls class CoreGraphics {
   private static final CoreGraphicsLibrary myCoreGraphicsLibrary;
 
   static {

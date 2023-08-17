@@ -231,8 +231,7 @@ public final class ColorUtil {
   /**
    * Returns the color that is the result of having a foreground color on top of a background color
    */
-  @NotNull
-  public static Color alphaBlending(@NotNull Color foreground, @NotNull Color background) {
+  public static @NotNull Color alphaBlending(@NotNull Color foreground, @NotNull Color background) {
     return new Color(
       alphaBlendingComponent(foreground.getRed(), foreground.getAlpha(), background.getRed(), background.getAlpha()),
       alphaBlendingComponent(foreground.getGreen(), foreground.getAlpha(), background.getGreen(), background.getAlpha()),
@@ -280,8 +279,7 @@ public final class ColorUtil {
   /**
    * Returns the color that, placed underneath the colors background and foreground, would result in the worst contrast
    */
-  @NotNull
-  public static Color worstContrastColor(@NotNull Color foreground, @NotNull Color background) {
+  public static @NotNull Color worstContrastColor(@NotNull Color foreground, @NotNull Color background) {
     int backgroundAlpha = background.getAlpha();
     int r = worstContrastComponent(foreground.getRed(), background.getRed(), backgroundAlpha);
     int g = worstContrastComponent(foreground.getGreen(), background.getGreen(), backgroundAlpha);

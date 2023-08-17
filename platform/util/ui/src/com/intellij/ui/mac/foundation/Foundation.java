@@ -21,8 +21,7 @@ import java.util.*;
 /**
  * see <a href="http://developer.apple.com/documentation/Cocoa/Reference/ObjCRuntimeRef/Reference/reference.html">Documentation</a>
  */
-@NonNls
-public final class Foundation {
+public final @NonNls class Foundation {
   private static final FoundationLibrary myFoundationLibrary;
   private static final Function myObjcMsgSend;
 
@@ -154,14 +153,12 @@ public final class Foundation {
     return myFoundationLibrary.class_isMetaClass(cls);
   }
 
-  @Nullable
-  public static String stringFromSelector(Pointer selector) {
+  public static @Nullable String stringFromSelector(Pointer selector) {
     ID id = myFoundationLibrary.NSStringFromSelector(selector);
     return ID.NIL.equals(id) ? null : toStringViaUTF8(id);
     }
 
-  @Nullable
-  public static String stringFromClass(ID aClass) {
+  public static @Nullable String stringFromClass(ID aClass) {
     ID id = myFoundationLibrary.NSStringFromClass(aClass);
     return ID.NIL.equals(id) ? null : toStringViaUTF8(id);
   }
@@ -182,14 +179,14 @@ public final class Foundation {
     return myFoundationLibrary.objc_getMetaClass(className);
   }
 
-  public static boolean isPackageAtPath(@NotNull final String path) {
+  public static boolean isPackageAtPath(final @NotNull String path) {
     final ID workspace = invoke("NSWorkspace", "sharedWorkspace");
     final ID result = invoke(workspace, createSelector("isFilePackageAtPath:"), nsString(path));
 
     return result.booleanValue();
   }
 
-  public static boolean isPackageAtPath(@NotNull final File file) {
+  public static boolean isPackageAtPath(final @NotNull File file) {
     if (!file.isDirectory()) return false;
     return isPackageAtPath(file.getPath());
   }
@@ -202,8 +199,7 @@ public final class Foundation {
     private static final Pointer initWithBytesLengthEncodingSel = createSelector("initWithBytes:length:encoding:");
     private static final long nsEncodingUTF16LE = convertCFEncodingToNS(FoundationLibrary.kCFStringEncodingUTF16LE);
 
-    @NotNull
-    public static ID create(@NotNull String s) {
+    public static @NotNull ID create(@NotNull String s) {
       // Use a byte[] rather than letting jna do the String -> char* marshalling itself.
       // Turns out about 10% quicker for long strings.
       if (s.isEmpty()) {
@@ -217,8 +213,7 @@ public final class Foundation {
     }
   }
 
-  @NotNull
-  public static ID nsString(@Nullable String s) {
+  public static @NotNull ID nsString(@Nullable String s) {
     return s == null ? ID.NIL : NSString.create(s);
   }
 
@@ -230,8 +225,7 @@ public final class Foundation {
     return invoke(invoke(invoke("NSUUID", "alloc"), "initWithUUIDString:", nsString(uuid)), "autorelease");
   }
 
-  @Nullable
-  public static String toStringViaUTF8(ID cfString) {
+  public static @Nullable String toStringViaUTF8(ID cfString) {
     if (ID.NIL.equals(cfString)) return null;
 
     int lengthInChars = myFoundationLibrary.CFStringGetLength(cfString);
@@ -252,8 +246,7 @@ public final class Foundation {
     return StringUtil.notNullize(description);
   }
 
-  @Nullable
-  public static String getEncodingName(long nsStringEncoding) {
+  public static @Nullable String getEncodingName(long nsStringEncoding) {
     long cfEncoding = myFoundationLibrary.CFStringConvertNSStringEncodingToEncoding(nsStringEncoding);
     ID pointer = myFoundationLibrary.CFStringConvertEncodingToIANACharSetName(cfEncoding);
     String name = toStringViaUTF8(pointer);
@@ -398,8 +391,7 @@ public final class Foundation {
 
     public NSArray keys() { return new NSArray(invoke(myDelegate, "allKeys")); }
 
-    @NotNull
-    public static Map<String, String> toStringMap(@Nullable ID delegate) {
+    public static @NotNull Map<String, String> toStringMap(@Nullable ID delegate) {
       Map<String, String> result = new HashMap<>();
       if (isNil(delegate)) {
         return result;
@@ -441,8 +433,7 @@ public final class Foundation {
       return invoke(myDelegate, "objectAtIndex:", index);
     }
 
-    @NotNull
-    public List<ID> getList() {
+    public @NotNull List<ID> getList() {
       List<ID> result = new ArrayList<>();
       for (int i = 0; i < count(); i++) {
         result.add(at(i));
@@ -543,15 +534,13 @@ public final class Foundation {
     return invoke("NSDictionary", "dictionaryWithObjects:forKeys:", nsData, nsKeys);
   }
 
-  @NotNull
-  public static PointerType createPointerReference() {
+  public static @NotNull PointerType createPointerReference() {
     PointerType reference = new PointerByReference(new Memory(Native.POINTER_SIZE));
     reference.getPointer().clear(Native.POINTER_SIZE);
     return reference;
   }
 
-  @NotNull
-  public static ID castPointerToNSError(@NotNull PointerType pointerType) {
+  public static @NotNull ID castPointerToNSError(@NotNull PointerType pointerType) {
     return new ID(pointerType.getPointer().getLong(0));
   }
 

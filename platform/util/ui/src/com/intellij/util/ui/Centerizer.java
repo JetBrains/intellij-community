@@ -32,8 +32,7 @@ public final class Centerizer extends JPanel {
     add(comp);
   }
 
-  @Nullable
-  private Component getComponent() {
+  private @Nullable Component getComponent() {
     if (getComponentCount() != 1) return null;
     return getComponent(0);
   }

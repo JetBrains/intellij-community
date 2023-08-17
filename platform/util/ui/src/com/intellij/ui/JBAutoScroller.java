@@ -317,13 +317,11 @@ public final class JBAutoScroller implements ActionListener {
       addSelectionListener(newSelectionModel);
     }
 
-    @Nullable
-    private ListSelectionModel getRowSelectionModel() {
+    private @Nullable ListSelectionModel getRowSelectionModel() {
       return myTable.getSelectionModel();
     }
 
-    @Nullable
-    private ListSelectionModel getColumnSelectionModel() {
+    private @Nullable ListSelectionModel getColumnSelectionModel() {
       return myTable.getColumnModel().getSelectionModel();
     }
 

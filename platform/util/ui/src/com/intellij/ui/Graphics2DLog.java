@@ -529,8 +529,7 @@ public final class Graphics2DLog extends Graphics2D {
     return myPeer.getClipBounds(r);
   }
 
-  @Nullable
-  private static String toHex(Color c) {
+  private static @Nullable String toHex(Color c) {
     return c == null ? null : ColorUtil.toHex(c);
   }
 }

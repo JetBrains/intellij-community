@@ -25,8 +25,8 @@ public final class CollapsiblePanel extends JPanel {
   private Label myTitleLabel;
   public static final KeyStroke LEFT_KEY_STROKE = KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, 0);
   public static final KeyStroke RIGHT_KEY_STROKE = KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0);
-  @NonNls public static final String EXPAND = "expand";
-  @NonNls public static final String COLLAPSE = "collapse";
+  public static final @NonNls String EXPAND = "expand";
+  public static final @NonNls String COLLAPSE = "collapse";
 
   public CollapsiblePanel(JComponent content, boolean collapseButtonAtLeft,
                           boolean isCollapsed, Icon collapseIcon, Icon expandIcon,

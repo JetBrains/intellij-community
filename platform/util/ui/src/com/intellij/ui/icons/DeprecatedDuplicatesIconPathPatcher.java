@@ -13,7 +13,7 @@ import java.util.Map;
  * @author Konstantin Bulenkov
  */
 final class DeprecatedDuplicatesIconPathPatcher extends IconPathPatcher {
-  @NonNls private static final Map<String, String> ourDeprecatedIconsReplacements = new HashMap<>();
+  private static final @NonNls Map<String, String> ourDeprecatedIconsReplacements = new HashMap<>();
 
   static {
     ourDeprecatedIconsReplacements.put("/actions/prevfile.png", "AllIcons.Actions.Back");

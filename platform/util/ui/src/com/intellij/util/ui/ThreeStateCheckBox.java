@@ -65,13 +65,11 @@ public class ThreeStateCheckBox extends JCheckBox {
     setState(initial);
   }
 
-  @NotNull
-  protected State nextState() {
+  protected @NotNull State nextState() {
     return nextState(myState, myThirdStateEnabled);
   }
 
-  @NotNull
-  public static State nextState(@NotNull State state, boolean thirdStateEnabled) {
+  public static @NotNull State nextState(@NotNull State state, boolean thirdStateEnabled) {
     return switch (state) {
       case SELECTED -> State.NOT_SELECTED;
       case NOT_SELECTED -> thirdStateEnabled ? State.DONT_CARE : State.SELECTED;

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.util.containers.ContainerUtil;
@@ -35,13 +35,11 @@ public class CollectionComboBoxModel<T> extends CollectionListModel<T> implement
   }
 
   @Override
-  @Nullable
-  public Object getSelectedItem() {
+  public @Nullable Object getSelectedItem() {
     return mySelection;
   }
 
-  @Nullable
-  public T getSelected() {
+  public @Nullable T getSelected() {
     return mySelection;
   }
 

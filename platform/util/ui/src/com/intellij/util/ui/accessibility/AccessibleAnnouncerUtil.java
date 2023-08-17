@@ -8,8 +8,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.accessibility.Accessible;
 import java.awt.*;
 
-final public class AccessibleAnnouncerUtil {
-  final private static AccessibleAnnouncer announcer = JBR.getAccessibleAnnouncer();
+public final class AccessibleAnnouncerUtil {
+  private static final AccessibleAnnouncer announcer = JBR.getAccessibleAnnouncer();
 
   private AccessibleAnnouncerUtil() {}
 
@@ -20,7 +20,7 @@ final public class AccessibleAnnouncerUtil {
    * @param str       message for announcing
    * @param interruptCurrentOutput  output interruption
    */
-  public static void announce(@Nullable final Accessible a, final String str, final boolean interruptCurrentOutput) {
+  public static void announce(final @Nullable Accessible a, final String str, final boolean interruptCurrentOutput) {
     if (announcer == null) return;
 
     KeyboardFocusManager focusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();

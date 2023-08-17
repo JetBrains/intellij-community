@@ -29,13 +29,11 @@ public abstract class ColorizeProxyIcon implements Icon {
     return myBaseIcon.getIconHeight();
   }
 
-  @NotNull
-  public Icon getBaseIcon() {
+  public @NotNull Icon getBaseIcon() {
     return myBaseIcon;
   }
 
-  @NotNull
-  public abstract Color getColor();
+  public abstract @NotNull Color getColor();
 
   public static final class Simple extends ColorizeProxyIcon {
     private final @NotNull Color myColor;
