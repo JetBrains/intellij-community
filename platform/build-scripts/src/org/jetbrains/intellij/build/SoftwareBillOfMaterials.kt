@@ -83,7 +83,7 @@ class SoftwareBillOfMaterials internal constructor(
     get() = "${context.applicationInfo.productCode}-${context.buildNumber}"
 
   private val baseDownloadUrl: String?
-    get() = (context.options.sbomOptions.baseDownloadUrl ?: context.applicationInfo.patchesUrl)?.removeSuffix("/")
+    get() = context.productProperties.baseDownloadUrl?.removeSuffix("/")
 
   private val repositories by lazy {
     JpsRemoteRepositoryService.getInstance()

@@ -166,6 +166,10 @@ abstract class ProductProperties {
    * Base part of URL (ending with `/`) where additional product resources are located.
    * For example, for IntelliJ IDEA it's `https://download.jetbrains.com/idea/`.
    * Note that it can be used only for published builds; there will be no resources for snapshot or nightly builds.
+   * It's used by the build scripts for the following:
+   * * to inject URL of *.manifest file produced by [RepairUtilityBuilder][org.jetbrains.intellij.build.impl.support.RepairUtilityBuilder] and 
+   *   in `repair` executable;
+   * * to specify URL of distributions in [SBOM][SoftwareBillOfMaterials] files. 
    */
   var baseDownloadUrl: String? = null
 

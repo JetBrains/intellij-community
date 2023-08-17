@@ -158,7 +158,8 @@ class RepairUtilityBuilder {
       return spanBuilder("build repair-utility").useWithScope2 {
         val projectHome = repairUtilityProjectHome(context) ?: return@useWithScope2 emptyMap()
         try {
-          val baseUrl = (context.productProperties.baseDownloadUrl ?: context.applicationInfo.patchesUrl)?.removeSuffix("/") ?: error("Missing download url")
+          val baseUrl = context.productProperties.baseDownloadUrl?.removeSuffix("/") 
+                        ?: error("'baseDownloadUrl' is not specified in ${context.productProperties.javaClass.name}")
           val baseName = baseArtifactName(context)
           val distributionUrls = BINARIES.associate {
             it.distributionUrlVariable to "$baseUrl/$baseName${it.distributionSuffix}"
