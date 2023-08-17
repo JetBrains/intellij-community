@@ -29,10 +29,12 @@ import kotlin.math.min
 
 private val LOG = logger<LayeredIcon>()
 
+private class IconState(@JvmField val icons: Array<Icon?>,
+                        @JvmField val disabledLayers: BooleanArray)
+
 open class LayeredIcon : JBCachingScalableIcon<LayeredIcon>, DarkIconProvider, CompositeIcon, IconWithToolTip {
-  private val iconListSupplier: Supplier<Array<Icon?>>
+  private val iconListSupplier: Supplier<IconState>
   private var scaledIcons: Array<Icon?>?
-  private var disabledLayers: BooleanArray
   private var hShifts: IntArray
   private var vShifts: IntArray
   private var xShift = 0
@@ -49,9 +51,8 @@ open class LayeredIcon : JBCachingScalableIcon<LayeredIcon>, DarkIconProvider, C
   }
 
   constructor(layerCount: Int) {
-    val arrayOfNulls = arrayOfNulls<Icon>(layerCount)
-    iconListSupplier = Supplier { arrayOfNulls }
-    disabledLayers = BooleanArray(layerCount)
+    val state = IconState(icons = arrayOfNulls(layerCount), disabledLayers = BooleanArray(layerCount))
+    iconListSupplier = Supplier { state }
     hShifts = IntArray(layerCount)
     vShifts = IntArray(layerCount)
     scaledIcons = null
@@ -63,11 +64,10 @@ open class LayeredIcon : JBCachingScalableIcon<LayeredIcon>, DarkIconProvider, C
   constructor(vararg icons: Icon) {
     val layerCount = icons.size
 
-    val arrayOfNulls = arrayOfNulls<Icon>(layerCount)
-    icons.copyInto(arrayOfNulls)
-    iconListSupplier = Supplier { arrayOfNulls }
+    val state = IconState(icons = arrayOfNulls(layerCount), disabledLayers = BooleanArray(layerCount))
+    icons.copyInto(state.icons)
+    iconListSupplier = Supplier { state }
 
-    disabledLayers = BooleanArray(layerCount)
     hShifts = IntArray(layerCount)
     vShifts = IntArray(layerCount)
     scaledIcons = null
@@ -77,16 +77,13 @@ open class LayeredIcon : JBCachingScalableIcon<LayeredIcon>, DarkIconProvider, C
     iconListSupplier = SynchronizedClearableLazy {
       @Suppress("UNCHECKED_CAST")
       val result = icons.get() as Array<Icon?>
-
-      disabledLayers = BooleanArray(result.size)
       hShifts = IntArray(result.size)
       vShifts = IntArray(result.size)
       sizeIsDirty = true
 
-      result
+      IconState(icons = result, disabledLayers = BooleanArray(result.size))
     }
 
-    disabledLayers = ArrayUtilRt.EMPTY_BOOLEAN_ARRAY
     hShifts = ArrayUtilRt.EMPTY_INT_ARRAY
     vShifts = ArrayUtilRt.EMPTY_INT_ARRAY
     scaledIcons = null
@@ -117,16 +114,18 @@ open class LayeredIcon : JBCachingScalableIcon<LayeredIcon>, DarkIconProvider, C
   }
 
   private constructor(icon: LayeredIcon, replacer: IconReplacer?) : super(icon) {
-    val icons = icon.iconListSupplier.get().copyOf()
+    val otherState = icon.iconListSupplier.get()
+    val icons = otherState.icons.copyOf()
     if (replacer != null) {
       for ((i, subIcon) in icons.withIndex()) {
         icons[i] = replacer.replaceIcon(subIcon)
       }
     }
-    iconListSupplier = Supplier { icons }
+
+    val state = IconState(icons = icons, disabledLayers = otherState.disabledLayers)
+    iconListSupplier = Supplier { state }
 
     scaledIcons = null
-    disabledLayers = icon.disabledLayers.copyOf()
     hShifts = icon.hShifts.copyOf()
     vShifts = icon.vShifts.copyOf()
     xShift = icon.xShift
@@ -136,7 +135,7 @@ open class LayeredIcon : JBCachingScalableIcon<LayeredIcon>, DarkIconProvider, C
   }
 
   val allLayers: Array<Icon?>
-    get() = iconListSupplier.get()
+    get() = iconListSupplier.get().icons
 
   override fun replaceBy(replacer: IconReplacer) = LayeredIcon(icon = this, replacer = replacer)
 
@@ -276,6 +275,7 @@ open class LayeredIcon : JBCachingScalableIcon<LayeredIcon>, DarkIconProvider, C
     }
 
     val icons = getOrComputeScaledIcons()
+    val disabledLayers = iconListSupplier.get().disabledLayers
     for ((i, icon) in icons.withIndex()) {
       if (icon == null || disabledLayers[i]) {
         continue
@@ -287,9 +287,10 @@ open class LayeredIcon : JBCachingScalableIcon<LayeredIcon>, DarkIconProvider, C
     }
   }
 
-  fun isLayerEnabled(layer: Int): Boolean = !disabledLayers[layer]
+  fun isLayerEnabled(layer: Int): Boolean = !iconListSupplier.get().disabledLayers[layer]
 
   fun setLayerEnabled(layer: Int, enabled: Boolean) {
+    val disabledLayers = iconListSupplier.get().disabledLayers
     if (disabledLayers[layer] == enabled) {
       disabledLayers[layer] = !enabled
       clearCachedScaledValue()
