@@ -97,6 +97,7 @@
       "cwmUsers.svg": "users.svg"
     },
     "debugger": {
+      "addToWatch.svg": "debugger/addToWatch.svg",
       "dbPrimitive.svg": "debugger/db_primitive.svg",
       "frame.svg": "debugger/frame.svg",
       "threads.svg": "debugger/threads.svg",

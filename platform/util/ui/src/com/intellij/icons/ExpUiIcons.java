@@ -140,6 +140,7 @@ public final class ExpUiIcons {
   }
 
   public static final class Debugger {
+    /** 16x16 */ public static final @NotNull Icon AddToWatch = load("expui/debugger/addToWatch.svg", -979955605, 2);
     /** 16x16 */ public static final @NotNull Icon DbPrimitive = load("expui/debugger/dbPrimitive.svg", 737408395, 2);
     /** 16x16 */ public static final @NotNull Icon Frame = load("expui/debugger/frame.svg", -1911875806, 2);
     /** 16x16 */ public static final @NotNull Icon Threads = load("expui/debugger/threads.svg", 779575452, 2);
