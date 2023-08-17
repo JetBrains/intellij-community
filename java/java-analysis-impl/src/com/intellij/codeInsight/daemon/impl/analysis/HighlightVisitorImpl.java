@@ -60,6 +60,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     @Override
     public Boolean visitClassType(@NotNull PsiClassType classType) {
       for (PsiType p : classType.getParameters()) {
+        if (p == null) continue;
         if (p.accept(this)) return true;
       }
       return super.visitClassType(classType);
