@@ -86,7 +86,7 @@ final class InspectionRunner {
     final @NotNull LocalInspectionToolWrapper tool;
     final @NotNull InspectionProblemHolder holder;
     final @NotNull PsiElementVisitor visitor;
-    volatile PsiElement myFavoriteElement; // the element during visiting which some diagnostics were generated in previous run
+    volatile PsiElement myFavoriteElement; // the element during visiting which some diagnostics were generated in the previous run
   }
 
   @NotNull List<? extends InspectionContext> inspect(@NotNull List<? extends LocalInspectionToolWrapper> toolWrappers,
@@ -120,7 +120,7 @@ final class InspectionRunner {
           ContainerUtil.addIfNotNull(init, createContext(wrapper, session, applyIncrementallyCallback));
         }
       }
-      //sort init according to the priorities saved earlier to run in order
+      //sort `init`, according to the priorities, saved earlier to run in order
       InspectionProfilerDataHolder profileData = InspectionProfilerDataHolder.getInstance(myPsiFile.getProject());
       profileData.sortAndRetrieveFavoriteElement(myPsiFile, init);
 
@@ -142,7 +142,7 @@ final class InspectionRunner {
 
       boolean isWholeFileInspectionsPass = !init.isEmpty() && init.get(0).tool.runForWholeFile();
       if (myIsOnTheFly && !isWholeFileInspectionsPass) {
-        // do not save stats for batch process, there could be too many files
+        // do not save stats for the batch process, there could be too many files
         InspectionProfilerDataHolder.getInstance(myPsiFile.getProject()).saveStats(myPsiFile, init, System.nanoTime() - start);
       }
       if (myIsOnTheFly && addRedundantSuppressions) {
@@ -163,7 +163,7 @@ final class InspectionRunner {
         inspectionIdsReportedProblems.add(context.tool.getID());
       }
     }
-    InspectionUsageStorage.getInstance(myPsiFile.getProject()).reportInspectionsWhichReportedProblems(inspectionIdsReportedProblems);
+    InspectionUsageFUSStorage.getInstance(myPsiFile.getProject()).reportInspectionsWhichReportedProblems(inspectionIdsReportedProblems);
   }
 
   private static long finalPriorityRange(@NotNull TextRange priorityRange, @NotNull List<Divider.DividedElements> allDivided) {
@@ -320,7 +320,7 @@ final class InspectionRunner {
               // accept favoriteElement only if it belongs to the correct inside/outside list
               if (favoriteElement != null && isInsideVisibleRange == TextRangeScalarUtil.intersects(favoriteElement.getTextRange(), priorityRange)) {
                 context.myFavoriteElement = null; // null the element to make sure it will hold the new favorite after this method finished
-                // run first for the element we know resulted in the diagnostics during previous run
+                // run first for the element we know resulted in the diagnostics during the previous run
                 favoriteElement.accept(context.visitor);
                 if (holder.getResultCount() != resultCount && resultCount != -1) {
                   context.myFavoriteElement = favoriteElement;
@@ -368,7 +368,7 @@ final class InspectionRunner {
                                                                  myInspectionProfileWrapper, applyIncrementallyCallback);
 
     PsiElementVisitor visitor = InspectionEngine.createVisitor(tool, holder, myIsOnTheFly, session);
-    // if inspection returned the empty visitor then it should be skipped
+    // if inspection returned the empty visitor, then it should be skipped
     if (visitor != PsiElementVisitor.EMPTY_VISITOR) {
       tool.inspectionStarted(session, myIsOnTheFly);
       return new InspectionContext(toolWrapper, holder, visitor);
@@ -476,7 +476,7 @@ final class InspectionRunner {
       }
     }
 
-    boolean anyProblemWasReported() {
+    private boolean anyProblemWasReported() {
       return errorStamp > 0 || warningStamp > 0 || otherStamp > 0;
     }
   }

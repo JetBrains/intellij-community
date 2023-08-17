@@ -1,9 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.internal.statistic.tools;
+package com.intellij.internal.statistic;
 
 import com.intellij.codeInspection.InspectionEP;
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.intellij.codeInspection.InspectionUsageStorage;
+import com.intellij.codeInspection.InspectionUsageFUSStorage;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.ScopeToolState;
@@ -41,7 +41,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.function.Predicate;
 
-public final class InspectionsUsagesCollector extends ProjectUsagesCollector {
+final class InspectionUsageFUSCollector extends ProjectUsagesCollector {
   private static final Predicate<ScopeToolState> ENABLED = state -> !state.getTool().isEnabledByDefault() && state.isEnabled();
   private static final Predicate<ScopeToolState> DISABLED = state -> state.getTool().isEnabledByDefault() && !state.isEnabled();
 
@@ -173,7 +173,7 @@ public final class InspectionsUsagesCollector extends ProjectUsagesCollector {
   }
 
   private static MetricEvent getInspectionsReportingProblemsEvent(@NotNull Project project) {
-    InspectionUsageStorage.Report report = InspectionUsageStorage.getInstance(project).collectHighligtingReport();
+    InspectionUsageFUSStorage.Report report = InspectionUsageFUSStorage.getInstance(project).collectHighligtingReport();
     return INSPECTION_IDS_REPORTING_PROBLEMS.metric(new ArrayList<>(report.inspectionsReportingProblems()), report.inspectionSessionCount());
   }
 

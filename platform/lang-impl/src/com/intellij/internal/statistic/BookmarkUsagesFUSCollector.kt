@@ -12,7 +12,7 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
 import com.intellij.openapi.project.Project
 
-class BookmarkUsagesCollector : ProjectUsagesCollector() {
+class BookmarkUsagesFUSCollector : ProjectUsagesCollector() {
   private val group: EventLogGroup = EventLogGroup("bookmarks", 3)
 
   private val bookmarksTotal = group.registerEvent("bookmarks.total", EventFields.Count)

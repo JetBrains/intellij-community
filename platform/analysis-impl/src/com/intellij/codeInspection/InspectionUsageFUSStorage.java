@@ -16,9 +16,9 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 @Service(Service.Level.PROJECT)
 @ApiStatus.Internal
-public final class InspectionUsageStorage {
-  public static InspectionUsageStorage getInstance(Project project) {
-    return project.getService(InspectionUsageStorage.class);
+public final class InspectionUsageFUSStorage {
+  public static InspectionUsageFUSStorage getInstance(Project project) {
+    return project.getService(InspectionUsageFUSStorage.class);
   }
   private Set<String> inspectionsReportingProblems = newStorage();
   private final AtomicInteger inspectionSessions = new AtomicInteger(0);
