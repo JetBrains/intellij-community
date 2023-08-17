@@ -28,7 +28,6 @@ import org.junit.Rule
 import org.junit.Test
 import java.io.InputStream
 import java.nio.file.Files
-import java.nio.file.OpenOption
 import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.io.path.inputStream
@@ -185,7 +184,6 @@ internal class SchemeManagerTest {
                                    filter: (name: String) -> Boolean,
                                    processor: (name: String, input: InputStream, readOnly: Boolean) -> Boolean): Boolean {
         for (name in fileNames) {
-          arrayOf<OpenOption>()
           dir.resolve(name).inputStream().use {
             processor(name, it, false)
           }

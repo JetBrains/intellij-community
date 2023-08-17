@@ -12,11 +12,15 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.settingsSync.SettingsSnapshot.MetaInfo
 import com.intellij.settingsSync.notification.NotificationService
 import com.intellij.settingsSync.plugins.SettingsSyncPluginManager
+import com.intellij.util.io.inputStreamIfExists
 import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.io.write
 import org.jetbrains.annotations.VisibleForTesting
 import java.io.InputStream
-import java.nio.file.*
+import java.nio.file.FileVisitResult
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.SimpleFileVisitor
 import java.nio.file.attribute.BasicFileAttributes
 import java.time.Instant
 import java.util.concurrent.locks.ReadWriteLock
@@ -152,11 +156,7 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
     val adjustedSpec = getFileRelativeToRootConfig(fileSpec)
     return readUnderLock(adjustedSpec) {
       try {
-        consumer(path.inputStream())
-        true
-      }
-      catch (e: NoSuchFileException) {
-        consumer(null)
+        consumer(path.inputStreamIfExists())
         true
       }
       catch (e: Throwable) {
