@@ -62,7 +62,9 @@ sealed interface PluginAdvertiserService {
                                                   "https://www.jetbrains.com/idea/download/download-thanks.html?platform={type}")
 
     @Suppress("HardCodedStringLiteral", "DialogTitleCapitalization")
-    private val pyCharmProfessional = SuggestedIde("PyCharm Professional", "https://www.jetbrains.com/pycharm/download/")
+    private val pyCharmProfessional = SuggestedIde("PyCharm Professional",
+                                                   "https://www.jetbrains.com/pycharm/download/",
+                                                   "https://www.jetbrains.com/pycharm/download/download-thanks.html?platform={type}")
 
     @Suppress("HardCodedStringLiteral")
     internal val ides: Map<String, SuggestedIde> = linkedMapOf(
