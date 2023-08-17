@@ -81,7 +81,7 @@ fun <T : CommandChain> T.openFile(relativePath: String,
                                   timeoutInSeconds: Long = 0,
                                   suppressErrors: Boolean = false,
                                   warmup: Boolean = false,
-                                  disableCodeAnalysis:Boolean = false, ): T {
+                                  disableCodeAnalysis:Boolean = false): T {
   val command = mutableListOf("${CMD_PREFIX}openFile", "-file $relativePath")
   if (timeoutInSeconds != 0L) {
     command.add("-timeout $timeoutInSeconds")
