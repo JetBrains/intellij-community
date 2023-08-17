@@ -13,6 +13,8 @@
     <psi.treeChangePreprocessor
             implementation="org.jetbrains.kotlin.idea.base.fir.analysisApiProviders.FirIdeOutOfBlockPsiTreeChangePreprocessor"/>
     <postStartupActivity implementation="org.jetbrains.kotlin.idea.base.fir.analysisApiProviders.FirAnalysisEventSubscriptionProjectActivity"/>
+
+    <daemon.changeLocalityDetector implementation="org.jetbrains.kotlin.idea.base.fir.analysisApiProviders.KotlinChangeLocalityDetector"/>
   </extensions>
 
   <projectListeners>
