@@ -15,16 +15,15 @@ import com.intellij.openapi.progress.withBackgroundProgress
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.registry.Registry
 import kotlinx.coroutines.launch
 import java.nio.file.Path
 
 private val LOG = logger<WindowsDefenderCheckerActivity>()
 
-private const val DisableWindowsDefenderCheckProperty = "idea.winDefender.check.disable"
-
 internal class WindowsDefenderCheckerActivity : ProjectActivity {
   init {
-    if (ApplicationManager.getApplication().isUnitTestMode || java.lang.Boolean.getBoolean(DisableWindowsDefenderCheckProperty)) {
+    if (ApplicationManager.getApplication().isUnitTestMode || !Registry.`is`("ide.check.windows.defender.rules")) {
       throw ExtensionNotApplicableException.create()
     }
   }
