@@ -50,6 +50,9 @@
     <orderEntry type="module" module-name="intellij.java" />
     <orderEntry type="module" module-name="intellij.platform.externalSystem" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.project-configuration" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.base.facet" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.base.facet" />
+    <orderEntry type="module" module-name="intellij.platform.workspace.jps" />
+    <orderEntry type="module" module-name="intellij.platform.backend.workspace" />
+    <orderEntry type="module" module-name="intellij.platform.ide" />
   </component>
 </module>

@@ -5,9 +5,6 @@
             serviceInterface="org.jetbrains.kotlin.analysis.providers.KotlinModificationTrackerFactory"
             serviceImplementation="org.jetbrains.kotlin.idea.base.fir.analysisApiProviders.FirIdeKotlinModificationTrackerFactory"/>
     <projectService
-            serviceInterface="org.jetbrains.kotlin.idea.base.analysisApiProviders.KotlinModuleStateModificationService"
-            serviceImplementation="org.jetbrains.kotlin.idea.base.fir.analysisApiProviders.FirIdeKotlinModuleStateModificationService"/>
-    <projectService
             serviceInterface="org.jetbrains.kotlin.analysis.providers.KotlinGlobalModificationService"
             serviceImplementation="org.jetbrains.kotlin.idea.base.fir.analysisApiProviders.FirIdeKotlinGlobalModificationService"/>
     <psi.treeChangePreprocessor
@@ -18,17 +15,17 @@
   </extensions>
 
   <projectListeners>
-    <listener class="org.jetbrains.kotlin.idea.base.analysisApiProviders.KotlinModuleStateModificationService$SingleFileModuleModificationListener"
+    <listener class="org.jetbrains.kotlin.idea.base.fir.analysisApiProviders.FirIdeModuleStateModificationService$SingleFileModuleModificationListener"
               topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
-    <listener class="org.jetbrains.kotlin.idea.base.analysisApiProviders.KotlinModuleStateModificationService$LibraryUpdatesListener"
+    <listener class="org.jetbrains.kotlin.idea.base.fir.analysisApiProviders.FirIdeModuleStateModificationService$LibraryUpdatesListener"
               topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
-    <listener class="org.jetbrains.kotlin.idea.base.analysisApiProviders.KotlinModuleStateModificationService$JdkListener"
+    <listener class="org.jetbrains.kotlin.idea.base.fir.analysisApiProviders.FirIdeModuleStateModificationService$JdkListener"
               topic="com.intellij.openapi.projectRoots.ProjectJdkTable$Listener"/>
-    <listener class="org.jetbrains.kotlin.idea.base.analysisApiProviders.KotlinModuleStateModificationService$NonWorkspaceModuleRootListener"
+    <listener class="org.jetbrains.kotlin.idea.base.fir.analysisApiProviders.FirIdeModuleStateModificationService$NonWorkspaceModuleRootListener"
               topic="com.intellij.openapi.roots.ModuleRootListener"/>
-    <listener class="org.jetbrains.kotlin.idea.base.analysisApiProviders.KotlinModuleStateModificationService$FileDocumentListener"
+    <listener class="org.jetbrains.kotlin.idea.base.fir.analysisApiProviders.FirIdeModuleStateModificationService$FileDocumentListener"
               topic="com.intellij.openapi.fileEditor.FileDocumentManagerListener"/>
-    <listener class="org.jetbrains.kotlin.idea.base.analysisApiProviders.KotlinModuleStateModificationService$MyDynamicPluginListener"
+    <listener class="org.jetbrains.kotlin.idea.base.fir.analysisApiProviders.FirIdeModuleStateModificationService$MyDynamicPluginListener"
               topic="com.intellij.ide.plugins.DynamicPluginListener"/>
   </projectListeners>
 

@@ -5,7 +5,7 @@ import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.project.Project
 import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
 import com.intellij.platform.workspace.storage.VersionedStorageChange
-import org.jetbrains.kotlin.idea.base.analysisApiProviders.KotlinModuleStateModificationService
+import org.jetbrains.kotlin.idea.base.fir.analysisApiProviders.FirIdeModuleStateModificationService
 import org.jetbrains.kotlin.idea.base.projectStructure.LibraryInfoCache
 
 /**
@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.LibraryInfoCache
  */
 internal class FirOrderedWorkspaceModelChangeListener(private val project: Project) : WorkspaceModelChangeListener {
     override fun beforeChanged(event: VersionedStorageChange) {
-        KotlinModuleStateModificationService.getInstance(project).beforeWorkspaceModelChanged(event)
+        FirIdeModuleStateModificationService.getInstance(project).beforeWorkspaceModelChanged(event)
 
         // `LibraryInfoCache` is ordered last so that other listeners can still access `LibraryInfo`s before they might be invalidated in
         // the context of the current event. If `LibraryInfoCache`'s invalidation was ordered first, the following hypothetical situation

@@ -1,10 +1,12 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.base.analysisApiProviders
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.base.fir.analysisApiProviders
 
+import java.util.regex.Pattern
 import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.java.workspace.entities.JavaSourceRootPropertiesEntity
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.fileEditor.FileDocumentManagerListener
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
@@ -49,9 +51,10 @@ import org.jetbrains.kotlin.idea.util.toKtModulesForModificationEvents
 import org.jetbrains.kotlin.idea.facet.isKotlinFacet
 import org.jetbrains.kotlin.utils.alwaysTrue
 
-open class KotlinModuleStateModificationService(val project: Project) : Disposable {
-    protected open fun mayBuiltinsHaveChanged(events: List<VFileEvent>): Boolean { return false }
+private val STDLIB_PATTERN = Pattern.compile("kotlin-stdlib-(\\d*)\\.(\\d*)\\.(\\d*)\\.jar")
 
+@Service(Service.Level.PROJECT)
+class FirIdeModuleStateModificationService(val project: Project) : Disposable {
     private fun invalidateSourceModule(
         module: Module,
         modificationKind: KotlinModuleStateModificationKind = KotlinModuleStateModificationKind.UPDATE,
@@ -100,10 +103,10 @@ open class KotlinModuleStateModificationService(val project: Project) : Disposab
     internal class LibraryUpdatesListener(private val project: Project) : BulkFileListener {
         val index = ProjectRootManager.getInstance(project).fileIndex
 
-        private val moduleStateModificationService: KotlinModuleStateModificationService get() = getInstance(project)
+        private val moduleStateModificationService: FirIdeModuleStateModificationService get() = getInstance(project)
 
         override fun before(events: List<VFileEvent>) {
-            if (moduleStateModificationService.mayBuiltinsHaveChanged(events)) {
+            if (mayBuiltinsHaveChanged(events)) {
                 KotlinGlobalModificationService.getInstance(project).publishGlobalModuleStateModification()
                 return
             }
@@ -118,6 +121,12 @@ open class KotlinModuleStateModificationService(val project: Project) : Disposab
                 val jarRoot = StandardFileSystems.jar().findFileByPath(file.path + URLUtil.JAR_SEPARATOR) ?: return@mapNotNull null
                 (index.getOrderEntriesForFile(jarRoot).firstOrNull { it is LibraryOrderEntry } as? LibraryOrderEntry)?.library
             }.distinct().forEach { moduleStateModificationService.invalidateLibraryModule(it) }
+        }
+
+        private fun mayBuiltinsHaveChanged(events: List<VFileEvent>): Boolean {
+            return events.find { event ->
+                event is VFileContentChangeEvent && STDLIB_PATTERN.matcher(event.file.name).matches()
+            } != null
         }
     }
 
@@ -148,7 +157,7 @@ open class KotlinModuleStateModificationService(val project: Project) : Disposab
                 return
             }
 
-            // Workspace model changes are already handled by `KotlinModuleStateModificationService`, so we shouldn't publish a module state
+            // Workspace model changes are already handled by `FirIdeModuleStateModificationService`, so we shouldn't publish a module state
             // modification event when the `workspace.xml` is changed by the IDE.
             if (file == project.workspaceFile) {
                 return
@@ -260,8 +269,8 @@ open class KotlinModuleStateModificationService(val project: Project) : Disposab
                 is EntityChange.Added -> {}
                 is EntityChange.Removed -> {
                     change.oldEntity
-                      .findLibraryBridge(event.storageBefore)
-                      ?.let { invalidateLibraryModule(it, KotlinModuleStateModificationKind.REMOVAL) }
+                        .findLibraryBridge(event.storageBefore)
+                        ?.let { invalidateLibraryModule(it, KotlinModuleStateModificationKind.REMOVAL) }
                 }
 
                 is EntityChange.Replaced -> {
@@ -302,14 +311,14 @@ open class KotlinModuleStateModificationService(val project: Project) : Disposab
     override fun dispose() {}
 
     companion object {
-        fun getInstance(project: Project): KotlinModuleStateModificationService =
-            project.getService(KotlinModuleStateModificationService::class.java)
+        fun getInstance(project: Project): FirIdeModuleStateModificationService =
+            project.getService(FirIdeModuleStateModificationService::class.java)
     }
 }
 
 private fun <C : WorkspaceEntity, E> EntityChange.Replaced<C>.getReplacedEntity(
-  event: VersionedStorageChange,
-  get: (C, EntityStorage) -> E
+    event: VersionedStorageChange,
+    get: (C, EntityStorage) -> E
 ): E {
     val old = get(oldEntity, event.storageBefore)
     val new = get(newEntity, event.storageAfter)
