@@ -12,5 +12,5 @@ fun ModuleEntity.getModuleLibraries(storage: EntityStorage): Sequence<LibraryEnt
     .filter { (it.symbolicId.tableId as? LibraryTableId.ModuleLibraryTableId)?.moduleId?.name == name }
 }
 
-val EntityStorage.projectLibraries
+val EntityStorage.projectLibraries: Sequence<LibraryEntity>
   get() = entities(LibraryEntity::class.java).filter { it.symbolicId.tableId == LibraryTableId.ProjectLibraryTableId }
