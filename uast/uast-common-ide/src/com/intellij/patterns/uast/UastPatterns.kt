@@ -91,13 +91,10 @@ open class UElementPattern<T : UElement, Self : UElementPattern<T, Self>>(clazz:
     parentPattern.accepts(it, context) || it.uastParent?.let { parentPattern.accepts(it, context) } ?: false
   }
 
-  fun withStringRoomExpressionOrSelf(parentPattern: ElementPattern<out UElement>): Self = filterWithContext { it, context ->
-    if (it !is UInjectionHost) return@filterWithContext false
-
-    if (parentPattern.accepts(it, context)) return@filterWithContext true
-
-    val room = it.getStringRoomExpression()
-    if (room === it) return@filterWithContext false
+  fun withStringRoomExpression(parentPattern: ElementPattern<out UElement>): Self = filterWithContext { it, context ->
+    if (it !is UExpression) return@filterWithContext false
+    val uHost = wrapULiteral(it) as? UInjectionHost ?: return@filterWithContext false
+    val room = uHost.getStringRoomExpression()
 
     parentPattern.accepts(room, context)
   }
