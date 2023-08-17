@@ -200,6 +200,9 @@
     <applicationService serviceInterface="com.intellij.psi.statistics.StatisticsManager"
                         serviceImplementation="com.intellij.psi.statistics.impl.StatisticsManagerImpl"/>
 
+    <applicationService serviceImplementation="com.intellij.codeInsight.hint.ImplementationPopupManager"
+                        client="all"/>
+
     <applicationService serviceImplementation="com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings"/>
     <search.optionContributor
       implementation="com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings$IntentionSearchableOptionContributor"/>
