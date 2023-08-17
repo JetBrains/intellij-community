@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.base.analysisApiProviders
 
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
+import org.jetbrains.kotlin.analysis.project.structure.KtLibrarySourceModule
 import org.jetbrains.kotlin.analysis.project.structure.KtModule
 import org.jetbrains.kotlin.analysis.project.structure.KtSourceModule
 import org.jetbrains.kotlin.analysis.project.structure.allDirectDependencies
@@ -37,7 +38,11 @@ internal class IdeKotlinByModulesResolutionScopeProvider(private val project: Pr
 
             else -> {
                 val allModules = buildList {
-                    add(module)
+                    if (module is KtLibrarySourceModule) {
+                        add(module.binaryLibrary)
+                    } else {
+                        add(module)
+                    }
                     addAll(module.allDirectDependencies())
                 }
                 GlobalSearchScope.union(allModules.map { it.contentScope })
