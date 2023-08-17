@@ -10,11 +10,16 @@ import com.intellij.ui.BalloonLayoutData
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBScrollBar
 import com.intellij.util.ui.JBUI
+import java.awt.AWTEvent
 import java.awt.Insets
+import java.awt.Toolkit
+import java.awt.event.AWTEventListener
 import java.awt.event.MouseEvent
+import java.awt.event.MouseWheelEvent
 import javax.swing.JComponent
 import javax.swing.JRootPane
 import javax.swing.SwingUtilities
+import kotlin.math.max
 
 /**
  * @author Alexander Lobas
@@ -53,7 +58,7 @@ class WelcomeSeparateBalloonLayoutImpl(parent: JRootPane, insets: Insets) : Welc
           hideListener?.run()
           if (myVisible) {
             updateVisible(false)
-            myScrollController.hide()
+            myScrollController.hide(true)
             myShowState.hide()
           }
         }
@@ -131,7 +136,7 @@ class WelcomeSeparateBalloonLayoutImpl(parent: JRootPane, insets: Insets) : Welc
     if (myVisible) {
       if (balloons.isEmpty()) {
         myVisible = false
-        myScrollController.hide()
+        myScrollController.hide(false)
       }
       else {
         layoutBalloons()
@@ -141,15 +146,33 @@ class WelcomeSeparateBalloonLayoutImpl(parent: JRootPane, insets: Insets) : Welc
 
   private inner class ScrollController {
     private var myScrollBar = JBScrollBar()
+    private var myState = ScrollInfo(0, 0, 0, false)
     private var myStartValue = 0
     private var myValue = 0
     var startY = 0
+
+    private var myAwtListener: AWTEventListener? = null
 
     fun isInside(relativePoint: RelativePoint): Boolean {
       return myScrollBar.isVisible && myScrollBar.contains(relativePoint.getPoint(myScrollBar))
     }
 
-    fun hide() {
+    fun hide(save: Boolean) {
+      if (save && myScrollBar.isVisible) {
+        myState.value = myValue
+        myState.save = true
+      }
+      else {
+        myState.save = false
+      }
+      hide()
+    }
+
+    private fun hide() {
+      if (myAwtListener != null) {
+        Toolkit.getDefaultToolkit().removeAWTEventListener(myAwtListener)
+        myAwtListener = null
+      }
       myScrollBar.isVisible = false
       startY = 0
       myStartValue = 0
@@ -180,28 +203,52 @@ class WelcomeSeparateBalloonLayoutImpl(parent: JRootPane, insets: Insets) : Welc
       val totalHeight = getTotalHeight()
 
       if (totalHeight <= startY) {
-        hide()
+        hide(false)
       }
       else {
         if (myScrollBar.isVisible) {
-          val delta = myScrollBar.model.extent - startY
+          val delta = startY - myScrollBar.model.extent + myScrollBar.maximum - totalHeight
           if (delta != 0) {
-            myValue += delta
-            myStartValue += delta
-            this.startY += delta // XXX
+            if (myValue > 0) {
+              myValue = max(0, myValue - delta)
+            }
+            myStartValue = totalHeight - startY
+            this.startY = myStartValue - myValue
           }
         }
         else {
-          this.startY = 0
-          myValue = totalHeight - startY
-          myStartValue = myValue
+          myStartValue = totalHeight - startY
+
+          if (myState.save && myState.totalHeight == totalHeight && myState.extent == startY) {
+            myValue = myState.value
+            this.startY = myStartValue - myValue
+          }
+          else {
+            myValue = myStartValue
+            this.startY = 0
+          }
         }
+
+        myState.totalHeight = totalHeight
+        myState.extent = startY
+        myState.save = false
 
         myScrollBar.setValues(myValue, startY, 0, totalHeight)
         val scrollBarWidth = myScrollBar.preferredSize.width
         myScrollBar.setBounds(totalWidth - scrollBarWidth, 0, scrollBarWidth, startY)
         myScrollBar.isVisible = true
+
+        if (myAwtListener == null) {
+          myAwtListener = AWTEventListener { event ->
+            if (isInside(RelativePoint(event as MouseWheelEvent))) {
+              myScrollBar.handleMouseWheelEvent(event)
+            }
+          }
+          Toolkit.getDefaultToolkit().addAWTEventListener(myAwtListener, AWTEvent.MOUSE_WHEEL_EVENT_MASK)
+        }
       }
+
+      clearClip()
     }
 
     fun setClip(startY: Int) {
@@ -210,20 +257,31 @@ class WelcomeSeparateBalloonLayoutImpl(parent: JRootPane, insets: Insets) : Welc
           val balloonImpl = balloon as BalloonImpl
           val bounds = balloonImpl.component.bounds
           if (bounds.y > startY) {
-            balloonImpl.clipY = 0
+            balloonImpl.clipY = -1
+            balloonImpl.component.isVisible = false
           }
           else if (bounds.maxY > startY) {
-            balloonImpl.clipY = startY - bounds.y
+            val clipY = startY - bounds.y
+            balloonImpl.clipY = clipY
+            balloonImpl.component.isVisible = true
+            balloonImpl.setActionButtonsVisible(clipY > JBUI.scale(26))
           }
           else {
             balloonImpl.clipY = -1
+            balloonImpl.component.isVisible = true
           }
         }
       }
       else {
-        for (balloon in balloons) {
-          (balloon as BalloonImpl).clipY = -1
-        }
+        clearClip()
+      }
+    }
+
+    private fun clearClip() {
+      for (balloon in balloons) {
+        val balloonImpl = balloon as BalloonImpl
+        balloonImpl.clipY = -1
+        balloonImpl.component.isVisible = true
       }
     }
 
@@ -261,4 +319,11 @@ class WelcomeSeparateBalloonLayoutImpl(parent: JRootPane, insets: Insets) : Welc
       return System.currentTimeMillis() - timeHiddenAt < 200
     }
   }
+
+  private data class ScrollInfo(
+    var totalHeight: Int,
+    var extent: Int,
+    var value: Int,
+    var save: Boolean
+  )
 }

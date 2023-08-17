@@ -1777,11 +1777,7 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
 
     @Override
     public void setVisible(boolean aFlag) {
-      if (myActionButtons != null) {
-        for (ActionButton button : myActionButtons) {
-          button.setVisible(aFlag);
-        }
-      }
+      setActionButtonsVisible(aFlag);
       super.setVisible(aFlag);
     }
 
@@ -2258,6 +2254,14 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
     myClipY = clipY;
     if (oldClip != clipY) {
       component.repaint();
+    }
+  }
+
+  public void setActionButtonsVisible(boolean aFlag) {
+    if (myActionButtons != null) {
+      for (ActionButton button : myActionButtons) {
+        button.setVisible(aFlag);
+      }
     }
   }
 
