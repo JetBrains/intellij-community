@@ -381,11 +381,11 @@ public final class HighlightUtil {
     if (!PsiUtil.isAccessedForWriting(expressionVariable)) {
       return null;
     }
-    PsiPatternGuard patternGuard = PsiTreeUtil.getParentOfType(expressionVariable, PsiPatternGuard.class);
-    if (patternGuard == null) {
+    PsiSwitchLabelStatementBase label = PsiTreeUtil.getParentOfType(expressionVariable, PsiSwitchLabelStatementBase.class);
+    if (label == null) {
       return null;
     }
-    PsiExpression guardingExpression = patternGuard.getGuardingExpression();
+    PsiExpression guardingExpression = label.getGuardExpression();
     if (!PsiTreeUtil.isAncestor(guardingExpression, expressionVariable, false)) {
       return null;
     }

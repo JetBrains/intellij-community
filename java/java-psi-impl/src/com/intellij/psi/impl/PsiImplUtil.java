@@ -756,9 +756,6 @@ public final class PsiImplUtil {
     PsiElement parent = labelElement instanceof PsiParenthesizedPattern
                         ? JavaPsiPatternUtil.skipParenthesizedPatternUp(labelElement.getParent())
                         : PsiUtil.skipParenthesizedExprUp(labelElement.getParent());
-    if (parent instanceof PsiPatternGuard) {
-      parent = parent.getParent();
-    }
     if (parent instanceof PsiCaseLabelElementList) {
       PsiElement grand = parent.getParent();
       if (grand instanceof PsiSwitchLabelStatementBase) {

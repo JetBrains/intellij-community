@@ -38,8 +38,8 @@ class Test {
   
   void testGuards(Object obj) {
     switch (obj) {
-      case Integer _ when <error descr="Guard expression is allowed only after the last label element">((Integer)obj) > 0</error>,
-           String _ when !((String)obj).isEmpty() -> System.out.println("Positive integer or non-empty string");
+      case Integer _ when ((Integer)obj) > 0<error descr="':' or '->' expected"><error descr="Unexpected token">,</error></error>
+           <error descr="Unnamed variable declaration must have an initializer">String _</error><error descr="';' expected"> </error><error descr="Cannot resolve symbol 'when'" textAttributesKey="WRONG_REFERENCES_ATTRIBUTES">when</error> <error descr="Not a statement">!((String)obj).isEmpty()</error> <error descr="Unexpected token">-></error> System.out.println("Positive integer or non-empty string");
       default -> System.out.println("other");
     }
   }

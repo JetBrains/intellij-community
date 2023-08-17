@@ -18,18 +18,22 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.psi.*;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
 class SwitchStatementBranch {
 
   private final Set<PsiElement> myPendingDeclarations = new HashSet<>(5);
-  private final List<PsiCaseLabelElement> myCaseElements = new ArrayList<>(2);
+  private final List<LabelElement> myCaseElements = new ArrayList<>(2);
   private final List<PsiElement> myBodyElements = new ArrayList<>(5);
   private final List<PsiElement> myPendingWhiteSpace = new ArrayList<>(2);
   private boolean myDefault;
   private boolean myHasStatements;
   private boolean myAlwaysExecuted;
+  
+  record LabelElement(@NotNull PsiCaseLabelElement element, @Nullable PsiExpression guard) {}
 
   void addStatement(PsiStatement statement) {
     myHasStatements = myHasStatements || !ControlFlowUtils.isEmpty(statement, false, true);
@@ -52,7 +56,7 @@ class SwitchStatementBranch {
     }
   }
 
-  List<PsiCaseLabelElement> getCaseElements() {
+  List<LabelElement> getCaseElements() {
     return Collections.unmodifiableList(myCaseElements);
   }
 
@@ -99,9 +103,11 @@ class SwitchStatementBranch {
           }
         }
         if (!myDefault) {
-          Collections.addAll(myCaseElements, labelElementList.getElements());
+          for (PsiCaseLabelElement element : labelElementList.getElements()) {
+            myCaseElements.add(new LabelElement(element, label.getGuardExpression()));
+          }
         } else if (nullCase != null) {
-          myCaseElements.add(nullCase);
+          myCaseElements.add(new LabelElement(nullCase, null));
         }
       }
     }

@@ -668,13 +668,6 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
   }
 
   @Override
-  public void visitPatternGuard(@NotNull PsiPatternGuard guard) {
-    if (myType1 == JavaTokenType.WHEN_KEYWORD || myType2 == JavaTokenType.WHEN_KEYWORD) {
-      createSpaceInCode(true);
-    }
-  }
-
-  @Override
   public void visitImportList(@NotNull PsiImportList list) {
     if (ElementType.IMPORT_STATEMENT_BASE_BIT_SET.contains(myType1) &&
         ElementType.IMPORT_STATEMENT_BASE_BIT_SET.contains(myType2)) {
@@ -1401,6 +1394,9 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
     else if (myType2 == JavaTokenType.COLON) {
       createSpaceProperty(false, false, 0);
     }
+    else if (myType1 == JavaTokenType.WHEN_KEYWORD || myType2 == JavaTokenType.WHEN_KEYWORD) {
+      createSpaceInCode(true);
+    }
   }
 
   @Override
@@ -1410,6 +1406,9 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
     }
     else if (myType1 == JavaTokenType.CASE_KEYWORD || myType1 == JavaTokenType.ARROW || myType2 == JavaTokenType.ARROW) {
       createSpaceProperty(true, false, 0);
+    }
+    else if (myType1 == JavaTokenType.WHEN_KEYWORD || myType2 == JavaTokenType.WHEN_KEYWORD) {
+      createSpaceInCode(true);
     }
   }
 

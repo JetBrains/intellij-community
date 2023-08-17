@@ -1798,12 +1798,14 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   public void visitSwitchLabelStatement(@NotNull PsiSwitchLabelStatement statement) {
     super.visitSwitchLabelStatement(statement);
     if (!myHolder.hasErrorResults()) add(HighlightUtil.checkCaseStatement(statement));
+    if (!myHolder.hasErrorResults()) checkGuard(statement);
   }
 
   @Override
   public void visitSwitchLabeledRuleStatement(@NotNull PsiSwitchLabeledRuleStatement statement) {
     super.visitSwitchLabeledRuleStatement(statement);
     if (!myHolder.hasErrorResults()) add(HighlightUtil.checkCaseStatement(statement));
+    if (!myHolder.hasErrorResults()) checkGuard(statement);
   }
 
   @Override
@@ -2059,12 +2061,19 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     add(checkFeature(pattern, HighlightingFeature.PARENTHESIZED_PATTERNS));
   }
 
-  @Override
-  public void visitPatternGuard(@NotNull PsiPatternGuard guard) {
-    super.visitPatternGuard(guard);
-    add(checkFeature(guard, HighlightingFeature.PATTERN_GUARDS_AND_RECORD_PATTERNS));
+  private void checkGuard(@NotNull PsiSwitchLabelStatementBase statement) {
+    PsiExpression guardingExpr = statement.getGuardExpression();
+    if (guardingExpr == null) return;
+    add(checkFeature(guardingExpr, HighlightingFeature.PATTERN_GUARDS_AND_RECORD_PATTERNS));
     if (myHolder.hasErrorResults()) return;
-    PsiExpression guardingExpr = guard.getGuardingExpression();
+    PsiCaseLabelElementList list = statement.getCaseLabelElementList();
+    if (list != null) {
+      if (!ContainerUtil.exists(list.getElements(), e -> e instanceof PsiPattern)) {
+        add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(guardingExpr)
+              .descriptionAndTooltip(JavaErrorBundle.message("error.guard.allowed.after.patterns.only")));
+        return;
+      }
+    }
     add(checkGuardingExpressionHasBooleanType(guardingExpr));
     if (myHolder.hasErrorResults()) return;
     Object constVal = ExpressionUtils.computeConstantExpression(guardingExpr);

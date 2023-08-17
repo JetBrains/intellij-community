@@ -502,12 +502,20 @@ public final class ExpectedTypesProvider {
     }
 
     @Override
-    public void visitPatternGuard(@NotNull PsiPatternGuard guard) {
-      processGuard(guard);
+    public void visitSwitchLabelStatement(@NotNull PsiSwitchLabelStatement statement) {
+      processGuard(statement);
     }
 
-    private void processGuard(@NotNull PsiCaseLabelElement guard) {
-      final PsiSwitchBlock switchBlock = PsiTreeUtil.getParentOfType(guard, PsiSwitchBlock.class);
+    @Override
+    public void visitSwitchLabeledRuleStatement(@NotNull PsiSwitchLabeledRuleStatement statement) {
+      processGuard(statement);
+    }
+
+    private void processGuard(@NotNull PsiSwitchLabelStatementBase statement) {
+      if (!myExpr.equals(statement.getGuardExpression())) {
+        return;
+      }
+      final PsiSwitchBlock switchBlock = statement.getEnclosingSwitchBlock();
       if (switchBlock != null) {
         final TailType caseTail = TailTypes.forSwitchLabel(switchBlock);
         myResult.add(createInfoImpl(PsiTypes.booleanType(), ExpectedTypeInfo.TYPE_STRICTLY, PsiTypes.booleanType(), caseTail));

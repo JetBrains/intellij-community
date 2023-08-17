@@ -34,12 +34,15 @@ public class DeleteSwitchLabelFix extends PsiUpdateModCommandAction<PsiCaseLabel
 
   public DeleteSwitchLabelFix(@NotNull PsiCaseLabelElement label, boolean addDefaultIfNecessary) {
     super(label);
-    myName = label.getText();
     myAddDefaultIfNecessary = addDefaultIfNecessary;
     PsiSwitchLabelStatementBase labelStatement = Objects.requireNonNull(PsiImplUtil.getSwitchLabel(label));
-    PsiCaseLabelElementList labelElementList = labelStatement.getCaseLabelElementList();
-    boolean multiple = labelElementList != null && labelElementList.getElementCount() > 1;
+    PsiCaseLabelElementList labelElementList = Objects.requireNonNull(labelStatement.getCaseLabelElementList());
+    boolean multiple = labelElementList.getElementCount() > 1;
     myBranch = !multiple && shouldRemoveBranch(labelStatement);
+    PsiExpression guardExpression = labelStatement.getGuardExpression();
+    myName = myBranch && guardExpression != null ? labelStatement.getText()
+      .substring(labelElementList.getStartOffsetInParent(), guardExpression.getStartOffsetInParent() +
+                                                            guardExpression.getTextLength()) : label.getText();
   }
 
   private static boolean shouldRemoveBranch(PsiSwitchLabelStatementBase label) {

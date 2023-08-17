@@ -63,19 +63,19 @@ class Dominance {
     switch (object) {
       case CharSequence s -> {
       }
-      case <error descr="Label is dominated by a preceding case label 'CharSequence s'">String c when c.length() > 0</error> -> {
+      case <error descr="Label is dominated by a preceding case label 'CharSequence s'">String c</error> when c.length() > 0 -> {
       } 
     }
     switch (object) {
       case CharSequence s when true -> {
       }
-      case <error descr="Label is dominated by a preceding case label 'CharSequence s when true'">String c</error> -> {
+      case <error descr="Label is dominated by a preceding case label 'CharSequence s'">String c</error> -> {
       } 
     }
     switch (object) {
       case CharSequence s when true -> {
       }
-      case <error descr="Label is dominated by a preceding case label 'CharSequence s when true'">String c when c.length() > 0</error> -> {
+      case <error descr="Label is dominated by a preceding case label 'CharSequence s'">String c</error> when c.length() > 0 -> {
       } 
     }
     switch (object) {
@@ -96,7 +96,7 @@ class Dominance {
     }
     switch (object) {
       case List<?> l -> System.out.println();
-      case <error descr="Label is dominated by a preceding case label 'List<?> l'">List<?> l  when l.size() == 2</error> -> System.out.println(); 
+      case <error descr="Label is dominated by a preceding case label 'List<?> l'">List<?> l</error>  when l.size() == 2 -> System.out.println(); 
         default -> throw new IllegalStateException("Unexpected value: " + object);
     }
     switch (integer) {

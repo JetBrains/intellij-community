@@ -25,10 +25,7 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.migration.TryWithIdenticalCatchesInspection;
-import com.siyeh.ig.psiutils.CommentTracker;
-import com.siyeh.ig.psiutils.ControlFlowUtils;
-import com.siyeh.ig.psiutils.ExpressionUtils;
-import com.siyeh.ig.psiutils.SwitchUtils;
+import com.siyeh.ig.psiutils.*;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.Contract;
@@ -800,14 +797,13 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
     }
 
     private static boolean calculateCanMergeBranches(PsiSwitchLabelStatement @NotNull [] labels) {
-      boolean java20plus = PsiUtil.getLanguageLevel(labels[0]).isAtLeast(LanguageLevel.JDK_20_PREVIEW);
+      PsiExpression guard0 = labels[0].getGuardExpression();
       for (PsiSwitchLabelStatement label : labels) {
         PsiCaseLabelElementList labelElementList = label.getCaseLabelElementList();
         if (labelElementList == null) continue;
         PsiCaseLabelElement[] elements = labelElementList.getElements();
         for (PsiCaseLabelElement element : elements) {
-          if (element instanceof PsiPatternGuard ||
-              element instanceof PsiPattern && (!java20plus || JavaPsiPatternUtil.containsNamedPatternVariable(element))) {
+          if (element instanceof PsiPattern && JavaPsiPatternUtil.containsNamedPatternVariable(element)) {
             return false;
           }
         }
@@ -969,11 +965,11 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
     }
 
     public static boolean calculateCanMergeBranches(@NotNull PsiSwitchLabelStatementBase rule) {
+      if (rule.getGuardExpression() != null) return false; // TODO: support merging with the same guard
       PsiCaseLabelElementList labelElementList = rule.getCaseLabelElementList();
       if (labelElementList == null) return false;
       PsiCaseLabelElement[] elements = labelElementList.getElements();
-      return !ContainerUtil.exists(elements, element -> element instanceof PsiPattern ||
-                                                        element instanceof PsiPatternGuard ||
+      return !ContainerUtil.exists(elements, element -> element instanceof PsiPattern && JavaPsiPatternUtil.containsNamedPatternVariable(element) ||
                                                         element instanceof PsiExpression expr && ExpressionUtils.isNullLiteral(expr));
     }
 
