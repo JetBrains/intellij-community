@@ -45,6 +45,7 @@ class PyCharmCommunityProperties(communityHome: Path) : PyCharmPropertiesBase() 
       )
       ))
     productLayout.pluginModulesToPublish = persistentSetOf("intellij.python.community.plugin")
+    baseDownloadUrl = "https://download.jetbrains.com/python/"
   }
 
   override fun copyAdditionalFilesBlocking(context: BuildContext, targetDirectory: String) {
