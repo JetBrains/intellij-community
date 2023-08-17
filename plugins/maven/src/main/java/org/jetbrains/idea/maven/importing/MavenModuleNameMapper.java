@@ -30,7 +30,7 @@ public final class MavenModuleNameMapper {
       if (names[i].hasDuplicatedGroup) continue;
 
       for (int k = i + 1; k < names.length; k++) {
-        // IDEA-320329 check should be non case-sensitive
+        // IDEA-320329 check should be non-case-sensitive
         if (names[i].originalName.equalsIgnoreCase(names[k].originalName)) {
           nameCountersLowerCase.put(names[i].originalName.toLowerCase(ROOT), 0);
 
@@ -46,8 +46,7 @@ public final class MavenModuleNameMapper {
 
     for (NameItem name : names) {
       if (name.module != null) {
-        boolean wasAdded = existingNames.add(name.getResultName());
-        //assert wasAdded : name.getResultName();
+        existingNames.add(name.getResultName());
       }
     }
 
@@ -109,28 +108,28 @@ public final class MavenModuleNameMapper {
 
       if (number == -1) return originalName;
       String result = originalName + " (" + (number + 1) + ")";
-      if (!hasDuplicatedGroup && groupId.length() != 0) {
+      if (!hasDuplicatedGroup && !groupId.isEmpty()) {
         result += " (" + groupId + ")";
       }
       return result;
+    }
+
+    private static boolean isValidName(String name) {
+      if (StringUtil.isEmptyOrSpaces(name)) return false;
+      if (name.equals(MavenId.UNKNOWN_VALUE)) return false;
+
+      for (int i = 0; i < name.length(); i++) {
+        char ch = name.charAt(i);
+        if (!(Character.isDigit(ch) || Character.isLetter(ch) || ch == '-' || ch == '_' || ch == '.')) {
+          return false;
+        }
+      }
+      return true;
     }
 
     @Override
     public int compareTo(NameItem o) {
       return project.getPath().compareToIgnoreCase(o.project.getPath());
     }
-  }
-
-  private static boolean isValidName(String name) {
-    if (StringUtil.isEmptyOrSpaces(name)) return false;
-    if (name.equals(MavenId.UNKNOWN_VALUE)) return false;
-
-    for (int i = 0; i < name.length(); i++) {
-      char ch = name.charAt(i);
-      if (!(Character.isDigit(ch) || Character.isLetter(ch) || ch == '-' || ch == '_' || ch == '.')) {
-        return false;
-      }
-    }
-    return true;
   }
 }
