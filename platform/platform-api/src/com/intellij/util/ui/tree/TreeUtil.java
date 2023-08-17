@@ -15,10 +15,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.pom.Navigatable;
-import com.intellij.ui.ComponentUtil;
-import com.intellij.ui.LoadingNode;
-import com.intellij.ui.ScrollingUtil;
-import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.tree.DelegatingEdtBgtTreeVisitor;
@@ -31,6 +28,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.JBTreeTraverser;
 import com.intellij.util.containers.TreeTraversal;
+import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.ApiStatus;
@@ -75,8 +73,8 @@ public final class TreeUtil {
    * @return a navigatable object that corresponds to the specified path,  or {@code null} otherwise
    */
   public static @Nullable Navigatable getNavigatable(@NotNull JTree tree, @Nullable TreePath path) {
-    Function<? super TreePath, ? extends Navigatable> supplier = UIUtil.getClientProperty(tree, NAVIGATABLE_PROVIDER);
-    return supplier != null ? supplier.apply(path) : getLastUserObject(Navigatable.class, path);
+    Function<? super TreePath, ? extends Navigatable> supplier = ClientProperty.get(tree, NAVIGATABLE_PROVIDER);
+    return supplier == null ? getLastUserObject(Navigatable.class, path) : supplier.apply(path);
   }
 
   /**
@@ -938,7 +936,7 @@ public final class TreeUtil {
         tree.expandPath(rootPath.pathByAddingChild(firstChild));
       }
     };
-    UIUtil.invokeLaterIfNeeded(runnable);
+    EdtInvocationManager.invokeLaterIfNeeded(runnable);
   }
 
   public static void expandAll(@NotNull JTree tree) {
@@ -952,7 +950,7 @@ public final class TreeUtil {
    * @param onDone a task to run on EDT after expanding nodes
    */
   public static void expandAll(@NotNull JTree tree, @NotNull Runnable onDone) {
-    promiseExpandAll(tree).onSuccess(result -> UIUtil.invokeLaterIfNeeded(onDone));
+    promiseExpandAll(tree).onSuccess(result -> EdtInvocationManager.invokeLaterIfNeeded(onDone));
   }
 
   /**
@@ -985,7 +983,7 @@ public final class TreeUtil {
    * @param onDone a task to run on EDT after expanding nodes
    */
   public static void expand(@NotNull JTree tree, int depth, @NotNull Runnable onDone) {
-    promiseExpand(tree, depth).onSuccess(result -> UIUtil.invokeLaterIfNeeded(onDone));
+    promiseExpand(tree, depth).onSuccess(result -> EdtInvocationManager.invokeLaterIfNeeded(onDone));
   }
 
   /**
@@ -1222,7 +1220,7 @@ public final class TreeUtil {
         LOG.warn(new IllegalStateException("tree is not properly initialized yet"));
         return;
       }
-      UIUtil.invokeLaterIfNeeded(() -> basic.setLeftChildIndent(basic.getLeftChildIndent()));
+      EdtInvocationManager.invokeLaterIfNeeded(() -> basic.setLeftChildIndent(basic.getLeftChildIndent()));
     }
   }
 
@@ -1489,7 +1487,7 @@ public final class TreeUtil {
         if (promise.isCancelled()) {
           return;
         }
-        UIUtil.invokeLaterIfNeeded(() -> {
+        EdtInvocationManager.invokeLaterIfNeeded(() -> {
           if (promise.isCancelled()) return;
           if (tree.isVisible(path)) {
             if (consumer != null) consumer.accept(path);
@@ -1531,7 +1529,7 @@ public final class TreeUtil {
       .onSuccess(paths -> {
         if (promise.isCancelled()) return;
         if (!ContainerUtil.isEmpty(paths)) {
-          UIUtil.invokeLaterIfNeeded(() -> {
+          EdtInvocationManager.invokeLaterIfNeeded(() -> {
             if (promise.isCancelled()) return;
             List<TreePath> visible = ContainerUtil.filter(paths, tree::isVisible);
             if (!ContainerUtil.isEmpty(visible)) {
@@ -1774,7 +1772,7 @@ public final class TreeUtil {
    * @param consumer a path consumer called on done
    */
   public static void visit(@NotNull JTree tree, @NotNull TreeVisitor visitor, @NotNull Consumer<? super TreePath> consumer) {
-    promiseVisit(tree, visitor).onSuccess(path -> UIUtil.invokeLaterIfNeeded(() -> consumer.accept(path)));
+    promiseVisit(tree, visitor).onSuccess(path -> EdtInvocationManager.invokeLaterIfNeeded(() -> consumer.accept(path)));
   }
 
   /**
@@ -1794,7 +1792,7 @@ public final class TreeUtil {
     }
     if (model == null) return Promises.rejectedPromise("tree model is not set");
     AsyncPromise<TreePath> promise = new AsyncPromise<>();
-    UIUtil.invokeLaterIfNeeded(() -> promise.setResult(visitModel(model, visitor)));
+    EdtInvocationManager.invokeLaterIfNeeded(() -> promise.setResult(visitModel(model, visitor)));
     return promise;
   }
 
