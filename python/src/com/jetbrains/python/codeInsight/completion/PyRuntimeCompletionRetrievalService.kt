@@ -258,7 +258,7 @@ fun createCompletionResultSet(retrievalService: PyRuntimeCompletionRetrievalServ
         if (valueContainer.type == "module") return@flatMap emptyList()
         if (checkDelimiterByType(valueContainer.qualifiedType, candidate.psiName.delimiter)) return@flatMap emptyList()
       }
-      getSetOfChildrenByListOfCall(parentNode, candidate.pyQualifiedExpressionList, parameters.completionType)
+      getSetOfChildrenByListOfCall(parentNode, candidate, parameters.completionType)
         .let { retrievalService.extractItemsForCompletion(it, candidate, parameters.completionType) }
         ?.let { postProcessingChildren(it, candidate, parameters) }
       ?: emptyList()

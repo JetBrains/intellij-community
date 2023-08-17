@@ -34,6 +34,7 @@ data class PyQualifiedExpressionItem(val pyQualifiedName: String, val delimiter:
  * @param psiName - name of PsiElement, that could be a python object
  * LanguageNamesValidation.INSTANCE.forLanguage(PythonLanguage.getInstance()).isIdentifier()
  * @param pyQualifiedExpressionList - represents a qualified expression in the list
+ * @param requiredTypes - list of the required objects type for additional check
  * @see PyQualifiedExpressionItem
  *
  * An example "a.b.c.":
@@ -41,7 +42,8 @@ data class PyQualifiedExpressionItem(val pyQualifiedName: String, val delimiter:
  *     pyQualifiedExpressionList = [PyQualifiedExpressionItem("b",PyTokenTypes.DOT),PyQualifiedExpressionItem("c",PyTokenTypes.DOT)]
  */
 data class PyObjectCandidate(val psiName: PyQualifiedExpressionItem,
-                             val pyQualifiedExpressionList: List<PyQualifiedExpressionItem>)
+                             val pyQualifiedExpressionList: List<PyQualifiedExpressionItem>,
+                             val requiredTypes: List<String>? = null)
 
 
 // Temporary priority value to control order in CompletionResultSet (DS-3746)
@@ -142,10 +144,9 @@ private fun createPyObjectCandidate(psiElement: PsiElement, lastDelimiter: IElem
   if (names.isNotEmpty() && delimiter.size == names.size) {
     val firstDelimiter = delimiter.removeFirst()
     val firstName = names.removeFirst()
-    return PyObjectCandidate(PyQualifiedExpressionItem(firstName, firstDelimiter),
-                             names.zip(delimiter).map { pair ->
-                               PyQualifiedExpressionItem(pair.first, pair.second)
-                             })
+    return PyObjectCandidate(PyQualifiedExpressionItem(firstName, firstDelimiter), names.zip(delimiter).map { pair ->
+      PyQualifiedExpressionItem(pair.first, pair.second)
+    })
   }
 
   return PyObjectCandidate(PyQualifiedExpressionItem(firstChild.text, lastDelimiter), emptyList())
@@ -153,9 +154,13 @@ private fun createPyObjectCandidate(psiElement: PsiElement, lastDelimiter: IElem
 
 private fun getPossibleObjectsDataFrame(parameters: CompletionParameters,
                                         callInnerReferenceExpression: PyExpression?): List<PyObjectCandidate> {
-  return setOfNotNull(callInnerReferenceExpression?.text, getSliceSubscriptionReferenceExpression(parameters)?.text,
+  val callExpression = PsiTreeUtil.getParentOfType(parameters.position, PyCallExpression::class.java)
+  parseMethodsWithArguments(callExpression)?.let {
+    return it
+  }
+  return setOfNotNull(callInnerReferenceExpression?.text,
+                      getSliceSubscriptionReferenceExpression(parameters)?.text,
                       getAttributeReferenceExpression(parameters)?.text).map {
-
     PyObjectCandidate(PyQualifiedExpressionItem(it, PyTokenTypes.LBRACKET), emptyList())
   }
 }
@@ -178,6 +183,40 @@ private fun findCompleteAttribute(parameters: CompletionParameters): Pair<PsiEle
 
     else -> null
   }
+}
+
+//  DS-4870
+/**
+ * This data class retains types and methods about particular expressions associated with certain module usages.
+ * @see moduleToMethods
+ */
+private data class RuntimeCompletionMethods(val requiredTypes: List<String>?, val methodNames: List<String>)
+
+
+private val moduleToMethods = mapOf(
+  "polars" to RuntimeCompletionMethods(listOf("polars.dataframe.frame.DataFrame", "polars.internals.dataframe.frame.DataFrame"),
+                                       listOf("any", "approx_unique", "avg", "arg_sort_by", "by_name", "col", "count", "cumsum", "exclude", "first",
+                                     "from_epoch", "groups", "head", "implode", "last", "mean", "median", "min", "max", "n_unique",
+                                     "quantile", "std", "tail", "sum")),
+)
+
+fun parseMethodsWithArguments(callExpression: PyCallExpression?): List<PyObjectCandidate>? {
+  val calleeFqn = (callExpression?.callee?.reference?.resolve() as? PyFunction)?.qualifiedName?.split(".") ?: return null
+  val moduleMethods = moduleToMethods[calleeFqn.firstOrNull()] ?: return null
+  if (calleeFqn.lastOrNull() in moduleMethods.methodNames) {
+    var parentExpression = PsiTreeUtil.getParentOfType(callExpression.parent, PyCallExpression::class.java)
+    val result = mutableListOf<PyObjectCandidate>()
+    while (parentExpression != null) {
+      val psiElement = PsiTreeUtil.getChildOfType(parentExpression, PyReferenceExpression::class.java)?.navigationElement ?: break
+      val possibleDataFrame = createPyObjectCandidate(psiElement, PyTokenTypes.LPAR) ?: return null
+      result.add(PyObjectCandidate(PyQualifiedExpressionItem(possibleDataFrame.psiName.pyQualifiedName, PyTokenTypes.LBRACKET),
+                                   emptyList(),
+                                   moduleMethods.requiredTypes))
+      parentExpression = PsiTreeUtil.getParentOfType(parentExpression, PyCallExpression::class.java)
+    }
+    return result
+  }
+  return null
 }
 
 private fun getCallInnerReferenceExpression(parameters: CompletionParameters): PyExpression? {
@@ -334,15 +373,24 @@ internal fun checkDelimiterByType(qualifiedType: String?, delimiter: IElementTyp
   return delimiters != null && delimiter !in delimiters
 }
 
+internal fun checkRequiredType(qualifiedType: String?, requiredTypes: List<String>?): Boolean {
+  requiredTypes ?: return true
+  qualifiedType ?: return false
+  return requiredTypes.contains(qualifiedType)
+}
+
 internal fun getSetOfChildrenByListOfCall(valueNode: XValueNodeImpl?,
-                                          listOfCall: List<PyQualifiedExpressionItem>,
+                                          candidate: PyObjectCandidate,
                                           completionType: CompletionType): Pair<XValueNodeImpl, List<PyQualifiedExpressionItem>>? {
   var currentNode = valueNode ?: return null
-
+  val listOfCall = candidate.pyQualifiedExpressionList
   listOfCall.forEachIndexed { index, call ->
     when (currentNode.valueContainer) {
       is DataFrameDebugValue -> {
-        return Pair(currentNode, listOfCall.subList(index, listOfCall.size))
+        if (checkRequiredType((currentNode.valueContainer as? DataFrameDebugValue)?.qualifiedType, candidate.requiredTypes)) {
+          return Pair(currentNode, listOfCall.subList(index, listOfCall.size))
+        }
+        return null
       }
       else -> {
         if (completionType == CompletionType.BASIC) return null
@@ -355,7 +403,12 @@ internal fun getSetOfChildrenByListOfCall(valueNode: XValueNodeImpl?,
       if (checkDelimiterByType(valueContainer.qualifiedType, call.delimiter)) return null
     }
   }
-  return Pair(currentNode, emptyList())
+  (currentNode.valueContainer as? PyDebugValue)?.let {
+    if (checkRequiredType(it.qualifiedType, candidate.requiredTypes)) {
+      return Pair(currentNode, emptyList())
+    }
+  }
+  return null
 }
 
 internal fun createCustomMatcher(parameters: CompletionParameters, result: CompletionResultSet): PrefixMatcher {
