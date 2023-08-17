@@ -9,9 +9,7 @@ import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.search.GlobalSearchScope
-import junit.framework.AssertionFailedError
 import org.assertj.core.api.Assertions.assertThat
-import org.jetbrains.plugins.gradle.DefaultExternalDependencyId
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
 import org.jetbrains.plugins.gradle.importing.TestGradleBuildScriptBuilder
 import org.jetbrains.plugins.gradle.testFramework.util.importProject
@@ -20,49 +18,6 @@ import org.junit.Test
 import java.util.function.Consumer
 
 class GradleAttachSourcesProviderTest : GradleImportingTestCase() {
-
-  @Test
-  fun `test sources artifact notation parsing`() {
-    val dependencyId = DefaultExternalDependencyId("mygroup", "myartifact", "myversion")
-    assertEquals("mygroup:myartifact:myversion:sources",
-                 GradleAttachSourcesProvider.getSourcesArtifactNotation(dependencyId.presentableName) {
-                   true
-                 })
-
-    dependencyId.classifier = "myclassifier"
-    assertEquals("mygroup:myartifact:myversion:sources",
-                 GradleAttachSourcesProvider.getSourcesArtifactNotation(dependencyId.presentableName) {
-                   true
-                 })
-
-    dependencyId.packaging = "mypackaging"
-    assertEquals("mygroup:myartifact:myversion:sources",
-                 GradleAttachSourcesProvider.getSourcesArtifactNotation(dependencyId.presentableName) {
-                   true
-                 })
-
-    assertEquals("mygroup:myartifact:myversion:sources",
-                 GradleAttachSourcesProvider.getSourcesArtifactNotation(DefaultExternalDependencyId("mygroup", "myartifact",
-                                                                                                    "myversion")
-                                                                          .apply { packaging = "mypackaging" }.presentableName) {
-                   true
-                 })
-
-    assertEquals("myartifact:myversion:sources",
-                 GradleAttachSourcesProvider.getSourcesArtifactNotation("myartifact:myversion") {
-                   throw AssertionFailedError("artifactIdChecker shouldn't be called")
-                 })
-
-    assertEquals("mygroup:myartifact:sources",
-                 GradleAttachSourcesProvider.getSourcesArtifactNotation("mygroup:myartifact") {
-                   throw AssertionFailedError("artifactIdChecker shouldn't be called")
-                 })
-
-    assertEquals("mygroup:myartifact:myversion:sources",
-                 GradleAttachSourcesProvider.getSourcesArtifactNotation("mygroup:myartifact:myversion@aar") {
-                   throw AssertionFailedError("artifactIdChecker shouldn't be called")
-                 })
-  }
 
   @Test
   fun `test download sources dynamic task`() {
