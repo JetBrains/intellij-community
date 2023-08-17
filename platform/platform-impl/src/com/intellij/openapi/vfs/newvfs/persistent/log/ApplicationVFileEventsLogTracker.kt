@@ -31,9 +31,9 @@ class ApplicationVFileEventsLogTracker(
     private val eventStartTracker: OperationLogStorage.OperationTracker = context.trackOperation(tag)
     override fun completeEventTracking() {
       context.trackOperation(VfsOperationTag.VFILE_EVENT_END) {
-        completeTrackingWithCallback({
+        completeTracking({
           // finish start descriptor only after end is written
-          eventStartTracker.completeTracking(composeStartOperation)
+          eventStartTracker.completeTracking(null, composeStartOperation)
         }) {
           VfsOperation.VFileEventOperation.EventEnd(tag)
         }

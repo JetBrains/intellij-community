@@ -93,20 +93,19 @@ class OperationLogStorageImpl(
   }
 
   private inner class TrackContext(val tag: VfsOperationTag, val appendLogEntry: AppendContext): OperationTracker {
-
-    override fun completeTrackingWithCallback(trackingCompletedCallback: () -> Unit, composeOperation: () -> VfsOperation<*>) {
-      enqueueWriteJob {
-        try {
+    override fun completeTracking(trackingCompletedCallback: (() -> Unit)?, composeOperation: () -> VfsOperation<*>) {
+      if (trackingCompletedCallback == null) {
+        enqueueWriteJob {
           writeJobImpl(tag, composeOperation, appendLogEntry)
-        } finally {
-          trackingCompletedCallback()
         }
-      }
-    }
-
-    override fun completeTracking(composeOperation: () -> VfsOperation<*>) {
-      enqueueWriteJob {
-        writeJobImpl(tag, composeOperation, appendLogEntry)
+      } else {
+        enqueueWriteJob {
+          try {
+            writeJobImpl(tag, composeOperation, appendLogEntry)
+          } finally {
+            trackingCompletedCallback()
+          }
+        }
       }
     }
   }
