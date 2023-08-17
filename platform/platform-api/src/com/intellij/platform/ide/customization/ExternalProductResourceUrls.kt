@@ -16,6 +16,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.OverrideOnly
 interface ExternalProductResourceUrls {
   companion object {
+    @JvmStatic
     fun getInstance(): ExternalProductResourceUrls = ApplicationManager.getApplication().getService(ExternalProductResourceUrls::class.java)
   }
 
@@ -44,5 +45,18 @@ interface ExternalProductResourceUrls {
    * the action won't be available.
    */
   val bugReportUrl: ((description: String) -> Url)?
+    get() = null
+  
+  /**
+   * Returns a function which computes URL for contacting technical support.
+   * `description` parameter will contain automatically generated information about the current IDE and the environment, it may be added
+   * to the template of the issue report.
+   * In order to include custom data in the description, you may use [FeedbackDescriptionProvider][com.intellij.ide.FeedbackDescriptionProvider]
+   * extension point.
+   *
+   * The computed URL will be opened in browser when a user invokes the "Contact Support" action. If this function returns `null`,
+   * the action won't be available.
+   */
+  val technicalSupportUrl: ((description: String) -> Url)?
     get() = null
 }
