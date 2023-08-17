@@ -28,6 +28,7 @@ suspend fun buildCommunityStandaloneJpsBuilder(targetDir: Path,
     "intellij.platform.tracing.rt",
     "intellij.platform.util.diff",
     "intellij.platform.util.rt.java8",
+    "intellij.platform.util.trove",
   ).map { ModuleItem(moduleName = it, relativeOutputFile = "util.jar", reason = null) })
 
   layout.withModule("intellij.platform.util.rt", "util_rt.jar")
