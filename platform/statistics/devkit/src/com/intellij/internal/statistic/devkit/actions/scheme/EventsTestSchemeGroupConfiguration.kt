@@ -187,8 +187,9 @@ class EventsTestSchemeGroupConfiguration(private val project: Project,
     if (document == null) {
       document = EditorFactory.getInstance().createDocument(currentGroup.customRules)
     }
-    val editor = EditorFactory.getInstance().createEditor(document, project, file.virtualFile, false) as EditorEx
-    editor.setFile(file.virtualFile)
+    val virtualFile = file.virtualFile
+    val editor = EditorFactory.getInstance().createEditor(document, project, virtualFile, false) as EditorEx
+    editor.setFile(virtualFile)
     editor.settings.isLineMarkerAreaShown = false
     editor.settings.isFoldingOutlineShown = false
 

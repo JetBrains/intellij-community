@@ -174,7 +174,7 @@ final class EditorWindowImpl extends UserDataHolderBase implements EditorWindow,
   }
 
   @Override
-  public void setFile(final VirtualFile vFile) {
+  public void setFile(final @NotNull VirtualFile vFile) {
     myDelegate.setFile(vFile);
   }
 

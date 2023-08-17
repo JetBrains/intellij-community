@@ -153,7 +153,7 @@ public interface EditorEx extends Editor {
 
   void setRendererMode(boolean isRendererMode);
 
-  void setFile(VirtualFile vFile);
+  void setFile(@NotNull VirtualFile vFile);
 
   @NotNull
   DataContext getDataContext();

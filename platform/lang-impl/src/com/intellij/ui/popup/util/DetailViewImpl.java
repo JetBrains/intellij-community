@@ -140,7 +140,7 @@ public class DetailViewImpl extends JPanel implements DetailView, UserDataHolder
   }
 
   @NotNull
-  protected Editor createEditor(@Nullable Project project, Document document, VirtualFile file) {
+  protected Editor createEditor(@Nullable Project project, Document document, @NotNull VirtualFile file) {
     EditorEx editor = (EditorEx)EditorFactory.getInstance().createViewer(document, project, EditorKind.PREVIEW);
 
     final EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();

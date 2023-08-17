@@ -284,11 +284,13 @@ public final class EditorFragmentComponent extends JPanel {
     return showEditorFragmentHintAt(editor, range, point.y, true, showFolding, hideByAnyKey, false);
   }
 
-  public static Color getBackgroundColor(Editor editor){
+  @NotNull
+  public static Color getBackgroundColor(@NotNull Editor editor){
     return getBackgroundColor(editor, true);
   }
 
-  public static Color getBackgroundColor(Editor editor, boolean useCaretRowBackground){
+  @NotNull
+  public static Color getBackgroundColor(@NotNull Editor editor, boolean useCaretRowBackground){
     EditorColorsScheme colorsScheme = editor.getColorsScheme();
     Color color = colorsScheme.getColor(EditorColors.CARET_ROW_COLOR);
     if (!useCaretRowBackground || color == null){

@@ -113,8 +113,9 @@ public class TestParseEventsSchemeDialog extends DialogWrapper {
       document = EditorFactory.getInstance().createDocument(templateText);
     }
 
-    final EditorEx editor = (EditorEx)EditorFactory.getInstance().createEditor(document, myProject, file.getVirtualFile(), false);
-    editor.setFile(file.getVirtualFile());
+    VirtualFile virtualFile = file.getVirtualFile();
+    final EditorEx editor = (EditorEx)EditorFactory.getInstance().createEditor(document, myProject, virtualFile, false);
+    editor.setFile(virtualFile);
     return editor;
   }
 
