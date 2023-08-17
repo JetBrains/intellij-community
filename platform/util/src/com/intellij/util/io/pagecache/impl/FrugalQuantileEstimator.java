@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io.pagecache.impl;
 
 import java.util.concurrent.ThreadLocalRandom;
@@ -79,7 +79,7 @@ public class FrugalQuantileEstimator {
   @Override
   public String toString() {
     return "FrugalQuantileEstimator[" +
-           "target: " + targetPercentileToEstimate * 100 + " %-ile" +
+           "target: " + targetPercentileToEstimate + " %-ile" +
            ", current: " + currentEstimation +
            ", step: " + step +
            ']';

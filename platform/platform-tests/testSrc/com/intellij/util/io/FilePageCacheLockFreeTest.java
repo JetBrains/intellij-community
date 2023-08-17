@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
 import com.intellij.util.io.pagecache.FilePageCacheStatistics;
@@ -77,7 +77,7 @@ public class FilePageCacheLockFreeTest {
   }
 
   @Test
-  public void cacheSettlesDownAfterEachOperationAndDontDoAnyWorkByItself() throws Exception {
+  public void cacheSettlesIdleAfterEachOperationAndDontDoAnyWorkByItself() throws Exception {
     File file = tmpDirectory.newFile();
 
     try (FilePageCacheLockFree fpCache = new FilePageCacheLockFree(CACHE_CAPACITY_BYTES)) {
