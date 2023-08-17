@@ -26,7 +26,7 @@ import java.util.Objects;
 /**
  * A bridge from {@link ModCommandAction} to {@link IntentionAction} interface.
  */
-/*package*/ final class ModCommandActionWrapper implements IntentionAction, PriorityAction, Iconable, IntentionActionWithFixAllOption,
+/*package*/ public final class ModCommandActionWrapper implements IntentionAction, PriorityAction, Iconable, IntentionActionWithFixAllOption,
                                                            CustomizableIntentionAction {
   private final @NotNull ModCommandAction myAction;
   private @Nullable Presentation myPresentation;
