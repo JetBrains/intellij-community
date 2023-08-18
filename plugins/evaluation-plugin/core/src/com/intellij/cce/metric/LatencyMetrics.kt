@@ -86,5 +86,5 @@ private fun computePercentile(sample: List<Double>, percentile: Int): Double {
   if (sample.isEmpty()) return Double.NaN
   require(percentile in 0..100) { "Percentile must be between 0 and 100" }
   val index = (sample.size * percentile / 100).coerceAtMost(sample.size - 1)
-  return sample[index]
+  return sample.sorted()[index]
 }
