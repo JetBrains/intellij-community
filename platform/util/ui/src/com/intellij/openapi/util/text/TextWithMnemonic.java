@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.text;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.*;
 
@@ -12,6 +13,8 @@ import java.util.regex.Pattern;
  * An immutable object which represents a text string with mnemonic character.
  */
 public final class TextWithMnemonic {
+  private static final Logger LOG = Logger.getInstance(TextWithMnemonic.class);
+
   public static final TextWithMnemonic EMPTY = new TextWithMnemonic("", -1, "");
   public static final Pattern MNEMONIC = Pattern.compile(" ?\\(_?[A-Z]\\)");
 
@@ -177,19 +180,36 @@ public final class TextWithMnemonic {
     return new TextWithMnemonic(resultText, resultIndex, mnemonicSuffix);
   }
 
+  @ApiStatus.Internal
+  public static @Nullable TextWithMnemonic fromMnemonicText(@NotNull @Nls String text) {
+    return fromMnemonicText(text, true);
+  }
+
   /**
    * @param text a text with a mnemonic specified by the {@link UIUtil#MNEMONIC MNEMONIC} marker
    * @return new {@code TextWithMnemonic} object, or {@code null} if mnemonic is not specified in the given text
-   * @throws IllegalArgumentException if the given text contains a marker at wrong position, or if it contains several markers
    * @see UIUtil#replaceMnemonicAmpersand
    */
   @ApiStatus.Internal
-  public static @Nullable TextWithMnemonic fromMnemonicText(@NotNull @Nls String text) {
+  public static @Nullable TextWithMnemonic fromMnemonicText(@NotNull @Nls String text, boolean reportInvalidMnemonics) {
     int pos = text.indexOf(UIUtil.MNEMONIC);
     if (pos < 0) return null;
     String str = text.substring(pos + 1);
-    if (str.isEmpty()) throw new IllegalArgumentException("unexpected mnemonic marker in " + text);
-    if (str.indexOf(UIUtil.MNEMONIC) >= 0) throw new IllegalArgumentException("several mnemonic markers in " + text);
+
+    Exception error = null;
+    if (str.isEmpty()) error = new IllegalArgumentException("unexpected mnemonic marker in " + text);
+    if (str.indexOf(UIUtil.MNEMONIC) >= 0) error = new IllegalArgumentException("several mnemonic markers in " + text);
+
+    if (error != null) {
+      if (reportInvalidMnemonics) {
+        LOG.error(error);
+      }
+      else {
+        LOG.warn(error);
+      }
+      return null;
+    }
+
     return fromPlainTextWithIndex(pos > 0 ? text.substring(0, pos) + str : str, pos);
   }
 
