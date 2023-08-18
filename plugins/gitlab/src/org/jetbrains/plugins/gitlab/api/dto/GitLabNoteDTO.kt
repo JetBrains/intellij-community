@@ -2,8 +2,10 @@
 package org.jetbrains.plugins.gitlab.api.dto
 
 import com.intellij.collaboration.api.dto.GraphQLFragment
+import org.jetbrains.plugins.gitlab.api.SinceGitLab
 import java.util.*
 
+@SinceGitLab("12.0")
 @GraphQLFragment("/graphql/fragment/note.graphql")
 data class GitLabNoteDTO(
   val author: GitLabUserDTO,
@@ -12,13 +14,13 @@ data class GitLabNoteDTO(
   val id: String,
   val position: Position?,
   val resolvable: Boolean,
-  val resolved: Boolean,
+  @SinceGitLab("13.1") val resolved: Boolean,
   val system: Boolean,
-  val url: String,
+  @SinceGitLab("13.8") val url: String,
   val userPermissions: UserPermissions
 ) {
   data class Position(
-    val diffRefs: GitLabDiffRefs,
+    @SinceGitLab("12.4") val diffRefs: GitLabDiffRefs,
     val filePath: String,
     val positionType: String,
     val newPath: String?,

@@ -4,11 +4,14 @@ package org.jetbrains.plugins.gitlab.mergerequest.api.dto
 import com.intellij.collaboration.api.dto.GraphQLConnectionDTO
 import com.intellij.collaboration.api.dto.GraphQLCursorPageInfoDTO
 import com.intellij.collaboration.api.dto.GraphQLFragment
+import org.jetbrains.plugins.gitlab.api.GitLabEdition.Enterprise
+import org.jetbrains.plugins.gitlab.api.SinceGitLab
 import org.jetbrains.plugins.gitlab.api.dto.*
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestState
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeStatus
 import java.util.*
 
+@SinceGitLab("12.0")
 @GraphQLFragment("/graphql/fragment/mergeRequest.graphql")
 @GraphQLFragment("/graphql/fragment/community/mergeRequest.graphql")
 class GitLabMergeRequestDTO(
@@ -20,26 +23,25 @@ class GitLabMergeRequestDTO(
   val createdAt: Date,
   val targetBranch: String,
   val sourceBranch: String,
-  val diffRefs: GitLabDiffRefs,
-  // will be missing in community edition
-  val approved: Boolean?,
-  val conflicts: Boolean,
+  @SinceGitLab("12.1") val diffRefs: GitLabDiffRefs,
+  @SinceGitLab("14.3", editions = [Enterprise]) val approved: Boolean?,
+  @SinceGitLab("13.4") val conflicts: Boolean,
   val headPipeline: GitLabPipelineDTO?,
-  val mergeStatusEnum: GitLabMergeStatus,
-  val mergeable: Boolean,
+  @SinceGitLab("14.0") val mergeStatusEnum: GitLabMergeStatus,
+  @SinceGitLab("13.7") val mergeable: Boolean,
   val state: GitLabMergeRequestState,
-  val draft: Boolean,
-  val author: GitLabUserDTO,
+  @SinceGitLab("13.12") val draft: Boolean,
+  @SinceGitLab("13.1") val author: GitLabUserDTO,
   val targetProject: GitLabProjectDTO,
   val sourceProject: GitLabProjectDTO?,
   val userPermissions: GitLabMergeRequestPermissionsDTO,
   val shouldBeRebased: Boolean,
   val rebaseInProgress: Boolean,
-  approvedBy: UserCoreConnection,
-  assignees: AssigneeConnection,
-  reviewers: ReviewerConnection,
-  commits: CommitConnection,
-  labels: LabelConnection
+  @SinceGitLab("13.5") approvedBy: UserCoreConnection,
+  @SinceGitLab("12.4") assignees: AssigneeConnection,
+  @SinceGitLab("13.8") reviewers: ReviewerConnection,
+  @SinceGitLab("14.7") commits: CommitConnection,
+  @SinceGitLab("12.4") labels: LabelConnection
 ) {
   val approvedBy: List<GitLabUserDTO> = approvedBy.nodes
 
@@ -51,18 +53,33 @@ class GitLabMergeRequestDTO(
 
   val labels: List<GitLabLabelDTO> = labels.nodes
 
-  class UserCoreConnection(pageInfo: GraphQLCursorPageInfoDTO, nodes: List<GitLabUserDTO>)
-    : GraphQLConnectionDTO<GitLabUserDTO>(pageInfo, nodes)
+  @SinceGitLab("13.5")
+  class UserCoreConnection(
+    pageInfo: GraphQLCursorPageInfoDTO,
+    nodes: List<GitLabUserDTO>
+  ) : GraphQLConnectionDTO<GitLabUserDTO>(pageInfo, nodes)
 
-  class AssigneeConnection(pageInfo: GraphQLCursorPageInfoDTO, nodes: List<GitLabUserDTO>)
-    : GraphQLConnectionDTO<GitLabUserDTO>(pageInfo, nodes)
+  @SinceGitLab("12.4")
+  class AssigneeConnection(
+    pageInfo: GraphQLCursorPageInfoDTO,
+    nodes: List<GitLabUserDTO>
+  ) : GraphQLConnectionDTO<GitLabUserDTO>(pageInfo, nodes)
 
-  class ReviewerConnection(pageInfo: GraphQLCursorPageInfoDTO, nodes: List<GitLabReviewerDTO>)
-    : GraphQLConnectionDTO<GitLabReviewerDTO>(pageInfo, nodes)
+  @SinceGitLab("13.8")
+  class ReviewerConnection(
+    pageInfo: GraphQLCursorPageInfoDTO,
+    nodes: List<GitLabReviewerDTO>
+  ) : GraphQLConnectionDTO<GitLabReviewerDTO>(pageInfo, nodes)
 
-  class CommitConnection(pageInfo: GraphQLCursorPageInfoDTO, nodes: List<GitLabCommitDTO>)
-    : GraphQLConnectionDTO<GitLabCommitDTO>(pageInfo, nodes)
+  @SinceGitLab("14.7")
+  class CommitConnection(
+    pageInfo: GraphQLCursorPageInfoDTO,
+    nodes: List<GitLabCommitDTO>
+  ) : GraphQLConnectionDTO<GitLabCommitDTO>(pageInfo, nodes)
 
-  class LabelConnection(pageInfo: GraphQLCursorPageInfoDTO, nodes: List<GitLabLabelDTO>)
-    : GraphQLConnectionDTO<GitLabLabelDTO>(pageInfo, nodes)
+  @SinceGitLab("12.4")
+  class LabelConnection(
+    pageInfo: GraphQLCursorPageInfoDTO,
+    nodes: List<GitLabLabelDTO>
+  ) : GraphQLConnectionDTO<GitLabLabelDTO>(pageInfo, nodes)
 }

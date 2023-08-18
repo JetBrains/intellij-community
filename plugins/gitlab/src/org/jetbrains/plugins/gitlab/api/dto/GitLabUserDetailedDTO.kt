@@ -5,7 +5,9 @@ import com.intellij.collaboration.api.dto.GraphQLConnectionDTO
 import com.intellij.collaboration.api.dto.GraphQLCursorPageInfoDTO
 import com.intellij.collaboration.api.dto.GraphQLFragment
 import com.intellij.openapi.util.NlsSafe
+import org.jetbrains.plugins.gitlab.api.SinceGitLab
 
+@SinceGitLab("12.0")
 @GraphQLFragment("graphql/fragment/userDetailed.graphql")
 class GitLabUserDetailedDTO(
   id: String,
@@ -13,7 +15,7 @@ class GitLabUserDetailedDTO(
   name: @NlsSafe String,
   avatarUrl: String?,
   webUrl: String,
-  projectMemberships: ProjectMemberConnection
+  @SinceGitLab("13.1") projectMemberships: ProjectMemberConnection
 ) : GitLabUserDTO(id, username, name, avatarUrl, webUrl) {
   val projectMemberships: List<ProjectMemberDTO> = projectMemberships.nodes
 

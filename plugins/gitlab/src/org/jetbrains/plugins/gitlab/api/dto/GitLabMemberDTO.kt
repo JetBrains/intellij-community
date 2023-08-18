@@ -9,11 +9,12 @@ import com.fasterxml.jackson.databind.deser.std.StdDeserializer
 import com.intellij.collaboration.api.dto.GraphQLFragment
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
+import org.jetbrains.plugins.gitlab.api.SinceGitLab
 import org.jetbrains.plugins.gitlab.api.data.GitLabAccessLevel
 
-
-@JsonDeserialize(using = GitLabMemberDTODeserializer::class)
+@SinceGitLab("13.1")
 @GraphQLFragment("graphql/fragment/member.graphql")
+@JsonDeserialize(using = GitLabMemberDTODeserializer::class)
 class GitLabMemberDTO(
   val id: String,
   val user: GitLabUserDTO,

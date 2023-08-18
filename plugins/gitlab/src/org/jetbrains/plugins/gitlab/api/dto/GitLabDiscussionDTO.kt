@@ -4,18 +4,23 @@ package org.jetbrains.plugins.gitlab.api.dto
 import com.intellij.collaboration.api.dto.GraphQLConnectionDTO
 import com.intellij.collaboration.api.dto.GraphQLCursorPageInfoDTO
 import com.intellij.collaboration.api.dto.GraphQLFragment
+import org.jetbrains.plugins.gitlab.api.SinceGitLab
 import java.util.*
 
+@SinceGitLab("12.0")
 @GraphQLFragment("/graphql/fragment/discussion.graphql")
 class GitLabDiscussionDTO(
   val id: String,
-  val replyId: String,
+  @SinceGitLab("12.1") val replyId: String,
   val createdAt: Date,
   notes: NotesConnection
 ) {
   val notes: List<GitLabNoteDTO> = notes.nodes
 
-  class NotesConnection(pageInfo: GraphQLCursorPageInfoDTO, nodes: List<GitLabNoteDTO>) :
+  class NotesConnection(
+    pageInfo: GraphQLCursorPageInfoDTO,
+    @SinceGitLab("12.3") nodes: List<GitLabNoteDTO>
+  ) :
     GraphQLConnectionDTO<GitLabNoteDTO>(pageInfo, nodes)
 
   override fun equals(other: Any?): Boolean {

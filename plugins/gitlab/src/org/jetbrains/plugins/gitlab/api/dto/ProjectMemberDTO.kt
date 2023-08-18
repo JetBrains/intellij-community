@@ -2,7 +2,9 @@
 package org.jetbrains.plugins.gitlab.api.dto
 
 import com.intellij.collaboration.api.dto.GraphQLFragment
+import org.jetbrains.plugins.gitlab.api.SinceGitLab
 
+@SinceGitLab("13.1")
 @GraphQLFragment("/graphql/fragment/projectMember.graphql")
 data class ProjectMemberDTO(
   val project: GitLabProjectDTO

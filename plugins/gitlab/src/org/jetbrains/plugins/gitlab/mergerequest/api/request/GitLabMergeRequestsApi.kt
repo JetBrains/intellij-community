@@ -57,12 +57,12 @@ suspend fun GitLabApi.GraphQL.findMergeRequestsByBranch(project: GitLabProjectCo
   }
 }
 
+private class MergeRequestsConnection(pageInfo: GraphQLCursorPageInfoDTO, nodes: List<GitLabMergeRequestIidDTO>)
+  : GraphQLConnectionDTO<GitLabMergeRequestIidDTO>(pageInfo, nodes)
+
 @SinceGitLab("13.2")
 fun getMergeRequestStateEventsUri(project: GitLabProjectCoordinates, mrIid: String): URI =
   project.restApiUri.resolveRelative("merge_requests").resolveRelative(mrIid).resolveRelative("resource_state_events")
-
-private class MergeRequestsConnection(pageInfo: GraphQLCursorPageInfoDTO, nodes: List<GitLabMergeRequestIidDTO>)
-  : GraphQLConnectionDTO<GitLabMergeRequestIidDTO>(pageInfo, nodes)
 
 @SinceGitLab("11.4", note = "Maybe released in 11.3-rc5")
 fun getMergeRequestLabelEventsUri(project: GitLabProjectCoordinates, mrIid: String): URI =
