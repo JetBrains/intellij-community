@@ -3,6 +3,7 @@ package com.jetbrains.python.sdk.add.target.conda
 
 import com.intellij.execution.target.TargetBrowserHints
 import com.intellij.execution.target.TargetEnvironmentConfiguration
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
@@ -14,7 +15,6 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.emptyText
-import com.intellij.openapi.util.Disposer
 import com.intellij.ui.dsl.builder.*
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory.Companion.extendWithTargetSpecificFields
@@ -34,9 +34,8 @@ import javax.swing.JOptionPane.ERROR_MESSAGE
 /**
  * View for adding conda interpreter backed by [model]
  */
-class PyAddCondaPanelView(private val model: PyAddCondaPanelModel) : PyAddTargetBasedSdkView {
+class PyAddCondaPanelView(private val model: PyAddCondaPanelModel) : PyAddTargetBasedSdkView, Disposable {
   override val panelName: String get() = PyBundle.message("python.add.sdk.panel.name.conda.environment")
-  private val disposable = Disposer.newDisposable()
 
   override val icon: Icon = PythonIcons.Python.Anaconda
   private val condaPathField = TextFieldWithBrowseButton()
@@ -95,7 +94,7 @@ class PyAddCondaPanelView(private val model: PyAddCondaPanelModel) : PyAddTarget
     }.visibleIf(model.showCreateNewEnvPanelRoProp)
 
     targetPanelExtension = extendWithTargetSpecificFields(model.project, model.targetConfiguration)
-  }.also { it.registerValidators(disposable) }
+  }.also { it.registerValidators(this) }
 
   private fun showError(@Nls title: String, @Nls error: String) {
     JOptionPane.showMessageDialog(panel, error, title, ERROR_MESSAGE)
@@ -110,16 +109,14 @@ class PyAddCondaPanelView(private val model: PyAddCondaPanelModel) : PyAddTarget
   override fun addStateListener(stateListener: PyAddSdkStateListener) = Unit
 
   override fun onSelected() {
-      runBlockingModalWithRawProgressReporter(model.project, PyBundle.message("python.add.sdk.conda.detecting")) {
+    runBlockingModalWithRawProgressReporter(model.project, PyBundle.message("python.add.sdk.conda.detecting")) {
       model.detectConda(Dispatchers.EDT, progressSink)
     }
   }
 
   override val actions: Map<PyAddSdkDialogFlowAction, Boolean> = emptyMap()
 
-  override fun complete() {
-    Disposer.dispose(disposable)
-  }
+  override fun complete() = Unit
 
   override fun validateAll(): List<ValidationInfo> =
     panel.validateAll() + (model.getValidationError()?.let { listOf(ValidationInfo(it)) } ?: emptyList())
@@ -137,4 +134,6 @@ class PyAddCondaPanelView(private val model: PyAddCondaPanelModel) : PyAddTarget
           PyBundle.message("python.sdk.conda.cant.create.body", it.localizedMessage))
       }.getOrNull()
     }
+
+  override fun dispose() = Unit
 }
