@@ -36,7 +36,7 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : BaseIde
 
   init {
     platformPrefix = "Idea"
-    applicationInfoModule = "intellij.idea.community.resources"
+    applicationInfoModule = "intellij.idea.community.customization"
     additionalIDEPropertiesFilePaths = persistentListOf(communityHomeDir.resolve("build/conf/ideaCE.properties"))
     toolsJarRequired = true
     scrambleMainJar = false
@@ -47,7 +47,7 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : BaseIde
        so this property is set only when IDEA CE is built from the intellij-ultimate project. */
     embeddedJetBrainsClientMainModule = null
 
-    productLayout.productImplementationModules = listOf("intellij.platform.main", "intellij.idea.community.resources")
+    productLayout.productImplementationModules = listOf("intellij.platform.main", "intellij.idea.community.customization")
     productLayout.bundledPluginModules = IDEA_BUNDLED_PLUGINS
       .add("intellij.javaFX.community")
       .toMutableList()

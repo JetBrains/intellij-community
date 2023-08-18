@@ -51,7 +51,7 @@
     <module old-name="common" new-name="android.sdktools.common" />
     <module old-name="community-guitests" new-name="intellij.idea.community.guiTests" />
     <module old-name="community-main" new-name="intellij.idea.community.main" />
-    <module old-name="community-resources" new-name="intellij.idea.community.resources" />
+    <module old-name="community-resources" new-name="intellij.idea.community.customization" />
     <module old-name="compiler-impl" new-name="intellij.java.compiler.impl" />
     <module old-name="compiler-openapi" new-name="intellij.java.compiler" />
     <module old-name="compiler-tests" new-name="intellij.java.compiler.tests" />
@@ -673,9 +673,9 @@
       <module fileurl="file://$PROJECT_DIR$/build/deps/intellij.idea.community.build.dependencies.iml" filepath="$PROJECT_DIR$/build/deps/intellij.idea.community.build.dependencies.iml" />
       <module fileurl="file://$PROJECT_DIR$/build/tasks/intellij.idea.community.build.tasks.iml" filepath="$PROJECT_DIR$/build/tasks/intellij.idea.community.build.tasks.iml" />
       <module fileurl="file://$PROJECT_DIR$/build/tests/intellij.idea.community.build.tests.iml" filepath="$PROJECT_DIR$/build/tests/intellij.idea.community.build.tests.iml" />
+      <module fileurl="file://$PROJECT_DIR$/community-resources/intellij.idea.community.customization.iml" filepath="$PROJECT_DIR$/community-resources/intellij.idea.community.customization.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij.idea.community.main.iml" filepath="$PROJECT_DIR$/intellij.idea.community.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij.idea.community.main.android.iml" filepath="$PROJECT_DIR$/intellij.idea.community.main.android.iml" />
-      <module fileurl="file://$PROJECT_DIR$/community-resources/intellij.idea.community.resources.iml" filepath="$PROJECT_DIR$/community-resources/intellij.idea.community.resources.iml" />
       <module fileurl="file://$PROJECT_DIR$/build/launch/intellij.idea.tools.launch.iml" filepath="$PROJECT_DIR$/build/launch/intellij.idea.tools.launch.iml" />
       <module fileurl="file://$PROJECT_DIR$/java/openapi/intellij.java.iml" filepath="$PROJECT_DIR$/java/openapi/intellij.java.iml" />
       <module fileurl="file://$PROJECT_DIR$/aether-dependency-resolver/intellij.java.aetherDependencyResolver.iml" filepath="$PROJECT_DIR$/aether-dependency-resolver/intellij.java.aetherDependencyResolver.iml" />

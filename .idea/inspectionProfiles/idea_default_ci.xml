@@ -3367,7 +3367,7 @@
           <module name="intellij.platform.externalSystem.impl" />
         </modules-set>
         <modules-set>
-          <module name="intellij.idea.community.resources" />
+          <module name="intellij.idea.community.customization" />
           <module name="intellij.java" />
           <module name="intellij.java.aetherDependencyResolver" />
           <module name="intellij.java.analysis" />
