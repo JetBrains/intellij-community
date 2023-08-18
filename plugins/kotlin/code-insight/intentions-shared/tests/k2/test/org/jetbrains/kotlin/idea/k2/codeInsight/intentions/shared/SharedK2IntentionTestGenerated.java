@@ -1895,6 +1895,11 @@ public abstract class SharedK2IntentionTestGenerated extends AbstractSharedK2Int
             runTest("../testData/intentions/operatorToFunction/prefixPlusPlus.kt");
         }
 
+        @TestMetadata("setWithVararg.kt")
+        public void testSetWithVararg() throws Exception {
+            runTest("../testData/intentions/operatorToFunction/setWithVararg.kt");
+        }
+
         @TestMetadata("withReceiverContext.kt")
         public void testWithReceiverContext() throws Exception {
             runTest("../testData/intentions/operatorToFunction/withReceiverContext.kt");
