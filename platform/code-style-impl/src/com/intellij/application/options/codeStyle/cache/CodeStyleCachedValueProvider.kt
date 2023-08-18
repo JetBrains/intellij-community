@@ -66,6 +66,7 @@ internal class CodeStyleCachedValueProvider(private val viewProvider: FileViewPr
     }
     catch (ignored: ProcessCanceledException) {
       computation.reset()
+      LOG.debug { "Computation was cancelled for ${viewProvider.virtualFile.name}" }
       return CachedValueProvider.Result(null, ModificationTracker.EVER_CHANGED)
     }
     if (settings != null) {
@@ -241,6 +242,7 @@ internal class CodeStyleCachedValueProvider(private val viewProvider: FileViewPr
         CodeStyleSettingsManager.getInstance(project).fireCodeStyleSettingsChanged(viewProvider.virtualFile)
       }
       computation.reset()
+      LOG.debug { "Computation finished normally for ${viewProvider.virtualFile.name}" }
     }
 
     override fun equals(other: Any?): Boolean {
