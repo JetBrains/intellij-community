@@ -18,6 +18,8 @@ object TerminalUI {
   const val promptBottomInset = 12
   const val promptToCommandInset = 2
 
+  const val alternateBufferLeftInset = 4
+
   // todo: create color keys
   val terminalBackground: Color
     get() = JBColor(0xFFFFFF, 0x1E1F22)

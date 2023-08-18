@@ -13,12 +13,6 @@ class BlockTerminalController(
 ) : ShellCommandListener {
   init {
     session.addCommandListener(this)
-    session.model.addTerminalListener(object : TerminalModel.TerminalListener {
-      override fun onAlternateBufferChanged(enabled: Boolean) {
-        // todo: show separate editor
-      }
-    })
-
     // Show initial terminal output (prior to the first prompt) in a separate block.
     // `initialized` event will finish the block.
     outputController.startCommandBlock(null)

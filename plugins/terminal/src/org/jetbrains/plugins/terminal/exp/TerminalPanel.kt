@@ -16,9 +16,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComponentContainer
 import com.intellij.openapi.util.Disposer
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
-import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
 import com.jediterm.terminal.StyledTextConsumer
 import com.jediterm.terminal.TextStyle
 import com.jediterm.terminal.emulator.ColorPalette
@@ -30,13 +28,13 @@ import java.awt.Dimension
 import java.awt.Font
 import javax.swing.JComponent
 import javax.swing.JPanel
-import javax.swing.border.Border
-import kotlin.math.max
+import javax.swing.JScrollPane
 
 class TerminalPanel(project: Project,
                     private val settings: JBTerminalSystemSettingsProviderBase,
                     private val model: TerminalModel,
-                    eventsHandler: TerminalEventsHandler) : JPanel(), ComponentContainer {
+                    eventsHandler: TerminalEventsHandler,
+                    withVerticalScroll: Boolean = true) : JPanel(), ComponentContainer {
   private val document: Document
   private val editor: EditorImpl
 
@@ -47,12 +45,24 @@ class TerminalPanel(project: Project,
   private val palette: ColorPalette
     get() = settings.terminalColorPalette
 
+  val terminalWidth: Int
+    get() {
+      val visibleArea = editor.scrollingModel.visibleArea
+      val scrollBarWidth = editor.scrollPane.verticalScrollBar.width
+      return visibleArea.width - scrollBarWidth
+    }
+
   val charSize: Dimension
     get() = Dimension(editor.charHeight, editor.lineHeight)
 
   init {
     document = DocumentImpl("", true)
     editor = TerminalUiUtils.createEditor(document, project, settings)
+    editor.scrollPane.verticalScrollBarPolicy = if (withVerticalScroll) {
+      JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED
+    }
+    else JScrollPane.VERTICAL_SCROLLBAR_NEVER
+
     Disposer.register(this) {
       EditorFactory.getInstance().releaseEditor(editor)
     }
@@ -63,21 +73,13 @@ class TerminalPanel(project: Project,
     setupKeyEventDispatcher(editor, settings, eventsHandler, keyEventsForwardingDisposable, this::isFocused)
     setupMouseListener(editor, settings, model, eventsHandler, runningDisposable)
 
-    border = createBorder(isFullScreen = false)
-
+    border = JBUI.Borders.emptyLeft(TerminalUI.alternateBufferLeftInset)
     layout = BorderLayout()
     add(editor.component, BorderLayout.CENTER)
 
-    updateEditorContent()
-  }
-
-  private fun createBorder(isFullScreen: Boolean): Border {
-    return if (!isFullScreen) {
-      val innerBorder = JBUI.Borders.customLine(TerminalUI.terminalBackground, 6, 0, 6, 0)
-      val outerBorder = JBUI.Borders.customLineTop(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground())
-      JBUI.Borders.compound(outerBorder, innerBorder)!!
+    model.withContentLock {
+      updateEditorContent()
     }
-    else JBUI.Borders.empty()
   }
 
   private fun setupContentListener() {
@@ -191,15 +193,12 @@ class TerminalPanel(project: Project,
 
   fun isFocused(): Boolean = editor.contentComponent.hasFocus()
 
-  override fun getPreferredSize(): Dimension {
-    val baseSize = super.getPreferredSize()
-    JBInsets.addTo(baseSize, insets)
-    val lineCount = max(editor.document.lineCount, 1)
-    return Dimension(baseSize.width, lineCount * editor.lineHeight + insets.top + insets.bottom)
+  fun getContentSize(): Dimension {
+    return Dimension(width - JBUI.scale(TerminalUI.alternateBufferLeftInset), height)
   }
 
-  fun getContentSize(): Dimension {
-    return Dimension(width - JBUI.scale(LEFT_INSET), height)
+  override fun getBackground(): Color {
+    return TerminalUI.terminalBackground
   }
 
   override fun getComponent(): JComponent = this
@@ -210,8 +209,4 @@ class TerminalPanel(project: Project,
   }
 
   private data class TerminalContent(val text: String, val highlightings: List<HighlightingInfo>)
-
-  companion object {
-    const val LEFT_INSET: Int = 7
-  }
 }

@@ -21,9 +21,11 @@ import com.jediterm.terminal.ui.AwtTransformers
 import java.awt.Color
 import java.awt.Font
 
-class TerminalOutputController(private val editor: EditorEx,
-                               private val session: TerminalSession,
-                               private val settings: JBTerminalSystemSettingsProviderBase) {
+class TerminalOutputController(
+  private val editor: EditorEx,
+  private val session: TerminalSession,
+  private val settings: JBTerminalSystemSettingsProviderBase
+) : TerminalModel.TerminalListener {
   private val outputModel: TerminalOutputModel = TerminalOutputModel(editor)
   private val terminalModel: TerminalModel = session.model
   private val blocksDecorator: TerminalBlocksDecorator = TerminalBlocksDecorator(editor)
@@ -36,15 +38,20 @@ class TerminalOutputController(private val editor: EditorEx,
 
   var isFocused: Boolean = false
 
+  @Volatile
   private var runningListenersDisposable: Disposable? = null
 
   init {
     editor.highlighter = textHighlighter
+    session.model.addTerminalListener(this)
   }
 
   fun startCommandBlock(command: String?) {
     outputModel.createBlock(command)
+    installRunningCommandListeners()
+  }
 
+  private fun installRunningCommandListeners() {
     val disposable = Disposer.newDisposable().also { Disposer.register(session, it) }
     runningListenersDisposable = disposable
     val eventsHandler = TerminalEventsHandler(session, settings)
@@ -55,6 +62,7 @@ class TerminalOutputController(private val editor: EditorEx,
 
   fun finishCommandBlock() {
     runningListenersDisposable?.let { Disposer.dispose(it) }
+    runningListenersDisposable = null
     invokeLater {
       val block = outputModel.getLastBlock() ?: error("No active block")
       val document = editor.document
@@ -73,6 +81,20 @@ class TerminalOutputController(private val editor: EditorEx,
       }
       if (document.getText(block.textRange).isBlank()) {
         outputModel.removeBlock(block)
+      }
+    }
+  }
+
+  override fun onAlternateBufferChanged(enabled: Boolean) {
+    if (enabled) {
+      // stop updating the block content, because alternate buffer application will be shown in a separate component
+      runningListenersDisposable?.let { Disposer.dispose(it) }
+      runningListenersDisposable = null
+    }
+    else {
+      installRunningCommandListeners()
+      terminalModel.withContentLock {
+        updateEditorContent()
       }
     }
   }
@@ -162,17 +184,11 @@ class TerminalOutputController(private val editor: EditorEx,
       outputModel.putDecoration(block, decoration)
     }
 
-    if (terminalModel.useAlternateBuffer) {
-      editor.setCaretEnabled(false)
-    }
-    else {
-      editor.setCaretEnabled(terminalModel.isCursorVisible)
-      editor.caretModel.moveToOffset(block.endOffset)
-      editor.scrollingModel.scrollToCaret(ScrollType.CENTER_DOWN)
-      // caret highlighter can be removed at this moment, because we replaced the text of the block
-      // so, call repaint manually
-      caretPainter.repaint()
-    }
+    editor.caretModel.moveToOffset(block.endOffset)
+    editor.scrollingModel.scrollToCaret(ScrollType.CENTER_DOWN)
+    // caret highlighter can be removed at this moment, because we replaced the text of the block
+    // so, call repaint manually
+    caretPainter.repaint()
   }
 
   private fun TextStyle.toTextAttributes(): TextAttributes {

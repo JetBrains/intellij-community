@@ -22,13 +22,14 @@ import kotlin.math.min
 
 class BlockTerminalPanel(
   private val project: Project,
-  session: TerminalSession,
-  settings: JBTerminalSystemSettingsProviderBase
+  private val session: TerminalSession,
+  private val settings: JBTerminalSystemSettingsProviderBase
 ) : JPanel(), TerminalContentController, TerminalCommandExecutor {
   private val controller: BlockTerminalController
 
   private val outputPanel: TerminalOutputPanel
   private val promptPanel: TerminalPromptPanel
+  private var alternateBufferPanel: TerminalPanel? = null
 
   init {
     outputPanel = TerminalOutputPanel(project, session, settings)
@@ -65,14 +66,54 @@ class BlockTerminalPanel(
 
     addComponentListener(object : ComponentAdapter() {
       override fun componentResized(e: ComponentEvent?) {
-        val newSize = getTerminalSize() ?: return
-        controller.resize(newSize)
+        updateTerminalSize()
       }
     })
 
+    session.model.addTerminalListener(object : TerminalModel.TerminalListener {
+      override fun onAlternateBufferChanged(enabled: Boolean) {
+        invokeLater {
+          alternateBufferStateChanged(enabled)
+        }
+      }
+    })
+
+    installPromptAndOutput()
+  }
+
+  private fun alternateBufferStateChanged(enabled: Boolean) {
+    if (enabled) {
+      installAlternateBufferPanel()
+    }
+    else {
+      alternateBufferPanel?.let { Disposer.dispose(it) }
+      alternateBufferPanel = null
+      installPromptAndOutput()
+    }
+    IdeFocusManager.getInstance(project).requestFocus(preferredFocusableComponent, true)
+    invokeLater {
+      updateTerminalSize()
+    }
+  }
+
+  private fun installAlternateBufferPanel() {
+    val eventsHandler = TerminalEventsHandler(session, settings)
+    val panel = TerminalPanel(project, settings, session.model, eventsHandler, withVerticalScroll = false)
+    Disposer.register(this, panel)
+    alternateBufferPanel = panel
+
+    removeAll()
+    layout = BorderLayout()
+    add(panel.component, BorderLayout.CENTER)
+    revalidate()
+  }
+
+  private fun installPromptAndOutput() {
+    removeAll()
     layout = BlockTerminalLayout()
     add(outputPanel.component, BlockTerminalLayout.TOP)
     add(promptPanel.component, BlockTerminalLayout.BOTTOM)
+    revalidate()
   }
 
   override fun startCommandExecution(command: String) {
@@ -83,10 +124,18 @@ class BlockTerminalPanel(
     return TerminalUI.terminalBackground
   }
 
+  private fun updateTerminalSize() {
+    val newSize = getTerminalSize() ?: return
+    controller.resize(newSize)
+  }
+
   override fun getTerminalSize(): TermSize? {
-    val width = outputPanel.terminalWidth
+    val (width, charSize) = if (alternateBufferPanel != null) {
+      alternateBufferPanel!!.let { it.terminalWidth to it.charSize }
+    }
+    else outputPanel.let { it.terminalWidth to it.charSize }
     return if (width > 0 && height > 0) {
-      TerminalUiUtils.calculateTerminalSize(Dimension(width, height), outputPanel.charSize)
+      TerminalUiUtils.calculateTerminalSize(Dimension(width, height), charSize)
     }
     else null
   }
@@ -103,10 +152,11 @@ class BlockTerminalPanel(
   override fun getComponent(): JComponent = this
 
   override fun getPreferredFocusableComponent(): JComponent {
-    return if (promptPanel.isVisible) {
-      promptPanel.preferredFocusableComponent
+    return when {
+      alternateBufferPanel != null -> alternateBufferPanel!!.preferredFocusableComponent
+      promptPanel.component.isVisible -> promptPanel.preferredFocusableComponent
+      else -> outputPanel.preferredFocusableComponent
     }
-    else outputPanel.preferredFocusableComponent
   }
 
   /**
@@ -160,8 +210,8 @@ class BlockTerminalPanel(
 
     private fun calculateSize(getSize: Component.() -> Dimension): Dimension {
       val sizes = listOfNotNull(topComponent, bottomComponent).map { getSize(it) }
-      val width = sizes.maxOf { it.width }
-      val height = sizes.sumOf { it.height }
+      val width = sizes.maxOfOrNull { it.width } ?: 0
+      val height = sizes.maxOfOrNull { it.height } ?: 0
       return Dimension(width, height)
     }
 

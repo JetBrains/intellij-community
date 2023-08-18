@@ -49,6 +49,7 @@ object TerminalUiUtils {
     editor.settings.apply {
       isShowingSpecialChars = false
       isLineNumbersShown = false
+      isLineMarkerAreaShown = false
       setGutterIconsShown(false)
       isRightMarginShown = false
       isFoldingOutlineShown = false
