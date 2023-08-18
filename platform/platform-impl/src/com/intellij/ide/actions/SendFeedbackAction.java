@@ -21,6 +21,8 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.platform.ide.customization.ExternalProductResourceUrls;
+import com.intellij.platform.ide.customization.FeedbackReporter;
 import com.intellij.ui.LicensingFacade;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.io.URLUtil;
@@ -30,16 +32,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class SendFeedbackAction extends AnAction implements DumbAware {
   @Override
   public void update(@NotNull AnActionEvent e) {
-    ApplicationInfoEx info = ApplicationInfoEx.getInstanceEx();
     boolean isSupportedOS = SystemInfo.isMac || SystemInfo.isLinux || SystemInfo.isWindows;
-    if (info != null && info.getFeedbackUrl() != null && isSupportedOS) {
-      String feedbackSite = getFeedbackHost(info.getFeedbackUrl(), info.getCompanyName());
+    FeedbackReporter feedbackReporter = ExternalProductResourceUrls.getInstance().getFeedbackReporter();
+    if (feedbackReporter != null && isSupportedOS) {
+      String feedbackSite = feedbackReporter.getDestinationDescription();
       e.getPresentation().setDescription(ActionsBundle.messagePointer("action.SendFeedback.detailed.description", feedbackSite));
       e.getPresentation().setEnabledAndVisible(true);
     }
@@ -51,12 +51,6 @@ public class SendFeedbackAction extends AnAction implements DumbAware {
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
     return ActionUpdateThread.BGT;
-  }
-
-  private static String getFeedbackHost(String feedbackUrl, String companyName) {
-    Pattern uriPattern = Pattern.compile("[^:/?#]+://(?:www\\.)?([^/?#]*).*", Pattern.DOTALL);
-    Matcher matcher = uriPattern.matcher(feedbackUrl);
-    return matcher.matches() ? matcher.group(1) : companyName;
   }
 
   @Override
@@ -75,15 +69,31 @@ public class SendFeedbackAction extends AnAction implements DumbAware {
 
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        submit(project, ApplicationInfoEx.getInstanceEx().getFeedbackUrl(), getDescription(project));
+        openFeedbackPageInBrowser(project, getDescription(project));
       }
     });
   }
 
+  /**
+   * @deprecated use {@link FeedbackDescriptionProvider} extension point to provide additional data to description used by the default
+   * 'Send Feedback' action instead of implementing your own action and calling this method.
+   */
+  @Deprecated(forRemoval = true)
   public static void submit(@Nullable Project project, @NotNull String description) {
-    submit(project, ApplicationInfoEx.getInstanceEx().getFeedbackUrl(), description);
+    openFeedbackPageInBrowser(project, description);
   }
 
+  private static void openFeedbackPageInBrowser(@Nullable Project project, @NotNull String description) {
+    FeedbackReporter feedbackReporter = ExternalProductResourceUrls.getInstance().getFeedbackReporter();
+    if (feedbackReporter == null) return;
+    BrowserUtil.browse(feedbackReporter.feedbackFormUrl(description).toExternalForm(), project);
+  }
+
+  /**
+   * @deprecated use {@link FeedbackDescriptionProvider} extension point to provide additional data to description used by the default 
+   * 'Send Feedback' action instead of implementing your own action and calling this method.
+   */
+  @Deprecated
   public static void submit(@Nullable Project project, @NotNull String urlTemplate, @NotNull String description) {
     ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
     boolean eap = appInfo.isEAP();

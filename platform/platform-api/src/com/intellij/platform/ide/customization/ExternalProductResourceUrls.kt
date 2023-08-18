@@ -60,4 +60,32 @@ interface ExternalProductResourceUrls {
    */
   val technicalSupportUrl: ((description: String) -> Url)?
     get() = null
+
+  /**
+   * Returns an instance which will be used to submit feedback about the product via "Submit Feedback" action. 
+   * If this function returns `null`, the action won't be available.
+   */
+  val feedbackReporter: FeedbackReporter?
+    get() = null
+}
+
+/**
+ * Implement this interface and return an instance from [ExternalProductResourceUrls.feedbackReporter] to provide "Submit Feedback" action
+ * for the product.
+ */
+interface FeedbackReporter {
+  /**
+   * Describes the place where the feedback will be reported to (e.g., address of the site).
+   * It's shown in the description of "Submit Feedback" action.
+   */
+  val destinationDescription: String
+
+  /**
+   * Returns a URL which will be opened in the browser when the user invokes "Submit Feedback" action. 
+   * @param description contains automatically generated information about the current IDE and the environment, it may be added to the template 
+   * of the feedback form.
+   * In order to include custom data in the description, you may use [FeedbackDescriptionProvider][com.intellij.ide.FeedbackDescriptionProvider]
+   * extension point.
+   */
+  fun feedbackFormUrl(description: String): Url
 }

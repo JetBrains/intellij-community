@@ -4,9 +4,12 @@ package com.intellij.platform.ide.impl.customization
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.platform.ide.customization.ExternalProductResourceUrls
+import com.intellij.platform.ide.customization.FeedbackReporter
+import com.intellij.ui.LicensingFacade
 import com.intellij.util.Url
 import com.intellij.util.Urls
 import com.intellij.util.io.URLUtil
+import java.util.regex.Pattern
 
 class LegacyExternalProductResourceUrls : ExternalProductResourceUrls {
   override val updatesMetadataXmlUrl: String?
@@ -30,6 +33,31 @@ class LegacyExternalProductResourceUrls : ExternalProductResourceUrls {
           .replace("\$OS", currentOsNameForIntelliJSupport())
           .replace("\$TIMEZONE", System.getProperty("user.timezone"))
         Urls.newFromEncoded(url) 
+      }
+    }
+
+  override val feedbackReporter: FeedbackReporter?
+    get() {
+      val urlTemplate = ApplicationInfoEx.getInstanceEx().feedbackUrl ?: return null
+      return object : FeedbackReporter {
+        override val destinationDescription: String
+          get() {
+            val uriPattern = Pattern.compile("[^:/?#]+://(?:www\\.)?([^/?#]*).*", Pattern.DOTALL)
+            val matcher = uriPattern.matcher(urlTemplate)
+            return if (matcher.matches()) matcher.group(1) else ApplicationInfo.getInstance().companyName
+          }
+
+        override fun feedbackFormUrl(description: String): Url {
+          val appInfo = ApplicationInfoEx.getInstanceEx()
+          val build = appInfo.getBuild()
+          val url = urlTemplate
+            .replace("\$BUILD", URLUtil.encodeURIComponent(if (appInfo.isEAP()) build.asStringWithoutProductCode() else build.asString()))
+            .replace("\$TIMEZONE", URLUtil.encodeURIComponent(System.getProperty("user.timezone", "")))
+            .replace("\$VERSION", URLUtil.encodeURIComponent(appInfo.getFullVersion()))
+            .replace("\$EVAL", URLUtil.encodeURIComponent((LicensingFacade.getInstance()?.isEvaluationLicense == true).toString()))
+            .replace("\$DESCR", URLUtil.encodeURIComponent(description))
+          return Urls.newFromEncoded(url)
+        }
       }
     }
 }

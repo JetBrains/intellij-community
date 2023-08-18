@@ -4,6 +4,7 @@ package com.intellij.platform.ide.impl.customization
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.platform.ide.customization.ExternalProductResourceUrls
+import com.intellij.platform.ide.customization.FeedbackReporter
 import com.intellij.util.Url
 import com.intellij.util.Urls
 import com.intellij.util.system.CpuArch
@@ -20,9 +21,9 @@ abstract class BaseJetBrainsExternalProductResourceUrls : ExternalProductResourc
   abstract val youtrackProjectId: String
 
   /**
-   * Returns the product name in the form shown at intellij-support.jetbrains.com site
+   * Returns the product name in the form shown at intellij-support.jetbrains.com site and jetbrains.com/feedback/feedback.jsp page
    */
-  abstract val intellijSupportProductName: String
+  abstract val shortProductNameUsedInForms: String
 
   /**
    * Returns ID of the form used to contact support at intellij-support.jetbrains.com site 
@@ -47,12 +48,15 @@ abstract class BaseJetBrainsExternalProductResourceUrls : ExternalProductResourc
       Urls.newFromEncoded("https://intellij-support.jetbrains.com/hc/en-us/requests/new").addParameters(
         mapOf(
           "ticket_form_id" to "$intellijSupportFormId",
-          "product" to intellijSupportProductName,
+          "product" to shortProductNameUsedInForms,
           "build" to ApplicationInfo.getInstance().getBuild().asStringWithoutProductCode(),
           "os" to currentOsNameForIntelliJSupport(),
           "timezone" to System.getProperty("user.timezone")
         ))
     }
+
+  override val feedbackReporter: FeedbackReporter?
+    get() = JetBrainsFeedbackReporter(shortProductNameUsedInForms)
 }
 
 /**

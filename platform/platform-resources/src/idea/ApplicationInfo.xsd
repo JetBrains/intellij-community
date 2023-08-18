@@ -463,7 +463,7 @@
     <xs:sequence>
       <xs:element name="field" type="zendeskFieldType" minOccurs="0" maxOccurs="unbounded"/>
     </xs:sequence>
-    <xs:attribute type="xs:string" name="url" use="required"/>
+    <xs:attribute type="xs:string" name="url"/>
     <xs:attribute type="xs:string" name="zendesk-form-id"/>
     <xs:attribute type="xs:string" name="zendesk-url"/>
   </xs:complexType>
