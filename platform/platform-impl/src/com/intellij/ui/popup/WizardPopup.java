@@ -361,6 +361,9 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
   }
 
   public final boolean dispatch(KeyEvent event) {
+    if (anyModalWindowsKeepPopupOpen()) {
+      return false; // Popups should not process key events if there's a modal dialog on top of them.
+    }
     if (event.getID() == KeyEvent.KEY_PRESSED) {
       myKeyPressedReceived = true;
       final KeyStroke stroke = KeyStroke.getKeyStroke(event.getKeyCode(), event.getModifiers(), false);

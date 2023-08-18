@@ -919,7 +919,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
       !preventImmediateClosingAfterOpening();
   }
 
-  private boolean anyModalWindowsKeepPopupOpen() {
+  boolean anyModalWindowsKeepPopupOpen() {
     var modalEntitiesNow = LaterInvocator.getCurrentModalEntities();
     var i = 0;
     for (; i < modalEntitiesNow.length && i < modalEntitiesWhenShown.length; ++i) {
