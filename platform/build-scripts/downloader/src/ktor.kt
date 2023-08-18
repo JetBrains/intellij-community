@@ -225,8 +225,11 @@ private suspend fun downloadFileToCacheLocation(url: String,
           .resolve("${target.fileName}-${(Instant.now().epochSecond - 1634886185).toString(36)}-${Instant.now().nano.toString(36)}".take(255))
         Files.deleteIfExists(tempFile)
         try {
+          // we have custom error handler
+          val clientExpectSuccess = false
           val effectiveClient = when {
             token != null -> httpClient.value.config {
+              expectSuccess = clientExpectSuccess
               Auth {
                 bearer {
                   loadTokens {
@@ -237,6 +240,7 @@ private suspend fun downloadFileToCacheLocation(url: String,
             }
 
             username != null && password != null -> httpClient.value.config {
+              expectSuccess = clientExpectSuccess
               Auth {
                 basic {
                   credentials {
@@ -247,7 +251,9 @@ private suspend fun downloadFileToCacheLocation(url: String,
               }
             }
 
-            else -> httpClient.value
+            else -> httpClient.value.config {
+              expectSuccess = clientExpectSuccess
+            }
           }
 
           val response = effectiveClient.use { client ->
