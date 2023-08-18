@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.dev;
 
 import com.intellij.openapi.vfs.newvfs.persistent.dev.InvertedFilenameHashBasedIndex.Int2IntMultimap;
@@ -165,7 +165,7 @@ public class Int2IntMultimapTest {
     multimap.forEach((key, value) -> keys.add(key));
     for (final int key : keys) {
       final IntOpenHashSet values = new IntOpenHashSet();
-      multimap.get(key, value -> {
+      multimap.lookup(key, value -> {
         if (!values.add(value)) {
           fail("get(" + key + ") values are non-unique: value[" + value + "] was already reported " + values);
         }
@@ -178,7 +178,7 @@ public class Int2IntMultimapTest {
   private static IntOpenHashSet getValues(final Int2IntMultimap multimap,
                                           final int key) {
     final IntOpenHashSet values = new IntOpenHashSet();
-    multimap.get(key, value -> {
+    multimap.lookup(key, value -> {
       values.add(value);
       return true;
     });

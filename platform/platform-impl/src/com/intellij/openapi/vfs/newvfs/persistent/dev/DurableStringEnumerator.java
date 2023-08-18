@@ -53,7 +53,7 @@ public class DurableStringEnumerator implements ScannableDataEnumeratorEx<String
       return true;
     });
   }
-  
+
   private static @NotNull AppendOnlyLogOverMMappedFile openValuesLog(@NotNull Path storagePath) throws IOException {
     AppendOnlyLogOverMMappedFile valuesLog = new AppendOnlyLogOverMMappedFile(
       new MMappedFileStorage(storagePath, PAGE_SIZE)
@@ -130,7 +130,7 @@ public class DurableStringEnumerator implements ScannableDataEnumeratorEx<String
       // identify name uniquely anyway, hence this replacement just adds another hash collision -- basically,
       // we replaced original String hashcode with our own, which avoids 0 at the cost of slightly higher chances
       // of collisions
-      return -DATA_FORMAT_VERSION;// any value!=0 will do
+      return -1;// any value!=0 will do
     }
     return hash;
   }
@@ -152,7 +152,7 @@ public class DurableStringEnumerator implements ScannableDataEnumeratorEx<String
   private int lookupValue(@NotNull String value,
                           int hash) {
     IntRef foundIdRef = new IntRef(NULL_ID);
-    valueHashToId.get(hash, candidateId -> {
+    valueHashToId.lookup(hash, candidateId -> {
       try {
         String candidateValue = valuesLog.read(candidateId, IOUtil::readString);
         if (candidateValue.equals(value)) {

@@ -1,9 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.dev;
 
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.Arrays;
 import java.util.Set;
@@ -37,7 +36,7 @@ public class InvertedFilenameHashBasedIndex {
                                       final @NotNull IntPredicate fileIdProcessor) {
     for (final String name : names) {
       final int hash = hashCodeOf(name);
-      if (!nameHashToFileId.get(hash, fileIdProcessor)) {
+      if (!nameHashToFileId.lookup(hash, fileIdProcessor)) {
         return false;
       }
     }
@@ -81,8 +80,8 @@ public class InvertedFilenameHashBasedIndex {
    * Map relies on the fact id=0 is not valid id, hence map prohibits 0 for keys & values, and uses 0 to identify
    * 'empty' and 'deleted' entries.
    */
-  @VisibleForTesting
-  static class Int2IntMultimap {
+  @ApiStatus.Internal
+  public static class Int2IntMultimap {
     protected static final int NO_VALUE = 0;
 
     private final float loadFactor;
@@ -114,8 +113,8 @@ public class InvertedFilenameHashBasedIndex {
     /**
      * @return true if iterated through all values, false if iteration was stopped early by valuesProcessor returning false
      */
-    public boolean get(final int key,
-                       final IntPredicate valuesProcessor) {
+    public boolean lookup(final int key,
+                          final IntPredicate valuesProcessor) {
       checkNotNoValue("key", key);
       final int capacity = capacity();
       final int startIndex = Math.abs(key % capacity);
