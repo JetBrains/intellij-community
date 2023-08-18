@@ -43,6 +43,8 @@ import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
@@ -101,6 +103,15 @@ public final class GitBranchIncomingOutgoingManager implements GitRepositoryChan
   private static boolean hasExternalSSHAgent() {
     String ssh_auth_sock = EnvironmentUtil.getValue("SSH_AUTH_SOCK");
     if (ssh_auth_sock == null) return false;
+    try {
+      Path agentPath = Path.of(ssh_auth_sock);
+      String originPath = agentPath.toString();
+      String realPath = agentPath.toRealPath().toString();
+      if (!originPath.equals(realPath)) {
+        return true;
+      }
+    }
+    catch (IOException ignored) { }
     return !StringUtil.contains(ssh_auth_sock, MAC_DEFAULT_LAUNCH);
   }
 
