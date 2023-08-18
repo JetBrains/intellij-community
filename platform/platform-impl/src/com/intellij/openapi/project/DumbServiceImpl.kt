@@ -5,10 +5,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.application.AccessToken
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.application.*
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
@@ -24,19 +21,23 @@ import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.ex.StatusBarEx
 import com.intellij.serviceContainer.NonInjectable
 import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.SystemProperties
+import com.intellij.util.ThrowableRunnable
 import com.intellij.util.application
 import com.intellij.util.indexing.IndexingBundle
 import com.intellij.util.ui.DeprecationStripePanel
 import com.intellij.util.ui.UIUtil
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Async
 import org.jetbrains.annotations.TestOnly
@@ -173,7 +174,7 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
       }
       return myState.value.isDumb
     }
-    @TestOnly set(dumb) {
+    @TestOnly @Deprecated("Use runInDumbMode instead (or {run/compute}InDumbModeSynchronously)") set(dumb) {
       ApplicationManager.getApplication().assertIsDispatchThread()
       if (dumb) {
         myState.update { it.makeDumb() }
@@ -184,14 +185,70 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
       }
     }
 
+  /**
+   * This method starts dumb mode (if not started), then runs the runnable, then ends dumb mode (if no other dumb tasks are running).
+   *
+   * This method can be invoked from any thread. It will switch to EDT to start/stop dumb mode. Runnable itself will be invoked from
+   * method's invocation thread.
+   */
   @TestOnly
-  fun runInDumbModeSynchronously(runnable: Runnable) {
-    isDumb = true
-    try {
+  fun runInDumbModeSynchronously(runnable: ThrowableRunnable<in Throwable>) {
+    computeInDumbModeSynchronously {
       runnable.run()
     }
+  }
+
+  /**
+   * This method starts dumb mode (if not started), then runs the computable, then ends dumb mode (if no other dumb tasks are running).
+   *
+   * This method can be invoked from any thread. It will switch to EDT to start/stop dumb mode. Runnable itself will be invoked from
+   * method's invocation thread.
+   */
+  @TestOnly
+  fun <T> computeInDumbModeSynchronously(computable: ThrowableComputable<T, in Throwable>): T {
+    application.invokeAndWait {
+      isDumb = true
+    }
+    try {
+      return computable.compute()
+    }
     finally {
-      isDumb = false
+      application.invokeAndWait {
+        isDumb = false
+      }
+    }
+  }
+
+  /**
+   * This method starts dumb mode (if not started), then runs suspend lambda, then ends dumb mode (if no other dumb tasks are running).
+   *
+   * This method can be invoked from any thread. It will switch to EDT to start/stop dumb mode. Runnable itself will be invoked from
+   * method's invocation thread.
+   */
+  @TestOnly
+  suspend fun <T> runInDumbMode(block: suspend () -> T): T {
+    executeImmediatelyOrScheduleOnEDT {
+      isDumb = true
+    }
+    try {
+      return block()
+    }
+    finally {
+      executeImmediatelyOrScheduleOnEDT {
+        isDumb = false
+      }
+    }
+  }
+
+  private suspend fun executeImmediatelyOrScheduleOnEDT(block: suspend () -> Unit) {
+    //Dispatchers.EDT, Dispatchers.Main, and even Dispatchers.Main.immediate may never execute if already on EDT. See SwiftAttributeCompletionTest
+    if (application.isDispatchThread) {
+      block()
+    }
+    else {
+      withContext(Dispatchers.EDT) {
+        block()
+      }
     }
   }
 
