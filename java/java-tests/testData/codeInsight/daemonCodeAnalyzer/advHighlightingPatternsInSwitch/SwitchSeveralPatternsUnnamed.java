@@ -22,16 +22,16 @@ class Test {
 
   void testEnum(Object obj) {
     switch (obj) {
-      case X.A, <error descr="Invalid case label combination: a case label must consist of either a list of case constants or a single case pattern">String _</error> -> System.out.println("string or int");
-      case Integer _, <error descr="Invalid case label combination: a case label must consist of either a list of case constants or a single case pattern">X.B</error> -> System.out.println("string or int");
+      case X.A, <error descr="Invalid case label combination: a case label must consist of either a list of case constants or a list of case patterns">String _</error> -> System.out.println("string or int");
+      case Integer _, <error descr="Invalid case label combination: a case label must consist of either a list of case constants or a list of case patterns">X.B</error> -> System.out.println("string or int");
       default -> System.out.println("other");
     }
   }
 
   void test2(Object obj) {
     switch (obj) {
-      case Integer x, <error descr="Invalid case label combination: Multiple patterns are allowed only if none of them declare any pattern variables">String _</error> -> System.out.println("string or int");
-      case R(_, var i), <error descr="Invalid case label combination: Multiple patterns are allowed only if none of them declare any pattern variables">R1 _</error> -> System.out.println("R or R1");
+      case <error descr="Invalid case label combination: multiple patterns are allowed only if none of them declare any pattern variables">Integer x</error>, String _ -> System.out.println("string or int");
+      case <error descr="Invalid case label combination: multiple patterns are allowed only if none of them declare any pattern variables">R(_, var i)</error>, R1 _ -> System.out.println("R or R1");
       default -> System.out.println("other");
     }
   }
@@ -56,6 +56,16 @@ class Test {
         break;
       default:
         System.out.println("other");
+    }
+  }
+
+  record RR1() {}
+  record RR2() {}
+
+  void testNoVars(Object obj) {
+    switch(obj) {
+      case RR1(), RR2() -> {}
+      default -> {}
     }
   }
 }
