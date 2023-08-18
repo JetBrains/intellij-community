@@ -116,6 +116,8 @@
                      implementationClass="org.jetbrains.yaml.schema.YamlJsonSchemaDeprecationInspection"/>
 
     <psi.referenceContributor language="yaml" implementation="org.jetbrains.yaml.YAMLWebReferenceContributor"/>
+    <psi.referenceContributor language="yaml" implementation="org.jetbrains.yaml.YAMLJsonSchemaIdReferenceContributor"/>
+    <completion.contributor language="yaml" implementationClass="org.jetbrains.yaml.YAMLJsonSchemaInCommentCompletionContributor"/>
 
     <pluginSuggestionProvider implementation="org.jetbrains.yaml.swagger.OpenApiSuggestionProvider"/>
     <intentionAction>

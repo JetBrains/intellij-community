@@ -193,6 +193,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaService, ModificationTra
     boolean checkSchemaProperty = true;
     if (!onlyUserSchemas && providers.stream().noneMatch(p -> p.getSchemaType() == SchemaType.userSchema)) {
       if (schemaUrl == null) schemaUrl = JsonCachedValues.getSchemaUrlFromSchemaProperty(file, myProject);
+      if (schemaUrl == null) schemaUrl = JsonSchemaByCommentProvider.getCommentSchema(file, myProject);
       VirtualFile virtualFile = resolveFromSchemaProperty(schemaUrl, file);
       if (virtualFile != null) return Collections.singletonList(virtualFile);
       checkSchemaProperty = false;

@@ -75,7 +75,8 @@ public class JsonSchemaInfoPopupStep extends BaseListPopupStep<JsonSchemaInfo> i
     if (value == STOP_IGNORE_FILE) {
       return AllIcons.Actions.AddFile;
     }
-    return EMPTY_ICON;
+
+    return AllIcons.FileTypes.JsonSchema;
   }
 
   @Nullable
