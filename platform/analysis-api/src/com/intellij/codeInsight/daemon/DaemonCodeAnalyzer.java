@@ -51,6 +51,17 @@ public abstract class DaemonCodeAnalyzer {
 
   public static final Topic<DaemonListener> DAEMON_EVENT_TOPIC = new Topic<>(DaemonListener.class, Topic.BroadcastDirection.NONE, true);
 
+  /**
+   * Listener for various events during daemon lifecycle.
+   * You register your own listener implementaion by adding lines like these into your plugin.xml:
+   * <pre>
+   * {@code
+   *  <projectListeners>
+   *     <listener class="your.own.class.name" topic="com.intellij.codeInsight.daemon.DaemonCodeAnalyzer$DaemonListener"/>
+   *  </projectListeners>
+   * }
+   * </pre>
+   */
   public interface DaemonListener {
     /**
      * Fired when the background code analysis is being scheduled for the specified set of files.
@@ -60,13 +71,16 @@ public abstract class DaemonCodeAnalyzer {
     }
 
     /**
-     * Fired when the background code analysis is done.
+     * @see DaemonListener#daemonFinished(Collection)
      */
     default void daemonFinished() {
     }
 
     /**
-     * Fired when the background code analysis is done.
+     * Fired when the background code analysis is stopped.
+     * Analysis can be stopped because either it was completed, or it was canceled, for various reasons.
+     * If it was canceled, the {@link DaemonListener#daemonCancelEventOccurred(String)} is called at least once
+     * between {@link DaemonListener#daemonStarting(Collection)} and this method invocations.
      * @param fileEditors The list of files analyzed during the current execution of the daemon.
      */
     default void daemonFinished(@NotNull Collection<? extends @NotNull FileEditor> fileEditors) {
@@ -76,7 +90,7 @@ public abstract class DaemonCodeAnalyzer {
     /**
      * Fired when the daemon is canceled because of user tries to type something into the document or other reasons.
      * Please don't do anything remotely expensive in your listener implementation because it's called in the background thread under the read action,
-     * and could slow down the highlighting process if it's not fast enough.
+     * and if it's not fast enough, it could slow down the highlighting process and hurt overall responsiveness.
      */
     default void daemonCancelEventOccurred(@NotNull String reason) {
     }
