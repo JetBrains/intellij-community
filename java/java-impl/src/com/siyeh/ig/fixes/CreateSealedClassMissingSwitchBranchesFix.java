@@ -3,7 +3,6 @@ package com.siyeh.ig.fixes;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -31,16 +30,7 @@ public class CreateSealedClassMissingSwitchBranchesFix extends CreateMissingSwit
   @Override
   protected @NotNull List<String> getAllNames(@NotNull PsiClass ignored, @NotNull PsiSwitchBlock switchBlock) {
     Map<String, String> mapToConvert = getConversionNewTypeWithGeneric(switchBlock);
-    List<String> result = new ArrayList<>();
-    for (String name : myAllNames) {
-      if (mapToConvert.containsKey(name)) {
-        result.add(mapToConvert.get(name));
-      }
-      else {
-        result.add(name);
-      }
-    }
-    return result;
+    return ContainerUtil.map(myAllNames, name -> mapToConvert.getOrDefault(name, name));
   }
 
   @NotNull
@@ -62,31 +52,27 @@ public class CreateSealedClassMissingSwitchBranchesFix extends CreateMissingSwit
 
     for (String myName : myNames) {
       Project project = switchBlock.getProject();
-      PsiClass[] classes = JavaPsiFacade.getInstance(project).findClasses(myName, GlobalSearchScope.projectScope(project));
-      if (classes.length != 1) {
+      PsiClass classToAdd = JavaPsiFacade.getInstance(project).findClass(myName, switchBlock.getResolveScope());
+      if (classToAdd == null) {
         continue;
       }
-      PsiClass classToAdd = classes[0];
       if (!classToAdd.hasTypeParameters()) {
         continue;
       }
       if (!InheritanceUtil.isInheritorOrSelf(classToAdd, expressionClass, true)) {
-        return Map.of();
+        continue;
       }
       List<PsiType> arguments = GenericsUtil.getExpectedTypeArguments(switchBlock,
                                                                       classToAdd,
                                                                       Arrays.asList(classToAdd.getTypeParameters()),
                                                                       expressionClassType);
       if (ContainerUtil.all(arguments, argument -> argument == null)) {
-        return Map.of();
+        continue;
       }
       arguments = ContainerUtil.map(arguments, arg -> arg == null ? PsiWildcardType.createUnbounded(switchBlock.getManager()) : arg);
       PsiClassType classTypeToAdd = PsiElementFactory.getInstance(project).createType(classToAdd, arguments.toArray(PsiType.EMPTY_ARRAY));
       if (TypeConversionUtil.isAssignable(expressionClassType, classTypeToAdd)) {
         mapToConvert.put(myName, classTypeToAdd.getCanonicalText());
-      }
-      else {
-        return Map.of();
       }
     }
     return mapToConvert;
@@ -95,16 +81,7 @@ public class CreateSealedClassMissingSwitchBranchesFix extends CreateMissingSwit
   @Override
   protected @NotNull Set<String> getNames(@NotNull PsiSwitchBlock switchBlock) {
     Map<String, String> mapToConvert = getConversionNewTypeWithGeneric(switchBlock);
-    Set<String> result = new LinkedHashSet<>();
-    for (String name : myNames) {
-      if (mapToConvert.containsKey(name)) {
-        result.add(mapToConvert.get(name));
-      }
-      else {
-        result.add(name);
-      }
-    }
-    return result;
+    return ContainerUtil.map2Set(myNames, name -> mapToConvert.getOrDefault(name, name));
   }
 
   @Override
