@@ -58,3 +58,8 @@ class CallInlineCompletionAction : EditorAction(CallInlineCompletionHandler()), 
     }
   }
 }
+
+@ApiStatus.Experimental
+class CallMultiLineCompletionAction : HintManagerImpl.ActionToIgnore, EditorAction(
+  CallInlineCompletionAction.CallInlineCompletionHandler()
+)

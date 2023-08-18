@@ -1751,7 +1751,8 @@
     <action id="InsertInlineCompletionAction" class="com.intellij.codeInsight.inline.completion.InsertInlineCompletionAction">
       <keyboard-shortcut first-keystroke="TAB" keymap="$default"/>
     </action>
-    <action id="CallInlineCompletionAction" class="com.intellij.codeInsight.inline.completion.CallInlineCompletionAction">
+    <action id="CallInlineCompletionAction" class="com.intellij.codeInsight.inline.completion.CallInlineCompletionAction"/>
+    <action id="CallMultiLineCompletionAction" class="com.intellij.codeInsight.inline.completion.CallMultiLineCompletionAction">
       <keyboard-shortcut first-keystroke="meta BACK_SLASH" keymap="$default"/>
     </action>
 
