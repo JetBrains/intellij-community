@@ -1,7 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight
 
+import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinOptimizeImportsFacility
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtImportDirective
@@ -11,8 +13,12 @@ internal class K2OptimizeImportsFacility : KotlinOptimizeImportsFacility {
     private class K2ImportData(override val unusedImports: List<KtImportDirective>) : KotlinOptimizeImportsFacility.ImportData
 
     override fun analyzeImports(file: KtFile): KotlinOptimizeImportsFacility.ImportData? {
-        val unusedImports = analyze(file) {
-            analyseImports(file).unusedImports
+        // Import optimizer might be called from reformat action in EDT, see KTIJ-25031
+        @OptIn(KtAllowAnalysisOnEdt::class)
+        val unusedImports = allowAnalysisOnEdt {
+            analyze(file) {
+                analyseImports(file).unusedImports
+            }
         }
 
         return K2ImportData(unusedImports.toList())
