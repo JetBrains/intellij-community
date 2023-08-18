@@ -78,7 +78,8 @@ public final class GitCheckoutProvider extends CheckoutProviderEx {
     final String sourceRepositoryURL = dialog.getSourceRepositoryURL();
     final String directoryName = dialog.getDirectoryName();
     final String parentDirectory = dialog.getParentDirectory();
-    clone(project, Git.getInstance(), listener, destinationParent, sourceRepositoryURL, directoryName, parentDirectory);
+    clone(project, Git.getInstance(), listener, destinationParent, sourceRepositoryURL,
+          directoryName, parentDirectory);
   }
 
   public static void clone(@NotNull final Project project, @NotNull final Git git, final Listener listener,
@@ -107,7 +108,18 @@ public final class GitCheckoutProvider extends CheckoutProviderEx {
       public CloneStatus run(@NotNull ProgressIndicator indicator) {
         indicator.setIndeterminate(false);
         GitLineHandlerListener progressListener = GitStandardProgressAnalyzer.createListener(indicator);
-        GitCommandResult result = git.clone(project, new File(parentDirectory), sourceRepositoryURL, directoryName, progressListener);
+
+        GitCommandResult result;
+        try {
+          result = git.clone(project, new File(parentDirectory), sourceRepositoryURL, directoryName, progressListener);
+        }
+        catch (Exception e) {
+          if (listener instanceof GitCheckoutListener) {
+            ((GitCheckoutListener) listener).checkoutFailed(null);
+          }
+          throw e;
+        }
+
         if (result.success()) {
           File directory = new File(parentDirectory, directoryName);
           LOG.debug(String.format("Cloned into %s with success=%s", directory, result));
@@ -122,6 +134,9 @@ public final class GitCheckoutProvider extends CheckoutProviderEx {
         }
 
         notifyError(project, result, sourceRepositoryURL);
+        if (listener instanceof GitCheckoutListener) {
+          ((GitCheckoutListener) listener).checkoutFailed(result);
+        }
 
         return CloneStatus.FAILURE;
       }
