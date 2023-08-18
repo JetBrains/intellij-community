@@ -428,12 +428,13 @@ private fun addActivateAndWindowsCliListeners() {
 
 private suspend fun handleExternalCommand(args: List<String>, currentDirectory: String?): CommandLineProcessorResult {
   if (args.isNotEmpty() && args[0].contains(URLUtil.SCHEME_SEPARATOR)) {
-    val result = CommandLineProcessorResult(project = null, result = CommandLineProcessor.processProtocolCommand(args[0]))
+    val cliResult = CommandLineProcessor.processProtocolCommand(args[0])
+    val result = CommandLineProcessorResult(project = null, result = cliResult)
     withContext(Dispatchers.EDT) {
       if (result.hasError) {
         result.showError()
       }
-      else {
+      else if (cliResult.exitCode != ProtocolHandler.PLEASE_DO_NOT_FOCUS) {
         CommandLineProcessor.findVisibleFrame()?.let { frame ->
           AppIcon.getInstance().requestFocus(frame)
         }
