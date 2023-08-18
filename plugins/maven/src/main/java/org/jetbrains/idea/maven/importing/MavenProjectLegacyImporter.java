@@ -364,11 +364,11 @@ public class MavenProjectLegacyImporter extends MavenProjectImporterLegacyBase {
       }
     }
 
-    Map<MavenProject, String> existingMavenProjectToModuleName = new HashMap<>();
+    Map<VirtualFile, String> existingMavenProjectToModuleName = new HashMap<>();
     for (var projectToModule : myMavenProjectToModule.entrySet()) {
       var module = projectToModule.getValue();
       if (null != module) {
-        existingMavenProjectToModuleName.put(projectToModule.getKey(), module.getName());
+        existingMavenProjectToModuleName.put(projectToModule.getKey().getFile(), module.getName());
       }
     }
     MavenModuleNameMapper.resolveModuleNames(myAllProjects, existingMavenProjectToModuleName, myMavenProjectToModuleName);

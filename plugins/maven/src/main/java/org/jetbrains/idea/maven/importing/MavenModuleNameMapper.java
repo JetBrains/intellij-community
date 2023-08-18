@@ -2,6 +2,7 @@
 package org.jetbrains.idea.maven.importing;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenProject;
@@ -12,13 +13,13 @@ import static java.util.Locale.ROOT;
 
 public final class MavenModuleNameMapper {
   public static void resolveModuleNames(Collection<MavenProject> projects,
-                                        Map<MavenProject, String> existingMavenProjectToModuleName,
+                                        Map<VirtualFile, String> existingPomModuleName,
                                         Map<MavenProject, String> mavenProjectToModuleName) {
     NameItem[] names = new NameItem[projects.size()];
 
     int i = 0;
     for (MavenProject each : projects) {
-      names[i++] = new NameItem(each, existingMavenProjectToModuleName.get(each));
+      names[i++] = new NameItem(each, existingPomModuleName.get(each.getFile()));
     }
 
     Arrays.sort(names);
