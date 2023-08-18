@@ -27,9 +27,9 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
 import java.util.List;
 
+import static com.intellij.util.containers.ContainerUtil.unmodifiableOrEmptyList;
 import static java.util.Objects.requireNonNull;
 
 public final class HyperlinkAnnotator implements Annotator {
@@ -57,7 +57,7 @@ public final class HyperlinkAnnotator implements Annotator {
     List<PsiReference> references = getReferences(element);
 
     if (!annotateHyperlinks(element, holder, references)) {
-      return; // found web references and it is single reference there
+      return; // all references highlighted already
     }
 
     List<ContributedReferencesAnnotator> annotators =
@@ -72,16 +72,15 @@ public final class HyperlinkAnnotator implements Annotator {
   private static List<PsiReference> getReferences(@NotNull PsiElement element) {
     return CachedValuesManager.getCachedValue(element, () -> {
       List<PsiReference> references = PsiReferenceService.getService().getReferences(element, Hints.HIGHLIGHTED_REFERENCES);
-      if (references.isEmpty()) {
-        references = Collections.emptyList();
-      }
-      return Result.create(references, PsiModificationTracker.MODIFICATION_COUNT);
+      return Result.create(unmodifiableOrEmptyList(references), PsiModificationTracker.MODIFICATION_COUNT);
     });
   }
 
   private static boolean annotateHyperlinks(@NotNull PsiElement element,
                                             @NotNull AnnotationHolder holder,
                                             @NotNull List<PsiReference> references) {
+    boolean hasUnprocessedReferences = false;
+
     for (PsiReference reference : references) {
       if (reference instanceof WebReference) {
         String message = holder.getCurrentAnnotationSession().getUserData(messageKey);
@@ -94,8 +93,6 @@ public final class HyperlinkAnnotator implements Annotator {
           .range(range)
           .textAttributes(CodeInsightColors.INACTIVE_HYPERLINK_ATTRIBUTES)
           .create();
-
-        if (references.size() == 1) return false;
       }
       else if (reference instanceof HighlightedReference) {
         if (reference.isSoft() && !((HighlightedReference)reference).isHighlightedWhenSoft()) continue;
@@ -108,11 +105,12 @@ public final class HyperlinkAnnotator implements Annotator {
           .range(range)
           .textAttributes(DefaultLanguageHighlighterColors.HIGHLIGHTED_REFERENCE)
           .create();
-
-        if (references.size() == 1) return false;
+      }
+      else {
+        hasUnprocessedReferences = true;
       }
     }
-    return true;
+    return hasUnprocessedReferences;
   }
 
   @Nls
