@@ -24,7 +24,12 @@ abstract class EvaluableFeatureBase<T : EvaluationStrategy>(override val name: S
     Precision(),
     MeanRankMetric(),
     MeanLatencyMetric(),
+    SuccessMeanLatencyMetric(),
     MaxLatencyMetric(),
+    PercentileLatencyMetric(percentile = 50),
+    PercentileLatencyMetric(percentile = 80),
+    SuccessPercentileLatencyMetric(percentile = 50),
+    SuccessPercentileLatencyMetric(percentile = 80),
     SessionsCountMetric(),
     SuggestionsCountMetric()
   )

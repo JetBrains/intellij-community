@@ -51,5 +51,40 @@ class MeanLatencyMetric(private val filterZeroes: Boolean = false) : LatencyMetr
 
   override fun compute(sample: List<Double>): Double = sample.average()
 
-  override fun shouldInclude(lookup: Lookup) = if (filterZeroes) lookup.latency > 0 else true
+  override fun shouldInclude(lookup: Lookup) = !filterZeroes || lookup.latency > 0
+}
+
+class SuccessMeanLatencyMetric(private val filterZeroes: Boolean = false) : LatencyMetric("Mean Success Latency") {
+  override val valueType = MetricValueType.DOUBLE
+  override val description: String = "Average latency by invocations with selected proposal"
+  override val showByDefault = false
+
+  override fun compute(sample: List<Double>): Double = sample.average()
+
+  override fun shouldInclude(lookup: Lookup) = lookup.selectedPosition >= 0 && (!filterZeroes || lookup.latency > 0)
+}
+
+class PercentileLatencyMetric(private val percentile: Int) : LatencyMetric("Latency Percentile $percentile") {
+  override val valueType = MetricValueType.INT
+  override val description: String = "Latency $percentile percentile by all invocations"
+  override val showByDefault = false
+
+  override fun compute(sample: List<Double>): Double = computePercentile(sample, percentile)
+}
+
+class SuccessPercentileLatencyMetric(private val percentile: Int) : LatencyMetric("Latency Success Percentile $percentile") {
+  override val valueType = MetricValueType.INT
+  override val description: String = "Latency $percentile percentile by invocations with selected proposal"
+  override val showByDefault = false
+
+  override fun compute(sample: List<Double>): Double = computePercentile(sample, percentile)
+
+  override fun shouldInclude(lookup: Lookup): Boolean = lookup.selectedPosition >= 0
+}
+
+private fun computePercentile(sample: List<Double>, percentile: Int): Double {
+  if (sample.isEmpty()) return Double.NaN
+  require(percentile in 0..100) { "Percentile must be between 0 and 100" }
+  val index = (sample.size * percentile / 100).coerceAtMost(sample.size - 1)
+  return sample[index]
 }
