@@ -12486,14 +12486,24 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/joinDeclarationAndAssignment/notFirstSecondaryConstructorLine.kt");
         }
 
-        @TestMetadata("propertyAssignmentWithConstructorParameter.kt")
-        public void testPropertyAssignmentWithConstructorParameter() throws Exception {
-            runTest("testData/intentions/joinDeclarationAndAssignment/propertyAssignmentWithConstructorParameter.kt");
+        @TestMetadata("propertyAssignmentWithCtorParam.kt")
+        public void testPropertyAssignmentWithCtorParam() throws Exception {
+            runTest("testData/intentions/joinDeclarationAndAssignment/propertyAssignmentWithCtorParam.kt");
         }
 
-        @TestMetadata("propertyAssignmentWithConstructorParameter2.kt")
-        public void testPropertyAssignmentWithConstructorParameter2() throws Exception {
-            runTest("testData/intentions/joinDeclarationAndAssignment/propertyAssignmentWithConstructorParameter2.kt");
+        @TestMetadata("propertyAssignmentWithCtorParam2.kt")
+        public void testPropertyAssignmentWithCtorParam2() throws Exception {
+            runTest("testData/intentions/joinDeclarationAndAssignment/propertyAssignmentWithCtorParam2.kt");
+        }
+
+        @TestMetadata("propertyAssignmentWithSecondaryCtorParam.kt")
+        public void testPropertyAssignmentWithSecondaryCtorParam() throws Exception {
+            runTest("testData/intentions/joinDeclarationAndAssignment/propertyAssignmentWithSecondaryCtorParam.kt");
+        }
+
+        @TestMetadata("propertyAssignmentWithSecondaryCtorParam2.kt")
+        public void testPropertyAssignmentWithSecondaryCtorParam2() throws Exception {
+            runTest("testData/intentions/joinDeclarationAndAssignment/propertyAssignmentWithSecondaryCtorParam2.kt");
         }
 
         @TestMetadata("propertyReassignment.kt")
