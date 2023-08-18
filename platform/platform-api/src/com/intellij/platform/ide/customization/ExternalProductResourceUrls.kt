@@ -9,7 +9,8 @@ import org.jetbrains.annotations.ApiStatus
  * Provides URLs of different external resources associated with an IDE. An IDE should register its implementation of this interface as
  * a service with `overrides="true"` attribute to override the default one (which takes this information from *ApplicationInfo.xml file).
  * 
- * IDEs developed by JetBrains should use [BaseJetBrainsExternalProductResourceUrls] as a superclass for their implementations.
+ * IDEs developed by JetBrains should use [BaseJetBrainsExternalProductResourceUrls][com.intellij.platform.ide.impl.customization.BaseJetBrainsExternalProductResourceUrls] 
+ * as a superclass for their implementations.
  * 
  * Members of this interface are supposed to be accessed from platform code only, and should be only overriden in IDEs.  
  */

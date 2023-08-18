@@ -1,12 +1,12 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.ide.customization
+package com.intellij.platform.ide.impl.customization
 
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.platform.ide.customization.ExternalProductResourceUrls
 import com.intellij.util.Url
 import com.intellij.util.Urls
 import com.intellij.util.system.CpuArch
-import org.jetbrains.annotations.ApiStatus
 
 /**
  * A base class for implementations of [ExternalProductResourceUrls] describing IDEs developed by JetBrains.
@@ -64,8 +64,7 @@ abstract class BaseJetBrainsExternalProductResourceUrls : ExternalProductResourc
  * * Windows 7 or older - `win-7`[[-64]]
  * * Other - `other-os`
  */
-@ApiStatus.Internal
-fun currentOsNameForIntelliJSupport(): String = when {
+internal fun currentOsNameForIntelliJSupport(): String = when {
   SystemInfo.isWindows -> {
     "win-" +
     when {
@@ -84,5 +83,3 @@ fun currentOsNameForIntelliJSupport(): String = when {
     "other-os"
   }
 }
-
-

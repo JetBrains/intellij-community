@@ -4,7 +4,6 @@ package com.intellij.platform.ide.impl.customization
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.platform.ide.customization.ExternalProductResourceUrls
-import com.intellij.platform.ide.customization.currentOsNameForIntelliJSupport
 import com.intellij.util.Url
 import com.intellij.util.Urls
 import com.intellij.util.io.URLUtil
