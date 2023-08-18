@@ -59,6 +59,9 @@ public interface WorkspaceModelChangeListener : EventListener {
 }
 
 /**
+ * Register an implementation of this interface as a handler for [WorkspaceModelTopics.UNLOADED_ENTITIES_CHANGED] to synchronously process
+ * changes in the unloaded storage of the workspace model.
+ *
  * See documentation in [WorkspaceModelChangeListener] to understand how events are constructed
  */
 public interface WorkspaceModelUnloadedStorageChangeListener : EventListener {
