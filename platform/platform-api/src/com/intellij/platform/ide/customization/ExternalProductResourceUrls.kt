@@ -50,7 +50,7 @@ interface ExternalProductResourceUrls {
   /**
    * Returns a function which computes URL for contacting technical support.
    * `description` parameter will contain automatically generated information about the current IDE and the environment, it may be added
-   * to the template of the issue report.
+   * to the template of the support form.
    * In order to include custom data in the description, you may use [FeedbackDescriptionProvider][com.intellij.ide.FeedbackDescriptionProvider]
    * extension point.
    *
