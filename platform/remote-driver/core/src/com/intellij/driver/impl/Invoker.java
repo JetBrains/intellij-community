@@ -15,8 +15,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.BuildNumber;
+import com.intellij.openapi.util.ClearableLazyValue;
 import com.intellij.platform.diagnostic.telemetry.IJTracer;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.containers.ContainerUtil;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.SpanBuilder;
 import io.opentelemetry.context.Context;
@@ -47,12 +49,17 @@ public class Invoker implements InvokerMBean {
 
   private final Map<Integer, WeakReference<Object>> adhocReferenceMap = new ConcurrentHashMap<>();
 
-  private final IJTracer tracer;
+  private final ClearableLazyValue<IJTracer> tracer;
   private final Supplier<? extends Context> timedContextSupplier;
 
-  public Invoker(@NotNull IJTracer tracer, @NotNull Supplier<? extends Context> timedContextSupplier) {
+  public Invoker(@NotNull Supplier<? extends IJTracer> tracerSupplier, @NotNull Supplier<? extends Context> timedContextSupplier) {
     this.timedContextSupplier = timedContextSupplier;
-    this.tracer = tracer;
+    this.tracer = new ClearableLazyValue<>() {
+      @Override
+      protected @NotNull IJTracer compute() {
+        return tracerSupplier.get();
+      }
+    };
   }
 
   @Override
@@ -269,7 +276,7 @@ public class Invoker implements InvokerMBean {
       }
     }
     else {
-      SpanBuilder spanBuilder = tracer.spanBuilder(call.getTimedSpan())
+      SpanBuilder spanBuilder = tracer.getValue().spanBuilder(call.getTimedSpan())
         .setParent(timedContextSupplier.get());
 
       Span span = spanBuilder.startSpan();

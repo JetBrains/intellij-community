@@ -125,7 +125,7 @@ class ProjectLoaded : InitProjectActivityJavaShim(), ApplicationInitializedListe
 
   override suspend fun execute(asyncScope: CoroutineScope) {
     if (System.getProperty("com.sun.management.jmxremote") == "true") {
-      InvokerMBean.register(PerformanceTestSpan.TRACER) { PerformanceTestSpan.getContext() }
+      InvokerMBean.register({ PerformanceTestSpan.TRACER }, { PerformanceTestSpan.getContext() })
     }
 
     if (ApplicationManagerEx.getApplicationEx().isLightEditMode) {

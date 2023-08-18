@@ -84,7 +84,7 @@ class TelemetryManagerImpl(app: Application) : TelemetryManager {
   }
 
   override fun forceFlushMetrics() {
-    logger<TelemetryManagerImpl>().info("Forcing metrics flushing ...")
+    logger<TelemetryManagerImpl>().info("Forcing flushing OpenTelemetry metrics ...")
 
     listOf(
       sdk.sdkMeterProvider.forceFlush(),
@@ -93,7 +93,7 @@ class TelemetryManagerImpl(app: Application) : TelemetryManager {
 
     aggregatedMetricExporter.flush().join(10, TimeUnit.SECONDS)
 
-    logger<TelemetryManagerImpl>().info("Metrics are flushed")
+    logger<TelemetryManagerImpl>().info("OpenTelemetry metrics were flushed")
   }
 }
 
