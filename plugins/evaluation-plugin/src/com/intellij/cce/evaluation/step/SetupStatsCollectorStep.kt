@@ -72,9 +72,8 @@ class SetupStatsCollectorStep(private val experimentGroup: Int?,
     initCollectLogsInHeadlessValue = java.lang.Boolean.getBoolean(COLLECT_LOGS_HEADLESS_KEY)
     System.setProperty(COLLECT_LOGS_HEADLESS_KEY, "true")
     val experimentStatus = object : ExperimentStatus {
-      // it allows to collect logs from all sessions (need a more explicit solution in stats-collector)
       override fun forLanguage(language: Language): ExperimentInfo =
-        ExperimentInfo(true,
+        ExperimentInfo(experimentGroup != null,
                        version = experimentGroup ?: 0,
                        shouldRank = false,
                        shouldShowArrows = false,
