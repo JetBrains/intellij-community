@@ -216,14 +216,30 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
     showParameterHints(this, context, method, methodCall);
   }
 
+  /**
+   * Checks if the argument live template can be started.
+   *
+   * @return true if the argument live template can be started, otherwise false.
+   */
   protected boolean canStartArgumentLiveTemplate() {
     return true;
   }
 
+  /**
+   * Called after insertion methods. Performs any necessary post-processing or cleanup.
+   *
+   * @param context the insertion context for the code template
+   * @param call the PsiCallExpression representing the inserted code, or null if no code was inserted
+   */
   protected void afterHandle(@NotNull InsertionContext context, @Nullable PsiCallExpression call) {
 
   }
 
+  /**
+   * Called before insertion methods. Performs any necessary pre-processing or setup.
+   *
+   * @param context the insertion context for the code template, must not be null
+   */
   protected void beforeHandle(@NotNull InsertionContext context) {
   }
 
@@ -267,6 +283,11 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
     qualifyMethodCall(file, startOffset, document);
   }
 
+  /**
+   * Determines if import or qualification is needed.
+   *
+   * @return true if import or qualification is needed, false otherwise
+   */
   protected boolean needImportOrQualify() {
     return true;
   }

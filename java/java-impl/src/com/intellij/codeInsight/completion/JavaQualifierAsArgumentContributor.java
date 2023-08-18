@@ -7,7 +7,6 @@ import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.lookup.DefaultLookupItemRenderer;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.codeInsight.lookup.impl.JavaElementLookupRenderer;
-import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
@@ -280,7 +279,6 @@ public class JavaQualifierAsArgumentContributor extends CompletionContributor im
     private final PsiExpression myOldQualifierExpression;
 
     private final Collection<? extends PsiMethod> myMethods;
-    private final boolean myShouldImport;
     private final boolean myShouldImportOrQualify;
     private final boolean myMergedOverloads;
     private final boolean myShouldShowClass;
@@ -294,7 +292,6 @@ public class JavaQualifierAsArgumentContributor extends CompletionContributor im
       myMethods = methods;
       myMergedOverloads = methods.size() > 1;
       myOldQualifierExpression = oldQualifierExpression;
-      myShouldImport = shouldImportStatic;
       myShouldImportOrQualify = shouldImportOrQualify;
       myShouldShowClass = shouldShowClass;
     }
@@ -306,7 +303,6 @@ public class JavaQualifierAsArgumentContributor extends CompletionContributor im
 
     @Override
     public void handleInsert(@NotNull InsertionContext context) {
-      FeatureUsageTracker.getInstance().triggerFeatureUsed(JavaCompletionFeatures.STATIC_COMPLETION);
       super.handleInsert(context);
     }
 
@@ -329,7 +325,7 @@ public class JavaQualifierAsArgumentContributor extends CompletionContributor im
 
       final String qname = containingClass == null ? "" : containingClass.getQualifiedName();
       String pkg = qname == null ? "" : StringUtil.getPackageName(qname);
-      String location = myShouldImport && StringUtil.isNotEmpty(pkg) ? " (" + pkg + ")" : "";
+      String location = myShouldImportOrQualify && StringUtil.isNotEmpty(pkg) ? " " + pkg : "";
 
       final String paramsText;
       boolean allHasOneArgument = ContainerUtil.all(myMethods, m -> m.getParameterList().getParameters().length == 1);
@@ -356,8 +352,8 @@ public class JavaQualifierAsArgumentContributor extends CompletionContributor im
       }
 
       presentation.appendTailText(paramsText, false);
-      if (myShouldImport && StringUtil.isNotEmpty(className)) {
-        presentation.appendTailText(" in " + className + location, true);
+      if (myShouldImportOrQualify && StringUtil.isNotEmpty(className)) {
+        presentation.appendTailText(" in " + location, true);
       }
 
       if (!myMergedOverloads) {
