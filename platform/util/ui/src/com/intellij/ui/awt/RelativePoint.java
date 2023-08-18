@@ -67,7 +67,7 @@ public class RelativePoint {
     return myPointOnComponent;
   }
 
-  public Point getPoint(@Nullable Component aTargetComponent) {
+  public @NotNull Point getPoint(@Nullable Component aTargetComponent) {
     //todo: remove that after implementation of DND to html design time controls
     boolean window = aTargetComponent instanceof Window;
     if (aTargetComponent == null || !window && (aTargetComponent.getParent() == null || SwingUtilities.getWindowAncestor(aTargetComponent) == null)) {

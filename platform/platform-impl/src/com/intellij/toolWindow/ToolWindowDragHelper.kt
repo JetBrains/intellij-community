@@ -564,9 +564,8 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
     // because we place that drop target highlight component on it (see createDropTargetHighlightComponent).
     // So we have to walk the middle ground here and start searching from the layered pane instead.
     // Moreover, we want the topmost layered pane, as there may be others, like the tool window pane itself.
-    ComponentUtil.getParentOfType(JLayeredPane::class.java, dragSourcePane)
-    val layeredPane = getTopmostLayeredPane(dragSourcePane)
-    val pointOnWindow = point.getPoint(layeredPane) ?: return null
+    val layeredPane = getTopmostLayeredPane(dragSourcePane) ?: return null
+    val pointOnWindow = point.getPoint(layeredPane)
     return SwingUtilities.getDeepestComponentAt(layeredPane, pointOnWindow.x, pointOnWindow.y)
   }
 
