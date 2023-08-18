@@ -23,6 +23,7 @@ import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider.Result;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.containers.ConcurrentFactoryMap;
+import kotlin.text.StringsKt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -262,6 +263,9 @@ public final class JavaLibraryUtil {
         if (libraryFile.getFileSystem() != jarFileSystem) continue;
 
         String nameWithoutExtension = libraryFile.getNameWithoutExtension();
+
+        // Drop prefix of Bazel processed libraries IDEA-324807
+        nameWithoutExtension = StringsKt.removePrefix(nameWithoutExtension, "processed_");
 
         jarLibrariesIndex.put(nameWithoutExtension, nameWithoutExtension);
 
