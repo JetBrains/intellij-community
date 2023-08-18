@@ -3,6 +3,7 @@ package org.jetbrains.idea.maven.importing;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenProject;
@@ -76,9 +77,9 @@ public final class MavenModuleNameMapper {
     }
   }
 
-  public static String getDefaultModuleName(MavenProject project) {
-    String name = project.getMavenId().getArtifactId();
-    if (!isValidName(name)) name = project.getDirectoryFile().getName();
+  public static String getDefaultModuleName(@NotNull MavenProject mavenProject) {
+    String name = mavenProject.getMavenId().getArtifactId();
+    if (!isValidName(name)) name = mavenProject.getDirectoryFile().getName();
     return name;
   }
 
