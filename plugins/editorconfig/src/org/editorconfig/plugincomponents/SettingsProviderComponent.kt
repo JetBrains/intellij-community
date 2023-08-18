@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.editorconfig.plugincomponents
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.components.Service
@@ -15,10 +16,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.SlowOperations
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
+import kotlinx.coroutines.*
 import org.ec4j.core.*
 import org.ec4j.core.model.Version
 import org.ec4j.core.parser.ParseException
@@ -27,13 +25,14 @@ import org.editorconfig.core.ec4jwrappers.EditorConfigLoadErrorHandler
 import org.editorconfig.core.ec4jwrappers.EditorConfigPermanentCache
 import org.editorconfig.core.ec4jwrappers.VirtualFileResource
 import java.io.IOException
+import java.util.concurrent.ConcurrentHashMap
+import kotlin.time.Duration.Companion.seconds
 
 @Service
 class SettingsProviderComponent(private val project: Project, private val coroutineScope: CoroutineScope) : SimpleModificationTracker() {
-  // TODO not caching properties per virtual file right now (c.f. CachedPairProvider in SettingsProviderComponentOld)
   companion object {
     private val LOG = thisLogger()
-    private const val TIMEOUT = 3 // Seconds
+    private const val TIMEOUT = 10 // Seconds
     private val EMPTY_PROPERTIES = ResourceProperties.builder().build()
 
     @JvmStatic
@@ -60,7 +59,6 @@ class SettingsProviderComponent(private val project: Project, private val corout
       ReadAction.run<RuntimeException> {
         dirs.addAll(project.getBaseDirectories())
       }
-      // TODO move this into the above ReadAction and use refreshAndFindFileByPath?
       LocalFileSystem.getInstance().findFileByPath(PathManager.getConfigPath())?.let { dirs.add(it) }
       CachedValueProvider.Result(
         dirs,
@@ -83,16 +81,39 @@ class SettingsProviderComponent(private val project: Project, private val corout
     }
   }
 
-  fun getPropertiesAndEditorConfigs(file: VirtualFile): Deferred<Pair<ResourceProperties, List<VirtualFile>>> {
-    return coroutineScope.async(Dispatchers.IO) {
-      var properties: ResourceProperties? = null
-      val accessed = resourceCache.doWhileRecordingAccess {
-        properties = getProperties(file)
-      }.map {
-        require(it is VirtualFileResource)
-        it.file
+  private val pendingJobs = ConcurrentHashMap<String, Deferred<Pair<ResourceProperties, List<VirtualFile>>>>()
+
+  private fun doGetPropertiesAndEditorConfigs(file: VirtualFile): Pair<ResourceProperties, List<VirtualFile>> {
+    var properties: ResourceProperties? = null
+    val accessed = resourceCache.doWhileRecordingAccess {
+      properties = getProperties(file)
+    }.map {
+      require(it is VirtualFileResource)
+      it.file
+    }
+    return Pair(properties!!, accessed)
+  }
+
+  suspend fun getPropertiesAndEditorConfigs(file: VirtualFile): Pair<ResourceProperties, List<VirtualFile>> {
+    val app = ApplicationManager.getApplication()
+    if (app.isUnitTestMode || app.isHeadlessEnvironment) {
+      return doGetPropertiesAndEditorConfigs(file)
+    }
+    else {
+      val key = file.url
+      val deferred = pendingJobs.computeIfAbsent(key) {
+        coroutineScope.async(CoroutineName("EditorConfig IO monitor")) {
+          withTimeout(TIMEOUT.seconds) {
+            // Since withTimeout relies on cooperative cancellation and native calls are not cancellable, this cannot be a child coroutine
+            coroutineScope.async(CoroutineName("EditorConfig IO") + Dispatchers.IO) {
+              doGetPropertiesAndEditorConfigs(file)
+            }.await()
+          }
+        }
       }
-      Pair(properties!!, accessed)
+      val result = deferred.await()
+      pendingJobs.computeIfPresent(key) { _, v -> if (deferred.isCompleted) null else v }
+      return result
     }
   }
 }
