@@ -11,10 +11,14 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DoNotAskOption
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.vcs.CheckinProjectPanel
+import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.Change
@@ -25,6 +29,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.util.progress.SequentialProgressReporter
 import com.intellij.platform.util.progress.reportSequentialProgress
 import com.intellij.vcs.log.VcsUser
+import com.intellij.vcsUtil.VcsUtil
 import git4idea.GitUserRegistry
 import git4idea.GitUtil
 import git4idea.GitVcs
@@ -36,8 +41,10 @@ import git4idea.crlf.GitCrlfProblemsDetector
 import git4idea.crlf.GitCrlfUtil
 import git4idea.i18n.GitBundle
 import git4idea.rebase.GitRebaseUtils
+import git4idea.repo.GitRepositoryManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.PropertyKey
 
 abstract class GitCheckinHandlerFactory : VcsCheckinHandlerFactory(GitVcs.getKey())
 
@@ -62,6 +69,12 @@ class GitLargeFileCheckinHandlerFactory : GitCheckinHandlerFactory() {
 class GitDetachedRootCheckinHandlerFactory : GitCheckinHandlerFactory() {
   override fun createVcsHandler(panel: CheckinProjectPanel, commitContext: CommitContext): CheckinHandler {
     return GitDetachedRootCheckinHandler(panel.project)
+  }
+}
+
+class GitFileNameCheckinHandlerFactory : GitCheckinHandlerFactory() {
+  override fun createVcsHandler(panel: CheckinProjectPanel, commitContext: CommitContext): CheckinHandler {
+    return GitFileNameCheckinHandler(panel.project)
   }
 }
 
@@ -420,6 +433,81 @@ private class GitDetachedRootCheckinHandler(project: Project) : GitCheckinHandle
   }
 
   private class DetachedRoot(val root: VirtualFile, val isDuringRebase: Boolean)
+}
+
+private class GitFileNameCheckinHandler(project: Project) : GitCheckinHandler(project) {
+  override fun getExecutionOrder(): CommitCheck.ExecutionOrder = CommitCheck.ExecutionOrder.EARLY
+
+  override fun isEnabled(): Boolean = !SystemInfo.isWindows && Registry.`is`("git.pre.commit.check.windows.compatible.names")
+
+  override suspend fun runGitCheck(commitInfo: CommitInfo, committedChanges: List<Change>): CommitProblem? {
+    for (change in committedChanges) {
+      val beforePath = change.beforeRevision?.file
+      val afterPath = change.afterRevision?.file
+      if (afterPath != null && beforePath != afterPath) {
+        val problem = checkFileName(afterPath)
+        if (problem != null) return problem
+      }
+    }
+    return null
+  }
+
+  private fun checkFileName(filePath: FilePath): GitFileNameCommitProblem? {
+    val repo = GitRepositoryManager.getInstance(project).getRepositoryForFile(filePath) ?: return null
+
+    val rootPath = VcsUtil.getFilePath(repo.root)
+
+    var parentPath: FilePath? = filePath
+    while (parentPath != null && parentPath != rootPath) {
+      val fileName = parentPath.name
+      val fileNameWithoutExtension = FileUtil.getNameWithoutExtension(fileName)
+      if (fileNameWithoutExtension.length in 3..4 &&
+          WINDOWS_RESERVED_NAMES.any { it.equals(fileNameWithoutExtension, ignoreCase = true) }) {
+        return GitFileNameCommitProblem(fileName, BadFileNameType.RESERVED)
+      }
+
+      if (fileName.any { char -> char.code <= 31 || WINDOWS_INVALID_CHARS.contains(char) }) {
+        return GitFileNameCommitProblem(fileName, BadFileNameType.INVALID_CHAR)
+      }
+
+      parentPath = parentPath.parentPath
+    }
+    return null
+  }
+
+  enum class BadFileNameType(val msgKey: @PropertyKey(resourceBundle = GitBundle.BUNDLE) String) {
+    RESERVED("warning.message.commit.with.bad.windows.file.name.reserved"),
+    INVALID_CHAR("warning.message.commit.with.bad.windows.file.name.bad.character")
+  }
+
+  companion object {
+    private val WINDOWS_INVALID_CHARS = "<>:\"\\|?*"
+    private val WINDOWS_RESERVED_NAMES: Set<String> = setOf(
+      "CON", "PRN", "AUX", "NUL",
+      "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9",
+      "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9")
+  }
+
+  private class GitFileNameCommitProblem(val fileName: @NlsSafe String, val type: BadFileNameType) : CommitProblem {
+    override val text: String get() = GitBundle.message(type.msgKey, fileName)
+
+    override fun showModalSolution(project: Project, commitInfo: CommitInfo): ReturnResult {
+      val title = GitBundle.message("warning.title.commit.with.bad.windows.file.name")
+      val message = HtmlBuilder().append(text)
+
+      val commit = MessageDialogBuilder.okCancel(title, message.wrapWithHtmlBody().toString())
+        .yesText(commitInfo.commitActionText)
+        .icon(Messages.getWarningIcon())
+        .ask(project)
+
+      if (commit) {
+        return ReturnResult.COMMIT
+      }
+      else {
+        return ReturnResult.CLOSE_WINDOW
+      }
+    }
+  }
 }
 
 private abstract class GitCheckinHandler(val project: Project) : CheckinHandler(), CommitCheck, DumbAware {
