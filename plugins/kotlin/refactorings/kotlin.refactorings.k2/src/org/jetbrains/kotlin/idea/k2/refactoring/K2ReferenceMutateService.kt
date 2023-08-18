@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtJavaFieldSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSyntheticJavaPropertySymbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.invokeShortening
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinOptimizeImportsFacility
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.kdoc.KDocElementFactory
@@ -41,9 +42,9 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
 
     @OptIn(KtAllowAnalysisFromWriteAction::class)
     private fun <R : KtElement> KtFile.withOptimizedImports(replacement: () -> R?): PsiElement? = allowAnalysisFromWriteAction {
-        fun KtFile.unusedImports(): Set<KtImportDirective> = analyze(this) {
-            analyseImports(this@unusedImports).unusedImports
-        }
+        fun KtFile.unusedImports(): Set<KtImportDirective> =
+            KotlinOptimizeImportsFacility.getInstance().analyzeImports(this)?.unusedImports?.toSet().orEmpty()
+
         val unusedImportsBefore = unusedImports()
         val newElement = replacement() ?: return null
         val unusedImportsAfter = unusedImports()
