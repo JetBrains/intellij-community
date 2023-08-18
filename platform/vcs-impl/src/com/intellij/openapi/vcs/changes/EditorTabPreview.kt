@@ -131,7 +131,7 @@ abstract class EditorTabPreviewBase(protected val project: Project,
 
   protected open fun skipPreviewUpdate(): Boolean = ToolWindowManager.getInstance(project).isEditorComponentActive
 
-  override fun updatePreview(fromModelRefresh: Boolean) {
+  open fun updatePreview(fromModelRefresh: Boolean) {
     if (isPreviewOpen()) {
       updatePreviewProcessor.refresh(false)
     }
