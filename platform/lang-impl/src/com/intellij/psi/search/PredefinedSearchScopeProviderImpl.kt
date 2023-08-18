@@ -1,401 +1,410 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.psi.search;
+package com.intellij.psi.search
 
-import com.intellij.ide.IdeBundle;
-import com.intellij.ide.hierarchy.HierarchyBrowserBase;
-import com.intellij.ide.scratch.ScratchesSearchScope;
-import com.intellij.lang.LangBundle;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
-import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.SelectionModel;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
-import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
-import com.intellij.openapi.fileEditor.impl.OpenFilesScope;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleType;
-import com.intellij.openapi.module.ModuleUtil;
-import com.intellij.openapi.module.ModuleUtilCore;
-import com.intellij.openapi.project.DumbUnawareHider;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowId;
-import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.search.scope.EditorSelectionLocalSearchScope;
-import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.ui.content.Content;
-import com.intellij.ui.content.ContentManager;
-import com.intellij.usages.Usage;
-import com.intellij.usages.UsageView;
-import com.intellij.usages.UsageViewManager;
-import com.intellij.usages.rules.PsiElementUsage;
-import com.intellij.util.PlatformUtils;
-import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.JBIterable;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.concurrency.AsyncPromise;
-import org.jetbrains.concurrency.Promise;
-
-import javax.swing.*;
-import java.util.*;
+import com.intellij.ide.IdeBundle
+import com.intellij.ide.hierarchy.HierarchyBrowserBase
+import com.intellij.ide.scratch.ScratchesSearchScope
+import com.intellij.lang.LangBundle
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory
+import com.intellij.openapi.fileEditor.impl.EditorHistoryManager
+import com.intellij.openapi.fileEditor.impl.OpenFilesScope
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleType
+import com.intellij.openapi.module.ModuleUtil
+import com.intellij.openapi.module.ModuleUtilCore
+import com.intellij.openapi.project.DumbUnawareHider
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.wm.ToolWindowId
+import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.psi.search.scope.EditorSelectionLocalSearchScope
+import com.intellij.psi.util.PsiUtilCore
+import com.intellij.usages.Usage
+import com.intellij.usages.UsageViewManager
+import com.intellij.usages.rules.PsiElementUsage
+import com.intellij.util.PlatformUtils
+import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.containers.JBIterable
+import org.jetbrains.annotations.Nls
+import org.jetbrains.concurrency.AsyncPromise
+import org.jetbrains.concurrency.Promise
 
 // used by Rider
-public class PredefinedSearchScopeProviderImpl extends PredefinedSearchScopeProvider {
-  private static final Logger LOG = Logger.getInstance(PredefinedSearchScopeProviderImpl.class);
-
-  public static @NotNull @Nls String getRecentlyViewedFilesScopeName() {
-    return IdeBundle.message("scope.recent.files");
+open class PredefinedSearchScopeProviderImpl : PredefinedSearchScopeProvider() {
+  override fun getPredefinedScopes(project: Project,
+                                   dataContext: DataContext?,
+                                   suggestSearchInLibs: Boolean,
+                                   prevSearchFiles: Boolean,
+                                   currentSelection: Boolean,
+                                   usageView: Boolean,
+                                   showEmptyScopes: Boolean): List<SearchScope> {
+    val context = ScopeCollectionContext.collectContext(
+      project, dataContext, suggestSearchInLibs, prevSearchFiles, usageView, showEmptyScopes)
+    val result = context.result
+    result.addAll(context.collectRestScopes(project, currentSelection, usageView, showEmptyScopes))
+    return ArrayList(result)
   }
 
-  public static @NotNull @Nls String getRecentlyChangedFilesScopeName() {
-    return IdeBundle.message("scope.recent.modified.files");
-  }
+  override fun getPredefinedScopesAsync(project: Project,
+                                        dataContext: DataContext?,
+                                        suggestSearchInLibs: Boolean,
+                                        prevSearchFiles: Boolean,
+                                        currentSelection: Boolean,
+                                        usageView: Boolean,
+                                        showEmptyScopes: Boolean): Promise<List<SearchScope>> {
+    val context = ScopeCollectionContext.collectContext(
+      project, dataContext, suggestSearchInLibs, prevSearchFiles, usageView, showEmptyScopes)
 
-  public static @NotNull @Nls String getCurrentFileScopeName() {
-    return IdeBundle.message("scope.current.file");
-  }
-
-  @Override
-  public @NotNull List<SearchScope> getPredefinedScopes(@NotNull Project project,
-                                                        @Nullable DataContext dataContext,
-                                                        boolean suggestSearchInLibs,
-                                                        boolean prevSearchFiles,
-                                                        boolean currentSelection,
-                                                        boolean usageView,
-                                                        boolean showEmptyScopes) {
-    ScopeCollectionContext context =
-      ScopeCollectionContext.collectContext(project, dataContext, suggestSearchInLibs, prevSearchFiles, usageView, showEmptyScopes);
-    Collection<SearchScope> result = context.result;
-    result.addAll(context.collectRestScopes(project, currentSelection, usageView, showEmptyScopes));
-    return new ArrayList<>(result);
-  }
-
-  @Override
-  public @NotNull Promise<List<SearchScope>> getPredefinedScopesAsync(@NotNull Project project,
-                                                                      @Nullable DataContext dataContext,
-                                                                      boolean suggestSearchInLibs,
-                                                                      boolean prevSearchFiles,
-                                                                      boolean currentSelection,
-                                                                      boolean usageView,
-                                                                      boolean showEmptyScopes) {
-    ScopeCollectionContext context =
-      ScopeCollectionContext.collectContext(project, dataContext, suggestSearchInLibs, prevSearchFiles, usageView, showEmptyScopes);
-    AsyncPromise<List<SearchScope>> promise = new AsyncPromise<>();
-    ReadAction.nonBlocking(() -> context.collectRestScopes(project, currentSelection, usageView, showEmptyScopes))
+    val promise = AsyncPromise<List<SearchScope>>()
+    ReadAction.nonBlocking<Collection<SearchScope>>()
+    { context.collectRestScopes(project, currentSelection, usageView, showEmptyScopes) }
       .expireWith(project)
-      .finishOnUiThread(ModalityState.any(), backgroundResult -> {
-        Collection<SearchScope> result = context.result;
-        result.addAll(backgroundResult);
-        promise.setResult(new ArrayList<>(result));
-      }).submit(AppExecutorUtil.getAppExecutorService());
-    return promise;
+      .finishOnUiThread(ModalityState.any()) { backgroundResult: Collection<SearchScope>? ->
+        val result = context.result
+        result.addAll(backgroundResult!!)
+        promise.setResult(ArrayList(result))
+      }
+      .submit(AppExecutorUtil.getAppExecutorService())
+
+    return promise
   }
 
-  private record ScopeCollectionContext(PsiFile psiFile,
-                                        Editor selectedTextEditor,
-                                        Collection<? extends SearchScope> scopesFromUsageView,
-                                        PsiFile currentFile,
-                                        SearchScope selectedFilesScope,
-                                        Collection<SearchScope> result) {
-    // in EDT
-    static @NotNull ScopeCollectionContext collectContext(@NotNull Project project,
-                                                          @Nullable DataContext dataContext,
-                                                          boolean suggestSearchInLibs,
-                                                          boolean prevSearchFiles,
-                                                          boolean usageView,
-                                                          boolean showEmptyScopes) {
-      Collection<SearchScope> result = new LinkedHashSet<>();
-      result.add(GlobalSearchScope.everythingScope(project));
-      result.add(GlobalSearchScope.projectScope(project));
-      if (suggestSearchInLibs) {
-        result.add(GlobalSearchScope.allScope(project));
-      }
-
-      DataContext adjustedContext = dataContext != null ? dataContext : SimpleDataContext.getProjectContext(project);
-      for (SearchScopeProvider each : SearchScopeProvider.EP_NAME.getExtensions()) {
-        result.addAll(each.getGeneralSearchScopes(project, adjustedContext));
-      }
-
-      if (ModuleUtil.hasTestSourceRoots(project)) {
-        result.add(GlobalSearchScopesCore.projectProductionScope(project));
-        result.add(GlobalSearchScopesCore.projectTestScope(project));
-      }
-
-      result.add(ScratchesSearchScope.getScratchesScope(project));
-
-      SearchScope recentFilesScope = recentFilesScope(project, false);
-      ContainerUtil.addIfNotNull(
-        result, !SearchScope.isEmptyScope(recentFilesScope) ? recentFilesScope :
-                showEmptyScopes ? new LocalSearchScope(PsiElement.EMPTY_ARRAY, getRecentlyViewedFilesScopeName()) : null);
-      SearchScope recentModFilesScope = recentFilesScope(project, true);
-      ContainerUtil.addIfNotNull(
-        result, !SearchScope.isEmptyScope(recentModFilesScope) ? recentModFilesScope :
-                showEmptyScopes ? new LocalSearchScope(PsiElement.EMPTY_ARRAY, getRecentlyChangedFilesScopeName()) : null);
-      GlobalSearchScope openFilesScope = GlobalSearchScopes.openFilesScope(project);
-      ContainerUtil.addIfNotNull(
-        result, openFilesScope != GlobalSearchScope.EMPTY_SCOPE ? openFilesScope :
-                showEmptyScopes ? new LocalSearchScope(PsiElement.EMPTY_ARRAY, OpenFilesScope.getNameText()) : null);
-
-      Editor selectedTextEditor = ApplicationManager.getApplication().isDispatchThread()
-                                  ? FileEditorManager.getInstance(project).getSelectedTextEditor()
-                                  : null;
-      PsiFile psiFile =
-        selectedTextEditor == null ? null : PsiDocumentManager.getInstance(project).getPsiFile(selectedTextEditor.getDocument());
-      PsiFile currentFile = fillFromDataContext(dataContext, result, psiFile);
-      SearchScope selectedFilesScope = getSelectedFilesScope(project, dataContext, currentFile);
-
-      Collection<SearchScope> scopesFromUsageView = usageView ? getScopesFromUsageView(project, prevSearchFiles) : Collections.emptyList();
-      return new ScopeCollectionContext(psiFile, selectedTextEditor, scopesFromUsageView, currentFile, selectedFilesScope, result);
-    }
-
-
+  private data class ScopeCollectionContext(val psiFile: PsiFile?,
+                                            val selectedTextEditor: Editor?,
+                                            val scopesFromUsageView: Collection<SearchScope>,
+                                            val currentFile: PsiFile?,
+                                            val selectedFilesScope: SearchScope?,
+                                            val result: MutableCollection<SearchScope>) {
     // under read action
-    Collection<SearchScope> collectRestScopes(@NotNull Project project,
-                                              boolean currentSelection,
-                                              boolean usageView,
-                                              boolean showEmptyScopes) {
-      Collection<SearchScope> backgroundResult = new LinkedHashSet<>();
-      if (project.isDisposed() ||
-          (psiFile != null && !psiFile.isValid()) ||
-          (selectedTextEditor != null && selectedTextEditor.isDisposed())) {
-        return backgroundResult;
+    fun collectRestScopes(project: Project,
+                          currentSelection: Boolean,
+                          usageView: Boolean,
+                          showEmptyScopes: Boolean): Collection<SearchScope> {
+      if (project.isDisposed() || psiFile != null && !psiFile.isValid() || selectedTextEditor != null && selectedTextEditor.isDisposed()) {
+        return emptyList()
       }
+
+      val backgroundResult = mutableSetOf<SearchScope>()
+
       if (currentFile != null || showEmptyScopes) {
-        PsiElement[] scope = currentFile != null ? new PsiElement[]{currentFile} : PsiElement.EMPTY_ARRAY;
-        backgroundResult.add(new LocalSearchScope(scope, getCurrentFileScopeName()));
+        val scope = if (currentFile != null) arrayOf<PsiElement>(currentFile) else PsiElement.EMPTY_ARRAY
+        backgroundResult.add(LocalSearchScope(scope, getCurrentFileScopeName()))
       }
 
       if (currentSelection && selectedTextEditor != null && psiFile != null) {
-        SelectionModel selectionModel = selectedTextEditor.getSelectionModel();
+        val selectionModel = selectedTextEditor.getSelectionModel()
         if (selectionModel.hasSelection()) {
-          backgroundResult.add(new EditorSelectionLocalSearchScope(selectedTextEditor, project, IdeBundle.message("scope.selection")));
+          backgroundResult.add(EditorSelectionLocalSearchScope(selectedTextEditor, project, IdeBundle.message("scope.selection")))
         }
       }
 
       if (usageView) {
-        addHierarchyScope(project, backgroundResult);
-        backgroundResult.addAll(scopesFromUsageView);
+        addHierarchyScope(project, backgroundResult)
+        backgroundResult.addAll(scopesFromUsageView)
       }
 
-      ContainerUtil.addIfNotNull(backgroundResult, selectedFilesScope);
-      return backgroundResult;
+      ContainerUtil.addIfNotNull(backgroundResult, selectedFilesScope)
+
+      return backgroundResult
     }
-  }
 
-  // in EDT
-  private static Collection<SearchScope> getScopesFromUsageView(@NotNull Project project, boolean prevSearchFiles) {
-    LinkedHashSet<SearchScope> scopes = new LinkedHashSet<>();
-    UsageView selectedUsageView = UsageViewManager.getInstance(project).getSelectedUsageView();
-    if (selectedUsageView != null && !selectedUsageView.isSearchInProgress()) {
-      final Set<Usage> usages = new HashSet<>(selectedUsageView.getUsages());
-      usages.removeAll(selectedUsageView.getExcludedUsages());
+    companion object {
+      // in EDT
+      fun collectContext(project: Project,
+                         dataContext: DataContext?,
+                         suggestSearchInLibs: Boolean,
+                         prevSearchFiles: Boolean,
+                         usageView: Boolean,
+                         showEmptyScopes: Boolean): ScopeCollectionContext {
+        val result: MutableCollection<SearchScope> = LinkedHashSet()
 
-      if (prevSearchFiles) {
-        final Set<VirtualFile> files = collectFiles(usages, true);
-        if (!files.isEmpty()) {
-          GlobalSearchScope prev = new GlobalSearchScope(project) {
-            private Set<VirtualFile> myFiles;
+        result.add(GlobalSearchScope.everythingScope(project))
+        result.add(GlobalSearchScope.projectScope(project))
 
-            @Override
-            public @NotNull String getDisplayName() {
-              return IdeBundle.message("scope.files.in.previous.search.result");
-            }
-
-            @Override
-            public synchronized boolean contains(@NotNull VirtualFile file) {
-              if (myFiles == null) {
-                myFiles = collectFiles(usages, false);
-              }
-              return myFiles.contains(file);
-            }
-
-            @Override
-            public boolean isSearchInModuleContent(@NotNull Module aModule) {
-              return true;
-            }
-
-            @Override
-            public boolean isSearchInLibraries() {
-              return true;
-            }
-          };
-          scopes.add(prev);
-        }
-      }
-      else {
-        final List<PsiElement> results = new ArrayList<>(usages.size());
-        for (Usage usage : usages) {
-          if (usage instanceof PsiElementUsage) {
-            final PsiElement element = ((PsiElementUsage)usage).getElement();
-            if (element != null && element.isValid() && element.getContainingFile() != null) {
-              results.add(element);
-            }
-          }
+        if (suggestSearchInLibs) {
+          result.add(GlobalSearchScope.allScope(project))
         }
 
-        if (!results.isEmpty()) {
-          scopes.add(
-            new LocalSearchScope(PsiUtilCore.toPsiElementArray(results), IdeBundle.message("scope.previous.search.results")));
+        val adjustedContext = dataContext ?: SimpleDataContext.getProjectContext(project)
+        for (each in SearchScopeProvider.EP_NAME.extensions) {
+          result.addAll(each.getGeneralSearchScopes(project, adjustedContext))
         }
-      }
-    }
-    return scopes;
-  }
 
-  // in EDT
-  private static PsiFile fillFromDataContext(@Nullable DataContext dataContext,
-                                             Collection<SearchScope> result,
-                                             PsiFile psiFile) {
-    PsiFile currentFile = psiFile;
-    if (dataContext != null) {
-      PsiElement dataContextElement = CommonDataKeys.PSI_FILE.getData(dataContext);
-      if (dataContextElement == null) {
-        dataContextElement = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
-      }
-
-      if (dataContextElement == null && psiFile != null) {
-        dataContextElement = psiFile;
-      }
-
-      if (dataContextElement != null) {
-        if (!PlatformUtils.isCidr() && !PlatformUtils.isRider()) { // TODO: have an API to disable module scopes.
-          Module module = ModuleUtilCore.findModuleForPsiElement(dataContextElement);
-          if (module == null) {
-            module = PlatformCoreDataKeys.MODULE.getData(dataContext);
-          }
-          if (module != null && !ModuleType.isInternal(module)) {
-            result.add(module.getModuleScope());
-          }
+        if (ModuleUtil.hasTestSourceRoots(project)) {
+          result.add(GlobalSearchScopesCore.projectProductionScope(project))
+          result.add(GlobalSearchScopesCore.projectTestScope(project))
         }
-        if (currentFile == null) {
-          currentFile = dataContextElement.getContainingFile();
+
+        result.add(ScratchesSearchScope.getScratchesScope(project))
+
+        val recentFilesScope = recentFilesScope(project, false)
+        if (!SearchScope.isEmptyScope(recentFilesScope)) {
+          result.add(recentFilesScope)
         }
-      }
-    }
-    return currentFile;
-  }
-
-  private static void addHierarchyScope(@NotNull Project project, Collection<? super SearchScope> result) {
-    final ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.HIERARCHY);
-    if (toolWindow == null) {
-      return;
-    }
-    final ContentManager contentManager = toolWindow.getContentManager();
-    final Content content = contentManager.getSelectedContent();
-    if (content == null) {
-      return;
-    }
-    final String name = content.getDisplayName();
-    JComponent component = content.getComponent();
-    if (component instanceof DumbUnawareHider) {
-      component = ((DumbUnawareHider)component).getContent();
-    }
-    final HierarchyBrowserBase hierarchyBrowserBase = (HierarchyBrowserBase)component;
-    final PsiElement[] elements = hierarchyBrowserBase.getAvailableElements();
-    if (elements.length > 0) {
-      result.add(new LocalSearchScope(elements, LangBundle.message("predefined.search.scope.hearchy.scope.display.name", name)));
-    }
-  }
-
-  public static @NotNull SearchScope recentFilesScope(@NotNull Project project, boolean changedOnly) {
-    String name = changedOnly ? getRecentlyChangedFilesScopeName() : getRecentlyViewedFilesScopeName();
-    List<VirtualFile> files = changedOnly ? IdeDocumentHistory.getInstance(project).getChangedFiles() :
-                              JBIterable.from(EditorHistoryManager.getInstance(project).getFileList())
-                                .append(FileEditorManager.getInstance(project).getOpenFiles()).unique().toList();
-
-    return files.isEmpty() ? LocalSearchScope.EMPTY : GlobalSearchScope.filesScope(project, files, name);
-  }
-
-  public static @Nullable SearchScope getSelectedFilesScope(@NotNull Project project,
-                                                            @Nullable DataContext dataContext,
-                                                            @Nullable PsiFile currentFile) {
-    VirtualFile[] filesOrDirs = dataContext == null ? null : CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
-    if (filesOrDirs == null || filesOrDirs.length == 0 ||
-        filesOrDirs.length == 1 && currentFile != null && filesOrDirs[0].equals(currentFile.getVirtualFile())) {
-      return null;
-    }
-    return new SelectedFilesScope(project, filesOrDirs);
-  }
-
-  protected static @NotNull Set<VirtualFile> collectFiles(Set<? extends Usage> usages, boolean findFirst) {
-    final Set<VirtualFile> files = new HashSet<>();
-    for (Usage usage : usages) {
-      if (usage instanceof PsiElementUsage) {
-        PsiElement psiElement = ((PsiElementUsage)usage).getElement();
-        if (psiElement != null && psiElement.isValid()) {
-          PsiFile psiFile = psiElement.getContainingFile();
-          if (psiFile != null) {
-            VirtualFile file = psiFile.getVirtualFile();
-            if (file != null) {
-              files.add(file);
-              if (findFirst) return files;
-            }
-          }
+        else if (showEmptyScopes) {
+          result.add(LocalSearchScope(PsiElement.EMPTY_ARRAY, getRecentlyViewedFilesScopeName()))
         }
+
+        val recentModFilesScope = recentFilesScope(project, true)
+        ContainerUtil.addIfNotNull(
+          result, if (!SearchScope.isEmptyScope(recentModFilesScope)) recentModFilesScope
+        else if (showEmptyScopes) LocalSearchScope(
+          PsiElement.EMPTY_ARRAY, getRecentlyChangedFilesScopeName())
+        else null)
+
+        val openFilesScope = GlobalSearchScopes.openFilesScope(project)
+        ContainerUtil.addIfNotNull(
+          result, if (openFilesScope !== GlobalSearchScope.EMPTY_SCOPE) openFilesScope
+        else if (showEmptyScopes) LocalSearchScope(
+          PsiElement.EMPTY_ARRAY, OpenFilesScope.getNameText())
+        else null)
+
+        val selectedTextEditor = if (ApplicationManager.getApplication().isDispatchThread())
+          FileEditorManager.getInstance(project).getSelectedTextEditor()
+        else null
+
+        val psiFile = selectedTextEditor?.let {
+          PsiDocumentManager.getInstance(project).getPsiFile(it.getDocument())
+        }
+        val currentFile = fillFromDataContext(dataContext, result, psiFile)
+        val selectedFilesScope = getSelectedFilesScope(project, dataContext, currentFile)
+
+        val scopesFromUsageView = if (usageView) getScopesFromUsageView(project, prevSearchFiles) else emptyList()
+
+        return ScopeCollectionContext(psiFile, selectedTextEditor, scopesFromUsageView, currentFile, selectedFilesScope, result)
       }
     }
-    return files;
   }
 
-  static final class SelectedFilesScope extends GlobalSearchScope {
-    private final Set<VirtualFile> myFiles = new HashSet<>();
-    private final Set<VirtualFile> myDirectories = new HashSet<>();
+  internal class SelectedFilesScope(project: Project?, vararg filesOrDirs: VirtualFile) : GlobalSearchScope(project) {
+    private val myFiles: MutableSet<VirtualFile> = HashSet()
+    private val myDirectories: MutableSet<VirtualFile> = HashSet()
 
-    SelectedFilesScope(Project project, VirtualFile... filesOrDirs) {
-      super(project);
-      if (filesOrDirs.length == 0) {
-        throw new IllegalArgumentException("array is empty");
-      }
-      for (VirtualFile fileOrDir : filesOrDirs) {
+    init {
+      require(filesOrDirs.isEmpty())
+
+      for (fileOrDir in filesOrDirs) {
         if (fileOrDir.isDirectory()) {
-          myDirectories.add(fileOrDir);
+          myDirectories.add(fileOrDir)
         }
         else {
-          myFiles.add(fileOrDir);
+          myFiles.add(fileOrDir)
         }
       }
     }
 
-    @Override
-    public boolean isSearchInModuleContent(@NotNull Module aModule) {
-      return true;
+    override fun isSearchInModuleContent(aModule: Module): Boolean {
+      return true
     }
 
-    @Override
-    public boolean isSearchInLibraries() {
-      return true;
+    override fun isSearchInLibraries(): Boolean {
+      return true
     }
 
-    @Override
-    public boolean contains(@NotNull VirtualFile file) {
-      if (myFiles.contains(file)) return true;
-      return VfsUtilCore.isUnder(file, myDirectories);
+    override fun contains(file: VirtualFile): Boolean {
+      if (myFiles.contains(file)) return true
+      return VfsUtilCore.isUnder(file, myDirectories)
     }
 
-    @Override
-    public @NotNull String getDisplayName() {
+    override fun getDisplayName(): String {
       if (myFiles.isEmpty()) {
-        return IdeBundle.message("scope.selected.directories", myDirectories.size());
+        return IdeBundle.message("scope.selected.directories", myDirectories.size)
       }
+
       if (myDirectories.isEmpty()) {
-        return IdeBundle.message("scope.selected.files", myFiles.size());
+        return IdeBundle.message("scope.selected.files", myFiles.size)
       }
-      return IdeBundle.message("scope.selected.files.and.directories", myFiles.size(), myDirectories.size());
+
+      return IdeBundle.message("scope.selected.files.and.directories", myFiles.size, myDirectories.size)
+    }
+  }
+
+  companion object {
+    @JvmStatic
+    fun getRecentlyViewedFilesScopeName(): @Nls String = IdeBundle.message("scope.recent.files")
+    @JvmStatic
+    fun getRecentlyChangedFilesScopeName(): @Nls String = IdeBundle.message("scope.recent.modified.files")
+    @JvmStatic
+    fun getCurrentFileScopeName(): @Nls String = IdeBundle.message("scope.current.file")
+
+    // in EDT
+    private fun getScopesFromUsageView(project: Project, prevSearchFiles: Boolean): Collection<SearchScope> {
+      val scopes = LinkedHashSet<SearchScope>()
+
+      val selectedUsageView = UsageViewManager.getInstance(project).getSelectedUsageView()
+      if (selectedUsageView != null && !selectedUsageView.isSearchInProgress()) {
+        val usages: MutableSet<Usage> = selectedUsageView.getUsages().toMutableSet()
+        usages.removeAll(selectedUsageView.getExcludedUsages())
+
+        if (prevSearchFiles) {
+          val files = collectFiles(usages, true)
+          if (!files.isEmpty()) {
+            val prev: GlobalSearchScope = object : GlobalSearchScope(project) {
+              private var myFiles: Set<VirtualFile>? = null
+              override fun getDisplayName(): String {
+                return IdeBundle.message("scope.files.in.previous.search.result")
+              }
+
+              @Synchronized
+              override fun contains(file: VirtualFile): Boolean {
+                if (myFiles == null) {
+                  myFiles = collectFiles(usages, false)
+                }
+                return myFiles!!.contains(file)
+              }
+
+              override fun isSearchInModuleContent(aModule: Module): Boolean {
+                return true
+              }
+
+              override fun isSearchInLibraries(): Boolean {
+                return true
+              }
+            }
+            scopes.add(prev)
+          }
+        }
+        else {
+          val results: MutableList<PsiElement> = ArrayList(usages.size)
+          for (usage in usages) {
+            if (usage is PsiElementUsage) {
+              val element = usage.getElement()
+              if (element != null && element.isValid() && element.getContainingFile() != null) {
+                results.add(element)
+              }
+            }
+          }
+
+          if (!results.isEmpty()) {
+            scopes.add(LocalSearchScope(PsiUtilCore.toPsiElementArray(results), IdeBundle.message("scope.previous.search.results")))
+          }
+        }
+      }
+
+      return scopes
+    }
+
+    // in EDT
+    private fun fillFromDataContext(dataContext: DataContext?,
+                                    result: MutableCollection<SearchScope>,
+                                    psiFile: PsiFile?): PsiFile? {
+      var currentFile = psiFile
+      if (dataContext != null) {
+        var dataContextElement: PsiElement? = CommonDataKeys.PSI_FILE.getData(dataContext)
+        if (dataContextElement == null) {
+          dataContextElement = CommonDataKeys.PSI_ELEMENT.getData(dataContext)
+        }
+
+        if (dataContextElement == null && psiFile != null) {
+          dataContextElement = psiFile
+        }
+
+        if (dataContextElement != null) {
+          if (!PlatformUtils.isCidr() && !PlatformUtils.isRider()) { // TODO: have an API to disable module scopes.
+            var module = ModuleUtilCore.findModuleForPsiElement(dataContextElement)
+            if (module == null) {
+              module = PlatformCoreDataKeys.MODULE.getData(dataContext)
+            }
+            if (module != null && !ModuleType.isInternal(module)) {
+              result.add(module.getModuleScope())
+            }
+          }
+          if (currentFile == null) {
+            currentFile = dataContextElement.getContainingFile()
+          }
+        }
+      }
+
+      return currentFile
+    }
+
+    private fun addHierarchyScope(project: Project, result: MutableCollection<in SearchScope>) {
+      val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.HIERARCHY)
+      if (toolWindow == null) {
+        return
+      }
+
+      val contentManager = toolWindow.getContentManager()
+      val content = contentManager.getSelectedContent()
+      if (content == null) {
+        return
+      }
+
+      val name = content.getDisplayName()
+      var component = content.getComponent()
+      if (component is DumbUnawareHider) {
+        component = component.content
+      }
+
+      val hierarchyBrowserBase = component as HierarchyBrowserBase
+      val elements = hierarchyBrowserBase.getAvailableElements()
+      if (elements.isNotEmpty()) {
+        result.add(LocalSearchScope(elements, LangBundle.message("predefined.search.scope.hearchy.scope.display.name", name)))
+      }
+    }
+
+    fun recentFilesScope(project: Project, changedOnly: Boolean): SearchScope {
+      val name = if (changedOnly) getRecentlyChangedFilesScopeName() else getRecentlyViewedFilesScopeName()
+
+      val files = if (changedOnly)
+        IdeDocumentHistory.getInstance(project).getChangedFiles()
+      else
+        JBIterable.from(EditorHistoryManager.getInstance(project).fileList)
+          .append(FileEditorManager.getInstance(project).getOpenFiles()).unique().toList()
+
+      return if (files.isEmpty()) LocalSearchScope.EMPTY else GlobalSearchScope.filesScope(project, files, name)
+    }
+
+    @JvmStatic
+    fun getSelectedFilesScope(project: Project,
+                              dataContext: DataContext?,
+                              currentFile: PsiFile?): SearchScope? {
+      val filesOrDirs = if (dataContext == null) null else CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext)
+      if (filesOrDirs.isNullOrEmpty()) {
+        return null
+      }
+
+      if (filesOrDirs.size == 1 && currentFile != null && filesOrDirs[0] == currentFile.getVirtualFile()) {
+        return null
+      }
+
+      return SelectedFilesScope(project, *filesOrDirs)
+    }
+
+    private fun collectFiles(usages: Set<Usage>, findFirst: Boolean): Set<VirtualFile> {
+      val files: MutableSet<VirtualFile> = HashSet()
+
+      for (usage in usages) {
+        if (usage is PsiElementUsage) {
+          val psiElement = usage.getElement()
+          if (psiElement != null && psiElement.isValid()) {
+            val psiFile = psiElement.getContainingFile()
+            if (psiFile != null) {
+              val file = psiFile.getVirtualFile()
+              if (file != null) {
+                files.add(file)
+                if (findFirst) return files
+              }
+            }
+          }
+        }
+      }
+
+      return files
     }
   }
 }
