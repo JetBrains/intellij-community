@@ -9,8 +9,11 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.stream.Collectors;
 
 /**
  * Merges multiple inspections settings {@link #getSourceToolNames()} into another one {@link #getMergedToolName()}.
@@ -68,12 +71,9 @@ public abstract class InspectionElementsMerger {
    * @return new merged tool name
    *         null if merger is not found
    */
-  public static String getMergedToolName(@NotNull String id) {
-    for (InspectionElementsMerger merger : EP_NAME.getExtensionList()) {
-      if (ArrayUtil.contains(id, merger.getSourceToolNames()) || ArrayUtil.contains(id, merger.getSuppressIds())) {
-        return merger.getMergedToolName();
-      }
-    }
-    return null;
+  public static List<String> getMergedToolNames(@NotNull String id) {
+    return EP_NAME.getExtensionList().stream()
+      .filter(merger -> ArrayUtil.contains(id, merger.getSourceToolNames()) || ArrayUtil.contains(id, merger.getSuppressIds()))
+      .map(InspectionElementsMerger::getMergedToolName).toList();
   }
 }

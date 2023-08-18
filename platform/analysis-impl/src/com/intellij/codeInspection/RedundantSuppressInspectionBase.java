@@ -251,21 +251,21 @@ public abstract class RedundantSuppressInspectionBase extends GlobalSimpleInspec
                                                                       String suppressedId,
                                                                       Language language) {
     List<InspectionToolWrapper<?, ?>> wrappers = Collections.emptyList();
-    String mergedToolName = InspectionElementsMerger.getMergedToolName(suppressedId);
+    List<String> mergedToolName = InspectionElementsMerger.getMergedToolNames(suppressedId);
     for (InspectionToolWrapper<?, ?> toolWrapper : toolWrappers) {
       String toolWrapperShortName = toolWrapper.getShortName();
       String alternativeID = toolWrapper.getTool().getAlternativeID();
       if (toolWrapper instanceof LocalInspectionToolWrapper wrapper &&
           (wrapper.getTool().getID().equals(suppressedId) ||
            suppressedId.equals(alternativeID) ||
-           toolWrapperShortName.equals(mergedToolName))) {
+           mergedToolName.contains(toolWrapperShortName))) {
         if (!wrapper.isUnfair() && toolWrapper.isApplicable(language)) {
           if (wrappers.isEmpty()) wrappers = new ArrayList<>();
           wrappers.add(toolWrapper);
         }
       }
       else if (toolWrapperShortName.equals(suppressedId) ||
-               toolWrapperShortName.equals(mergedToolName) ||
+               mergedToolName.contains(toolWrapperShortName) ||
                suppressedId.equals(alternativeID)) {
         //ignore global unused as it won't be checked anyway
         if (toolWrapper instanceof LocalInspectionToolWrapper ||
