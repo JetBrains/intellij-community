@@ -8,6 +8,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.LoadingNode;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.concurrency.Invoker;
 import com.intellij.util.concurrency.InvokerSupplier;
 import com.intellij.util.containers.ContainerUtil;
@@ -15,6 +16,7 @@ import com.intellij.util.containers.SmartHashSet;
 import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.tree.AbstractTreeModel;
 import com.intellij.util.ui.tree.TreeModelAdapter;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,6 +30,8 @@ import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
 import java.util.function.*;
 
 import static java.util.Collections.emptyList;
@@ -283,7 +287,18 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Searchabl
    * and to accept the resulting value on the foreground thread.
    */
   private void submit(@NotNull Command command) {
-    background.compute(command).onSuccess(value -> foreground.invoke(() -> command.accept(value)));
+    background.compute(command).onSuccess(value -> {
+      if (value != null && value.object instanceof AsyncCommandResult r) {
+        r.promise.onSuccess(value2 -> accept(command, value2));
+      }
+      else {
+        accept(command, value);
+      }
+    });
+  }
+
+  private void accept(@NotNull Command command, Node value) {
+    foreground.invoke(() -> command.accept(value));
   }
 
   private boolean isValidThread() {
@@ -549,15 +564,44 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Searchabl
       Node loaded = new Node(object, LeafState.get(object, model));
       if (loaded.leafState == LeafState.ALWAYS || isObsolete()) return loaded;
 
-      if (model instanceof ChildrenProvider<?> provider) {
-        List<?> children = provider.getChildren(object);
-        if (children == null) throw new ProcessCanceledException(); // cancel this command
-        loaded.children = load(children.size(), index -> children.get(index));
+      if (model instanceof AsyncChildrenProvider<?> provider) {
+        Promise<? extends List<?>> childrenPromise = provider.getChildrenAsync(object);
+        if (childrenPromise == null) throw new ProcessCanceledException(); // cancel this command
+        if (childrenPromise.getState() == Promise.State.PENDING) {
+          return new Node(new AsyncCommandResult(childrenPromise.then(children -> {
+            loaded.children = load(children);
+            return loaded;
+          })), LeafState.ALWAYS);
+        }
+        loaded.children = load(getImmediately(childrenPromise));
+      }
+      else if (model instanceof ChildrenProvider<?> provider) {
+        loaded.children = load(provider.getChildren(object));
       }
       else {
         loaded.children = load(model.getChildCount(object), index -> model.getChild(object, index));
       }
       return loaded;
+    }
+
+    @Nullable
+    private static <T> T getImmediately(Promise<T> promise) {
+      try {
+        return promise.blockingGet(0);
+      }
+      catch (TimeoutException e) {
+        throw new ProcessCanceledException();
+      }
+      catch (ExecutionException e) {
+        ExceptionUtil.rethrow(e.getCause());
+        throw new ProcessCanceledException();
+      }
+    }
+
+    @Nullable
+    private List<Node> load(@Nullable List<?> children) {
+      if (children == null) throw new ProcessCanceledException(); // cancel this command
+      return load(children.size(), index -> children.get(index));
     }
 
     private @Nullable List<Node> load(int count, @NotNull IntFunction<?> childGetter) {
@@ -975,4 +1019,11 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Searchabl
     tree.root = node;
     tree.map.put(object, node);
   }
+
+  @ApiStatus.Internal
+  public interface AsyncChildrenProvider<T> {
+    Promise<? extends List<? extends T>> getChildrenAsync(Object parent);
+  }
+
+  private record AsyncCommandResult(Promise<Node> promise) {}
 }
