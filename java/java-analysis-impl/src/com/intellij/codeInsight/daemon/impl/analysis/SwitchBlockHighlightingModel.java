@@ -1097,7 +1097,7 @@ public class SwitchBlockHighlightingModel {
           }
         }
         else if (who instanceof PsiCaseLabelElement whoElement) {
-          if (!JavaPsiPatternUtil.dominates(overWhom, whoElement)) {
+          if (!JavaPsiPatternUtil.dominates(overWhom, whoElement) && overWhom.getParent() != whoElement.getParent()) {
             IntentionAction action = getFixFactory().createMoveSwitchBranchUpFix(whoElement, overWhom);
             info.registerFix(action, null, null, null, null);
           }
