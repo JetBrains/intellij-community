@@ -12,6 +12,7 @@ import com.intellij.settingsSync.plugins.SettingsSyncPluginsState.PluginData
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.replaceService
+import com.intellij.util.containers.mapSmartSet
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.*
@@ -29,6 +30,28 @@ abstract class BasePluginManagerTest {
   internal lateinit var testRootDisposable: Disposable
   protected lateinit var testDispatcher: TestDispatcher
   protected lateinit var testScheduler: TestCoroutineScheduler
+
+  //is used in TestPluginDescriptor.Companion.allDependenciesOnly
+  internal val modulesPlatform = TestPluginDescriptor(
+    "com.intellij.modules.platform",
+    bundled = true,
+    essential = true,
+    isDependencyOnly = true
+  )
+  //is used in TestPluginDescriptor.Companion.allDependenciesOnly
+  internal val modulesLang = TestPluginDescriptor(
+    "com.intellij.modules.lang",
+    bundled = true,
+    essential = true,
+    isDependencyOnly = true
+  )
+
+  internal val modulesJava = TestPluginDescriptor(
+    "com.intellij.modules.java",
+    bundled = true,
+    essential = true,
+    isDependencyOnly = true
+  )
 
   internal val quickJump = TestPluginDescriptor(
     "QuickJump",
@@ -70,6 +93,7 @@ abstract class BasePluginManagerTest {
     SettingsSyncSettings.getInstance().syncEnabled = true
     SettingsSyncSettings.getInstance().loadState(SettingsSyncSettings.State())
     testPluginManager = TestPluginManager()
+    testPluginManager.addPluginDescriptors(*TestPluginDescriptor.allDependenciesOnly().toTypedArray())
     ApplicationManager.getApplication().replaceService(PluginManagerProxy::class.java, testPluginManager, testRootDisposable)
     testScheduler = TestCoroutineScheduler()
     testDispatcher = StandardTestDispatcher(testScheduler)
@@ -94,7 +118,7 @@ abstract class BasePluginManagerTest {
   }
 
   internal fun getIdeState(): Map<PluginId, PluginData> {
-    return PluginManagerProxy.getInstance().getPlugins().associate { plugin ->
+    return PluginManagerProxy.getInstance().getPlugins().filter { !(it as TestPluginDescriptor).isDependencyOnly}.associate { plugin ->
       plugin.pluginId to PluginData(plugin.isEnabled)
     }
   }
@@ -117,7 +141,7 @@ internal class StateBuilder {
     enabled: Boolean,
     category: SettingsCategory = SettingsCategory.PLUGINS): Pair<PluginId, PluginData> {
 
-    val pluginData = PluginData(enabled, category)
+    val pluginData = PluginData(enabled, category, this.pluginDependencies.mapSmartSet { it.pluginId.idString })
     states[pluginId] = pluginData
     return this.pluginId to pluginData
   }
