@@ -1456,6 +1456,11 @@ public abstract class K1IdeK2CodeKotlinEvaluateExpressionInMppTestGenerated exte
                 runTest("testData/evaluation/singleBreakpoint/ktij21963.kt");
             }
 
+            @TestMetadata("ktij26694.kt")
+            public void testKtij26694() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/ktij26694.kt");
+            }
+
             @TestMetadata("lambdaToString.kt")
             public void testLambdaToString() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/lambdaToString.kt");
