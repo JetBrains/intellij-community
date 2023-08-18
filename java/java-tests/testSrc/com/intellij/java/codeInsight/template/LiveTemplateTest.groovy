@@ -1272,7 +1272,7 @@ class Foo {
 
     myFixture.configureByText "a.java", "class Foo {{ System.out.println(helloW<caret>) }}"
     LiveTemplateCompletionContributor.setShowTemplatesInTests(true, myFixture.getTestRootDisposable())
-    DumbServiceImpl.getInstance(getProject()).runInDumbMode {
+    DumbServiceImpl.getInstance(getProject()).runInDumbModeSynchronously {
       RecursionManager.disableMissedCacheAssertions(testRootDisposable)
       myFixture.completeBasic()
       assert myFixture.lookup

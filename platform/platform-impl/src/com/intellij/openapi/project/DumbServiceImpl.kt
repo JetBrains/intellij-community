@@ -185,7 +185,7 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
     }
 
   @TestOnly
-  fun runInDumbMode(runnable: Runnable) {
+  fun runInDumbModeSynchronously(runnable: Runnable) {
     isDumb = true
     try {
       runnable.run()

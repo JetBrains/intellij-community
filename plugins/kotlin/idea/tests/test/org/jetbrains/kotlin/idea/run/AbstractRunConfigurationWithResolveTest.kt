@@ -124,7 +124,7 @@ abstract class AbstractRunConfigurationWithResolveTest : AbstractRunConfiguratio
                 findMainClassFile(module, mainClassName, true)
             } else {
                 val findMainClassFileResult = AtomicReference<KtFile>()
-                DumbServiceImpl.getInstance(project).runInDumbMode {
+                DumbServiceImpl.getInstance(project).runInDumbModeSynchronously {
                     findMainClassFileResult.set(findMainClassFile(module, mainClassName, true))
                 }
                 findMainClassFileResult.get()

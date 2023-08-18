@@ -276,7 +276,7 @@ public class ClsPsiTest extends LightIdeaTestCase {
       assertEquals("o", parameters[1].getName());
     };
 
-    DumbServiceImpl.getInstance(getProject()).runInDumbMode(checkNames);
+    DumbServiceImpl.getInstance(getProject()).runInDumbModeSynchronously(checkNames);
     checkNames.run();
   }
 

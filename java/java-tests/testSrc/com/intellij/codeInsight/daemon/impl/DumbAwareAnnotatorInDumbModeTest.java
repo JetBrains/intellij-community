@@ -23,7 +23,7 @@ public class DumbAwareAnnotatorInDumbModeTest extends LightJavaCodeInsightFixtur
     LanguageAnnotators.INSTANCE.addExplicitExtension(javaLanguage, dumbAwareAnnotator);
     ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject())).mustWaitForSmartMode(false, getTestRootDisposable());
     try {
-      DumbServiceImpl.getInstance(getProject()).runInDumbMode(() -> {
+      DumbServiceImpl.getInstance(getProject()).runInDumbModeSynchronously(() -> {
         myFixture.testHighlighting();
       });
     }

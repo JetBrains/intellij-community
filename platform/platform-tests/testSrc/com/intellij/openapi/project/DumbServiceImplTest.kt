@@ -320,7 +320,7 @@ class DumbServiceImplTest {
     lateinit var future: Future<*>
     for (i in 0 until N) {
       runInEdtAndWait {
-        dumbService.runInDumbMode {
+        dumbService.runInDumbModeSynchronously {
           val waiting = CountDownLatch(1)
           future = application.executeOnPooledThread {
             waiting.countDown()
