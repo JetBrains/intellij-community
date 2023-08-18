@@ -201,7 +201,6 @@ public final class FilePageCacheLockFree implements AutoCloseable {
       long startedAtNs = System.nanoTime();
       try {
         int pagesPreparedToReclaim = pagesForReclaimCollector.totalPagesPreparedToReclaim();
-        //MAYBE: .size is O(N) for linked queue!
         int pagesRemainedToReclaim = pagesToProbablyReclaim.size();
 
         //Is there work to do: commands to process? Page allocation pressure to keep up with?
@@ -693,9 +692,9 @@ public final class FilePageCacheLockFree implements AutoCloseable {
 
   /**
    * Receives pages during page scanning, and selects those that are best suited for reclaiming
-   * (i.e. least useful by some measure). So it is basically (page*) -> (pagesForReclaim).
+   * (i.e. least useful by some measure). So it is basically F[ page* -> pages good for reclaim ]
    * <p>
-   * Internally, it maintains reclamation threshould, and other parameters.
+   * Internally, it maintains a reclamation threshold and other parameters.
    */
   private static class PagesForReclaimCollector {
 
@@ -822,6 +821,103 @@ public final class FilePageCacheLockFree implements AutoCloseable {
     }
   }
 
+  /** Keeps pages that are good candidates for reclaim */
+  private static class PagesToReclaim {
+
+    //TODO RC: CLQueue is quite expensive for use here -- node allocations, O(N) size, and so on -- while we
+    //         don't benefit from the strict order it provides.
+    //         Fixed-size ring buffer with volatile head-tail cursors is cheaper, while serves same purpose.
+    //         It also allows to insert new candidates right into the buffer, instead of collecting them to
+    //         temporary lists, as we now in PagesForReclaimCollector
+
+    private volatile ConcurrentLinkedQueue<PageImpl> pagesToProbablyReclaimQueue = new ConcurrentLinkedQueue<>();
+    /** CLQ.size is O(N), so cache the size here */
+    private final AtomicInteger pagesInQueue = new AtomicInteger(0);
+
+    /**
+     * Lock object is used to wait for pagesToProbablyReclaimQueue to refill,
+     * and to notify the waiters about pages refilled
+     */
+    private final Object refillSignalLock = new Object();
+
+
+    public int size() {
+      //FiXME RC: CLQ.size is O(N), but current attempt to fix it with counter leads to freezes
+      //          due to out-of-sync counter & queue
+      return pagesToProbablyReclaimQueue.size();
+      //return pagesInQueue.get();
+    }
+
+    public void refill(@NotNull PagesForReclaimCollector pagesCollector) {
+      ConcurrentLinkedQueue<PageImpl> pagesForReclaim = new ConcurrentLinkedQueue<>();
+      List<PageImpl> forReclaimDirty = pagesCollector.pagesForReclaimDirty();
+      List<PageImpl> forReclaimNonDirty = pagesCollector.pagesForReclaimNonDirty();
+      pagesForReclaim.addAll(forReclaimDirty);
+      pagesForReclaim.addAll(forReclaimNonDirty);
+
+      this.pagesToProbablyReclaimQueue = pagesForReclaim;
+      this.pagesInQueue.addAndGet(forReclaimDirty.size() + forReclaimNonDirty.size());
+
+      notifyAboutRefill();
+    }
+
+    public @Nullable PageImpl poll() {
+      PageImpl page = pagesToProbablyReclaimQueue.poll();
+      if (page != null) {
+        pagesInQueue.decrementAndGet();
+      }
+      return page;
+    }
+
+    public void pushBack(@NotNull PageImpl page) {
+      pagesToProbablyReclaimQueue.offer(page);
+      pagesInQueue.incrementAndGet();
+    }
+
+    public Iterator<PageImpl> iterator() {
+      Iterator<PageImpl> it = pagesToProbablyReclaimQueue.iterator();
+      return new Iterator<PageImpl>() {
+        @Override
+        public boolean hasNext() {
+          return it.hasNext();
+        }
+
+        @Override
+        public PageImpl next() {
+          return it.next();
+        }
+
+        @Override
+        public void remove() {
+          it.remove();
+          pagesInQueue.decrementAndGet();
+        }
+      };
+    }
+
+    private void notifyAboutRefill() {
+      synchronized (refillSignalLock) {
+        refillSignalLock.notifyAll();
+      }
+    }
+
+    private void waitForRefill() {
+      synchronized (refillSignalLock) {
+        try {
+          //noinspection WaitNotInLoop
+          refillSignalLock.wait(10);
+        }
+        catch (InterruptedException ignored) {
+        }
+      }
+    }
+
+    @Override
+    public String toString() {
+      return "PagesToReclaim[" + pagesInQueue + " in queue]";
+    }
+  }
+
   /**
    * Cyclically iterates through the list of items, while the items could be changed on the go.
    * Iteration order is not strictly defined, but it tries to not list the item a second time until
@@ -873,92 +969,6 @@ public final class FilePageCacheLockFree implements AutoCloseable {
 
     public int size() {
       return currentItems.size();
-    }
-  }
-
-  private static class PagesToReclaim {
-    private volatile ConcurrentLinkedQueue<PageImpl> pagesToProbablyReclaimQueue = new ConcurrentLinkedQueue<>();
-    /** CLQ.size is O(N), so cache the size here */
-    private final AtomicInteger pagesInQueue = new AtomicInteger(0);
-
-    /**
-     * Lock object is used to wait for pagesToProbablyReclaimQueue to refill,
-     * and to notify the waiters about pages refilled
-     */
-    private final Object refillSignalLock = new Object();
-
-
-    public int size() {
-      return pagesInQueue.get();
-    }
-
-    public void refill(@NotNull PagesForReclaimCollector pagesCollector) {
-      ConcurrentLinkedQueue<PageImpl> pagesForReclaim = new ConcurrentLinkedQueue<>();
-      List<PageImpl> forReclaimDirty = pagesCollector.pagesForReclaimDirty();
-      List<PageImpl> forReclaimNonDirty = pagesCollector.pagesForReclaimNonDirty();
-      pagesForReclaim.addAll(forReclaimDirty);
-      pagesForReclaim.addAll(forReclaimNonDirty);
-
-      this.pagesInQueue.set(forReclaimDirty.size() + forReclaimNonDirty.size());
-      this.pagesToProbablyReclaimQueue = pagesForReclaim;
-
-      notifyAboutRefill();
-    }
-
-    public @Nullable PageImpl poll() {
-      PageImpl page = pagesToProbablyReclaimQueue.poll();
-      if (page != null) {
-        pagesInQueue.decrementAndGet();
-      }
-      return page;
-    }
-
-    public void pushBack(@NotNull PageImpl page) {
-      pagesInQueue.incrementAndGet();
-      pagesToProbablyReclaimQueue.offer(page);
-    }
-
-    public Iterator<PageImpl> iterator() {
-      Iterator<PageImpl> it = pagesToProbablyReclaimQueue.iterator();
-      return new Iterator<PageImpl>() {
-        @Override
-        public boolean hasNext() {
-          return it.hasNext();
-        }
-
-        @Override
-        public PageImpl next() {
-          return it.next();
-        }
-
-        @Override
-        public void remove() {
-          it.remove();
-          pagesInQueue.decrementAndGet();
-        }
-      };
-    }
-
-    private void notifyAboutRefill() {
-      synchronized (refillSignalLock) {
-        refillSignalLock.notifyAll();
-      }
-    }
-
-    private void waitForRefill() {
-      synchronized (refillSignalLock) {
-        try {
-          //noinspection WaitNotInLoop
-          refillSignalLock.wait(10);
-        }
-        catch (InterruptedException ignored) {
-        }
-      }
-    }
-
-    @Override
-    public String toString() {
-      return "PagesToReclaim[" + pagesInQueue + " in queue]";
     }
   }
 }
