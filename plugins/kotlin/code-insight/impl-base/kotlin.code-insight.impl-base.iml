@@ -49,5 +49,6 @@
     <orderEntry type="module" module-name="intellij.platform.codeStyle.impl" />
     <orderEntry type="module" module-name="intellij.java.impl" />
     <orderEntry type="module" module-name="kotlin.base.indices" />
+    <orderEntry type="module" module-name="intellij.java.execution.impl" />
   </component>
 </module>
