@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
@@ -84,6 +85,12 @@ public final class ModifierKeyDoubleClickHandler {
     public boolean dispatch(@NotNull AWTEvent event) {
       if (!(event instanceof KeyEvent keyEvent)) {
         return false;
+      }
+
+      Application application = ApplicationManager.getApplication();
+      if ((application != null && !application.isHeadlessEnvironment()) &&
+          KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow() == null) {
+        return false; // on macOS, we can receive modifier key events even if app isn't in focus (e.g. when Spotlight popup is shown)
       }
 
       ModifierKeyDoubleClickHandler doubleClickHandler = getInstance();
