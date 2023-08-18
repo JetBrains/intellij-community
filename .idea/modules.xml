@@ -439,6 +439,8 @@
       <module fileurl="file://$PROJECT_DIR$/android/designer/intellij.android.designer.tests.iml" filepath="$PROJECT_DIR$/android/designer/intellij.android.designer.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/intellij.android.device/intellij.android.device.iml" filepath="$PROJECT_DIR$/android/intellij.android.device/intellij.android.device.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/device-explorer/intellij.android.device-explorer.iml" filepath="$PROJECT_DIR$/android/device-explorer/intellij.android.device-explorer.iml" />
+      <module fileurl="file://$PROJECT_DIR$/android/device-explorer-common/intellij.android.device-explorer-common.iml" filepath="$PROJECT_DIR$/android/device-explorer-common/intellij.android.device-explorer-common.iml" />
+      <module fileurl="file://$PROJECT_DIR$/android/device-explorer-common/intellij.android.device-explorer-common.tests.iml" filepath="$PROJECT_DIR$/android/device-explorer-common/intellij.android.device-explorer-common.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/device-explorer-files/intellij.android.device-explorer-files.iml" filepath="$PROJECT_DIR$/android/device-explorer-files/intellij.android.device-explorer-files.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/device-explorer-files/intellij.android.device-explorer-files.tests.iml" filepath="$PROJECT_DIR$/android/device-explorer-files/intellij.android.device-explorer-files.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/device-explorer-monitor/intellij.android.device-explorer-monitor.iml" filepath="$PROJECT_DIR$/android/device-explorer-monitor/intellij.android.device-explorer-monitor.iml" />

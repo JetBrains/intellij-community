@@ -438,6 +438,7 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.android.debuggers", "android.jar")
       spec.withModule("intellij.android.deploy", "android.jar")
       spec.withModule("intellij.android.device-file-explorer-toolwindow", "android.jar")
+      spec.withModule("intellij.android.device-explorer-common", "android.jar")
       spec.withModule("intellij.android.device-explorer", "android.jar")
       spec.withModule("intellij.android.device-explorer-files", "android.jar")
       spec.withModule("intellij.android.device-explorer-monitor", "android.jar")
