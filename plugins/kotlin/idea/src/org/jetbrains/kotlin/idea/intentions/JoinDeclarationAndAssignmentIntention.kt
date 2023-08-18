@@ -9,7 +9,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReferenceService
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.PsiTreeUtil
-import org.jetbrains.kotlin.descriptors.ClassConstructorDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
 import org.jetbrains.kotlin.idea.base.psi.replaced
@@ -20,6 +19,8 @@ import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetin
 import org.jetbrains.kotlin.idea.core.canOmitDeclaredType
 import org.jetbrains.kotlin.idea.core.moveCaret
 import org.jetbrains.kotlin.idea.core.unblockDocument
+import org.jetbrains.kotlin.idea.inspections.CanBePrimaryConstructorPropertyUtils.canBePrimaryConstructorProperty
+import org.jetbrains.kotlin.idea.intentions.MovePropertyToConstructorUtils.moveToConstructor
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.lexer.KtTokens.LATEINIT_KEYWORD
 import org.jetbrains.kotlin.psi.*
@@ -63,7 +64,7 @@ class JoinDeclarationAndAssignmentIntention : SelfTargetingRangeIntention<KtProp
         val assignment = findAssignment(element) ?: return null
         val initializer = assignment.right ?: return null
         val context = assignment.analyze()
-        val propertyDescriptor = context[BindingContext.DECLARATION_TO_DESCRIPTOR, element] ?: return null
+        val propertyDescriptor = element.descriptor(context) ?: return null
 
         if (initializer.hasReference(propertyDescriptor, context)) return null
         if (initializer.dependsOnNextSiblingsOfProperty(element)) return null
@@ -120,12 +121,18 @@ class JoinDeclarationAndAssignmentIntention : SelfTargetingRangeIntention<KtProp
         editor?.apply {
             unblockDocument()
 
-            if (newProperty.canOmitDeclaredType(newInitializer, canChangeTypeToSubtype = !newProperty.isVar)) {
-                val colon = newProperty.colon!!
-                selectionModel.setSelection(colon.startOffset, typeReference.endOffset)
-                moveCaret(typeReference.endOffset, ScrollType.CENTER)
-            } else {
-                moveCaret(newInitializer.startOffset, ScrollType.CENTER)
+            when {
+                newProperty.canBePrimaryConstructorProperty() != null -> newProperty.moveToConstructor()
+
+                newProperty.canOmitDeclaredType(newInitializer, canChangeTypeToSubtype = !newProperty.isVar) -> {
+                    val colon = newProperty.colon!!
+                    selectionModel.setSelection(colon.startOffset, typeReference.endOffset)
+                    moveCaret(typeReference.endOffset, ScrollType.CENTER)
+                }
+
+                else -> {
+                    moveCaret(newInitializer.startOffset, ScrollType.CENTER)
+                }
             }
         }
     }
@@ -172,15 +179,16 @@ class JoinDeclarationAndAssignmentIntention : SelfTargetingRangeIntention<KtProp
         val context = firstAssignment.analyze()
 
         if (!property.isLocal && firstAssignment.parent != propertyContainer) {
-            val isAssignedConstructorParameter = firstAssignment.right?.anyDescendantOfType<KtNameReferenceExpression> {
-                val descriptor = context[BindingContext.REFERENCE_TARGET, it]
-                descriptor is ValueParameterDescriptor && descriptor.containingDeclaration is ClassConstructorDescriptor
-            } == true
-
-            if (isAssignedConstructorParameter) return null
+            val secondaryConstructor = firstAssignment.getStrictParentOfType<KtSecondaryConstructor>()?.descriptor(context)
+            if (secondaryConstructor != null) {
+                val isAssignedConstructorParameter = firstAssignment.right?.anyDescendantOfType<KtNameReferenceExpression> {
+                    (it.descriptor(context) as? ValueParameterDescriptor)?.containingDeclaration == secondaryConstructor
+                } == true
+                if (isAssignedConstructorParameter) return null
+            }
         }
 
-        val propertyDescriptor = context[BindingContext.DECLARATION_TO_DESCRIPTOR, property] ?: return null
+        val propertyDescriptor = property.descriptor(context) ?: return null
         val assignedDescriptor = firstAssignment.left.getResolvedCall(context)?.candidateDescriptor ?: return null
         if (propertyDescriptor != assignedDescriptor) return null
 
@@ -204,14 +212,14 @@ class JoinDeclarationAndAssignmentIntention : SelfTargetingRangeIntention<KtProp
     private fun PsiElement.hasReference(declaration: DeclarationDescriptor, context: BindingContext): Boolean {
         val declarationName = declaration.name.asString()
         return anyDescendantOfType<KtNameReferenceExpression> {
-            it.text == declarationName && context[BindingContext.REFERENCE_TARGET, it] == declaration
+            it.text == declarationName && it.descriptor(context) == declaration
         }
     }
 
     private fun PsiElement.hasSmartCast(declaration: DeclarationDescriptor, context: BindingContext): Boolean {
         val declarationName = declaration.name.asString()
         return anyDescendantOfType<KtNameReferenceExpression> {
-            it.text == declarationName && context[BindingContext.REFERENCE_TARGET, it] == declaration &&
+            it.text == declarationName && it.descriptor(context) == declaration &&
                     context[BindingContext.SMARTCAST, it] != null
         }
     }
@@ -228,6 +236,12 @@ class JoinDeclarationAndAssignmentIntention : SelfTargetingRangeIntention<KtProp
     }
 
     private fun PsiElement.nextSiblings(): Sequence<PsiElement> = siblings(forward = true, withItself = false)
+
+    private fun KtDeclaration.descriptor(context: BindingContext): DeclarationDescriptor? =
+        context[BindingContext.DECLARATION_TO_DESCRIPTOR, this]
+
+    private fun KtNameReferenceExpression.descriptor(context: BindingContext): DeclarationDescriptor? =
+        context[BindingContext.REFERENCE_TARGET, this]
 }
 
 private fun KtElement.deleteWithPreviousWhitespace() {

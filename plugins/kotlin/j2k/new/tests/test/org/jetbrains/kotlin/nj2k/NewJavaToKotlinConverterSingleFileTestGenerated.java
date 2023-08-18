@@ -1313,6 +1313,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("testData/newJ2k/constructors/fieldsInitializedFromParams1.java");
         }
 
+        @TestMetadata("fieldsInitializedFromParams10.java")
+        public void testFieldsInitializedFromParams10() throws Exception {
+            runTest("testData/newJ2k/constructors/fieldsInitializedFromParams10.java");
+        }
+
         @TestMetadata("fieldsInitializedFromParams2.java")
         public void testFieldsInitializedFromParams2() throws Exception {
             runTest("testData/newJ2k/constructors/fieldsInitializedFromParams2.java");
