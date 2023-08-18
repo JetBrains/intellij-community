@@ -657,9 +657,6 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     @Override
     public void setBounds(int x, int y, int width, int height) {
       Rectangle rect = new Rectangle(x, y, width, height);
-      if (LOG.isTraceEnabled()) {
-        LOG.trace(new Throwable("DialogWrapperPeerImpl.MyDialog.setBounds(title='" + getTitle() + "'): " + rect));
-      }
       fitToScreen(rect);
       super.setBounds(rect.x, rect.y, rect.width, rect.height);
     }
@@ -668,6 +665,15 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     public void setBounds(Rectangle r) {
       fitToScreen(r);
       super.setBounds(r);
+    }
+
+    @SuppressWarnings("deprecation") // overridden for logging purposes, as other similar methods all delegate to this one
+    @Override
+    public void reshape(int x, int y, int width, int height) {
+      if (LOG.isTraceEnabled()) {
+        LOG.trace(new Throwable("DialogWrapperPeerImpl.MyDialog.reshape(title='" + getTitle() + "'): " + new Rectangle(x, y, width, height)));
+      }
+      super.reshape(x, y, width, height);
     }
 
     @Override
