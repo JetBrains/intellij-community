@@ -45,10 +45,14 @@ data class TestPluginDescriptor(
   val bundled: Boolean = false,
   val essential: Boolean = false,
   val compatible: Boolean = true,
+  val isDependencyOnly: Boolean = false, // it's only a dependency, should be listed as a plugin
   val isDynamic: Boolean = true // whether can be enabled/disabled/installed without restart
 ) : IdeaPluginDescriptor {
   companion object {
     val ALL = hashMapOf<PluginId, TestPluginDescriptor>()
+
+    fun allDependenciesOnly() : List<TestPluginDescriptor> =
+      ALL.values.filter { it.isDependencyOnly }
   }
 
   private var _enabled = true
