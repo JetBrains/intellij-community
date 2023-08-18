@@ -6,7 +6,7 @@ import java.io.File;
 
 public final class SplitByLetterPolicy extends FilePathSplittingPolicy{
 
-  protected SplitByLetterPolicy() {
+  SplitByLetterPolicy() {
   }
 
   @Override

@@ -110,7 +110,7 @@ public abstract class JBValue {
   private static final class CachedFloat extends Float {
     private float cachedScaledValue;
 
-    protected CachedFloat(float value) {
+    private CachedFloat(float value) {
       super(value);
       scaleAndCache();
     }
@@ -137,7 +137,7 @@ public abstract class JBValue {
 
   /**
    * A group of values, utilizing caching strategy per value. The group listens to the global user scale factor change and updates
-   * all of the values. The {@link JBValue#get()} method of a value returns a cached scaled value, saving recalculation.
+   * all the values. The {@link JBValue#get()} method of a value returns a cached scaled value, saving recalculation.
    * This can be a better choice when values are used multiple times in a code block.
    */
   public static final class JBValueGroup {

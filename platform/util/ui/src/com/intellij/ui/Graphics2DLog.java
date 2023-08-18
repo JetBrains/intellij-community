@@ -23,14 +23,14 @@ import java.util.Map;
  */
 @SuppressWarnings("UnusedDeclaration")
 public final class Graphics2DLog extends Graphics2D {
-  protected final Graphics2D myPeer;
+  private final Graphics2D myPeer;
 
   public Graphics2DLog(Graphics g) {
     myPeer = (Graphics2D)g;
   }
 
-  @SuppressWarnings({"UseOfSystemOutOrSystemErr"})
-  protected void log(@NonNls String msg) {
+  @SuppressWarnings("UseOfSystemOutOrSystemErr")
+  private static void log(@NonNls String msg) {
     System.out.println(msg);
   }
 

@@ -109,7 +109,7 @@ public final class CollapsiblePanel extends JPanel {
     this(content, collapseButtonAtLeft, false, null, null, null);
   }
 
-  protected void setCollapsed(boolean collapse) {
+  private void setCollapsed(boolean collapse) {
     try {
       if (collapse) {
         if (myIsInitialized) remove(myContent);

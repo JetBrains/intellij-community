@@ -51,11 +51,11 @@ public interface PopupBorder extends Border {
     private boolean myActive;
     private boolean popupUsed = false;
 
-    protected BaseBorder() {
+    private BaseBorder() {
       this(false, null, null);
     }
 
-    protected BaseBorder(final boolean visible, final Color activeColor, final Color passiveColor) {
+    private BaseBorder(final boolean visible, final Color activeColor, final Color passiveColor) {
       myVisible = visible;
       myActiveColor = activeColor;
       myPassiveColor = passiveColor;
