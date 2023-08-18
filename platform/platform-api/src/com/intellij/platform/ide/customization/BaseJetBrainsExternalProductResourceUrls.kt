@@ -12,11 +12,27 @@ import org.jetbrains.annotations.ApiStatus
  * A base class for implementations of [ExternalProductResourceUrls] describing IDEs developed by JetBrains.
  */
 abstract class BaseJetBrainsExternalProductResourceUrls : ExternalProductResourceUrls {
+  abstract override val basePatchDownloadUrl: String
+
+  /**
+   * Returns ID of YouTrack Project which will be used by "Submit a Bug Report" action.
+   */
+  abstract val youtrackProjectId: String
+
+  /**
+   * Returns the product name in the form shown at intellij-support.jetbrains.com site
+   */
+  abstract val intellijSupportProductName: String
+
+  /**
+   * Returns ID of the form used to contact support at intellij-support.jetbrains.com site 
+   */
+  open val intellijSupportFormId: Int
+    get() = 66731
+
   override val updatesMetadataXmlUrl: String
     get() = "https://www.jetbrains.com/updates/updates.xml"
   
-  abstract override val basePatchDownloadUrl: String
-
   override val bugReportUrl: ((String) -> Url)?
     get() = { description ->
       Urls.newFromEncoded("https://youtrack.jetbrains.com/newissue").addParameters(mapOf(
@@ -26,8 +42,6 @@ abstract class BaseJetBrainsExternalProductResourceUrls : ExternalProductResourc
       ))
     }
   
-  abstract val youtrackProjectId: String
-
   override val technicalSupportUrl: ((description: String) -> Url)?
     get() = { _ ->  
       Urls.newFromEncoded("https://intellij-support.jetbrains.com/hc/en-us/requests/new").addParameters(
@@ -39,11 +53,6 @@ abstract class BaseJetBrainsExternalProductResourceUrls : ExternalProductResourc
           "timezone" to System.getProperty("user.timezone")
         ))
     }
-  
-  abstract val intellijSupportProductName: String
-  
-  open val intellijSupportFormId: Int
-    get() = 66731
 }
 
 /**
