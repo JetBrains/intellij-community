@@ -14,4 +14,10 @@
     <module name="intellij.xml.xmlbeans"/>
     <module name="intellij.platform.ide.newUiOnboarding"/>
   </content>
+  
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="com.intellij.platform.ide.customization.ExternalProductResourceUrls" 
+                        serviceImplementation="com.intellij.idea.community.customization.IdeaCommunityExternalResourceUrls"
+                        overrides="true"/>
+  </extensions>
 </idea-plugin>

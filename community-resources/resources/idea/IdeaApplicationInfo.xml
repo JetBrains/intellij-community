@@ -15,15 +15,10 @@
 
   <plugins url="https://plugins.jetbrains.com/"
            builtin-url="__BUILTIN_PLUGINS_URL__"/>
-  <update-urls check="https://www.jetbrains.com/updates/updates.xml"
-               patches="https://download.jetbrains.com/idea/"/>
 
   <help webhelp-url="https://www.jetbrains.com/help/idea/"/>
   <documentation url="https://www.jetbrains.com/idea/resources/"/>
-  <support url="https://intellij-support.jetbrains.com/hc/en-us/requests/new?ticket_form_id=66731&amp;product=IDEA&amp;build=$BUILD&amp;os=$OS&amp;timezone=$TIMEZONE"/>
-  <youtrack url="https://youtrack.jetbrains.com/newissue?project=IDEA&amp;clearDraft=true&amp;description=$DESCR" />
-  <feedback url="https://www.jetbrains.com/feedback/feedback.jsp?product=IDEA&amp;build=$BUILD&amp;timezone=$TIMEZONE&amp;eval=$EVAL"
-    zendesk-form-id="360001912739" zendesk-url="https://jbsintellij.zendesk.com">
+  <feedback zendesk-form-id="360001912739" zendesk-url="https://jbsintellij.zendesk.com">
     <field id="28147552" value="ij_idea"/>
     <field id="28102551" value="sl_unknown"/>   <!-- country -->
     <field id="29444529" type="rating"/>
