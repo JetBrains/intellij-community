@@ -988,17 +988,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   }
 
   @Override
-  public void visitErrorElement(@NotNull PsiErrorElement element) {
-    super.visitErrorElement(element);
-    String text = element.getText();
-    if ((text.equals(PsiKeyword.NON_SEALED) || text.equals(PsiKeyword.SEALED)) &&
-        PsiTreeUtil.skipWhitespacesAndCommentsForward(element) instanceof PsiClass) {
-      add(HighlightUtil.checkFeature(element, HighlightingFeature.SEALED_CLASSES,
-                                     PsiUtil.getLanguageLevel(element), element.getContainingFile()));
-    }
-  }
-
-  @Override
   public void visitMethod(@NotNull PsiMethod method) {
     super.visitMethod(method);
     if (!myHolder.hasErrorResults()) add(checkUnnamedClassMember(method));

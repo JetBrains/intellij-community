@@ -409,8 +409,8 @@ public class RunLineMarkerTest extends LightJavaCodeInsightFixtureTestCase {
   public void testStaticWithNoParametersHasHigherPriorityThanInstance() {
     IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21_PREVIEW, () -> {
       myFixture.configureByText("MainTest.java", """
-      static void main<caret>() {}
-      void main(String[] args) {}
+      static void main() {}
+      void main<caret>(String[] args) {}
       """);
       List<GutterMark> marks = myFixture.findAllGutters();
       assertEquals(1, marks.size());

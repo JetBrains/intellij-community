@@ -10,6 +10,8 @@ import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.impl.PsiSuperMethodImplUtil;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiClassStub;
+import com.intellij.psi.impl.light.LightEmptyImplementsList;
+import com.intellij.psi.impl.light.LightReferenceListBuilder;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.LocalSearchScope;
@@ -57,12 +59,12 @@ public class PsiUnnamedClassImpl extends JavaStubPsiElement<PsiClassStub<?>> imp
 
   @Override
   public @Nullable PsiReferenceList getExtendsList() {
-    return null;
+    return new LightEmptyImplementsList(getManager());
   }
 
   @Override
   public @Nullable PsiReferenceList getImplementsList() {
-    return null;
+    return new LightReferenceListBuilder(getManager(), PsiReferenceList.Role.EXTENDS_LIST);
   }
 
   @Override

@@ -1,8 +1,9 @@
 class TestClass {
-    public static final String s;
+}
+public static final String s;
 
-    static {
-        String foo = "foo";
-        s = foo.trim();
-    }
+static {
+    String foo = "foo";
+    s = foo.trim();
+}
 }
