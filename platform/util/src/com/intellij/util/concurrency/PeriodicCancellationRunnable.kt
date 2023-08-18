@@ -12,7 +12,7 @@ internal class PeriodicCancellationRunnable(
   override fun run() {
     // don't complete the job, it can be either failed, or cancelled
     try {
-      runAsCoroutine(job, false, runnable::run)
+      runAsCoroutine(job, completeOnFinish = false, runnable::run)
     }
     catch (e: CancellationException) {
       // According to the specification of the FutureTask, the runnable should not throw in case of cancellation.

@@ -15,7 +15,7 @@ internal class CancellationRunnable(
 ) : Runnable {
 
   override fun run() {
-    runAsCoroutine(job, runnable)
+    runAsCoroutine(job, completeOnFinish = true, runnable::run)
   }
 
   override fun toString(): String {

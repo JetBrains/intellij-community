@@ -170,7 +170,7 @@ private fun isContextAwareComputation(runnable: Any): Boolean {
  */
 @Internal
 @OptIn(DelicateCoroutinesApi::class, ExperimentalCoroutinesApi::class)
-fun <T> runAsCoroutine(job: CompletableJob, completeOnFinish: Boolean = true, action: () -> T): T {
+fun <T> runAsCoroutine(job: CompletableJob, completeOnFinish: Boolean, action: () -> T): T {
   val originalPCE: Ref<ProcessCanceledException> = Ref(null)
   val deferred = GlobalScope.async(
     // we need to have a job in CoroutineContext so that `Deferred` becomes its child and properly delays cancellation
@@ -199,12 +199,6 @@ fun <T> runAsCoroutine(job: CompletableJob, completeOnFinish: Boolean = true, ac
   originalPCE.get()?.let { throw it }
   return deferred.getCompleted()
 }
-
-/**
- * A runnable-friendly overload for usage in Java
- * @see runAsCoroutine
- */
-fun runAsCoroutine(job: CompletableJob, r: Runnable): Unit = runAsCoroutine(job, action = r::run)
 
 internal fun capturePropagationAndCancellationContext(command: Runnable): Runnable {
   if (isContextAwareComputation(command)) {

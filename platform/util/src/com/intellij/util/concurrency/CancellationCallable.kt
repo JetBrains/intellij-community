@@ -18,7 +18,7 @@ internal class CancellationCallable<V>(
 ) : Callable<V> {
 
   override fun call(): V {
-    return runAsCoroutine(job) {
+    return runAsCoroutine(job, completeOnFinish = true) {
       callable.call()
     }
   }

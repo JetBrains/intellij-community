@@ -12,7 +12,7 @@ class CancellationFunction<T, U> internal constructor(
 ) : Function<T, U> {
 
   override fun apply(t: T): U {
-    return runAsCoroutine(job) {
+    return runAsCoroutine(job, completeOnFinish = true) {
       function.apply(t)
     }
   }

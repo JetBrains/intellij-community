@@ -9,7 +9,7 @@ internal class CancellationBiConsumer<T, U>(
   private val runnable: BiConsumer<T, U>,
 ) : BiConsumer<T, U> {
   override fun accept(t: T, u: U) {
-    runAsCoroutine(job) {
+    runAsCoroutine(job, completeOnFinish = true) {
       runnable.accept(t, u)
     }
   }
