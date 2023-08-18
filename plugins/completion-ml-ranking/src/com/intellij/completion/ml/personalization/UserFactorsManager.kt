@@ -16,15 +16,17 @@
 
 package com.intellij.completion.ml.personalization
 
+import com.intellij.ide.plugins.PluginManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
+import com.intellij.openapi.extensions.PluginId
 
 /**
  * @author Vitaliy.Bibaev
  */
 interface UserFactorsManager {
   companion object {
-    val ENABLE_USER_FACTORS = ApplicationManager.getApplication().isEAP
+    val ENABLE_USER_FACTORS = ApplicationManager.getApplication().isEAP || PluginManager.isPluginInstalled(PluginId.getId("org.jetbrains.completion.full.line"))
 
     fun getInstance(): UserFactorsManager = service()
   }
