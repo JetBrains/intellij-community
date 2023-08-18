@@ -35,6 +35,7 @@ import com.jetbrains.rd.util.reactive.viewNotNull
 import com.jetbrains.rd.util.threading.SynchronousScheduler
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 import java.awt.Component
 import java.awt.Window
 import java.awt.image.BufferedImage
@@ -48,6 +49,7 @@ import javax.imageio.ImageIO
 import kotlin.reflect.full.createInstance
 import kotlin.time.Duration.Companion.milliseconds
 
+@TestOnly
 @ApiStatus.Internal
 open class DistributedTestHost(coroutineScope: CoroutineScope) {
   companion object {
