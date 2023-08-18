@@ -58,4 +58,22 @@ class X {
       case <error descr="Duplicate unconditional pattern">Integer i</error> -> System.out.println("An integer");
     }
   }
+  
+  record R1() {}
+  record R2() {}
+  
+  void testNoVars(Object obj) {
+    switch(obj) {
+      case R1(), <error descr="Invalid case label combination: a case label must not consist of more than one case pattern">R2()</error> -> {}
+      default -> {}
+    }
+  }
+
+  void testCombination(Integer i) {
+    switch (i) {
+      case Integer a, <error descr="Invalid case label combination: a case label must not consist of more than one case pattern">Integer b</error> when i > 0 -> System.out.println(1);
+      case 1, 2, 3, <error descr="Invalid case label combination: a case label must consist of either a list of case constants or a single case pattern">Integer c</error> when i > 0 -> System.out.println(1);
+      case Integer d, <error descr="Invalid case label combination: a case label must consist of either a list of case constants or a single case pattern">4</error> when i > 0 -> System.out.println(1);
+    }
+  }
 }

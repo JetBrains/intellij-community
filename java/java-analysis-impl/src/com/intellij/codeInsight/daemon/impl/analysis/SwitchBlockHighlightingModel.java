@@ -1011,21 +1011,32 @@ public class SwitchBlockHighlightingModel {
         return new CaseLabelCombinationProblem(elements[nullIndex], "null.label.not.allowed.here");
       }
       if (firstElement instanceof PsiExpression && patternIndex != -1) {
-        return new CaseLabelCombinationProblem(elements[patternIndex], "invalid.case.label.combination.constants.and.patterns");
+        return getPatternConstantCombinationProblem(elements[patternIndex]);
       }
       else if (firstElement instanceof PsiPattern) {
-        if (elements[1] instanceof PsiPattern) {
-          if (ContainerUtil.exists(elements, JavaPsiPatternUtil::containsNamedPatternVariable)) {
-            String messageKey = HighlightingFeature.UNNAMED_PATTERNS_AND_VARIABLES.isAvailable(firstElement)
-                             ? "invalid.case.label.combination.several.patterns.unnamed"
-                             : "invalid.case.label.combination.several.patterns";
-            return new CaseLabelCombinationProblem(elements[1], messageKey);
+        PsiCaseLabelElement nonPattern = ContainerUtil.find(elements, e -> !(e instanceof PsiPattern));
+        if (nonPattern != null) {
+          return getPatternConstantCombinationProblem(nonPattern);
+        }
+        if (HighlightingFeature.UNNAMED_PATTERNS_AND_VARIABLES.isAvailable(firstElement)) {
+          PsiCaseLabelElement patternVarElement = ContainerUtil.find(elements, JavaPsiPatternUtil::containsNamedPatternVariable);
+          if (patternVarElement != null) {
+            return new CaseLabelCombinationProblem(patternVarElement, "invalid.case.label.combination.several.patterns.unnamed");
           }
         } else {
-          return new CaseLabelCombinationProblem(elements[1], "invalid.case.label.combination.constants.and.patterns");
+          return new CaseLabelCombinationProblem(elements[1], "invalid.case.label.combination.several.patterns");
         }
       }
       return null;
+    }
+
+    @NotNull
+    private static CaseLabelCombinationProblem getPatternConstantCombinationProblem(PsiCaseLabelElement anchor) {
+      if (HighlightingFeature.UNNAMED_PATTERNS_AND_VARIABLES.isAvailable(anchor)) {
+        return new CaseLabelCombinationProblem(anchor, "invalid.case.label.combination.constants.and.patterns.unnamed");
+      } else {
+        return new CaseLabelCombinationProblem(anchor, "invalid.case.label.combination.constants.and.patterns");
+      }
     }
 
     private static void addIllegalFallThroughError(@NotNull PsiElement element,

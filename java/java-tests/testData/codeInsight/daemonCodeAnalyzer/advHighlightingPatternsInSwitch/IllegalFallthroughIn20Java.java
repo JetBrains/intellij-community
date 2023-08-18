@@ -246,7 +246,7 @@ public class Main {
 
   void test28(Object obj) {
     switch (obj) {
-      case Integer i, <error descr="Invalid case label combination: A case label must not consist of more than one case pattern">String str</error> -> {}
+      case Integer i, <error descr="Invalid case label combination: a case label must not consist of more than one case pattern">String str</error> -> {}
       default -> {}
     }
   }
