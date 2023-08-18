@@ -32,6 +32,7 @@ import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.*;
 
 import static java.util.Collections.emptyList;
@@ -39,6 +40,7 @@ import static org.jetbrains.concurrency.Promises.rejectedPromise;
 
 public final class AsyncTreeModel extends AbstractTreeModel implements Searchable, TreeVisitor.Acceptor {
   private static final Logger LOG = Logger.getInstance(AsyncTreeModel.class);
+  private final AtomicInteger runningCommands = new AtomicInteger(0);
   private final Invoker foreground;
   private final Invoker background;
   private final Tree tree = new Tree();
@@ -278,6 +280,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Searchabl
   public boolean isProcessing() {
     if (foreground.getTaskCount() > 0) return true;
     if (background.getTaskCount() > 0) return true;
+    if (runningCommands.get() != 0) return true;
     Command command = tree.queue.get();
     return command != null && command.isPending();
   }
@@ -287,18 +290,22 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Searchabl
    * and to accept the resulting value on the foreground thread.
    */
   private void submit(@NotNull Command command) {
-    background.compute(command).onSuccess(value -> {
+    runningCommands.incrementAndGet();
+    background.compute(command).thenAsync(value -> {
       if (value != null && value.object instanceof AsyncCommandResult r) {
-        r.promise.onSuccess(value2 -> accept(command, value2));
+        return r.promise.thenAsync(value2 -> accept(command, value2));
       }
       else {
-        accept(command, value);
+        return accept(command, value);
       }
-    });
+    }).onProcessed(x -> runningCommands.decrementAndGet());
   }
 
-  private void accept(@NotNull Command command, Node value) {
-    foreground.invoke(() -> command.accept(value));
+  private Promise<Void> accept(@NotNull Command command, Node value) {
+    return foreground.compute(() -> {
+      command.accept(value);
+      return null;
+    });
   }
 
   private boolean isValidThread() {
