@@ -185,7 +185,7 @@ public final class GitRollbackEnvironment implements RollbackEnvironment {
       GitRepository repo = GitUtil.getRepositoryManager(myProject).getRepositoryForRoot(root);
       GitUntrackedFilesHolder untrackedFilesHolder = (repo == null ? null : repo.getUntrackedFilesHolder());
       if (untrackedFilesHolder != null) {
-        untrackedFilesHolder.add(files);
+        untrackedFilesHolder.addUntracked(files);
       }
     }
   }

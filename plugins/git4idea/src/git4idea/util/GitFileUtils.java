@@ -97,7 +97,7 @@ public final class GitFileUtils {
       LOG.warn("Repository not found for root " + root.getPresentableUrl());
       return;
     }
-    repository.getUntrackedFilesHolder().remove(addedFiles);
+    repository.getUntrackedFilesHolder().removeUntracked(addedFiles);
   }
 
   private static void updateIgnoredFilesHolderOnFileAdd(@NotNull Project project, @NotNull VirtualFile root,
@@ -117,7 +117,7 @@ public final class GitFileUtils {
       LOG.warn("Repository not found for root " + root.getPresentableUrl());
       return;
     }
-    repository.getUntrackedFilesHolder().add(removedFiles);
+    repository.getUntrackedFilesHolder().addUntracked(removedFiles);
   }
 
   private static void updateUntrackedFilesHolderOnFileReset(@NotNull Project project, @NotNull VirtualFile root,

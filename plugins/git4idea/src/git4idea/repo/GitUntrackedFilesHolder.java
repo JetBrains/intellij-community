@@ -79,14 +79,14 @@ public class GitUntrackedFilesHolder implements Disposable {
   /**
    * Adds the file to the list of untracked.
    */
-  public void add(@NotNull FilePath file) {
-    add(Collections.singletonList(file));
+  public void addUntracked(@NotNull FilePath file) {
+    addUntracked(Collections.singletonList(file));
   }
 
   /**
    * Adds several files to the list of untracked.
    */
-  public void add(@NotNull Collection<? extends FilePath> files) {
+  public void addUntracked(@NotNull Collection<? extends FilePath> files) {
     synchronized (LOCK) {
       myUntrackedFiles.addAll(files);
       if (!myEverythingDirty) myDirtyFiles.addAll(files);
@@ -98,7 +98,7 @@ public class GitUntrackedFilesHolder implements Disposable {
   /**
    * Removes several files from untracked.
    */
-  public void remove(@NotNull Collection<? extends FilePath> files) {
+  public void removeUntracked(@NotNull Collection<? extends FilePath> files) {
     synchronized (LOCK) {
       files.forEach(myUntrackedFiles::remove);
       if (!myEverythingDirty) myDirtyFiles.addAll(files);
@@ -184,7 +184,7 @@ public class GitUntrackedFilesHolder implements Disposable {
     }
   }
 
-  public boolean containsFile(@NotNull FilePath filePath) {
+  public boolean containsUntrackedFile(@NotNull FilePath filePath) {
     synchronized (LOCK) {
       return myUntrackedFiles.contains(filePath);
     }
