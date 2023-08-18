@@ -13,6 +13,16 @@ import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.ui.OrderRoot
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.ExistingLibraryEditor
 import com.intellij.openapi.util.Disposer
+import com.intellij.platform.backend.workspace.toVirtualFileUrl
+import com.intellij.platform.workspace.jps.entities.LibraryEntity
+import com.intellij.platform.workspace.jps.entities.LibraryRoot
+import com.intellij.platform.workspace.jps.entities.LibraryRootTypeId
+import com.intellij.platform.workspace.jps.entities.modifyEntity
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
+import com.intellij.workspaceModel.ide.getInstance
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridge
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.findLibraryEntity
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.resolvedPromise
@@ -77,6 +87,57 @@ class ExternalAnnotationsRepositoryResolver : ExternalAnnotationsArtifactsResolv
     }
 
     ApplicationManager.getApplication().invokeAndWait { updateLibrary(roots, descriptor, library) }
+    return true
+  }
+
+  override fun resolve(project: Project, library: Library, location: AnnotationsLocation, diff: MutableEntityStorage): Boolean {
+    val descriptor = JpsMavenRepositoryLibraryDescriptor(location.groupId, location.artifactId, location.version, false)
+    val repos = if (location.repositoryUrls.isNotEmpty()) {
+      location.repositoryUrls.mapIndexed { index, url ->
+        val someUniqueId = "id_${url.hashCode()}_$index"
+        RemoteRepositoryDescription(someUniqueId, "name", url)
+      }
+    }
+    else {
+      null
+    }
+
+    if (library !is LibraryBridge || library.isDisposed) {
+      return true;
+    }
+
+    val newRoots = JarRepositoryManager
+      .loadDependenciesSync(project, descriptor, setOf(ArtifactKind.ANNOTATIONS), repos, null)
+
+    if (newRoots.isNullOrEmpty()) {
+      return false
+    }
+
+    LOG.debug("Found ${newRoots.size} external annotations for ${library.name}")
+
+    val libraryEntity: LibraryEntity = diff.findLibraryEntity(library) ?: return true
+    val vfUrlManager = VirtualFileUrlManager.getInstance(project)
+    val newUrls = newRoots.map { it.file.toVirtualFileUrl(vfUrlManager) }.toHashSet()
+    val toRemove = mutableListOf<LibraryRoot>()
+    val annotationsRootType = LibraryRootTypeId(AnnotationOrderRootType.ANNOTATIONS_ID)
+
+    libraryEntity.roots
+      .filter { it.type == annotationsRootType }
+      .forEach {
+        if (it.url !in newUrls) {
+          toRemove.add(it)
+        }
+        else {
+          newUrls.remove(it.url)
+        }
+      }
+
+    if (!toRemove.isEmpty() || !newUrls.isEmpty()) {
+      diff.modifyEntity(libraryEntity) {
+        roots.removeAll(toRemove)
+        roots.addAll(newUrls.map { LibraryRoot(it, annotationsRootType) })
+      }
+    }
     return true
   }
 
