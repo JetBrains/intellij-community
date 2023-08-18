@@ -11,7 +11,8 @@ import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
 import org.jetbrains.kotlin.idea.base.scripting.KotlinBaseScriptingBundle
-import org.jetbrains.kotlin.idea.base.scripting.ScriptingTargetPlatformDetector
+import org.jetbrains.kotlin.idea.base.scripting.getLanguageVersionSettings
+import org.jetbrains.kotlin.idea.base.scripting.getTargetPlatformVersion
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.core.script.dependencies.KotlinScriptSearchScope
 import org.jetbrains.kotlin.name.Name
@@ -64,10 +65,10 @@ sealed class ScriptDependenciesInfo(override val project: Project) : IdeaModuleI
             get() = ScriptConfigurationManager.getInstance(project).getScriptSdk(scriptFile)
 
         override val languageVersionSettings: LanguageVersionSettings
-            get() = ScriptingTargetPlatformDetector.getLanguageVersionSettings(project, scriptFile, scriptDefinition)
+            get() = getLanguageVersionSettings(project, scriptFile, scriptDefinition)
 
         override val targetPlatformVersion: TargetPlatformVersion
-            get() = ScriptingTargetPlatformDetector.getTargetPlatformVersion(project, scriptFile, scriptDefinition)
+            get() = getTargetPlatformVersion(project, scriptFile, scriptDefinition)
 
         override val contentScope: GlobalSearchScope
             get() {
