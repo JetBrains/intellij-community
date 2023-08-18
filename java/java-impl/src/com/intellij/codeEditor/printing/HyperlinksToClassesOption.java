@@ -36,11 +36,11 @@ public class HyperlinksToClassesOption extends PrintOption {
 
   @Override
   @Nullable
-  public TreeMap<Integer, PsiReference> collectReferences(PsiFile psiFile, Map<PsiFile, PsiFile> filesMap) {
+  public Map<Integer, PsiReference> collectReferences(@NotNull PsiFile psiFile, @NotNull Map<PsiFile, PsiFile> filesMap) {
     if (isGenerateHyperlinksToClasses) {
       FileType fileType = psiFile.getFileType();
       if (JavaFileType.INSTANCE == fileType || StdFileTypes.JSP == fileType) {
-        final TreeMap<Integer, PsiReference> refMap = new TreeMap<>();
+        Map<Integer, PsiReference> refMap = new TreeMap<>();
         findClassReferences(psiFile, refMap, filesMap, psiFile);
         return refMap;
       }
@@ -55,7 +55,7 @@ public class HyperlinksToClassesOption extends PrintOption {
   }
 
 
-  private static void findClassReferences(PsiElement psiElement, TreeMap<Integer, PsiReference> refMap, Map<PsiFile, PsiFile> filesMap, PsiFile psiFile) {
+  private static void findClassReferences(@NotNull PsiElement psiElement, @NotNull Map<? super Integer, ? super PsiReference> refMap, @NotNull Map<PsiFile, PsiFile> filesMap, @NotNull PsiFile psiFile) {
     PsiReference ref = psiElement.getReference();
     if(ref instanceof PsiJavaCodeReferenceElement) {
       PsiElement refElement = ref.resolve();

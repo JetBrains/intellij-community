@@ -24,13 +24,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
-import java.util.TreeMap;
 
 public abstract class PrintOption {
   public static final ExtensionPointName<PrintOption> EP_NAME = ExtensionPointName.create("com.intellij.printOption");
   
   @Nullable
-  public abstract TreeMap<Integer, PsiReference> collectReferences(PsiFile psiFile, Map<PsiFile, PsiFile> filesMap);
+  public abstract Map<Integer, PsiReference> collectReferences(@NotNull PsiFile psiFile, @NotNull Map<PsiFile, PsiFile> filesMap);
 
   @NotNull
   public abstract UnnamedConfigurable createConfigurable();
