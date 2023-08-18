@@ -74,7 +74,7 @@ class SdkTableBridgeImpl: SdkTableImplementationDelegate {
     val roots = mutableListOf<SdkRoot>()
     for (type in OrderRootType.getAllPersistentTypes()) {
       sdk.rootProvider.getUrls(type).forEach { url ->
-        roots.add(SdkRoot(virtualFileUrlManager.fromUrl(url), rootTypes[type.name()]!!))
+        roots.add(SdkRoot(virtualFileUrlManager.fromUrl(url), rootTypes[type.customName]!!))
       }
     }
 
