@@ -60,7 +60,6 @@ import com.intellij.util.childScope
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.ChildContext
 import com.intellij.util.concurrency.createChildContext
-import com.intellij.util.concurrency.runAsCoroutine
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.StartupUiUtil.addAwtListener
 import com.intellij.util.xml.dom.XmlElement
@@ -1311,14 +1310,8 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
 
     override fun run() {
       installThreadContext(childContext.context).use {
-        val job = childContext.job
-        if (job == null) {
-          timerListener.run()
-        }
-        else {
-          // this is periodic runnable that is invoked on timer; it should not complete a parent job
-          runAsCoroutine(job = job, completeOnFinish = false, action = timerListener::run)
-        }
+        // this is periodic runnable that is invoked on timer; it should not complete a parent job
+        childContext.runAsCoroutine(completeOnFinish = false, timerListener::run)
       }
     }
   }

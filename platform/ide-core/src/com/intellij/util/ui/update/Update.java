@@ -110,13 +110,7 @@ public abstract class Update extends ComparableObject.Impl implements Runnable {
     }
     else {
       try (AccessToken ignored = ThreadContext.installThreadContext(myChildContext.getContext(), true)) {
-        CompletableJob job = myChildContext.getJob();
-        if (job != null) {
-          Propagation.runAsCoroutine(job, this);
-        }
-        else {
-          run();
-        }
+        myChildContext.runAsCoroutine(this);
       }
     }
   }

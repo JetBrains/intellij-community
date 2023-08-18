@@ -75,7 +75,21 @@ class BlockingJob(val blockingJob: Job) : AbstractCoroutineContextElement(Blocki
 data class ChildContext internal constructor(
   val context: CoroutineContext,
   val job: CompletableJob?,
-)
+) {
+
+  fun runAsCoroutine(action: Runnable) {
+    runAsCoroutine(completeOnFinish = true, action::run)
+  }
+
+  fun <T> runAsCoroutine(completeOnFinish: Boolean, action: () -> T): T {
+    return if (job == null) {
+      action()
+    }
+    else {
+      runAsCoroutine(job, completeOnFinish, action)
+    }
+  }
+}
 
 @Internal
 fun createChildContext(): ChildContext {
