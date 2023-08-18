@@ -500,7 +500,7 @@ public class UnindexedFilesScanner implements FilesScanningTask {
     }
   }
 
-  protected @NotNull ProjectIndexingHistoryImpl performScanningAndIndexing(@NotNull ProgressIndicator indicator) {
+  protected @NotNull ProjectScanningHistory performScanningAndIndexing(@NotNull ProgressIndicator indicator) {
     ProjectIndexingHistoryImpl projectIndexingHistory =
       new ProjectIndexingHistoryImpl(myProject, myIndexingReason, myScanningType);
     ProjectScanningHistoryImpl scanningHistory = new ProjectScanningHistoryImpl(myProject, myIndexingReason, myScanningType);
@@ -534,7 +534,7 @@ public class UnindexedFilesScanner implements FilesScanningTask {
       IndexDiagnosticDumper.getInstance().onIndexingFinished(projectIndexingHistory);
       IndexDiagnosticDumper.getInstance().onScanningFinished(scanningHistory);
     }
-    return projectIndexingHistory;
+    return scanningHistory;
   }
 
   @Override

@@ -110,7 +110,7 @@ class IndexDiagnosticDumper : Disposable {
      * Some processes may be done in multiple threads, like content loading,
      * see [com.intellij.util.indexing.contentQueue.IndexUpdateRunner.doIndexFiles]
      * Such processes have InAllThreads time and visible time, see [com.intellij.util.indexing.contentQueue.IndexUpdateRunner.indexFiles],
-     * [ProjectIndexingHistoryImpl.visibleTimeToAllThreadsTimeRatio], [IndexingFileSetStatistics]
+     * [ProjectDumbIndexingHistoryImpl.visibleTimeToAllThreadsTimeRatio], [IndexingFileSetStatistics]
      *
      * This property allows to provide more details on those times and ratio in html
      */

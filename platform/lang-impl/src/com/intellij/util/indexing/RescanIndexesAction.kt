@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing
 
 import com.intellij.ide.actions.cache.*
@@ -12,7 +12,7 @@ import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.psi.stubs.StubTreeBuilder
 import com.intellij.psi.stubs.StubUpdatingIndex
 import com.intellij.util.BooleanFunction
-import com.intellij.util.indexing.diagnostic.ProjectIndexingHistoryImpl
+import com.intellij.util.indexing.diagnostic.ProjectScanningHistory
 import com.intellij.util.indexing.diagnostic.ScanningType
 import com.intellij.util.indexing.roots.IndexableFilesIterator
 import com.intellij.util.indexing.roots.ProjectIndexableFilesIteratorImpl
@@ -32,7 +32,7 @@ class RescanIndexesAction : RecoveryAction {
 
   override fun performSync(recoveryScope: RecoveryScope): List<CacheInconsistencyProblem> {
     val project = recoveryScope.project
-    val historyFuture = CompletableFuture<ProjectIndexingHistoryImpl>()
+    val historyFuture = CompletableFuture<ProjectScanningHistory>()
     val stubAndIndexingStampInconsistencies = Collections.synchronizedList(arrayListOf<CacheInconsistencyProblem>())
 
     var predefinedIndexableFilesIterators: List<IndexableFilesIterator>? = null
@@ -72,7 +72,7 @@ class RescanIndexesAction : RecoveryAction {
         StubTreeBuilder.buildStubTree(FileContentImpl.createByFile(file))
       }.getOrNull() != null
 
-      override fun performScanningAndIndexing(indicator: ProgressIndicator): ProjectIndexingHistoryImpl {
+      override fun performScanningAndIndexing(indicator: ProgressIndicator): ProjectScanningHistory {
         try {
           IndexingFlag.cleanupProcessedFlag()
           val history = super.performScanningAndIndexing(indicator)
@@ -97,7 +97,7 @@ class RescanIndexesAction : RecoveryAction {
     }
   }
 
-  private fun ProjectIndexingHistoryImpl.extractConsistencyProblems(): List<CacheInconsistencyProblem> =
+  private fun ProjectScanningHistory.extractConsistencyProblems(): List<CacheInconsistencyProblem> =
     scanningStatistics.filter { it.numberOfFilesForIndexing != 0 }.map {
       UnindexedFilesInconsistencyProblem(it.numberOfFilesForIndexing, it.providerName)
     }
