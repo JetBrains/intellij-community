@@ -4,10 +4,16 @@ package com.intellij.diff.editor
 import com.intellij.diff.chains.DiffRequestChain
 import com.intellij.diff.impl.CacheDiffRequestChainProcessor
 import com.intellij.diff.impl.DiffRequestProcessor
+import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.project.Project
 
-open class ChainDiffVirtualFile(val chain: DiffRequestChain, name: String) : DiffVirtualFile(name) {
+open class ChainDiffVirtualFile(val chain: DiffRequestChain, name: String) : DiffVirtualFile(name), DiffVirtualFileWithTabName {
   override fun createProcessor(project: Project): DiffRequestProcessor = CacheDiffRequestChainProcessor(project, chain)
+
+  override fun getEditorTabName(project: Project, editors: List<FileEditor>): String? {
+    val editor = editors.filterIsInstance<DiffRequestProcessorEditor>().firstOrNull()
+    return editor?.processor?.activeRequest?.title
+  }
 
   override fun toString(): String = "${super.toString()}:$chain"
 }

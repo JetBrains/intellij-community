@@ -2,10 +2,12 @@
 package com.intellij.openapi.vcs.changes.actions.diff
 
 import com.intellij.diff.chains.DiffRequestProducer
+import com.intellij.diff.editor.DiffVirtualFileWithTabName
 import com.intellij.diff.tools.combined.*
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.ListSelection
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -24,7 +26,12 @@ import javax.swing.JComponent
 internal val COMBINED_DIFF_PREVIEW_TAB_NAME = Key.create<() -> @NlsContexts.TabTitle String>("combined_diff_preview_tab_name")
 internal val COMBINED_DIFF_PREVIEW_MODEL = Key.create<CombinedDiffPreviewModel>("combined_diff_preview_model")
 
-abstract class CombinedDiffPreviewVirtualFile() : CombinedDiffVirtualFile("CombinedDiffPreviewVirtualFile")
+abstract class CombinedDiffPreviewVirtualFile() : CombinedDiffVirtualFile("CombinedDiffPreviewVirtualFile"), DiffVirtualFileWithTabName {
+  override fun getEditorTabName(project: Project, editors: List<FileEditor>): String? {
+    val editor = editors.filterIsInstance<CombinedDiffEditor>().firstOrNull()
+    return editor?.processor?.context?.getUserData(COMBINED_DIFF_PREVIEW_TAB_NAME)?.invoke()
+  }
+}
 
 abstract class CombinedDiffPreview(project: Project,
                                    targetComponent: JComponent,

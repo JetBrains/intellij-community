@@ -1,17 +1,24 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes;
 
+import com.intellij.diff.editor.DiffRequestProcessorEditor;
 import com.intellij.diff.editor.DiffVirtualFile;
+import com.intellij.diff.editor.DiffVirtualFileWithTabName;
 import com.intellij.diff.impl.DiffRequestProcessor;
 import com.intellij.ide.actions.SplitAction;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.Objects;
 
-public class PreviewDiffVirtualFile extends DiffVirtualFile {
+public class PreviewDiffVirtualFile extends DiffVirtualFile implements DiffVirtualFileWithTabName {
   @NotNull private final DiffPreviewProvider myProvider;
 
   public PreviewDiffVirtualFile(@NotNull DiffPreviewProvider provider) {
@@ -56,5 +63,13 @@ public class PreviewDiffVirtualFile extends DiffVirtualFile {
   @NotNull
   public DiffPreviewProvider getProvider() {
     return myProvider;
+  }
+
+  @Nullable
+  @Override
+  public @NlsContexts.TabTitle String getEditorTabName(@NotNull Project project, @NotNull List<? extends FileEditor> editors) {
+    DiffRequestProcessorEditor editor = ContainerUtil.findInstance(editors, DiffRequestProcessorEditor.class);
+    DiffRequestProcessor processor = editor != null ? editor.getProcessor() : null;
+    return myProvider.getEditorTabName(processor);
   }
 }
