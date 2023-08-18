@@ -48,6 +48,15 @@ abstract class AbstractSessionsInvalidationTest : AbstractProjectStructureTest<S
 
         val sessionsAfterOOBM = getAllModuleSessions(rootModule)
 
+        checkInvalidatedModules(testStructure, sessionsBeforeOOBM, sessionsAfterOOBM)
+        checkSessionsMarkedInvalid(sessionsBeforeOOBM, sessionsAfterOOBM)
+    }
+
+    private fun checkInvalidatedModules(
+        testStructure: SessionInvalidationTestProjectStructure,
+        sessionsBeforeOOBM: List<LLFirSession>,
+        sessionsAfterOOBM: List<LLFirSession>,
+    ) {
         val changedSessions = buildSet {
             addAll(sessionsBeforeOOBM)
             addAll(sessionsAfterOOBM)
@@ -64,6 +73,20 @@ abstract class AbstractSessionsInvalidationTest : AbstractProjectStructureTest<S
             .sorted()
 
         assertEquals(testStructure.expectedInvalidatedModules, changedSessionsModuleNames)
+    }
+
+    private fun checkSessionsMarkedInvalid(
+        sessionsBeforeOOBM: List<LLFirSession>,
+        sessionsAfterOOBM: List<LLFirSession>,
+    ) {
+        val invalidSessions = buildSet {
+            addAll(sessionsBeforeOOBM)
+            removeAll(sessionsAfterOOBM)
+        }
+
+        invalidSessions.forEach { session ->
+            assert(!session.isValid) { "The invalidated session `${session}` should have been marked invalid." }
+        }
     }
 
     private fun getAllModuleSessions(mainModule: KtModule): List<LLFirSession> {
