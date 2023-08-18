@@ -216,14 +216,27 @@ interface Row {
 
   fun button(@NlsContexts.Button text: String, action: AnAction, @NonNls actionPlace: String = ActionPlaces.UNKNOWN): Cell<JButton>
 
-  fun actionButton(action: AnAction, @NonNls actionPlace: String = ActionPlaces.UNKNOWN): Cell<ActionButton>
+  /**
+   * This method is moved into extension because Kotlin UI DSL is going to be moved into public API, but [ActionButton] is a part of impl API
+   * To fix compilation issue add `import com.intellij.ui.dsl.builder.actionButton`
+   */
+  @Deprecated("Use extension function com.intellij.ui.dsl.builder.ExtensionsKt.actionButton instead", level = DeprecationLevel.HIDDEN)
+  @ApiStatus.ScheduledForRemoval
+  fun actionButton(action: AnAction, @NonNls actionPlace: String = ActionPlaces.UNKNOWN): Cell<ActionButton> {
+    return actionButton(action, actionPlace)
+  }
 
   /**
-   * Creates an [ActionButton] with [icon] and menu with provided [actions]
+   * This method is moved into extension because Kotlin UI DSL is going to be moved into public API, but [ActionButton] is a part of impl API.
+   * To fix compilation issue add `import com.intellij.ui.dsl.builder.actionsButton`
    */
+  @Deprecated("Use extension function com.intellij.ui.dsl.builder.ExtensionsKt.actionButton instead", level = DeprecationLevel.HIDDEN)
+  @ApiStatus.ScheduledForRemoval
   fun actionsButton(vararg actions: AnAction,
                     @NonNls actionPlace: String = ActionPlaces.UNKNOWN,
-                    icon: Icon = AllIcons.General.GearPlain): Cell<ActionButton>
+                    icon: Icon = AllIcons.General.GearPlain): Cell<ActionButton> {
+    return actionsButton(*actions, actionPlace = actionPlace, icon = icon)
+  }
 
   @Deprecated("Use overloaded method", level = DeprecationLevel.HIDDEN)
   @ApiStatus.ScheduledForRemoval

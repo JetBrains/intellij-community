@@ -2,19 +2,16 @@
 package com.intellij.ui.dsl.builder.impl
 
 import com.intellij.BundleBase
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.ex.ActionUtil
-import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.openapi.observable.properties.whenPropertyChanged
-import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
-import com.intellij.openapi.ui.popup.JBPopupFactory
-import com.intellij.openapi.ui.popup.util.PopupUtil
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.ContextHelpLabel
@@ -220,17 +217,6 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
       ActionUtil.invokeAction(action, result.component, actionPlace, null, null)
     }
     return result
-  }
-
-  override fun actionButton(action: AnAction, actionPlace: String): Cell<ActionButton> {
-    val component = ActionButton(action, action.templatePresentation.clone(), actionPlace, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE)
-    return cell(component)
-  }
-
-  override fun actionsButton(vararg actions: AnAction, actionPlace: String, icon: Icon): Cell<ActionButton> {
-    val actionGroup = PopupActionGroup(arrayOf(*actions))
-    actionGroup.templatePresentation.icon = icon
-    return cell(ActionButton(actionGroup, actionGroup.templatePresentation.clone(), actionPlace, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE))
   }
 
   override fun <T> segmentedButton(options: Collection<T>, property: GraphProperty<T>, renderer: (T) -> @Nls String): Cell<SegmentedButtonToolbar> {
@@ -473,20 +459,5 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
     }
 
     return result
-  }
-}
-
-private class PopupActionGroup(private val actions: Array<AnAction>): ActionGroup(), DumbAware {
-  init {
-    isPopup = true
-    templatePresentation.isPerformGroup = actions.isNotEmpty()
-  }
-
-  override fun getChildren(e: AnActionEvent?): Array<AnAction> = actions
-
-  override fun actionPerformed(e: AnActionEvent) {
-    val popup = JBPopupFactory.getInstance().createActionGroupPopup(null, this, e.dataContext,
-      JBPopupFactory.ActionSelectionAid.MNEMONICS, true)
-    PopupUtil.showForActionButtonEvent(popup, e)
   }
 }

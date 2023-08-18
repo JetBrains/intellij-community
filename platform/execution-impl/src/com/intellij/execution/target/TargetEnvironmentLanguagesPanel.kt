@@ -13,6 +13,7 @@ import com.intellij.ui.components.DropDownLink
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.RightGap
+import com.intellij.ui.dsl.builder.actionsButton
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
