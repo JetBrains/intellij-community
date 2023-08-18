@@ -568,7 +568,6 @@ public final class PersistentFSLoader {
 
   private static @NotNull AbstractAttributesStorage createAttributesStorage_makeStorage(@NotNull Path attributesFile) throws IOException {
     if (FSRecordsImpl.USE_STREAMLINED_ATTRIBUTES_IMPLEMENTATION) {
-      LOG.info("VFS uses streamlined attributes storage");
       //avg record size is ~60b, hence I've chosen minCapacity=64 bytes, and defaultCapacity= 2*minCapacity
       final SpaceAllocationStrategy allocationStrategy = new SpaceAllocationStrategy.DataLengthPlusFixedPercentStrategy(128, 64, 30);
       final StreamlinedBlobStorage blobStorage;
@@ -625,7 +624,7 @@ public final class PersistentFSLoader {
       // bizare exception => VFS is rebuilt, but with rebuildCause=UNRECOGNIZED instead of 'version mismatch'.
       //To get an expected exception on transition, we need regular/fast enumerator to use different files,
       // e.g. 'names.dat' / 'names.dat.mmap'
-      Path namesPathEx = Paths.get(namesFile.toString() + ".mmap");
+      Path namesPathEx = Paths.get(namesFile + ".mmap");
       return new DurableStringEnumerator(namesPathEx);
     }
     else {
