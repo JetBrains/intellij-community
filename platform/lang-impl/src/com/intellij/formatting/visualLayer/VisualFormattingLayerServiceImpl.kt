@@ -62,7 +62,7 @@ class VisualFormattingLayerServiceImpl : VisualFormattingLayerService() {
     val codeStyleSettings = editor.visualFormattingLayerCodeStyleSettings ?: return emptyList()
 
     var formattingChanges: FormattingChanges? = null
-    CodeStyle.doWithTemporarySettings(file.project, codeStyleSettings, Runnable {
+    CodeStyle.runWithLocalSettings(file.project, codeStyleSettings, Runnable {
       if (file.isValid) {
         formattingChanges = detectFormattingChanges(file)
       }
