@@ -268,7 +268,7 @@ public class UnifiedLocalChangeListDiffViewer extends UnifiedDiffViewer {
     }
 
     if (LocalTrackerDiffUtil.shouldShowToggleAreaThumb(toggleableLineRange)) {
-      result.add(createToggleAreaThumb(builder, toggleableLineRange));
+      ContainerUtil.addIfNotNull(result, createToggleAreaThumb(builder, toggleableLineRange));
     }
     return result;
   }
@@ -299,12 +299,16 @@ public class UnifiedLocalChangeListDiffViewer extends UnifiedDiffViewer {
     });
   }
 
-  @NotNull
+  @Nullable
   private RangeHighlighter createToggleAreaThumb(@NotNull UnifiedFragmentBuilder builder,
                                                  @NotNull ToggleableLineRange toggleableLineRange) {
     Range lineRange = toggleableLineRange.getLineRange();
     int line1 = builder.getConvertor1().convertApproximateInv(lineRange.start1);
     int line2 = builder.getConvertor2().convertApproximateInv(lineRange.end2);
+    if (line1 < 0 || line2 < 0 || line2 <= line1 || line2 > DiffUtil.getLineCount(myDocument)) {
+      LOG.warn("Failed to show toggle area thumb");
+      return null;
+    }
     boolean isExcludedFromCommit = toggleableLineRange.getFragmentData().getExclusionState() instanceof RangeExclusionState.Excluded;
     return LocalTrackerDiffUtil.createToggleAreaThumb(getEditor(), line1, line2, () -> {
       LocalTrackerDiffUtil.toggleBlockExclusion(myTrackerActionProvider, lineRange.start1, isExcludedFromCommit);
