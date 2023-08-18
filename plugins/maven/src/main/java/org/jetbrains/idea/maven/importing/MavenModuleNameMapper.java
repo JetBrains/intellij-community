@@ -76,6 +76,25 @@ public final class MavenModuleNameMapper {
     }
   }
 
+  public static String getDefaultModuleName(MavenProject project) {
+    String name = project.getMavenId().getArtifactId();
+    if (!isValidName(name)) name = project.getDirectoryFile().getName();
+    return name;
+  }
+
+  private static boolean isValidName(String name) {
+    if (StringUtil.isEmptyOrSpaces(name)) return false;
+    if (name.equals(MavenId.UNKNOWN_VALUE)) return false;
+
+    for (int i = 0; i < name.length(); i++) {
+      char ch = name.charAt(i);
+      if (!(Character.isDigit(ch) || Character.isLetter(ch) || ch == '-' || ch == '_' || ch == '.')) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   private static class NameItem implements Comparable<NameItem> {
     public final MavenProject project;
     public final String existingName;
@@ -98,9 +117,7 @@ public final class MavenModuleNameMapper {
     private String calcOriginalName() {
       if (existingName != null) return existingName;
 
-      String name = project.getMavenId().getArtifactId();
-      if (!isValidName(name)) name = project.getDirectoryFile().getName();
-      return name;
+      return getDefaultModuleName(project);
     }
 
     public String getResultName() {
@@ -112,19 +129,6 @@ public final class MavenModuleNameMapper {
         result += " (" + groupId + ")";
       }
       return result;
-    }
-
-    private static boolean isValidName(String name) {
-      if (StringUtil.isEmptyOrSpaces(name)) return false;
-      if (name.equals(MavenId.UNKNOWN_VALUE)) return false;
-
-      for (int i = 0; i < name.length(); i++) {
-        char ch = name.charAt(i);
-        if (!(Character.isDigit(ch) || Character.isLetter(ch) || ch == '-' || ch == '_' || ch == '.')) {
-          return false;
-        }
-      }
-      return true;
     }
 
     @Override
