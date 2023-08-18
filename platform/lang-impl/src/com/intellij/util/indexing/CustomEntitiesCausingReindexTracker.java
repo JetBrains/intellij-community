@@ -88,8 +88,7 @@ class CustomEntitiesCausingReindexTracker {
 
   private static boolean isEntityReindexingCustomised(Class<? extends WorkspaceEntity> entityClass) {
     return LibraryEntity.class.isAssignableFrom(entityClass) ||
-           LibraryPropertiesEntity.class.isAssignableFrom(entityClass) ||
-           ModuleEntity.class.isAssignableFrom(entityClass);
+           LibraryPropertiesEntity.class.isAssignableFrom(entityClass);
   }
 
   /**
@@ -123,9 +122,6 @@ class CustomEntitiesCausingReindexTracker {
         return isEntityToRescan(contentRoot);
       }
       return false;
-    }
-    else if (entity instanceof ModuleEntity) {
-      return true;
     }
     return isEntityToRescan(entity);
   }
