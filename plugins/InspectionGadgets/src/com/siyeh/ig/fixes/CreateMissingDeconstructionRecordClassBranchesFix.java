@@ -33,7 +33,7 @@ public final class CreateMissingDeconstructionRecordClassBranchesFix extends Cre
   }
 
   @Override
-  protected String getText(@NotNull PsiSwitchBlock switchBlock) {
+  public @NotNull String getText() {
     return CreateSwitchBranchesUtil.getActionName(missedShorten.stream().sorted().toList());
   }
 
@@ -48,7 +48,7 @@ public final class CreateMissingDeconstructionRecordClassBranchesFix extends Cre
     return block == null
            ? null
            : new CreateMissingDeconstructionRecordClassBranchesFix(PsiTreeUtil.findSameElementInCopy(block, target), this.myNames,
-                                                                   this.allNames);
+                                                                   this.allNames, this.missedShorten);
   }
 
   @Override
