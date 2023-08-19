@@ -41,29 +41,6 @@ class WindowsFrameTitleButtons(
   override val closeInactiveIcon = AllIcons.Windows.CloseInactive
   override val closeHoverIcon = IconUtil.colorizeReplace(AllIcons.Windows.CloseActive, JBColor(0xffffff, 0xffffff))
 
-  /*private val closeStyleBuilder: ComponentStyle.ComponentStyleBuilder<JButton> = ComponentStyle.ComponentStyleBuilder<JButton> {
-    isOpaque = true
-    border = JBUI.Borders.empty()
-    icon = AllIcons.Windows.CloseActive
-  }*//*.apply {
-    style(ComponentStyleState.HOVERED) {
-      isOpaque = true
-      background = Color(0xe81123)
-      icon = AllIcons.Windows.CloseHover
-    }
-    style(ComponentStyleState.PRESSED) {
-      isOpaque = true
-      background = Color(0xf1707a)
-      icon = AllIcons.Windows.CloseHover
-    }
-  }*/
-  /*override val activeCloseStyle = closeStyleBuilder.build()
-
-  override val inactiveCloseStyle = closeStyleBuilder
-    .updateDefault {
-      icon = AllIcons.Windows.CloseInactive
-    }.build()*/
-
   override fun createButton(accessibleName: String, action: Action): JButton {
     val button = object : JButton() {
       init {

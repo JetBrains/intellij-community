@@ -106,33 +106,3 @@ private class HoveredCircleButtonUI : BasicButtonUI() {
   private fun getHoverColor(c: JComponent): Color? = c.getClientProperty(HOVER_KEY) as? Color
 }
 
-/*
-private class Dconf {
-
-  fun getIconTheme(): String? {
-    return getDconfEntry("/org/gnome/desktop/interface/icon-theme")
-  }
-
-  fun getHeaderLayout(): String? {
-    // Next line returns something like appmenu:minimize,maximize,close
-    return getDconfEntry("/org/gnome/desktop/wm/preferences/button-layout")
-  }
-
-  private fun getDconfEntry(key: String): String? {
-    return execute("dconf read $key")
-  }
-
-  private fun execute(command: String): String? {
-    val processBuilder = ProcessBuilder(command.split(" "))
-    processBuilder.redirectErrorStream(true)
-
-    val process = processBuilder.start()
-    val reader = BufferedReader(InputStreamReader(process.inputStream))
-
-    val line: String? = reader.readLine() // Leer la primera línea
-    val exitCode = process.waitFor()
-
-    return line
-  }
-
-}*/
