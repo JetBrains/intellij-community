@@ -2049,7 +2049,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   }
 
   void resetMousePointer() {
-    if (IdeGlassPaneImpl.hasPreProcessedCursor(this)) {
+    if (IdeGlassPaneImpl.Companion.hasPreProcessedCursor(this)) {
       return;
     }
 
@@ -2071,7 +2071,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   }
 
   void validateMousePointer(@NotNull MouseEvent e) {
-    if (IdeGlassPaneImpl.hasPreProcessedCursor(this)) {
+    if (IdeGlassPaneImpl.Companion.hasPreProcessedCursor(this)) {
       return;
     }
 
