@@ -10,12 +10,14 @@ import com.intellij.ide.impl.ProjectUtil.isSameProject
 import com.intellij.ide.impl.ProjectUtilCore
 import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.idea.AppMode
-import com.intellij.notification.impl.NotificationsToolWindowFactory
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.application.ex.ApplicationManagerEx
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.RoamingType
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.options.advanced.AdvancedSettings
@@ -30,15 +32,11 @@ import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeFrame
-import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.WindowManager
-import com.intellij.openapi.wm.ex.ToolWindowManagerEx
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.*
-import com.intellij.platform.ProjectSelfieUtil
 import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.project.stateStore
-import com.intellij.ui.ExperimentalUI
 import com.intellij.util.PathUtilRt
 import com.intellij.util.io.createParentDirectories
 import com.intellij.util.io.systemIndependentPath
@@ -87,9 +85,6 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
       return path.indexOf('/') != -1 || path.indexOf('\\') != -1
     }
   }
-
-  // https://youtrack.jetbrains.com/issue/IDEA-310958/Screenshot-of-the-mixed-old-new-UI-is-shown-after-switching-to-new-UI-and-restart
-  private val appStartedWithOldUi = !ExperimentalUI.isNewUI()
 
   private val modCounter = LongAdder()
   private val projectIconHelper by lazy(::RecentProjectIconHelper)
@@ -668,20 +663,6 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
     runCatching {
       if (writeLastProjectInfo) {
         writeInfoFile(frameInfo, frame)
-      }
-
-      if (workspaceId != null) {
-        val selfieLocation = ProjectSelfieUtil.getSelfieLocation(workspaceId)
-        if (!appStartedWithOldUi && ProjectSelfieUtil.isEnabled) {
-          NotificationsToolWindowFactory.clearAll(project)
-          frameHelper.balloonLayout?.closeAll()
-          (project.serviceIfCreated<ToolWindowManager>() as? ToolWindowManagerEx)?.closeBalloons()
-
-          ProjectSelfieUtil.takeProjectSelfie(frameHelper.frame.rootPane, selfieLocation)
-        }
-        else {
-          Files.deleteIfExists(selfieLocation)
-        }
       }
     }.getOrLogException(LOG)
   }

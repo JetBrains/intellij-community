@@ -7,6 +7,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Calendar;
 
@@ -107,5 +108,13 @@ public abstract class ApplicationInfo {
     return getBuild().asString();
   }
 
+  public boolean isEAP() {
+    return false;
+  }
+
   public abstract String getFullApplicationName();
+
+  public @Nullable String getSplashImageUrl() {
+    return null;
+  }
 }

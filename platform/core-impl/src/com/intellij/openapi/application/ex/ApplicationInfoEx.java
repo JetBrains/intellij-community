@@ -18,8 +18,6 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
 
   public abstract Calendar getMajorReleaseBuildDate();
 
-  public abstract String getSplashImageUrl();
-
   /**
    * Returns a path to an SVG icon of the product.
    * The path is a relative path inside the product's JAR files.
@@ -39,8 +37,6 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
   public abstract @Nullable String getWelcomeScreenLogoUrl();
 
   public abstract String getCopyrightStart();
-
-  public abstract boolean isEAP();
 
   /**
    * Returns {@code true} only for EAP builds of "major" releases (i.e. for {@code 2018.3}, but not for {@code 2018.3.1}).
