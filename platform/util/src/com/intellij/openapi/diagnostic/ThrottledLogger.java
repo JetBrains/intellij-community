@@ -13,7 +13,7 @@ import static java.util.Objects.requireNonNull;
  * Logger wrapper that ignores repeating logging attempts if they are done inside specified throttling interval
  * (see ignoreRepeatedMessagesInMs ctor arg)
  */
-public class ThrottledLogger {
+public final class ThrottledLogger {
   private final @NotNull Logger logger;
   /**
    * Ignore (i.e. skip logging) subsequent messages with same key if they come during that period after the first message.

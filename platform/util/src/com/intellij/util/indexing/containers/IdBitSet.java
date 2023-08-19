@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.containers;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -179,7 +179,7 @@ final class IdBitSet implements Cloneable, RandomAccessIntContainer {
     return calcCapacity(((roundToNearest(max) - roundToNearest(min)) >> SHIFT) + 1) * 8;
   }
 
-  private class Iterator implements IntIdsIterator {
+  private final class Iterator implements IntIdsIterator {
     private int nextSetBit = nextSetBit(0);
 
     @Override

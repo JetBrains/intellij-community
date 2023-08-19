@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io.pagecache;
 
 import com.intellij.util.io.FilePageCacheLockFree;
@@ -14,7 +14,7 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
 /**
  * Used by {@link FilePageCacheLockFree} to gather inside statistics
  */
-public class FilePageCacheStatistics {
+public final class FilePageCacheStatistics {
   private static final boolean MEASURE_TIMESTAMPS = true;
 
   private final AtomicLong totalNativeBytesAllocated = new AtomicLong();

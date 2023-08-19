@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
 import com.intellij.util.ExceptionUtil;
@@ -7,7 +7,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class MultiCloseable implements AutoCloseable {
+public final class MultiCloseable implements AutoCloseable {
   private static final AutoCloseable @NotNull [] EMPTY_ARRAY = new AutoCloseable[0];
   private final @NotNull SmartList<AutoCloseable> myCleanupList = new SmartList<>();
 

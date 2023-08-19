@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers;
 
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
@@ -91,7 +91,7 @@ public class ObjectIntHashMap<K> implements ObjectIntMap<K> {
     return getOrDefault(key, defaultValue);
   }
 
-  private class IntEntry implements Entry<K> {
+  private final class IntEntry implements Entry<K> {
     private final Object2IntMap.Entry<? extends K> myEntry;
 
     IntEntry(@NotNull Object2IntMap.Entry<? extends K> entry) { myEntry = entry; }

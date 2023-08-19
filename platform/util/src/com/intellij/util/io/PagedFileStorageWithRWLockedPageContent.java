@@ -29,7 +29,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import static com.intellij.util.SystemProperties.getIntProperty;
 import static java.nio.ByteOrder.BIG_ENDIAN;
 
-public class PagedFileStorageWithRWLockedPageContent implements PagedStorage {
+public final class PagedFileStorageWithRWLockedPageContent implements PagedStorage {
   private static final Logger LOG = Logger.getInstance(PagedFileStorageWithRWLockedPageContent.class);
 
   public static final int DEFAULT_PAGE_SIZE = PageCacheUtils.DEFAULT_PAGE_SIZE;

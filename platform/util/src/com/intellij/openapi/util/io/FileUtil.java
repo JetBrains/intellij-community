@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.io;
 
-import com.intellij.ReviseWhenPortedToJDK;
 import com.intellij.UtilBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NlsSafe;
@@ -1134,7 +1133,7 @@ public class FileUtil extends FileUtilRt {
     }
   }
 
-  private static class Lazy {
+  private static final class Lazy {
     private static final JBTreeTraverser<File> FILE_TRAVERSER = JBTreeTraverser.from(
       (Function<File, Iterable<File>>)file -> file == null ? Collections.emptySet() : JBIterable.of(file.listFiles()));
   }

@@ -305,7 +305,7 @@ public final class IntToIntBtree extends AbstractIntToIntBtree {
   // (|next_node {<0} , hash key|) {getChildrenCount()} , next_node {<0}
   // next_node[i] is pointer to all less than hash_key[i] except for the last
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
-  private class BtreeIndexNodeView implements Closeable {
+  private final class BtreeIndexNodeView implements Closeable {
     static final int INTERIOR_SIZE = 8;
     static final int KEY_OFFSET = 4;
 

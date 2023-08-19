@@ -276,7 +276,7 @@ public final class PathInterner {
     }
   }
 
-  public static class PathEnumerator extends Interner<CharSequence> {
+  public static final class PathEnumerator extends Interner<CharSequence> {
     @SuppressWarnings("unchecked")
     private final Object2IntMap<CharSegment[]> mySeqToIdx = new Object2IntOpenCustomHashMap<>((Hash.Strategy<CharSegment[]>)ObjectArrays.HASH_STRATEGY);
     private final List<CharSequence> myIdxToSeq = new ArrayList<>();

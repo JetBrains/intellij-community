@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.containers;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashSet;
 import java.util.Iterator;
 
-public class IntHashSetAsRAIntContainer implements RandomAccessIntContainer {
+public final class IntHashSetAsRAIntContainer implements RandomAccessIntContainer {
   private HashSet<Integer> myHashSet; // todo: fastutil.StrippedIntOpenHashSet?
 
   public IntHashSetAsRAIntContainer(int initialCapacity, float loadFactor) {
@@ -59,7 +59,7 @@ public class IntHashSetAsRAIntContainer implements RandomAccessIntContainer {
     return this;
   }
 
-  private class MyIterator implements IntIdsIterator {
+  private final class MyIterator implements IntIdsIterator {
     private final Iterator<Integer> myHashSetIterator;
 
     private MyIterator() {

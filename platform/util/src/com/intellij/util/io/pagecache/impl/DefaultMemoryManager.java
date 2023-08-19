@@ -14,7 +14,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * Utilises {@link DirectByteBufferAllocator} for direct ByteBuffer caching & re-use
  * Heap buffers are not cached: just allocated and released to GC.
  */
-public class DefaultMemoryManager implements IMemoryManager {
+public final class DefaultMemoryManager implements IMemoryManager {
   private final long nativeCapacityBytes;
   private final long heapCapacityBytes;
 

@@ -135,7 +135,7 @@ public final class AppScheduledExecutorService extends SchedulingWrapper {
     ((BackendThreadPoolExecutor)backendExecutorService).superSetCorePoolSize(size);
   }
 
-  static class BackendThreadPoolExecutor extends ThreadPoolExecutor {
+  static final class BackendThreadPoolExecutor extends ThreadPoolExecutor {
 
     BackendThreadPoolExecutor(@NotNull ThreadFactory factory,
                               long keepAliveTime,

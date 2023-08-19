@@ -279,7 +279,7 @@ public abstract class FilteredTraverserBase<T, Self extends FilteredTraverserBas
 
   }
 
-  protected static class Meta<T> {
+  protected static final class Meta<T> {
     final TreeTraversal traversal;
 
     final Iterable<? extends T> roots;
@@ -449,7 +449,7 @@ public abstract class FilteredTraverserBase<T, Self extends FilteredTraverserBas
 
   }
 
-  static class Cond<T> {
+  static final class Cond<T> {
     static final Cond<Object> TRUE = new Cond<>(Conditions.alwaysTrue(), null);
     static final Cond<Object> FALSE = new Cond<>(Conditions.alwaysFalse(), null);
 
@@ -525,7 +525,7 @@ public abstract class FilteredTraverserBase<T, Self extends FilteredTraverserBas
     }
   }
 
-  private static class MappedTraversal<T, S> extends TreeTraversal {
+  private static final class MappedTraversal<T, S> extends TreeTraversal {
     final TreeTraversal original;
     final Meta<T> meta;
     final Function<? super T, ? extends S> map;
@@ -573,7 +573,7 @@ public abstract class FilteredTraverserBase<T, Self extends FilteredTraverserBas
     }
   }
 
-  private static class MappedTree<T, S> implements Function<S, Iterable<? extends S>> {
+  private static final class MappedTree<T, S> implements Function<S, Iterable<? extends S>> {
     final Function<? super T, ? extends Iterable<? extends T>> tree;
     final Function<? super T, ? extends S> mapInner;
     final Meta<S> meta;

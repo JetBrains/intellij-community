@@ -13,7 +13,7 @@ import java.nio.file.Path;
  * Wrapper for {@link PagedFileStorageWithRWLockedPageContent} which allows page-unaligned
  * accesses: i.e. read int which is 2 bytes on one page, and 2 bytes on the next page.
  */
-public class PagedStorageWithPageUnalignedAccess implements PagedStorage {
+public final class PagedStorageWithPageUnalignedAccess implements PagedStorage {
 
   private final @NotNull PagedStorage alignedAccessStorage;
 

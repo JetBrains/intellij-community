@@ -194,7 +194,7 @@ public final class RecursionManager {
   }
 
 
-  private static class MyKey {
+  private static final class MyKey {
     final String guardId;
     final Object userObject;
     private final int myHashCode;
@@ -385,7 +385,7 @@ public final class RecursionManager {
     "com.jetbrains.python.psi.impl.references.PyReferenceImpl.multiResolve(",
   };
 
-  private static class MemoizedValue {
+  private static final class MemoizedValue {
     final Object value;
     final MyKey[] dependencies;
 
@@ -395,7 +395,7 @@ public final class RecursionManager {
     }
   }
 
-  private static class StackFrame {
+  private static final class StackFrame {
     int reentrancyStamp;
     @Nullable Set<MyKey> preventionsInside;
 
@@ -471,7 +471,7 @@ public final class RecursionManager {
    * In this case, you may call {@link #disableMissedCacheAssertions} in the tests
    * which check such exotic situations.
    */
-  static class CachingPreventedException extends RuntimeException {
+  static final class CachingPreventedException extends RuntimeException {
     CachingPreventedException(Map<MyKey, Throwable> preventions) {
       super("Caching disabled due to recursion prevention, please get rid of cyclic dependencies. Preventions: " + new ArrayList<>(preventions.keySet()),
             ContainerUtil.getFirstItem(preventions.values()));

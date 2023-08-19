@@ -116,7 +116,7 @@ public final class Conditions {
     return new SoftRefCache<>(c);
   }
 
-  private static class Not<T> implements Condition<T> {
+  private static final class Not<T> implements Condition<T> {
     final Condition<? super T> c;
 
     Not(@NotNull Condition<? super T> c) {
@@ -129,7 +129,7 @@ public final class Conditions {
     }
   }
 
-  private static class And<T> implements Condition<T> {
+  private static final class And<T> implements Condition<T> {
     final Condition<? super T> c1;
     final Condition<? super T> c2;
 
@@ -144,7 +144,7 @@ public final class Conditions {
     }
   }
 
-  private static class Or<T> implements Condition<T> {
+  private static final class Or<T> implements Condition<T> {
     final Condition<? super T> c1;
     final Condition<? super T> c2;
 

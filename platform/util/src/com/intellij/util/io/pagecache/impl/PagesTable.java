@@ -27,7 +27,7 @@ import static java.util.stream.Collectors.joining;
  * @see com.intellij.util.io.FilePageCacheLockFree
  */
 @ApiStatus.Internal
-public class PagesTable {
+public final class PagesTable {
   private static final double GROWTH_FACTOR = 1.5;
   private static final double SHRINK_FACTOR = 2;
 
@@ -382,7 +382,7 @@ public class PagesTable {
     return pages.length();
   }
 
-  private static class NoFreeSpaceException extends IllegalStateException {
+  private static final class NoFreeSpaceException extends IllegalStateException {
     private NoFreeSpaceException(final String message) { super(message); }
   }
 }

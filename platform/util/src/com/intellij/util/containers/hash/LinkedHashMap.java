@@ -264,7 +264,7 @@ public class LinkedHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> 
     }
   }
 
-  private static class Entry<K, V> implements Map.Entry<K, V> {
+  private static final class Entry<K, V> implements Map.Entry<K, V> {
 
     private final K key;
     private final int keyHash;

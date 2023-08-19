@@ -9,7 +9,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-public class SyncDateFormat {
+public final class SyncDateFormat {
   private final DateFormat myDelegate;
 
   public SyncDateFormat(@NotNull DateFormat delegate) {

@@ -547,7 +547,7 @@ public final class PersistentHashMapValueStorage {
     return 2; // number of chunks produced = number of appendBytes called
   }
 
-  static class ReadResult {
+  static final class ReadResult {
     final byte[] buffer;
     final int chunksCount;
 
@@ -810,7 +810,7 @@ public final class PersistentHashMapValueStorage {
     void dispose() throws IOException;
   }
 
-  private static class ReaderOverCompressedFile implements RAReader {
+  private static final class ReaderOverCompressedFile implements RAReader {
     private final @NotNull CompressedAppendableFile myCompressedAppendableFile;
 
     ReaderOverCompressedFile(@NotNull CompressedAppendableFile compressedAppendableFile) {
@@ -867,7 +867,7 @@ public final class PersistentHashMapValueStorage {
     }
   }
 
-  private static class SyncAbleBufferedOutputStreamOverCachedFileChannel extends BufferedOutputStream {
+  private static final class SyncAbleBufferedOutputStreamOverCachedFileChannel extends BufferedOutputStream {
     private final Path myPath;
 
     SyncAbleBufferedOutputStreamOverCachedFileChannel(final Path path) {
@@ -882,7 +882,7 @@ public final class PersistentHashMapValueStorage {
     }
 
     /** Implements output stream by writing data through {@link FileChannelWithSizeTracking} out of {@link #ourFileChannelCache} */
-    private static class OutputStreamOverRandomAccessFileCache extends OutputStream {
+    private static final class OutputStreamOverRandomAccessFileCache extends OutputStream {
       private final Path myPath;
 
       public OutputStreamOverRandomAccessFileCache(Path path) { myPath = path; }
@@ -908,7 +908,7 @@ public final class PersistentHashMapValueStorage {
 
   }
 
-  private class MyCompressedAppendableFile extends CompressedAppendableFile {
+  private final class MyCompressedAppendableFile extends CompressedAppendableFile {
     MyCompressedAppendableFile() throws IOException {
       super(myPath);
     }

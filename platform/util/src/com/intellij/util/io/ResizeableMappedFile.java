@@ -30,7 +30,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.List;
 
-public class ResizeableMappedFile implements Forceable, Closeable {
+public final class ResizeableMappedFile implements Forceable, Closeable {
   private static final Logger LOG = Logger.getInstance(ResizeableMappedFile.class);
 
   private static final boolean truncateOnClose = SystemProperties.getBooleanProperty("idea.resizeable.file.truncate.on.close", false);

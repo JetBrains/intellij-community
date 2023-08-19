@@ -8,7 +8,7 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
-public class NullableDataExternalizer<T> implements DataExternalizer<T> {
+public final class NullableDataExternalizer<T> implements DataExternalizer<T> {
   private final @NotNull DataExternalizer<T> myNotNullExternalizer;
 
   public NullableDataExternalizer(@NotNull DataExternalizer<T> externalizer) {

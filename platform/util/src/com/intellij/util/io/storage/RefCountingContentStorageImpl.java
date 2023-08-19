@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io.storage;
 
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
@@ -25,7 +25,7 @@ import java.util.zip.Inflater;
 import java.util.zip.InflaterInputStream;
 
 @ApiStatus.Internal
-public class RefCountingContentStorageImpl extends AbstractStorage implements RefCountingContentStorage {
+public final class RefCountingContentStorageImpl extends AbstractStorage implements RefCountingContentStorage {
   private final Map<Integer, Future<?>> myPendingWriteRequests = new ConcurrentHashMap<>();
   private int myPendingWriteRequestsSize;
   private final ExecutorService myWriteRequestExecutor;
@@ -37,7 +37,7 @@ public class RefCountingContentStorageImpl extends AbstractStorage implements Re
 
   private final IntObjectMap<RecordData> myCurrentRecords = ContainerUtil.createConcurrentIntObjectMap();
 
-  private static class RecordData {
+  private static final class RecordData {
     private final int compressedSize;
     private final int compressedHash;
 
@@ -105,7 +105,7 @@ public class RefCountingContentStorageImpl extends AbstractStorage implements Re
     }
   }
 
-  private static class CustomInflaterInputStream extends InflaterInputStream {
+  private static final class CustomInflaterInputStream extends InflaterInputStream {
     CustomInflaterInputStream(byte[] compressedData) {
       super(new UnsyncByteArrayInputStream(compressedData), new Inflater(), 1);
       // force to directly use compressed data, this ensures less round trips with native extraction code and copy streams

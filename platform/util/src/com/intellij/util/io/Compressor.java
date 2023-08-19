@@ -170,7 +170,7 @@ public abstract class Compressor implements Closeable {
     //</editor-fold>
   }
 
-  public static class Jar extends Zip {
+  public static final class Jar extends Zip {
     public Jar(@NotNull File file) throws IOException {
       this(file.toPath());
     }

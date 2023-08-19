@@ -48,7 +48,7 @@ import java.util.stream.Stream;
  * Also for certain Value types it is possible to avoid random reads at all: e.g. in case Value is non-negative integer the value can be stored
  * directly in storage used for offset and in case of btree enumerator directly in btree leaf.
  **/
-public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Value> {
+public final class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Value> {
   private static final Logger LOG = Logger.getInstance(PersistentMapImpl.class);
 
   private static final boolean myDoTrace = SystemProperties.getBooleanProperty("idea.trace.persistent.map", false);
@@ -1162,7 +1162,7 @@ public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Val
     return new PersistentHashMapStatistics(((PersistentBTreeEnumerator<?>)myEnumerator).getStatistics(), valueStorageSizeInBytes);
   }
 
-  private class MyEnumeratorRecordHandler extends PersistentEnumeratorBase.RecordBufferHandler<PersistentEnumeratorBase<?>> {
+  private final class MyEnumeratorRecordHandler extends PersistentEnumeratorBase.RecordBufferHandler<PersistentEnumeratorBase<?>> {
     private final ThreadLocal<byte @NotNull []> myRecordBuffer;
     private final ThreadLocal<byte @NotNull []> mySmallRecordBuffer;
     private final PersistentEnumeratorBase.@NotNull RecordBufferHandler<PersistentEnumeratorBase<?>> myRecordHandler;

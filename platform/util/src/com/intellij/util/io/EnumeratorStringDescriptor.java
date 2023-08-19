@@ -13,7 +13,7 @@ import java.io.IOException;
  * @see CaseInsensitiveEnumeratorStringDescriptor
  */
 public class EnumeratorStringDescriptor implements KeyDescriptor<String> {
-  private static class EnumeratorStringDescriptorImpl
+  private static final class EnumeratorStringDescriptorImpl
     extends EnumeratorStringDescriptor
     implements DifferentSerializableBytesImplyNonEqualityPolicy {
   }

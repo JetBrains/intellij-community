@@ -69,7 +69,7 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
   private RecordBufferHandler<PersistentEnumeratorBase<?>> myRecordHandler;
   private @Nullable Flushable myMarkCleanCallback;
 
-  public static class Version {
+  public static final class Version {
     private static final int DIRTY_MAGIC = 0xbabe1977;
     private static final int CORRECTLY_CLOSED_MAGIC = 0xebabafd;
 

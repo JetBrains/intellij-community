@@ -31,7 +31,7 @@ import java.util.Map;
  * @see #put(Key, Object)
  * @see #ProcessingContext(SharedProcessingContext) 
  */
-public class ProcessingContext {
+public final class ProcessingContext {
   private Map<Object, Object> myMap;
   private SharedProcessingContext mySharedContext;
 

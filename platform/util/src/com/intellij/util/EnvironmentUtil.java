@@ -579,7 +579,7 @@ public final class EnvironmentUtil {
     }
   }
 
-  private static class EnvironmentReaderException extends IOException implements ExceptionWithAttachments {
+  private static final class EnvironmentReaderException extends IOException implements ExceptionWithAttachments {
     private final Attachment[] myAttachments;
 
     private EnvironmentReaderException(String message, String data, String log) {

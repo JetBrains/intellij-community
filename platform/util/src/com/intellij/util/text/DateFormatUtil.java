@@ -318,6 +318,7 @@ public final class DateFormatUtil {
     long kCFDateFormatterMediumStyle = 2;
 
     @Structure.FieldOrder({"location", "length"})
+    final
     class CFRange extends Structure implements Structure.ByValue {
       public long location;
       public long length;

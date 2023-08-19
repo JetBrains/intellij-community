@@ -25,7 +25,7 @@ import static com.intellij.util.io.pagecache.impl.PageContentLockingStrategy.Sha
  * valueId == offset of value in a file
  */
 //@NotThreadSafe
-public class AppendableStorageBackedByPagedStorageLockFree<Data> implements AppendableObjectStorage<Data> {
+public final class AppendableStorageBackedByPagedStorageLockFree<Data> implements AppendableObjectStorage<Data> {
 
   @VisibleForTesting
   @ApiStatus.Internal
@@ -304,7 +304,7 @@ public class AppendableStorageBackedByPagedStorageLockFree<Data> implements Appe
     }
   }
 
-  private static class BufferedInputStreamOverPagedStorage extends BufferedInputStream {
+  private static final class BufferedInputStreamOverPagedStorage extends BufferedInputStream {
     BufferedInputStreamOverPagedStorage() {
       super(TOMBSTONE, 512);
     }
@@ -329,7 +329,7 @@ public class AppendableStorageBackedByPagedStorageLockFree<Data> implements Appe
    * The buffer caches in memory a region of a file [startingOffsetInFile..startingOffsetInFile+bufferPosition],
    * with both ends inclusive.
    */
-  private static class AppendMemoryBuffer {
+  private static final class AppendMemoryBuffer {
     private final byte[] buffer;
     /**
      * Similar to ByteBuffer.position: a cursor pointing to the last written byte of a buffer.

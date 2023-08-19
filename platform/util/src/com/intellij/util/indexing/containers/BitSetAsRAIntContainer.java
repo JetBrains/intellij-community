@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.containers;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -12,7 +12,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * @implNote not thread-safe. {@code size()} might give wrong results if collection is modified concurrently
  */
-public class BitSetAsRAIntContainer implements Cloneable, RandomAccessIntContainer {
+public final class BitSetAsRAIntContainer implements Cloneable, RandomAccessIntContainer {
   private BitSet myBitSet;
   private AtomicInteger myElementsCount;
 
@@ -82,7 +82,7 @@ public class BitSetAsRAIntContainer implements Cloneable, RandomAccessIntContain
     return this;
   }
 
-  private class MyIterator implements IntIdsIterator {
+  private final class MyIterator implements IntIdsIterator {
     private final Iterator<Integer> myIterator;
 
     private MyIterator() {

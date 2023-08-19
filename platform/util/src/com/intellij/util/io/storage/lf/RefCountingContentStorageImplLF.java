@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io.storage.lf;
 
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
@@ -27,7 +27,7 @@ import java.util.zip.Inflater;
 import java.util.zip.InflaterInputStream;
 
 @ApiStatus.Internal
-public class RefCountingContentStorageImplLF extends AbstractStorageLF implements RefCountingContentStorage {
+public final class RefCountingContentStorageImplLF extends AbstractStorageLF implements RefCountingContentStorage {
   
   private final Map<Integer, Future<?>> pendingWriteRequests = new ConcurrentHashMap<>();
   private int pendingWriteRequestsSize;
@@ -40,7 +40,7 @@ public class RefCountingContentStorageImplLF extends AbstractStorageLF implement
 
   private final IntObjectMap<RecordData> currentRecords = ContainerUtil.createConcurrentIntObjectMap();
 
-  private static class RecordData {
+  private static final class RecordData {
     private final int compressedSize;
     private final int compressedHash;
 
@@ -108,7 +108,7 @@ public class RefCountingContentStorageImplLF extends AbstractStorageLF implement
     }
   }
 
-  private static class CustomInflaterInputStream extends InflaterInputStream {
+  private static final class CustomInflaterInputStream extends InflaterInputStream {
     CustomInflaterInputStream(byte[] compressedData) {
       super(new UnsyncByteArrayInputStream(compressedData), new Inflater(), 1);
       // force to directly use compressed data, this ensures less round trips with native extraction code and copy streams

@@ -45,7 +45,7 @@ public final class ValueContainerImpl<Value> extends UpdatableValueContainer<Val
     myUpdateOps = doExpensiveChecks ? new SmartList<>() : null;
   }
 
-  private static class UpdateOp {
+  private static final class UpdateOp {
     private UpdateOp(Type type, int id, Object value) {
       myType = type;
       myInputId = id;
@@ -262,7 +262,7 @@ public final class ValueContainerImpl<Value> extends UpdatableValueContainer<Val
     };
   }
 
-  private static class EmptyValueIterator<Value> implements InvertedIndexValueIterator<Value> {
+  private static final class EmptyValueIterator<Value> implements InvertedIndexValueIterator<Value> {
     private static final EmptyValueIterator<Object> INSTANCE = new EmptyValueIterator<>();
 
     @Override

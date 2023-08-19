@@ -12,7 +12,7 @@ import java.util.Arrays;
 /**
  * A sequence of bytes backed by byte array (or sub-array).
  */
-public class ByteArraySequence implements ByteSequence {
+public final class ByteArraySequence implements ByteSequence {
   public static final ByteArraySequence EMPTY = new ByteArraySequence(ArrayUtil.EMPTY_BYTE_ARRAY);
   private final byte[] myBytes;
   private final int myOffset;

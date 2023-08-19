@@ -24,7 +24,7 @@ import java.nio.file.Path;
 
 import static com.intellij.util.io.PageCacheUtils.CHANNELS_CACHE;
 
-public class PagedFileStorage implements Forceable/*, PagedStorage*/ {
+public final class PagedFileStorage implements Forceable/*, PagedStorage*/ {
   static final Logger LOG = Logger.getInstance(PagedFileStorage.class);
 
   private static final int DEFAULT_PAGE_SIZE = PageCacheUtils.DEFAULT_PAGE_SIZE;

@@ -1,9 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io.zip;
 
 import java.math.BigInteger;
 
-public class ZipUInt64 {
+public final class ZipUInt64 {
   private static final int BYTE_1 = 1;
   private static final int BYTE_1_MASK = 0xFF00;
   private static final int BYTE_1_SHIFT = 8;

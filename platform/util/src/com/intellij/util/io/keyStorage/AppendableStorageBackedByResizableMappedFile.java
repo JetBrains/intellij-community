@@ -15,7 +15,7 @@ import java.io.*;
 import java.nio.file.Path;
 
 /** valueId == offset of value in a file */
-public class AppendableStorageBackedByResizableMappedFile<Data> implements AppendableObjectStorage<Data> {
+public final class AppendableStorageBackedByResizableMappedFile<Data> implements AppendableObjectStorage<Data> {
   @VisibleForTesting
   @ApiStatus.Internal
   public static final int APPEND_BUFFER_SIZE = 4096;
@@ -291,7 +291,7 @@ public class AppendableStorageBackedByResizableMappedFile<Data> implements Appen
     }
   }
 
-  private static class MyBufferedIS extends BufferedInputStream {
+  private static final class MyBufferedIS extends BufferedInputStream {
     MyBufferedIS() {
       super(TOMBSTONE, 512);
     }
@@ -314,7 +314,7 @@ public class AppendableStorageBackedByResizableMappedFile<Data> implements Appen
    * The buffer caches in memory a region of a file [startingOffsetInFile..startingOffsetInFile+bufferPosition],
    * with both ends inclusive.
    */
-  private static class AppendMemoryBuffer {
+  private static final class AppendMemoryBuffer {
     private final byte[] buffer;
     /**
      * Similar to ByteBuffer.position: a cursor pointing to the last written byte of a buffer.

@@ -21,7 +21,7 @@ import java.util.concurrent.ThreadLocalRandom;
  * Space-Efficient Data Structures, Streams, and Algorithms.
  * Berlin, Germany: Springer, 2013, pp. 77–96
  */
-public class FrugalQuantileEstimator {
+public final class FrugalQuantileEstimator {
 
   private int targetPercentileToEstimate;
   private double currentEstimation;
