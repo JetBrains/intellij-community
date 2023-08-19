@@ -35,6 +35,11 @@ class JavaSliceDereferenceUsage extends JavaSliceUsage {
     // no children
   }
 
+  @Override
+  protected boolean isForcedLeaf() {
+    return true;
+  }
+
   @NotNull
   @Override
   public UsagePresentation getPresentation() {
