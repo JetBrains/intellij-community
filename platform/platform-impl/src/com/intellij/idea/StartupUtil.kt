@@ -147,6 +147,18 @@ fun CoroutineScope.startApplication(args: List<String>,
     }
   }
 
+  if (!isHeadless) {
+    launch {
+      lockSystemDirsJob.join()
+      span("SvgCache creation") {
+        SvgCacheManager.svgCache = SvgCacheManager.createSvgCacheManager()
+      }
+    }
+
+    showSplashIfNeeded(initUiDeferred = initLafJob, appInfoDeferred = appInfoDeferred, args = args)
+    updateFrameClassAndWindowIconAndPreloadSystemFonts(initLafJob)
+  }
+
   val zipFilePoolDeferred = async(Dispatchers.IO) {
     val result = ZipFilePoolImpl()
     ZipFilePool.POOL = result
@@ -184,19 +196,6 @@ fun CoroutineScope.startApplication(args: List<String>,
     span("environment loading", Dispatchers.IO) {
       EnvironmentUtil.loadEnvironment(coroutineContext.job)
     }
-  }
-
-  if (!isHeadless) {
-    launch {
-      lockSystemDirsJob.join()
-      span("SvgCache creation") {
-        SvgCacheManager.svgCache = SvgCacheManager.createSvgCacheManager()
-      }
-    }
-
-    updateFrameClassAndWindowIconAndPreloadSystemFonts(initLafJob)
-
-    showSplashIfNeeded(initUiDeferred = initLafJob, appInfoDeferred = appInfoDeferred, args = args, logDeferred = logDeferred)
   }
 
   loadSystemLibsAndLogInfoAndInitMacApp(logDeferred, appInfoDeferred, initLafJob, args, mainScope)
@@ -350,10 +349,7 @@ private fun CoroutineScope.loadSystemLibsAndLogInfoAndInitMacApp(logDeferred: De
   }
 }
 
-private fun CoroutineScope.showSplashIfNeeded(initUiDeferred: Job,
-                                              appInfoDeferred: Deferred<ApplicationInfoEx>,
-                                              args: List<String>,
-                                              logDeferred: Deferred<Logger>) {
+private fun CoroutineScope.showSplashIfNeeded(initUiDeferred: Job, appInfoDeferred: Deferred<ApplicationInfo>, args: List<String>) {
   if (AppMode.isLightEdit()) {
     return
   }
@@ -367,7 +363,7 @@ private fun CoroutineScope.showSplashIfNeeded(initUiDeferred: Job,
         throw e
       }
       catch (e: Throwable) {
-        logDeferred.await().warn("Cannot show splash", e)
+        logger<AppStarter>().warn("Cannot show splash", e)
       }
     }
   }

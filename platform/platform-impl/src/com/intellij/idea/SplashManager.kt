@@ -7,7 +7,6 @@ import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.application.impl.RawSwingDispatcher
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.SystemInfoRt
@@ -50,7 +49,9 @@ private val splashJob = AtomicReference<Job>(CompletableDeferred<Unit>())
 
 private val SHOW_SPLASH_LONGER = System.getProperty("idea.show.splash.longer", "true").toBoolean()
 
-internal fun CoroutineScope.showSplashIfNeeded(initUiDeferred: Job, appInfoDeferred: Deferred<ApplicationInfoEx>) {
+private fun isTooLateToShowSplash(): Boolean = !SHOW_SPLASH_LONGER && LoadingState.COMPONENTS_LOADED.isOccurred
+
+internal fun CoroutineScope.showSplashIfNeeded(initUiDeferred: Job, appInfoDeferred: Deferred<ApplicationInfo>) {
   val oldJob = splashJob.get()
   if (oldJob.isCancelled) {
     return
@@ -73,12 +74,12 @@ internal fun CoroutineScope.showSplashIfNeeded(initUiDeferred: Job, appInfoDefer
       loadSplashImage(appInfo = appInfo)
     } ?: return@launch
 
-    if (!isActive || (!SHOW_SPLASH_LONGER && LoadingState.COMPONENTS_LOADED.isOccurred)) {
+    if (!isActive || isTooLateToShowSplash()) {
       return@launch
     }
 
     span("splash initialization", RawSwingDispatcher) {
-      if (LoadingState.COMPONENTS_LOADED.isOccurred) {
+      if (isTooLateToShowSplash()) {
         return@span
       }
 
@@ -92,7 +93,6 @@ internal fun CoroutineScope.showSplashIfNeeded(initUiDeferred: Job, appInfoDefer
         span("splash set visible") {
           splash.isVisible = true
         }
-        splash.toFront()
       }
       catch (ignore: CancellationException) {
         SPLASH_WINDOW = null
