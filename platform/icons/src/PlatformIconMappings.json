@@ -748,6 +748,7 @@
       "profiler.svg": "toolwindows/toolWindowProfiler.svg",
       "project.svg": "toolwindows/toolWindowProject.svg",
       "run.svg": "toolwindows/toolWindowRun.svg",
+      "toolWindowRunWithCoverage.svg": "toolwindows/toolWindowRunWithCoverage.svg",
       "services.svg": "toolwindows/toolWindowServices.svg",
       "settingSync.svg": "toolwindows/settingSync.svg",
       "structure.svg": "toolwindows/toolWindowStructure.svg",
