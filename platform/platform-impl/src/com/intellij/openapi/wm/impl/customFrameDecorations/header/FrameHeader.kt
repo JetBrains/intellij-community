@@ -7,7 +7,6 @@ import com.intellij.ide.IdeBundle
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.wm.impl.IdeRootPane
 import com.intellij.openapi.wm.impl.customFrameDecorations.CustomFrameTitleButtons
-import com.intellij.openapi.wm.impl.customFrameDecorations.ResizableCustomFrameTitleButtons
 import com.intellij.util.ui.JBFont
 import java.awt.Font
 import java.awt.Frame
@@ -98,7 +97,7 @@ internal open class FrameHeader(protected val frame: JFrame) : CustomHeader(fram
 
   private fun createButtonsPane(): CustomFrameTitleButtons? {
     if (IdeRootPane.hideNativeLinuxTitle) {
-      return ResizableCustomFrameTitleButtons.create(closeAction, restoreAction, iconifyAction, maximizeAction)
+      return CustomFrameTitleButtons.create(closeAction, restoreAction, iconifyAction, maximizeAction)
     }
     return null
   }

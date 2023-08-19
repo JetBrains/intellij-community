@@ -1,32 +1,42 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.customFrameDecorations
 
-import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.UISettings
+import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.wm.impl.customFrameDecorations.frameTitleButtons.FrameTitleButtons
+import com.intellij.openapi.wm.impl.customFrameDecorations.frameTitleButtons.LinuxFrameTitleButtons
+import com.intellij.openapi.wm.impl.customFrameDecorations.frameTitleButtons.WindowsFrameTitleButtons
 import com.intellij.openapi.wm.impl.customFrameDecorations.style.ComponentStyle
 import com.intellij.openapi.wm.impl.customFrameDecorations.style.ComponentStyleState
-import com.intellij.openapi.wm.impl.customFrameDecorations.style.HOVER_KEY
 import com.intellij.openapi.wm.impl.customFrameDecorations.style.StyleManager
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI.Borders
 import com.intellij.util.ui.JBUI.CurrentTheme
-import java.awt.Color
 import java.awt.Dimension
 import java.awt.FlowLayout
-import java.awt.Graphics
-import javax.accessibility.AccessibleContext
 import javax.swing.*
-import javax.swing.plaf.ButtonUI
-import javax.swing.plaf.basic.BasicButtonUI
 
-internal open class CustomFrameTitleButtons(myCloseAction: Action) {
+
+internal open class CustomFrameTitleButtons(private val myCloseAction: Action,
+                                            private val myRestoreAction: Action? = null,
+                                            private val myIconifyAction: Action? = null,
+                                            private val myMaximizeAction: Action? = null
+) {
   companion object {
-    fun create(closeAction: Action): CustomFrameTitleButtons {
-      val darculaTitleButtons = CustomFrameTitleButtons(closeAction)
+    fun create(myCloseAction: Action,
+               myRestoreAction: Action? = null,
+               myIconifyAction: Action? = null,
+               myMaximizeAction: Action? = null): CustomFrameTitleButtons {
+      val darculaTitleButtons = CustomFrameTitleButtons(myCloseAction, myRestoreAction, myIconifyAction, myMaximizeAction)
       darculaTitleButtons.createChildren()
       return darculaTitleButtons
     }
   }
+
+  private val buttons: FrameTitleButtons = if (SystemInfo.isWindows)
+    WindowsFrameTitleButtons(myCloseAction, myRestoreAction, myIconifyAction, myMaximizeAction)
+  else
+    LinuxFrameTitleButtons(myCloseAction, myRestoreAction, myIconifyAction, myMaximizeAction)
 
   private val baseStyle = ComponentStyle.ComponentStyleBuilder<JComponent> {
     isOpaque = false
@@ -41,32 +51,9 @@ internal open class CustomFrameTitleButtons(myCloseAction: Action) {
     }
   }
 
-  private val closeStyleBuilder: ComponentStyle.ComponentStyleBuilder<JButton> = ComponentStyle.ComponentStyleBuilder<JButton> {
-    isOpaque = false
-    border = Borders.empty()
-    icon = AllIcons.Windows.CloseActive
-  }.apply {
-    style(ComponentStyleState.HOVERED) {
-      isOpaque = true
-      background = Color(0xe81123)
-      icon = AllIcons.Windows.CloseHover
-    }
-    style(ComponentStyleState.PRESSED) {
-      isOpaque = true
-      background = Color(0xf1707a)
-      icon = AllIcons.Windows.CloseHover
-    }
-  }
-  private val activeCloseStyle = closeStyleBuilder.build()
-
-  private val inactiveCloseStyle = closeStyleBuilder
-    .updateDefault {
-      icon = AllIcons.Windows.CloseInactive
-    }.build()
 
   private val panel = TitleButtonsPanel()
 
-  val closeButton: JButton = createButton("Close", myCloseAction)
 
   internal var isCompactMode: Boolean
     set(value) {
@@ -78,19 +65,51 @@ internal open class CustomFrameTitleButtons(myCloseAction: Action) {
 
   var isSelected: Boolean = false
     set(value) {
-      if(field != value) {
+      if (field != value) {
         field = value
         updateStyles()
       }
     }
 
   protected open fun updateStyles() {
-    StyleManager.applyStyle(closeButton, if(isSelected) activeCloseStyle else inactiveCloseStyle)
+    StyleManager.applyStyle(
+      buttons.closeButton,
+      getStyle(
+        if (isSelected) buttons.closeIcon else buttons.closeInactiveIcon,
+        buttons.closeHoverIcon
+      )
+    )
+    buttons.restoreButton?.let {
+      StyleManager.applyStyle(
+        it,
+        getStyle(
+          if (isSelected) buttons.restoreIcon else buttons.restoreInactiveIcon,
+          buttons.restoreIcon
+        )
+      )
+    }
+    buttons.maximizeButton?.let {
+      StyleManager.applyStyle(
+        it,
+        getStyle(
+          if (isSelected) buttons.maximizeIcon else buttons.maximizeInactiveIcon,
+          buttons.maximizeIcon
+        )
+      )
+    }
+    buttons.minimizeButton?.let {
+      StyleManager.applyStyle(
+        it,
+        getStyle(
+          if (isSelected) buttons.minimizeIcon else buttons.minimizeInactiveIcon,
+          buttons.minimizeIcon
+        )
+      )
+    }
   }
 
   protected fun createChildren() {
     fillButtonPane()
-    addCloseButton()
     updateVisibility()
     updateStyles()
   }
@@ -98,20 +117,38 @@ internal open class CustomFrameTitleButtons(myCloseAction: Action) {
   fun getView(): JComponent = panel
 
   protected open fun fillButtonPane() {
+    if (SystemInfo.isLinux) {
+      var linuxButtonsLayout = LinuxLookAndFeel.getHeaderLayout()
+      if (!linuxButtonsLayout.contains("close")) {
+        linuxButtonsLayout = linuxButtonsLayout.plus("close")
+      }
+      for (item in linuxButtonsLayout) {
+        when (item) {
+          "minimize" -> buttons.minimizeButton?.let { panel.addComponent(it) }
+          "maximize" -> {
+            buttons.maximizeButton?.let { panel.addComponent(it) }
+            buttons.restoreButton?.let { panel.addComponent(it) }
+          }
+          "close" -> panel.addComponent(buttons.closeButton)
+        }
+      }
+      val emptyComponent: Box = Box.createHorizontalBox() // Margin right
+      panel.addComponent(emptyComponent)
+    } else {
+      buttons.minimizeButton?.let { panel.addComponent(it) }
+      buttons.maximizeButton?.let { panel.addComponent(it) }
+      buttons.restoreButton?.let { panel.addComponent(it) }
+      panel.addComponent(buttons.closeButton)
+    }
   }
 
   open fun updateVisibility() {
+    buttons.minimizeButton?.isVisible = myIconifyAction?.isEnabled ?: false
+    buttons.restoreButton?.isVisible = myRestoreAction?.isEnabled ?: false
+    buttons.maximizeButton?.isVisible = myMaximizeAction?.isEnabled ?: false
   }
 
-  private fun addCloseButton() {
-    addComponent(closeButton)
-  }
-
-  protected fun addComponent(component: JComponent) {
-    panel.addComponent(component)
-  }
-
-  protected fun getStyle(icon: Icon, hoverIcon : Icon): ComponentStyle<JComponent> {
+  protected fun getStyle(icon: Icon, hoverIcon: Icon): ComponentStyle<JComponent> {
     val clone = baseStyle.clone()
     clone.updateDefault {
       this.icon = icon
@@ -127,32 +164,6 @@ internal open class CustomFrameTitleButtons(myCloseAction: Action) {
     return clone.build()
   }
 
-  protected fun createButton(accessibleName: String, action: Action): JButton {
-    val button = object : JButton(){
-      init {
-        super.setUI(HoveredButtonUI())
-      }
-
-      override fun setUI(ui: ButtonUI?) {
-      }
-    }
-    button.action = action
-    button.isFocusable = false
-    button.putClientProperty(AccessibleContext.ACCESSIBLE_NAME_PROPERTY, accessibleName)
-    button.text = null
-    return button
-  }
-}
-private class HoveredButtonUI : BasicButtonUI() {
-  override fun paint(g: Graphics, c: JComponent) {
-    getHoverColor(c)?.let {
-      g.color = it
-      g.fillRect(0, 0, c.width, c.height)
-    }
-    super.paint(g, c)
-  }
-
-  private fun getHoverColor(c: JComponent): Color? = c.getClientProperty(HOVER_KEY) as? Color
 }
 
 private class TitleButtonsPanel : JPanel(FlowLayout(FlowLayout.LEADING, 0, 0)) {
@@ -177,10 +188,19 @@ private class TitleButtonsPanel : JPanel(FlowLayout(FlowLayout.LEADING, 0, 0)) {
 
   private fun JComponent.setScaledPreferredSize() {
     val size = CurrentTheme.TitlePane.buttonPreferredSize(UISettings.defFontScale).clone() as Dimension
+    // TODO isCompactMode siempre es false, parece un bug
     if (isCompactMode) {
       size.height = JBUIScale.scale(30)
     }
-    preferredSize = Dimension(size.width, size.height)
+    if (SystemInfo.isLinux) {
+      if (this !is Box) {
+        preferredSize = Dimension(36, 36)
+      } else {
+        preferredSize = Dimension(2, size.height) // Margin right
+      }
+    } else {
+      preferredSize = Dimension(size.width, size.height)
+    }
   }
 
   override fun updateUI() {

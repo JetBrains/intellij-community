@@ -88,6 +88,7 @@ internal class DialogHeader(window: Window) : CustomHeader(window) {
   }
 
   private fun createButtonsPane(): CustomFrameTitleButtons? {
+    //return null // TODO Arreglar
     return if (IdeRootPane.hideNativeLinuxTitle) CustomFrameTitleButtons.create(createCloseAction(this)) else null
   }
 }
