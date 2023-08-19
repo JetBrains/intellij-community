@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application;
 
+import com.intellij.diagnostic.LoadingState;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
@@ -84,11 +85,19 @@ public abstract class ApplicationInfo {
   public abstract @NlsSafe @NotNull String getStrictVersion();
 
   public static boolean helpAvailable() {
-    return ApplicationManager.getApplication() != null && getInstance() != null && getInstance().hasHelp();
+    if (!LoadingState.COMPONENTS_LOADED.isOccurred()) {
+      return false;
+    }
+    ApplicationInfo info = getInstance();
+    return info != null && info.hasHelp();
   }
 
   public static boolean contextHelpAvailable() {
-    return ApplicationManager.getApplication() != null && getInstance() != null && getInstance().hasContextHelp();
+    if (!LoadingState.COMPONENTS_LOADED.isOccurred()) {
+      return false;
+    }
+    ApplicationInfo info = getInstance();
+    return info != null && info.hasContextHelp();
   }
 
   /** @deprecated use {@link #getBuild()} */
