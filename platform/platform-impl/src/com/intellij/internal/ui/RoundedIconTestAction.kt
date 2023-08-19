@@ -6,7 +6,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.openapi.util.IconLoader
+import com.intellij.openapi.util.findIconUsingNewImplementation
 import com.intellij.ui.Gray
 import com.intellij.ui.RoundedIcon
 import com.intellij.ui.components.JBLabel
@@ -32,11 +32,11 @@ internal class RoundedIconTestAction : DumbAwareAction("Show Rounded Icon") {
 
   override fun actionPerformed(e: AnActionEvent) {
     object : DialogWrapper(e.project, null, true, IdeModalityType.IDE, false) {
-
-      private val myLabel = JBLabel("Some text").apply {
+      private val label = JBLabel("Some text").apply {
         horizontalAlignment = SwingConstants.CENTER
         horizontalTextPosition = SwingConstants.LEFT
       }
+
       private val iconChooser = JCheckBox("Splash", true).apply { isOpaque = false }
       private val formChooser = JCheckBox("Superellipse", true).apply { isOpaque = false }
       val slider = JSlider(0, 100).apply {
@@ -47,9 +47,12 @@ internal class RoundedIconTestAction : DumbAwareAction("Show Rounded Icon") {
         majorTickSpacing = 10
         isOpaque = false
       }
-      val splashIcon: Icon? by lazy { IconLoader.findIcon(ApplicationInfoImpl.getShadowInstanceImpl().splashImageUrl, ApplicationInfoImpl::class.java.classLoader) }
-      val generatedIcon: Icon? by lazy {
-        IconUtil.createImageIcon((createRandomImage(splashIcon!!.iconWidth, splashIcon!!.iconHeight) as Image))
+      val splashIcon: Icon by lazy {
+        findIconUsingNewImplementation(path = ApplicationInfoImpl.getShadowInstanceImpl().splashImageUrl!!,
+                                       classLoader = ApplicationInfoImpl::class.java.classLoader)!!
+      }
+      val generatedIcon: Icon by lazy {
+        IconUtil.createImageIcon((createRandomImage(splashIcon.iconWidth, splashIcon.iconHeight) as Image))
       }
 
       init {
@@ -86,7 +89,7 @@ internal class RoundedIconTestAction : DumbAwareAction("Show Rounded Icon") {
         iconChooser.addActionListener(actionListener)
         formChooser.addActionListener(actionListener)
 
-        panel.add(myLabel, CENTER)
+        panel.add(label, CENTER)
         val southPanel = NonOpaquePanel(BorderLayout())
         val chooserPanel = NonOpaquePanel(GridLayout(2, 1))
         chooserPanel.add(iconChooser)
@@ -98,9 +101,9 @@ internal class RoundedIconTestAction : DumbAwareAction("Show Rounded Icon") {
       }
 
       fun updateIcon() {
-        myLabel.icon = RoundedIcon(if (iconChooser.isSelected) splashIcon!! else generatedIcon!!,
-                                   (slider.value * 0.01),
-                                   formChooser.isSelected)
+        label.icon = RoundedIcon(/* source = */ if (iconChooser.isSelected) splashIcon else generatedIcon,
+                                 /* arcRatio = */ (slider.value * 0.01),
+                                 /* superEllipse = */ formChooser.isSelected)
       }
 
       override fun createActions() = emptyArray<Action>()
