@@ -316,6 +316,7 @@ private fun getCacheFile(scale: Float, appInfo: ApplicationInfo, path: String): 
     Xxh3.hashUnencodedChars(path),
     Xxh3.hashUnencodedChars(appInfo.build.asString()),
     if (appInfo.isEAP) 1 else 0,
+    1 /* cache format version */,
     scale.toBits().toLong(),
     key,
   )
