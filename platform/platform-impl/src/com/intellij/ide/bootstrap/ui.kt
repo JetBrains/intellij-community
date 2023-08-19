@@ -108,7 +108,9 @@ internal fun CoroutineScope.scheduleInitAwtToolkitAndEventQueue(lockSystemDirsJo
   val task = launch {
     // this should happen before UI initialization - if we're not going to show the UI (in case another IDE instance is already running),
     // we shouldn't initialize AWT toolkit in order to avoid unnecessary focus stealing and space switching on macOS.
-    lockSystemDirsJob.join()
+    if (SystemInfoRt.isMac) {
+      lockSystemDirsJob.join()
+    }
 
     launch(CoroutineName("initAwtToolkit")) {
       initAwtToolkit(busyThread)
