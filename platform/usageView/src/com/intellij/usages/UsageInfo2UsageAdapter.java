@@ -141,7 +141,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
     return EditorTabPresentationUtil.getFileBackgroundColor(getProject(), file);
   }
 
-  private TextChunk @NotNull [] computeText() {
+  protected TextChunk @NotNull [] computeText() {
     TextChunk[] chunks;
     PsiFile psiFile = getPsiFile();
     boolean isNullOrBinary = psiFile == null || psiFile.getFileType().isBinary();

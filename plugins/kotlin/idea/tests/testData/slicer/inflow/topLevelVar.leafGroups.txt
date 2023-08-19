@@ -4,9 +4,8 @@
 
 4 TopLevelVarKt.setFoo(<bold>3</bold>);
 3 	<bold>var foo: Int</bold> = 1
-4 		TopLevelVarKt.setFoo(<bold>3</bold>);
+4 		JAVA: TopLevelVarKt.setFoo(<bold>3</bold>); (in D.test())
 
 7 foo = <bold>2</bold> (in test())
 3 	<bold>var foo: Int</bold> = 1
 7 		foo = <bold>2</bold> (in test())
-
