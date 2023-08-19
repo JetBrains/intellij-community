@@ -15,12 +15,13 @@
  */
 package com.intellij.ide.util.scopeChooser
 
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.ExtensionPointName.Companion.create
 import com.intellij.openapi.project.Project
 
 interface ScopeDescriptorProvider {
-  fun getScopeDescriptors(project: Project): Array<ScopeDescriptor>
+  fun getScopeDescriptors(project: Project, dataContext: DataContext): Array<ScopeDescriptor>
 
   companion object {
     @JvmField

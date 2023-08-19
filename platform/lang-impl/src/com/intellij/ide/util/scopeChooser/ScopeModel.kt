@@ -103,7 +103,7 @@ class ScopeModel(options: Set<Option>) {
       }
 
       for (provider in ScopeDescriptorProvider.EP_NAME.extensionList) {
-        for (descriptor in provider.getScopeDescriptors(project)) {
+        for (descriptor in provider.getScopeDescriptors(project, dataContext)) {
           if (filter.test(descriptor)) {
             result.add(descriptor)
           }
