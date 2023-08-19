@@ -44,7 +44,44 @@ import javax.swing.RepaintManager
 import javax.swing.UIManager
 import kotlin.system.exitProcess
 
-internal suspend fun initUi(isHeadless: Boolean) {
+internal fun CoroutineScope.scheduleInitUi(initAwtToolkitJob: Job, isHeadless: Boolean): Job {
+  val iconManagerActivateJob = launch {
+    // IdeaLaF uses AllIcons - icon manager must be activated
+    if (!isHeadless) {
+      span("icon manager activation") {
+        IconManager.activate(CoreIconManager())
+      }
+    }
+  }
+
+  val task = launch {
+    initAwtToolkitJob.join()
+    iconManagerActivateJob.join()
+    // SwingDispatcher must be used after Toolkit init
+    span("initUi", RawSwingDispatcher) {
+      initLafAndScale(isHeadless)
+    }
+  }
+
+  // separate task - allow other UI tasks to be executed (e.g., show splash)
+  launch(RawSwingDispatcher) {
+    val uiDefaults = span("app-specific laf state initialization") { UIManager.getDefaults() }
+    span("html style patching") {
+      // create a separate copy for each case
+      val globalStyleSheet = GlobalStyleSheetHolder.getGlobalStyleSheet()
+      uiDefaults.put("javax.swing.JLabel.userStyleSheet", globalStyleSheet)
+      uiDefaults.put("HTMLEditorKit.jbStyleSheet", globalStyleSheet)
+
+      span("global styleSheet updating") {
+        GlobalStyleSheetHolder.updateGlobalSwingStyleSheet()
+      }
+    }
+  }
+
+  return task
+}
+
+private suspend fun initLafAndScale(isHeadless: Boolean) {
   if (!isHeadless) {
     val env = span("GraphicsEnvironment init") {
       GraphicsEnvironment.getLocalGraphicsEnvironment()
@@ -74,22 +111,27 @@ internal suspend fun initUi(isHeadless: Boolean) {
       runActivity("base LaF defaults getting") { baseLaF.defaults }
     }
   }
-
-  val uiDefaults = span("app-specific laf state initialization") { UIManager.getDefaults() }
-
-  span("html style patching") {
-    // create a separate copy for each case
-    val globalStyleSheet = GlobalStyleSheetHolder.getGlobalStyleSheet()
-    uiDefaults.put("javax.swing.JLabel.userStyleSheet", globalStyleSheet)
-    uiDefaults.put("HTMLEditorKit.jbStyleSheet", globalStyleSheet)
-
-    span("global styleSheet updating") {
-      GlobalStyleSheetHolder.updateGlobalSwingStyleSheet()
-    }
-  }
 }
 
-private fun CoroutineScope.schedulePreloadingLafClasses() {
+internal fun CoroutineScope.scheduleInitAwtToolkit(lockSystemDirsJob: Job, busyThread: Thread): Job {
+  val task = launch {
+    // this should happen before UI initialization - if we're not going to show the UI (in case another IDE instance is already running),
+    // we shouldn't initialize AWT toolkit in order to avoid unnecessary focus stealing and space switching on macOS.
+    if (SystemInfoRt.isMac) {
+      lockSystemDirsJob.join()
+    }
+
+    launch(CoroutineName("initAwtToolkit")) {
+      initAwtToolkit(busyThread)
+    }
+  }
+
+  launch(CoroutineName("IdeEventQueue class preloading") + Dispatchers.IO) {
+    val classLoader = AppStarter::class.java.classLoader
+    // preload class not in EDT
+    Class.forName(IdeEventQueue::class.java.name, true, classLoader)
+    Class.forName(AWTExceptionHandler::class.java.name, true, classLoader)
+  }
   launch(CoroutineName("LaF class preloading") + Dispatchers.IO) {
     val classLoader = AppStarter::class.java.classLoader
     // preload class not in EDT
@@ -102,39 +144,6 @@ private fun CoroutineScope.schedulePreloadingLafClasses() {
     Class.forName(GlobalStyleSheetHolder::class.java.name, true, classLoader)
     Class.forName(StartupUiUtil::class.java.name, true, classLoader)
   }
-}
-
-internal fun CoroutineScope.scheduleInitAwtToolkitAndEventQueue(lockSystemDirsJob: Job, busyThread: Thread, isHeadless: Boolean): Job {
-  val task = launch {
-    // this should happen before UI initialization - if we're not going to show the UI (in case another IDE instance is already running),
-    // we shouldn't initialize AWT toolkit in order to avoid unnecessary focus stealing and space switching on macOS.
-    if (SystemInfoRt.isMac) {
-      lockSystemDirsJob.join()
-    }
-
-    launch(CoroutineName("initAwtToolkit")) {
-      initAwtToolkit(busyThread)
-    }
-
-    // IdeaLaF uses AllIcons - icon manager must be activated
-    if (!isHeadless) {
-      launch(CoroutineName("icon manager activation")) {
-        IconManager.activate(CoreIconManager())
-      }
-    }
-
-    withContext(RawSwingDispatcher) {
-      patchSystem(isHeadless)
-    }
-  }
-
-  launch(CoroutineName("IdeEventQueue class preloading") + Dispatchers.IO) {
-    val classLoader = AppStarter::class.java.classLoader
-    // preload class not in EDT
-    Class.forName(IdeEventQueue::class.java.name, true, classLoader)
-    Class.forName(AWTExceptionHandler::class.java.name, true, classLoader)
-  }
-  schedulePreloadingLafClasses()
   return task
 }
 
@@ -160,8 +169,17 @@ private suspend fun initAwtToolkit(busyThread: Thread) {
   }
 }
 
+internal fun CoroutineScope.scheduleInitIdeEventQueue(initAwtToolkit: Job, isHeadless: Boolean): Job {
+  return launch {
+    initAwtToolkit.join()
+    withContext(RawSwingDispatcher) {
+      replaceIdeEventQueue(isHeadless)
+    }
+  }
+}
+
 // the method must be called on EDT
-private suspend fun patchSystem(isHeadless: Boolean) {
+private suspend fun replaceIdeEventQueue(isHeadless: Boolean) {
   span("event queue replacing") {
     // replace system event queue
     IdeEventQueue.getInstance()

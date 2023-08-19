@@ -137,17 +137,12 @@ fun CoroutineScope.startApplication(args: List<String>,
     }
   }
 
-  val initAwtToolkitAndEventQueueJob = scheduleInitAwtToolkitAndEventQueue(lockSystemDirsJob, busyThread, isHeadless)
-
-  val initLafJob = launch {
-    initAwtToolkitAndEventQueueJob.join()
-    // SwingDispatcher must be used after Toolkit init
-    span("initUi", RawSwingDispatcher) {
-      initUi(isHeadless)
-    }
-  }
-
+  val initAwtToolkitJob = scheduleInitAwtToolkit(lockSystemDirsJob, busyThread)
+  val initEventQueueJob = scheduleInitIdeEventQueue(initAwtToolkitJob, isHeadless)
+  val initLafJob = scheduleInitUi(initAwtToolkitJob, isHeadless)
   if (!isHeadless) {
+    showSplashIfNeeded(initUiDeferred = initLafJob, appInfoDeferred = appInfoDeferred, args = args)
+
     launch {
       lockSystemDirsJob.join()
       span("SvgCache creation") {
@@ -155,7 +150,6 @@ fun CoroutineScope.startApplication(args: List<String>,
       }
     }
 
-    showSplashIfNeeded(initUiDeferred = initLafJob, appInfoDeferred = appInfoDeferred, args = args)
     updateFrameClassAndWindowIconAndPreloadSystemFonts(initLafJob)
   }
 
@@ -264,7 +258,7 @@ fun CoroutineScope.startApplication(args: List<String>,
     }
 
     loadApp(app = app,
-            initAwtToolkitAndEventQueueJob = initAwtToolkitAndEventQueueJob,
+            initAwtToolkitAndEventQueueJob = initEventQueueJob,
             pluginSetDeferred = pluginSetDeferred,
             euaDocumentDeferred = euaDocumentDeferred,
             asyncScope = asyncScope,
