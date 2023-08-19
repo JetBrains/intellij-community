@@ -16,7 +16,6 @@ import com.intellij.ide.RecentProjectsManagerBase
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.util.runOnceForProject
 import com.intellij.idea.getAndUnsetSplashProjectFrame
-import com.intellij.idea.hideSplashBeforeShow
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
@@ -434,7 +433,6 @@ internal fun createNewProjectFrameProducer(frameInfo: FrameInfo?): ProjectFrameP
 
       override fun create(): IdeFrameImpl {
         val frame = IdeFrameImpl()
-        hideSplashBeforeShow(frame)
         setDefaultSize(frame)
         frame.setLocationRelativeTo(null)
         return frame
@@ -451,7 +449,6 @@ internal fun createNewProjectFrameProducer(frameInfo: FrameInfo?): ProjectFrameP
 
       override fun create(): IdeFrameImpl {
         val frame = IdeFrameImpl()
-        hideSplashBeforeShow(frame)
         if (isMaximized && frame.extendedState == Frame.NORMAL && boundsAndDevice != null) {
           frame.normalBounds = boundsAndDevice.first
           frame.screenBounds = ScreenUtil.getScreenDevice(boundsAndDevice.first)?.defaultConfiguration?.bounds

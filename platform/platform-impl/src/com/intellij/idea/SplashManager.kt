@@ -182,6 +182,8 @@ fun hideSplashBeforeShow(window: Window) {
   }
 }
 
+internal fun hasSplash(): Boolean = SPLASH_WINDOW != null
+
 fun hideSplash() {
   splashJob.get().cancel()
 

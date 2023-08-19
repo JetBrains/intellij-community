@@ -7,12 +7,15 @@ import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.IdeTooltipManager
 import com.intellij.ide.dnd.DnDAware
 import com.intellij.idea.AppMode
+import com.intellij.idea.hasSplash
+import com.intellij.idea.hideSplash
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.impl.LaterInvocator
+import com.intellij.openapi.application.impl.RawSwingDispatcher
 import com.intellij.openapi.editor.impl.EditorComponentImpl
 import com.intellij.openapi.project.impl.ProjectLoadingCancelled
 import com.intellij.openapi.ui.AbstractPainter
@@ -85,11 +88,20 @@ class IdeGlassPaneImpl : JComponent, IdeGlassPaneEx, IdeEventQueue.EventDispatch
       installPainters()
     }
     else {
-      loadingIndicator = IdePaneLoadingLayer(pane = this, loadingState, coroutineScope = coroutineScope) {
-        loadingIndicator = null
+      if (hasSplash()) {
+        loadingState.done.invokeOnCompletion {
+          coroutineScope.launch(RawSwingDispatcher) {
+            hideSplash()
+          }
+        }
+      }
+      else {
+        loadingIndicator = IdePaneLoadingLayer(pane = this, loadingState, coroutineScope = coroutineScope) {
+          loadingIndicator = null
+          applyActivationState()
+        }
         applyActivationState()
       }
-      applyActivationState()
     }
   }
 
@@ -202,7 +214,7 @@ class IdeGlassPaneImpl : JComponent, IdeGlassPaneEx, IdeEventQueue.EventDispatch
     }
   }
 
-  fun installPainters() {
+  internal fun installPainters() {
     if (paintersInstalled) {
       return
     }
