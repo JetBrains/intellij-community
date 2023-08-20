@@ -194,9 +194,9 @@ private class TitleButtonsPanel : JPanel(FlowLayout(FlowLayout.LEADING, 0, 0)) {
     }
     if (SystemInfo.isLinux) {
       if (this !is Box) {
-        preferredSize = Dimension(36, 36)
+        preferredSize = Dimension(38, size.height)
       } else {
-        preferredSize = Dimension(2, size.height) // Margin right
+        preferredSize = Dimension(1, size.height) // Margin right
       }
     } else {
       preferredSize = Dimension(size.width, size.height)

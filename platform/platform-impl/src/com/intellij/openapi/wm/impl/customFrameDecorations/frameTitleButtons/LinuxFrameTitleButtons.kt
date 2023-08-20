@@ -3,6 +3,7 @@ package com.intellij.openapi.wm.impl.customFrameDecorations.frameTitleButtons
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.wm.impl.customFrameDecorations.LinuxLookAndFeel
+import com.intellij.openapi.wm.impl.customFrameDecorations.LinuxLookAndFeel.Companion.findIconAbsolutePath
 import com.intellij.openapi.wm.impl.customFrameDecorations.style.HOVER_KEY
 import com.intellij.ui.IconManager
 import com.intellij.ui.JBColor
@@ -33,7 +34,7 @@ class LinuxFrameTitleButtons(
   override val restoreIcon = restore
   override val restoreInactiveIcon = restore
 
-  val maximize = loadLinuxIcon("window-maximize-symbolic")
+  val maximize = loadLinuxIcon("window-maximize-symbolic.svg")
   override val maximizeIcon = maximize
   override val maximizeInactiveIcon = maximize
 
@@ -59,7 +60,6 @@ class LinuxFrameTitleButtons(
     button.isFocusable = false
     button.putClientProperty(AccessibleContext.ACCESSIBLE_NAME_PROPERTY, accessibleName)
     button.text = null
-    //button.preferredSize = Dimension(5, 5)
 
     println("====================================")
     println("====================================")
@@ -77,10 +77,13 @@ class LinuxFrameTitleButtons(
 
 
   private fun loadLinuxIcon(iconName: String): Icon {
+    /*val iconThemeName = LinuxLookAndFeel.getIconTheme()
+    find /usr/share/icons -type f -name "window-maximize-symbolic.svg"
     val themeAdwaita = "Adwaita/scalable/ui/" // Adwaita
     val themeYaru = "Yaru/scalable/ui/" // Yaru
-    val themePapirus = "Papirus/symbolic/actions/" // Papirus
-    var icon = IconManager.getInstance().getIcon("file:/usr/share/icons/$themePapirus$iconName",
+    val themePapirus = "Papirus/symbolic/actions/" // Papirus*/
+    val iconPath = findIconAbsolutePath(iconName)
+    var icon = IconManager.getInstance().getIcon("file:$iconPath",
                                                  AllIcons::class.java.classLoader)
     icon = IconUtil.colorizeReplace(icon, JBColor(0x6c7080, 0xcfd1d8))
     return icon
@@ -89,11 +92,14 @@ class LinuxFrameTitleButtons(
 
 
 private class HoveredCircleButtonUI : BasicButtonUI() {
+  // Adwaita background circle:
+  // - light theme: rgba(0, 0, 0, 0.08) -> 20.40
+  // - dark theme: rgba(255, 255, 255, 0.1) -> 25.5
   private val circleDiameter = 24
   override fun paint(g: Graphics, c: JComponent) {
-    g.color = Color(0x434343)
+    g.color = JBColor(Color(0f, 0f, 0f, 0.1f), Color(1f, 1f, 1f, 0.08f))
     getHoverColor(c)?.let {
-      g.color = Color(0x4e4e4e)
+      g.color = JBColor(Color(0f, 0f, 0f, 0.1f + 0.05f), Color(1f, 1f, 1f, 0.08f + 0.05f))
       //g.fillRect(0, 0, c.width, c.height)
     }
     if (g is Graphics2D) {

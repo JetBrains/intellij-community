@@ -3,11 +3,19 @@ package com.intellij.openapi.wm.impl.customFrameDecorations
 
 import java.io.BufferedReader
 import java.io.InputStreamReader
+import kotlin.concurrent.thread
+
 
 class LinuxLookAndFeel {
   companion object {
+    fun findIconAbsolutePath(iconName: String): String? {
+      val iconTheme = getIconTheme() ?: return null
+      val command = "find /usr/share/icons/$iconTheme -type f -name $iconName"
+      return execute(command)
+    }
+
     fun getIconTheme(): String? {
-      return getDconfEntry("/org/gnome/desktop/interface/icon-theme")
+      return getDconfEntry("/org/gnome/desktop/interface/icon-theme")?.drop(1)?.dropLast(1)
     }
 
     fun getHeaderLayout(): List<String> {
@@ -29,10 +37,45 @@ class LinuxLookAndFeel {
       val process = processBuilder.start()
       val reader = BufferedReader(InputStreamReader(process.inputStream))
 
-      val line: String? = reader.readLine() // Leer la primera línea
-      val exitCode = process.waitFor()
+      val line: String? = reader.readLine()
+      process.waitFor()
 
       return line
+    }
+
+    private fun listenIconThemeChanges() {
+      thread(start = true) {
+        val processBuilder = ProcessBuilder(listOf("dbus-monitor", "member='Notify'"))
+        processBuilder.redirectErrorStream(true)
+
+        val process = processBuilder.start()
+        val reader = BufferedReader(InputStreamReader(process.inputStream))
+
+
+        Runtime.getRuntime().addShutdownHook(Thread {
+          reader.close()
+          process.destroy()
+        })
+
+        var line: String
+
+        while (true) {
+          line = reader.readLine()
+          if (line.contains("/org/gnome/desktop/interface/icon-theme")) {
+            println("Theme changed!!!")
+            subscribers.forEach {it()}
+          }
+        }
+      }
+    }
+
+    private val subscribers = mutableListOf<() -> Unit>()
+    fun onIconThemeChanges(callback: () -> Unit) {
+      subscribers.add(callback)
+    }
+
+    init {
+      //listenIconThemeChanges()
     }
   }
 }
