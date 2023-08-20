@@ -2,13 +2,13 @@
 package org.jetbrains.idea.devkit.kotlin.inspections
 
 import com.intellij.testFramework.TestDataPath
-import org.jetbrains.idea.devkit.inspections.ApplicationServiceAsStaticFinalFieldInspectionTestBase
+import org.jetbrains.idea.devkit.inspections.ApplicationServiceAsStaticFinalFieldOrPropertyInspectionTestBase
 import org.jetbrains.idea.devkit.kotlin.DevkitKtTestsUtil
 
-@TestDataPath("\$CONTENT_ROOT/testData/inspections/applicationServiceAsStaticFinalField")
-class KtApplicationServiceAsStaticFinalFieldInspectionTest : ApplicationServiceAsStaticFinalFieldInspectionTestBase() {
+@TestDataPath("/inspections/applicationServiceAsStaticFinalFieldOrProperty")
+class KtApplicationServiceAsStaticFinalFieldOrPropertyInspectionTest : ApplicationServiceAsStaticFinalFieldOrPropertyInspectionTestBase() {
 
-  override fun getBasePath() = DevkitKtTestsUtil.TESTDATA_PATH + "inspections/applicationServiceAsStaticFinalField"
+  override fun getBasePath() = DevkitKtTestsUtil.TESTDATA_PATH + "inspections/applicationServiceAsStaticFinalFieldOrProperty"
 
   override fun getFileExtension(): String = "kt"
 
@@ -25,6 +25,10 @@ class KtApplicationServiceAsStaticFinalFieldInspectionTest : ApplicationServiceA
   }
 
   fun testLightServices() {
+    doHighlightTest()
+  }
+
+  fun testBackingFields() {
     doHighlightTest()
   }
 }

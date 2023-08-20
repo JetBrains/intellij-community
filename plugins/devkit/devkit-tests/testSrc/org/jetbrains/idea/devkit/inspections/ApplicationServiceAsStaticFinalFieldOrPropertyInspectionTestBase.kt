@@ -7,12 +7,12 @@ import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.name
 import kotlin.io.path.relativeTo
 
-abstract class ApplicationServiceAsStaticFinalFieldInspectionTestBase : LightDevKitInspectionFixTestBase()  {
+abstract class ApplicationServiceAsStaticFinalFieldOrPropertyInspectionTestBase : LightDevKitInspectionFixTestBase()  {
 
   override fun setUp() {
     super.setUp()
     addPlatformClasses()
-    myFixture.enableInspections(ApplicationServiceAsStaticFinalFieldInspection())
+    myFixture.enableInspections(ApplicationServiceAsStaticFinalFieldOrPropertyInspection())
   }
 
   private fun addPlatformClasses() {
@@ -115,6 +115,16 @@ abstract class ApplicationServiceAsStaticFinalFieldInspectionTestBase : LightDev
       }
       """.trimIndent()
     )
+
+    myFixture.addClass(
+      """
+      package kotlin.reflect;
+
+      public class KClass<T> {
+        public Class<T> java;
+      }
+      """.trimIndent()
+    )
   }
 
   private fun getServiceDeclarationPaths(namePrefix: String = ""): Array<String> {
@@ -141,5 +151,4 @@ abstract class ApplicationServiceAsStaticFinalFieldInspectionTestBase : LightDev
     val resultName = testName + suffix?.let { "_$it" }.orEmpty()
     return "${resultName}.$fileExtension" to "${resultName}_after.$fileExtension"
   }
-
 }

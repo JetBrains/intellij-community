@@ -1,0 +1,31 @@
+<html>
+<body>
+Reports assignments of application services to static final fields / immutable properties.
+<p><b>Static final fields (Java) or immutable properties with backing fields (Kotlin)</b></p>
+<p>
+  Such services' assignments contribute to global state and make it impossible to tear down an application and set up another one in tests,
+  therefore, repeated tests in the same process may fail.
+  The only exception is an explicit constructor call to store dummy/default instances.</p>
+<p>
+  The recommended way to avoid storing services is to retrieve a service locally.
+  Alternatively, one can wrap it in <code>java.util.function.Supplier</code> (Java, Kotlin)
+  or convert the property to a function (Kotlin).
+</p>
+<p><b>Example (Java):</b></p>
+<pre><code lang="java">
+  // Incorrect way
+  private static final ManagingFS ourInstance = ApplicationManager.getApplication().getService(ManagingFS.class);
+</code></pre>
+<pre><code lang="java">
+  // Correct way
+  private static final Supplier&lt;ManagingFS&gt; ourInstance = CachedSingletonsRegistry.lazy(() -> {
+    return ApplicationManager.getApplication().getService(ManagingFS.class);
+  });
+</code></pre>
+<pre><code lang="java">
+  // Exception
+  private static final UniqueVFilePathBuilder DUMMY_BUILDER = new UniqueVFilePathBuilder()
+</code></pre>
+<p><small>New in 2023.3</small>
+</body>
+</html>

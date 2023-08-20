@@ -2,19 +2,22 @@
 package org.jetbrains.idea.devkit.kotlin.inspections
 
 import com.intellij.codeInspection.IntentionWrapper
-import com.intellij.codeInspection.LocalQuickFix
+import com.intellij.codeInspection.ProblemHighlightType
+import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.application.CachedSingletonsRegistry
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiEditorUtil
 import com.intellij.psi.util.parentOfType
-import org.jetbrains.idea.devkit.inspections.quickfix.AppServiceAsStaticFinalFieldFixProvider
+import org.jetbrains.idea.devkit.inspections.quickfix.AppServiceAsStaticFinalFieldOrPropertyProvider
 import org.jetbrains.idea.devkit.inspections.quickfix.WrapInSupplierQuickFix
+import org.jetbrains.idea.devkit.kotlin.DevKitKotlinBundle
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.symbols.KtPropertySymbol
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider
@@ -29,13 +32,32 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import java.util.function.Supplier
 
+private class KtAppServiceAsStaticFinalFieldOrPropertyProvider : AppServiceAsStaticFinalFieldOrPropertyProvider {
 
-private class KtAppServiceAsStaticFinalFieldFixProvider : AppServiceAsStaticFinalFieldFixProvider {
+  override fun registerProblem(holder: ProblemsHolder, sourcePsi: PsiElement, anchor: PsiElement) {
+    if (sourcePsi !is KtProperty) return
 
-  override fun getFixes(psiElement: PsiElement): List<LocalQuickFix> {
-    return if (psiElement is KtProperty) {
-      listOf(KtWrapInSupplierQuickFix(psiElement), IntentionWrapper(ConvertPropertyToFunctionIntention()))
-    } else emptyList()
+    if (!sourcePsi.hasBackingField()) return
+
+    holder.registerProblem(
+      anchor,
+      DevKitKotlinBundle.message("inspections.application.service.as.static.immutable.property.with.backing.field.message"),
+      ProblemHighlightType.WARNING,
+      IntentionWrapper(ConvertPropertyToFunctionIntention()),
+      KtWrapInSupplierQuickFix(sourcePsi),
+    )
+  }
+
+  @OptIn(KtAllowAnalysisOnEdt::class)
+  private fun KtProperty.hasBackingField(): Boolean {
+    allowAnalysisOnEdt {
+      val property = this
+
+      analyze(property) {
+        val propertySymbol = property.getVariableSymbol() as? KtPropertySymbol ?: return false
+        return propertySymbol.hasBackingField
+      }
+    }
   }
 
 }
@@ -77,7 +99,7 @@ private class KtWrapInSupplierQuickFix(ktProperty: KtProperty) : WrapInSupplierQ
   }
 
   override fun changeElementInitializerToSupplierCall(project: Project, element: KtProperty, supplierElement: KtProperty) {
-    val receiverName = when(val container = supplierElement.containingClassOrObject) {
+    val receiverName = when (val container = supplierElement.containingClassOrObject) {
       is KtClass -> container.name
       is KtObjectDeclaration -> if (container.isCompanion()) container.containingClassOrObject!!.name else container.name
       else -> null

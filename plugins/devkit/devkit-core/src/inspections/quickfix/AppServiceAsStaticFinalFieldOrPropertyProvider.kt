@@ -3,9 +3,9 @@ package org.jetbrains.idea.devkit.inspections.quickfix
 
 import com.intellij.codeInsight.FileModificationService
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
-import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.LocalQuickFixOnPsiElement
 import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.lang.LanguageExtension
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.CachedSingletonsRegistry
@@ -26,23 +26,29 @@ import org.jetbrains.idea.devkit.DevKitBundle
 import java.util.function.Supplier
 
 
-private val EP_NAME = ExtensionPointName.create<AppServiceAsStaticFinalFieldFixProvider>(
-  "DevKit.lang.appServiceAsStaticFinalFieldQuickFixProvider"
+private val EP_NAME = ExtensionPointName.create<AppServiceAsStaticFinalFieldOrPropertyProvider>(
+  "DevKit.lang.appServiceAsStaticFinalFieldOrPropertyProvider"
 )
 
-internal object AppServiceAsStaticFinalFieldQuickFixProviders : LanguageExtension<AppServiceAsStaticFinalFieldFixProvider>(EP_NAME.name)
+internal object AppServiceAsStaticFinalFieldOrPropertyProviders : LanguageExtension<AppServiceAsStaticFinalFieldOrPropertyProvider>(EP_NAME.name)
 
 @IntellijInternalApi
 @ApiStatus.Internal
-interface AppServiceAsStaticFinalFieldFixProvider {
-  fun getFixes(psiElement: PsiElement): List<LocalQuickFix>
+interface AppServiceAsStaticFinalFieldOrPropertyProvider {
+  fun registerProblem(holder: ProblemsHolder, sourcePsi: PsiElement, anchor: PsiElement)
+
 }
 
 
-private class JavaAppServiceAsStaticFinalFieldFixProvider : AppServiceAsStaticFinalFieldFixProvider {
+private class JavaAppServiceAsStaticFinalFieldOrPropertyProvider : AppServiceAsStaticFinalFieldOrPropertyProvider {
+  override fun registerProblem(holder: ProblemsHolder, sourcePsi: PsiElement, anchor: PsiElement) {
+    if (sourcePsi !is PsiField) return
 
-  override fun getFixes(psiElement: PsiElement): List<LocalQuickFix> {
-    return if (psiElement is PsiField) listOf(JavaWrapInSupplierQuickFix(psiElement)) else emptyList()
+    return holder.registerProblem(
+      anchor,
+      DevKitBundle.message("inspections.application.service.as.static.final.field.message"),
+      JavaWrapInSupplierQuickFix(sourcePsi),
+    )
   }
 
 }

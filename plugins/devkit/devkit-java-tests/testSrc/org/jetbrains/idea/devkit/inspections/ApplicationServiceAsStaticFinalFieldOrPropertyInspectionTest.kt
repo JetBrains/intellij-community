@@ -3,12 +3,11 @@ package org.jetbrains.idea.devkit.inspections
 
 import com.intellij.testFramework.TestDataPath
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil
-import kotlin.io.path.*
 
-@TestDataPath("\$CONTENT_ROOT/testData/inspections/applicationServiceAsStaticFinalField")
-class ApplicationServiceAsStaticFinalFieldInspectionTest : ApplicationServiceAsStaticFinalFieldInspectionTestBase() {
+@TestDataPath("/inspections/applicationServiceAsStaticFinalFieldOrProperty")
+class ApplicationServiceAsStaticFinalFieldOrPropertyInspectionTest : ApplicationServiceAsStaticFinalFieldOrPropertyInspectionTestBase() {
 
-  override fun getBasePath() = DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/applicationServiceAsStaticFinalField"
+  override fun getBasePath() = DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/applicationServiceAsStaticFinalFieldOrProperty"
 
   override fun getFileExtension(): String = "java"
 

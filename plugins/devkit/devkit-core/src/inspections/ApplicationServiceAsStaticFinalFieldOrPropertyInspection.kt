@@ -2,17 +2,15 @@
 package org.jetbrains.idea.devkit.inspections
 
 import com.intellij.codeInspection.ProblemsHolder
-import com.intellij.codeInspection.registerUProblem
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.util.PsiTypesUtil
 import com.intellij.uast.UastHintedVisitorAdapter
-import org.jetbrains.idea.devkit.DevKitBundle
-import org.jetbrains.idea.devkit.inspections.quickfix.AppServiceAsStaticFinalFieldQuickFixProviders
+import org.jetbrains.idea.devkit.inspections.quickfix.AppServiceAsStaticFinalFieldOrPropertyProviders
 import org.jetbrains.uast.*
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 
 
-class ApplicationServiceAsStaticFinalFieldInspection : DevKitUastInspectionBase() {
+class ApplicationServiceAsStaticFinalFieldOrPropertyInspection : DevKitUastInspectionBase() {
 
   override fun buildInternalVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
 
@@ -30,12 +28,10 @@ class ApplicationServiceAsStaticFinalFieldInspection : DevKitUastInspectionBase(
           if (serviceLevel == null || !serviceLevel.isApp()) return true
 
           val sourcePsi = node.sourcePsi ?: return true
-          val fixes = AppServiceAsStaticFinalFieldQuickFixProviders.forLanguage(holder.file.language)?.getFixes(sourcePsi) ?: emptyList()
-          holder.registerUProblem(
-            node,
-            DevKitBundle.message("inspections.application.service.as.static.final.field.message"),
-            *fixes.toTypedArray()
-          )
+          val anchor = node.uastAnchor?.sourcePsi ?: return true
+          val provider = AppServiceAsStaticFinalFieldOrPropertyProviders.forLanguage(holder.file.language) ?: return true
+
+          provider.registerProblem(holder, sourcePsi, anchor)
           return true
         }
 

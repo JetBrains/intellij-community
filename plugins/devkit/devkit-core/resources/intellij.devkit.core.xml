@@ -367,11 +367,11 @@
                      enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.CancellationCheckInLoopsInspection"/>
 
-    <localInspection language="UAST" shortName="ApplicationServiceAsStaticFinalField" groupPathKey="inspections.group.path"
+    <localInspection language="UAST" shortName="ApplicationServiceAsStaticFinalFieldOrProperty" groupPathKey="inspections.group.path"
                      projectType="INTELLIJ_PLUGIN"
-                     key="inspections.application.service.as.static.final.field.display.name" groupKey="inspections.group.code"
+                     key="inspections.application.service.as.static.final.field.or.property.display.name" groupKey="inspections.group.code"
                      enabledByDefault="false" level="WARNING"
-                     implementationClass="org.jetbrains.idea.devkit.inspections.ApplicationServiceAsStaticFinalFieldInspection"/>
+                     implementationClass="org.jetbrains.idea.devkit.inspections.ApplicationServiceAsStaticFinalFieldOrPropertyInspection"/>
 
     <localInspection language="UAST" enabledByDefault="false" level="ERROR"
                      projectType="INTELLIJ_PLUGIN"
@@ -538,9 +538,9 @@
       implementationClass="org.jetbrains.idea.devkit.inspections.ServiceLevelExtractorForJVM"/>
     <lightServiceMustBeFinalErrorMessageProvider language="JVM"
       implementationClass="org.jetbrains.idea.devkit.inspections.LightServiceMustBeFinalErrorMessageProvider"/>
-    <appServiceAsStaticFinalFieldQuickFixProvider
+    <appServiceAsStaticFinalFieldOrPropertyProvider
       language="JAVA"
-      implementationClass="org.jetbrains.idea.devkit.inspections.quickfix.JavaAppServiceAsStaticFinalFieldFixProvider"/>
+      implementationClass="org.jetbrains.idea.devkit.inspections.quickfix.JavaAppServiceAsStaticFinalFieldOrPropertyProvider"/>
   </extensions>
 
   <extensionPoints>
@@ -584,10 +584,10 @@
                     dynamic="true">
       <with attribute="implementationClass" implements="org.jetbrains.idea.devkit.inspections.ErrorMessageProvider"/>
     </extensionPoint>
-    <extensionPoint qualifiedName="DevKit.lang.appServiceAsStaticFinalFieldQuickFixProvider"
+    <extensionPoint qualifiedName="DevKit.lang.appServiceAsStaticFinalFieldOrPropertyProvider"
                     beanClass="com.intellij.lang.LanguageExtensionPoint"
                     dynamic="true">
-      <with attribute="implementationClass" implements="org.jetbrains.idea.devkit.inspections.quickfix.AppServiceAsStaticFinalFieldFixProvider"/>
+      <with attribute="implementationClass" implements="org.jetbrains.idea.devkit.inspections.quickfix.AppServiceAsStaticFinalFieldOrPropertyProvider"/>
     </extensionPoint>
     <extensionPoint qualifiedName="DevKit.lang.uElementAsPsiCheckProvider"
                     beanClass="com.intellij.lang.LanguageExtensionPoint"
