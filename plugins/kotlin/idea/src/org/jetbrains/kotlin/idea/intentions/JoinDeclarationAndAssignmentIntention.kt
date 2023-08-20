@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.intentions
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ScrollType
 import com.intellij.openapi.util.TextRange
+import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReferenceService
 import com.intellij.psi.PsiWhiteSpace
@@ -89,12 +90,14 @@ class JoinDeclarationAndAssignmentIntention : SelfTargetingRangeIntention<KtProp
         val secondaryConstructor = grandParent as? KtSecondaryConstructor
 
         val newProperty = if (!element.isLocal && (initializerBlock != null || secondaryConstructor != null)) {
+            moveComments(from = assignment, to = element)
             assignment.deleteWithPreviousWhitespace()
             if ((initializerBlock?.body as? KtBlockExpression)?.isEmpty() == true) initializerBlock.deleteWithPreviousWhitespace()
             val secondaryConstructorBlock = secondaryConstructor?.bodyBlockExpression
             if (secondaryConstructorBlock?.isEmpty() == true) secondaryConstructorBlock.deleteWithPreviousWhitespace()
             element
         } else {
+            moveComments(from = element, to = assignment)
             assignment.replaced(element).also {
                 element.deleteWithPreviousWhitespace()
             }
@@ -209,6 +212,8 @@ class JoinDeclarationAndAssignmentIntention : SelfTargetingRangeIntention<KtProp
         return type.isSubtypeOf(superType)
     }
 
+    private fun PsiElement.prevSiblings(): Sequence<PsiElement> = siblings(forward = false, withItself = false)
+
     private fun PsiElement.nextSiblings(): Sequence<PsiElement> = siblings(forward = true, withItself = false)
 
     private fun KtDeclaration.descriptor(context: BindingContext): DeclarationDescriptor? =
@@ -216,6 +221,48 @@ class JoinDeclarationAndAssignmentIntention : SelfTargetingRangeIntention<KtProp
 
     private fun KtNameReferenceExpression.descriptor(context: BindingContext): DeclarationDescriptor? =
         context[BindingContext.REFERENCE_TARGET, this]
+
+    private fun moveComments(from: KtExpression, to: KtExpression) {
+        val psiFactory = KtPsiFactory(from.project)
+
+        val prevComments = from.prevComments()
+        val nextComments = from.nextComments()
+
+        if (prevComments.isNotEmpty()) {
+            val first = prevComments.first()
+            val last = prevComments.last()
+            val anchor = to.prevComments().lastOrNull()?.getNextSiblingIgnoringWhitespaceAndComments() ?: to
+            anchor.parent.addRangeBefore(first, last, anchor)
+            first.parent.deleteChildRange(first, last)
+        }
+
+        if (nextComments.isNotEmpty()) {
+            val first = nextComments.first()
+            val last = nextComments.last()
+            val anchor = to.nextComments().lastOrNull() ?: to
+            anchor.parent.addRangeAfter(first, last, anchor)
+            if (anchor is PsiComment) {
+                anchor.parent.addAfter(psiFactory.createNewLine(), anchor)
+            }
+            first.parent.deleteChildRange(first, last)
+        }
+    }
+
+    private fun KtExpression.prevComments(): List<PsiElement> {
+        fun PsiElement.isComment() = this is PsiComment || this is PsiWhiteSpace
+        val comments = allChildren.toList().takeWhile { it.isComment() } +
+                prevSiblings().takeWhile { it.isComment() }.toList().reversed().dropLastWhile { it is PsiWhiteSpace }
+        return comments.takeIf { it.hasComments() }.orEmpty()
+    }
+
+    private fun KtExpression.nextComments(): List<PsiElement> {
+        fun PsiElement.isComment() = this is PsiComment || (this is PsiWhiteSpace && !this.textContains('\n'))
+        val comments = allChildren.toList().takeLastWhile { it.isComment() } +
+                nextSiblings().takeWhile { it.isComment() }.toList().dropLastWhile { it is PsiWhiteSpace }
+        return comments.takeIf { it.hasComments() }.orEmpty()
+    }
+
+    private fun List<PsiElement>.hasComments(): Boolean = any { it is PsiComment }
 }
 
 private fun List<KtBinaryExpression>.validate(propertyContainer: KtElement): Boolean {
