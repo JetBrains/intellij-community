@@ -5,7 +5,6 @@ import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.ElementManipulators
 import com.intellij.psi.impl.DebugUtil
-import com.intellij.psi.util.parentOfType
 import java.io.File
 
 class FrontmatterContentManipulatorTest : MermaidBaseTestCase("psi") {
@@ -21,7 +20,7 @@ class FrontmatterContentManipulatorTest : MermaidBaseTestCase("psi") {
     val testName = getTestName(true)
     val file = myFixture.configureByFile("${testName}_before.mermaid")
 
-    val element = file.findElementAt(myFixture.caretOffset)?.parentOfType<MermaidFrontmatterContent>()
+    val element = file.traverse().filterIsInstance<MermaidFrontmatterContent>().firstOrNull()
     assertNotNull(element)
 
     val manipulator = ElementManipulators.getNotNullManipulator(element!!)
