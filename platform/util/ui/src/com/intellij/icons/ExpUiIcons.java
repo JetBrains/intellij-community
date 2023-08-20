@@ -637,8 +637,8 @@ public final class ExpUiIcons {
     /** 20x20 */ public static final @NotNull Icon Changes_20x20 = load("expui/toolwindow/changes@20x20.svg", 1768066093, 2);
     /** 16x16 */ public static final @NotNull Icon Commit = load("expui/toolwindow/commit.svg", -441038154, 2);
     /** 20x20 */ public static final @NotNull Icon Commit_20x20 = load("expui/toolwindow/commit@20x20.svg", 93507568, 2);
-    /** 16x16 */ public static final @NotNull Icon Coverage = load("expui/toolwindow/coverage.svg", -1671161436, 2);
-    /** 20x20 */ public static final @NotNull Icon Coverage_20x20 = load("expui/toolwindow/coverage@20x20.svg", 172813251, 2);
+    /** 16x16 */ public static final @NotNull Icon Coverage = load("expui/toolwindow/coverage.svg", 211150817, 2);
+    /** 20x20 */ public static final @NotNull Icon Coverage_20x20 = load("expui/toolwindow/coverage@20x20.svg", 1415215084, 2);
     /** 16x16 */ public static final @NotNull Icon Debug = load("expui/toolwindow/debug.svg", -1538863538, 2);
     /** 20x20 */ public static final @NotNull Icon Debug_20x20 = load("expui/toolwindow/debug@20x20.svg", 1669427222, 2);
     /** 16x16 */ public static final @NotNull Icon Dependencies = load("expui/toolwindow/dependencies.svg", -2145342262, 2);
