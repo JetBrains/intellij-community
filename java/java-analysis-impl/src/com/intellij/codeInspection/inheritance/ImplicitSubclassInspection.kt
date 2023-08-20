@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.psi.*
 import com.intellij.psi.PsiJvmConversionHelper.MODIFIERS
+import com.intellij.uast.UastHintedVisitorAdapter
 import com.intellij.uast.UastSmartPointer
 import com.intellij.uast.createUastSmartPointer
 import com.intellij.util.IncorrectOperationException
@@ -27,7 +28,7 @@ import com.intellij.util.SmartList
 import org.jetbrains.annotations.Nls
 import org.jetbrains.uast.UClass
 import org.jetbrains.uast.UDeclaration
-import org.jetbrains.uast.toUElementOfType
+import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 
 class ImplicitSubclassInspection : LocalInspectionTool() {
   private val allModifiers = listOf(PsiModifier.PRIVATE, PsiModifier.PROTECTED, PsiModifier.PACKAGE_LOCAL, PsiModifier.PUBLIC)
@@ -230,15 +231,15 @@ class ImplicitSubclassInspection : LocalInspectionTool() {
 
   }
 
-  override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor = object : PsiElementVisitor() {
-    override fun visitElement(element: PsiElement) {
-      super.visitElement(element)
-      val uClass = element.toUElementOfType<UClass>() ?: return
-      val problems = checkClass(uClass, holder.manager, isOnTheFly)
-      for (problem in problems) {
-        holder.registerProblem(problem)
+  override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
+    return UastHintedVisitorAdapter.create(holder.file.language, object : AbstractUastNonRecursiveVisitor() {
+      override fun visitClass(node: UClass): Boolean {
+        val problems = checkClass(node, holder.manager, isOnTheFly)
+        for (problem in problems) {
+          holder.registerProblem(problem)
+        }
+        return true
       }
-    }
+    }, arrayOf(UClass::class.java))
   }
-
 }

@@ -1401,6 +1401,8 @@
     <java.error.fix errorCode="guarded.pattern.variable.must.be.final" implementationClass="com.intellij.codeInsight.daemon.impl.quickfix.VariableAccessFromInnerClassJava10Fix"/>
     <stripTrailingSpacesFilterFactory implementation="com.intellij.codeEditor.JavaStripTrailingSpacesFilterFactory"/>
 
+    <inspection.basicVisitor class="com.intellij.psi.JavaElementVisitor"/>
+
     <localInspection language="JAVA" shortName="MoveFieldAssignmentToInitializer" enabledByDefault="true" level="INFORMATION"
                      groupPath="Java" groupBundle="messages.InspectionsBundle" groupKey="group.names.code.style.issues"
                      implementationClass="com.intellij.codeInspection.MoveFieldAssignmentToInitializerInspection"

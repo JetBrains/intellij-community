@@ -54,7 +54,7 @@ public class JoinDeclarationAndAssignmentJavaInspection extends AbstractBaseJava
         }
       }
 
-      public void visitLocation(@Nullable PsiElement location) {
+      private void visitLocation(@Nullable PsiElement location) {
         Context context = getContext(location);
         if (context != null) {
           PsiLocalVariable variable = context.myVariable;

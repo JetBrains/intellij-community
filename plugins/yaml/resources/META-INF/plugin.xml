@@ -73,6 +73,8 @@
                                  bundle="messages.YAMLBundle"
                                  key="yaml.smartkeys.option.title"/>
 
+    <inspection.basicVisitor class="org.jetbrains.yaml.psi.YamlPsiElementVisitor"/>
+
     <localInspection language="yaml" bundle="messages.YAMLBundle"
                      shortName="YAMLUnresolvedAlias"
                      key="inspections.unresolved.alias.name" level="ERROR"

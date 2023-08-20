@@ -7,6 +7,7 @@
     <extensionPoint qualifiedName="com.intellij.implicit.resource.closer" interface="com.intellij.codeInspection.resources.ImplicitResourceCloser" dynamic="true"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
+    <inspection.basicVisitor class="com.siyeh.ig.BaseInspectionVisitor"/>
 
     <inspectionElementsMerger implementation="com.siyeh.ig.visibility.MethodOverridesInaccessibleMethodMerger"/>
     <inspectionElementsMerger implementation="com.siyeh.ig.redundancy.RedundantStringOperationMerger"/>
