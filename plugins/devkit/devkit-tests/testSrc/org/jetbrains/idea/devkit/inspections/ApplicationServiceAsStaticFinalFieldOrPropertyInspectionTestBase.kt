@@ -125,6 +125,21 @@ abstract class ApplicationServiceAsStaticFinalFieldOrPropertyInspectionTestBase 
       }
       """.trimIndent()
     )
+
+    myFixture.configureByText(
+      "service.kt",
+      //language=kotlin
+      """
+      package com.intellij.openapi.components
+
+      import com.intellij.openapi.application.ApplicationManager
+
+      inline fun <reified T : Any> service(): T {
+        val serviceClass = T::class.java
+        return ApplicationManager.getApplication().getService(serviceClass)
+      }
+      """.trimIndent()
+    )
   }
 
   private fun getServiceDeclarationPaths(namePrefix: String = ""): Array<String> {
