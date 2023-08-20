@@ -6,10 +6,8 @@ import com.intellij.json.psi.JsonProperty
 import com.intellij.json.psi.JsonStringLiteral
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.mermaid.MermaidBundle
-import com.intellij.mermaid.lang.psi.MermaidDirectiveValue
-import com.intellij.mermaid.lang.psi.MermaidElementFactory
-import com.intellij.mermaid.lang.psi.MermaidFile
-import com.intellij.mermaid.lang.psi.MermaidVisitor
+import com.intellij.mermaid.lang.parser.ParserUtils
+import com.intellij.mermaid.lang.psi.*
 import com.intellij.mermaid.settings.MermaidSettings
 import com.intellij.mermaid.settings.MermaidSettingsState
 import com.intellij.openapi.editor.colors.EditorColorsManager
@@ -34,7 +32,9 @@ class ThemeInspection : LocalInspectionTool() {
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
     if (holder.file !is MermaidFile) return PsiElementVisitor.EMPTY_VISITOR
     return object : MermaidVisitor() {
-      override fun visitDirectiveValue(directiveValue: MermaidDirectiveValue) {
+      override fun visitDirective(directive: MermaidDirective) {
+        val directiveValue = directive.children().firstOrNull { it.hasType(ParserUtils.DIRECTIVE_VALUE) } ?: return
+
         val scheme = EditorColorsManager.getInstance().globalScheme
         if (!ColorUtil.isDark(scheme.defaultBackground)) return
 

@@ -9,6 +9,7 @@ import com.intellij.mermaid.lang.lexer.MermaidTokenTypeSets.STATEMENTS
 import com.intellij.mermaid.lang.lexer.MermaidTokenTypeSets.STRUCTURED_STATEMENTS
 import com.intellij.mermaid.lang.lexer.MermaidTokens
 import com.intellij.mermaid.lang.parser.MermaidElements
+import com.intellij.mermaid.lang.parser.ParserUtils
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import com.intellij.psi.tree.TokenSet
@@ -248,7 +249,7 @@ internal object MermaidSpacingBuilder {
       .between(MermaidTokens.COMMA, MermaidElements.IDENTIFYING_QUOTED_SANKEY_FIELD).spaceIf(false)
       .aroundInside(MermaidTokens.STYLE_SEPARATOR, MermaidElements.STYLED_VERTEX).spaceIf(false)
       .around(MermaidElements.GENERIC_TYPE_ID).spaceIf(false)
-      .around(MermaidElements.DIRECTIVE_VALUE).spaceIf(false)
+      .around(ParserUtils.DIRECTIVE_VALUE).spaceIf(false)
       .around(MermaidTokens.Directives.CLOSE_DIRECTIVE).spaceIf(false)
       .after(MermaidTokens.Directives.OPEN_DIRECTIVE).spaceIf(false)
       .beforeInside(MermaidTokens.COLON, GIT_GRAPH_ATTRIBUTES).spaceIf(false)

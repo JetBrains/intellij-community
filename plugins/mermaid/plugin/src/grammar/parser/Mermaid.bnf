@@ -28,6 +28,7 @@
     'static com.intellij.mermaid.lang.lexer.MermaidTokens.Quadrant.*'
     'static com.intellij.mermaid.lang.lexer.MermaidTokens.ZenUML.*'
     'static com.intellij.mermaid.lang.lexer.MermaidTokens.Sankey.*'
+    'static com.intellij.mermaid.lang.parser.ParserUtils.*'
   ]
   generateTokens=false
   implements="com.intellij.mermaid.lang.psi.MermaidPsiElement"
@@ -872,9 +873,7 @@ complexSankeyText ::= SANKEY_TEXT+
 
 
 directive ::= OPEN_DIRECTIVE directiveValue? CLOSE_DIRECTIVE
-directiveValue ::= directiveValueLines { mixin="com.intellij.mermaid.lang.psi.impl.MermaidLanguageInjectionHost" }
-private directiveValueLines ::= directiveValueLine [directiveValueLines]
-private directiveValueLine ::= DIRECTIVE_TEXT [EOL] | EOL
+external directiveValue ::= directiveParser
 
 flowchartClickStatement ::= CLICK [CLICK_DATA] [HREF] string [string] [LINK_TARGET]
   | CLICK [CALL] CLICK_DATA [callbackArgs] string
