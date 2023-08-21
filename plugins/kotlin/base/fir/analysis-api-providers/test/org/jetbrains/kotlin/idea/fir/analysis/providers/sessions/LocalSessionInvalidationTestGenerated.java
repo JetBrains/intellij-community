@@ -18,7 +18,7 @@ import org.junit.runner.RunWith;
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("testData/sessionInvalidation")
-public class SessionsInvalidationTestGenerated extends AbstractSessionsInvalidationTest {
+public class LocalSessionInvalidationTestGenerated extends AbstractLocalSessionInvalidationTest {
     private void runTest(String testDataFilePath) throws Exception {
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }

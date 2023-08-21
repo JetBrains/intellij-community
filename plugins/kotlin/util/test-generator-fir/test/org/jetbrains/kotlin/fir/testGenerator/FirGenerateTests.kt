@@ -8,7 +8,8 @@ import org.jetbrains.kotlin.idea.fir.actions.AbstractK2AddImportActionTest
 import org.jetbrains.kotlin.idea.fir.actions.AbstractK2BytecodeToolWindowTest
 import org.jetbrains.kotlin.idea.fir.analysis.providers.AbstractIdeKotlinAnnotationsResolverTest
 import org.jetbrains.kotlin.idea.fir.analysis.providers.dependents.AbstractModuleDependentsTest
-import org.jetbrains.kotlin.idea.fir.analysis.providers.sessions.AbstractSessionsInvalidationTest
+import org.jetbrains.kotlin.idea.fir.analysis.providers.sessions.AbstractGlobalSessionInvalidationTest
+import org.jetbrains.kotlin.idea.fir.analysis.providers.sessions.AbstractLocalSessionInvalidationTest
 import org.jetbrains.kotlin.idea.fir.analysis.providers.trackers.AbstractProjectWideOutOfBlockKotlinModificationTrackerTest
 import org.jetbrains.kotlin.idea.fir.codeInsight.AbstractK2MultiModuleLineMarkerTest
 import org.jetbrains.kotlin.idea.fir.completion.*
@@ -76,7 +77,11 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("outOfBlockProjectWide", pattern = KT_WITHOUT_DOTS or Patterns.JAVA)
         }
 
-        testClass<AbstractSessionsInvalidationTest> {
+        testClass<AbstractLocalSessionInvalidationTest> {
+            model("sessionInvalidation", pattern = DIRECTORY, isRecursive = false)
+        }
+
+        testClass<AbstractGlobalSessionInvalidationTest> {
             model("sessionInvalidation", pattern = DIRECTORY, isRecursive = false)
         }
 
