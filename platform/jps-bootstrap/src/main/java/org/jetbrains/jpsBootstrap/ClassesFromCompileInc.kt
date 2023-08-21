@@ -59,11 +59,8 @@ object ClassesFromCompileInc {
         val hash = partsMetadata.files!![modulePrefix]
           ?: throw IllegalStateException("Unable to find module output by name '$modulePrefix' in $metadataJson")
         val outputPartUri = URI.create(partsMetadata.serverUrl + "/" + partsMetadata.prefix + "/" + modulePrefix + "/" + hash + ".jar")
-        verbose("Starting download $outputPartUri")
         val outputPart = downloadFileToCacheLocation(communityRoot, outputPartUri)
-        verbose("Download complete, extracting $outputPartUri")
         val outputPartExtracted = extractFileToCacheLocation(communityRoot, outputPart)
-        verbose("Extraction complete $outputPartUri")
         module to outputPartExtracted
       }
       tasks.add(c)
