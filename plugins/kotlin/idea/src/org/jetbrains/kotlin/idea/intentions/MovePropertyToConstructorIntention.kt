@@ -49,10 +49,9 @@ class MovePropertyToConstructorIntention :
     }
 }
 
-object MovePropertyToConstructorUtils {
-    fun KtProperty.canMoveToConstructor(): Boolean {
-        return isMovableToConstructorByPsi() && (initializer?.isValidInConstructor() ?: true)
-    }
+internal object MovePropertyToConstructorUtils {
+    fun KtProperty.canMoveToConstructor(): Boolean =
+        isMovableToConstructorByPsi() && (initializer?.isValidInConstructor() ?: true)
 
     fun KtProperty.moveToConstructor() {
         val parentClass = PsiTreeUtil.getParentOfType(this, KtClass::class.java) ?: return

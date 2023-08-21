@@ -20,46 +20,37 @@ import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
-import org.jetbrains.kotlin.idea.inspections.CanBePrimaryConstructorPropertyUtils.canBePrimaryConstructorProperty
+import org.jetbrains.kotlin.idea.inspections.CanBePrimaryConstructorPropertyUtils.getCorrespondingPrimaryConstructorParameter
 
 class CanBePrimaryConstructorPropertyInspection : AbstractKotlinInspection() {
+    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor = propertyVisitor(fun(property) {
+        val nameIdentifier = property.nameIdentifier ?: return
+        val parameter = property.getCorrespondingPrimaryConstructorParameter() ?: return
 
-    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
-        return propertyVisitor(fun(property) {
-            val nameIdentifier = property.nameIdentifier ?: return
-            val assignedDescriptor = property.canBePrimaryConstructorProperty() ?: return
-
-            holder.registerProblem(
-                holder.manager.createProblemDescriptor(
-                    nameIdentifier,
-                    nameIdentifier,
-                    KotlinBundle.message("property.is.explicitly.assigned.to.parameter.0.can", assignedDescriptor.name),
-                    ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                    isOnTheFly,
-                    MovePropertyToConstructorIntention()
-                )
+        holder.registerProblem(
+            holder.manager.createProblemDescriptor(
+                nameIdentifier,
+                nameIdentifier,
+                KotlinBundle.message("property.is.explicitly.assigned.to.parameter.0.can", parameter.name),
+                ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                isOnTheFly,
+                MovePropertyToConstructorIntention()
             )
-        })
-    }
-
-    private fun KtClass.isOpen(): Boolean {
-        return hasModifier(KtTokens.OPEN_KEYWORD) || hasModifier(KtTokens.ABSTRACT_KEYWORD) || hasModifier(KtTokens.SEALED_KEYWORD)
-    }
-
-    private fun KtParameter.isUsedInClassInitializer(containingClass: KtClass): Boolean {
-        val classInitializer = containingClass.body?.declarations?.firstIsInstanceOrNull<KtClassInitializer>() ?: return false
-        return hasUsages(classInitializer)
-    }
+        )
+    })
 }
 
-object CanBePrimaryConstructorPropertyUtils {
-    fun KtProperty.canBePrimaryConstructorProperty(): ValueParameterDescriptor? {
+internal object CanBePrimaryConstructorPropertyUtils {
+    fun KtProperty.canBePrimaryConstructorProperty(): Boolean =
+        getCorrespondingPrimaryConstructorParameter() != null
+
+    fun KtProperty.getCorrespondingPrimaryConstructorParameter(): ValueParameterDescriptor? {
         if (isLocal) return null
         if (getter != null || setter != null || delegate != null) return null
-        val assigned = initializer as? KtReferenceExpression ?: return null
 
-        val context = assigned.analyze()
-        val assignedDescriptor = context.get(BindingContext.REFERENCE_TARGET, assigned) as? ValueParameterDescriptor ?: return null
+        val reference = initializer as? KtReferenceExpression ?: return null
+        val context = reference.analyze()
+        val assignedDescriptor = context.get(BindingContext.REFERENCE_TARGET, reference) as? ValueParameterDescriptor ?: return null
 
         val containingConstructor = assignedDescriptor.containingDeclaration as? ClassConstructorDescriptor ?: return null
         if (containingConstructor.containingDeclaration.isData) return null
