@@ -611,7 +611,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
   private fun doSetLaF(lookAndFeelInfo: LookAndFeelInfo, installEditorScheme: Boolean): Boolean {
     val defaults = UIManager.getDefaults()
     defaults.clear()
-    IdeaLaf.fillFallbackDefaults(defaults)
+    fillFallbackDefaults(defaults)
     defaults.putAll(ourDefaults)
     if (!isFirstSetup) {
       colorPatcherProvider = null
@@ -625,9 +625,6 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
       try {
         UIManager.setLookAndFeel(laf)
         AppUIUtil.updateForDarcula(true)
-        //if (lafNameOrder.containsKey(lookAndFeelInfo.getName())) {
-        //  updateIconsUnderSelection(true);
-        //}
       }
       catch (e: Exception) {
         LOG.error(e)
