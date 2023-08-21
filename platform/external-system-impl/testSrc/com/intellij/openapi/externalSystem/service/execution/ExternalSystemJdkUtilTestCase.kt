@@ -85,11 +85,7 @@ abstract class ExternalSystemJdkUtilTestCase : SdkTestCase() {
     }
 
     fun withoutRegisteredSdks(action: () -> Unit) {
-      val application = ApplicationManager.getApplication()
-      Disposer.newDisposable().use {
-        application.replaceService(ProjectJdkTable::class.java, ProjectJdkTableImpl(), it)
-        assertUnexpectedSdksRegistration(action)
-      }
+      assertUnexpectedSdksRegistration(action)
     }
 
     fun withRegisteredSdks(vararg sdks: Sdk, action: () -> Unit) {

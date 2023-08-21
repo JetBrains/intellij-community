@@ -189,8 +189,13 @@ abstract class SdkTestCase : LightPlatformTestCase() {
       val sdkModificator = sdk.sdkModificator
       sdkModificator.homePath = sdkInfo.homePath
       sdkModificator.versionString = sdkInfo.versionString
-      ApplicationManager.getApplication().runWriteAction {
-        sdkModificator.commitChanges()
+
+      val application = ApplicationManager.getApplication()
+      val runnable = { sdkModificator.commitChanges() }
+      if (application.isDispatchThread) {
+        application.runWriteAction(runnable)
+      } else {
+        application.invokeAndWait { application.runWriteAction(runnable) }
       }
       createdSdks[FileUtil.toSystemDependentName(sdkInfo.homePath)] = sdk
       return sdk
