@@ -340,6 +340,9 @@
       <add-to-group group-id="VcsToolbarActions" anchor="after" relative-to-action="CheckinProject"/>
       <add-to-group group-id="VcsNavBarToolbarActions" anchor="after" relative-to-action="CheckinProject"/>
     </action>
+    <action id="Git.Stage.Enable" class="git4idea.index.actions.GitEnableStagingAreaAction">
+      <add-to-group group-id="ChangesViewToolbar" anchor="last"/>
+    </action>
     <action id="Git.Stage.Add" class="git4idea.index.actions.GitAddAction" use-shortcut-of="ChangesView.AddUnversioned"/>
     <action id="Git.Stage.Add.No.Content" class="git4idea.index.actions.GitAddWithoutContent"/>
     <action id="Git.Stage.Reset" class="git4idea.index.actions.GitResetAction" use-shortcut-of="ChangesView.Revert"/>
@@ -379,6 +382,7 @@
         <separator key="separator.show"/>
         <reference id="Git.Stage.ToggleIgnored"/>
       </group>
+      <reference id="Git.Stage.Enable"/>
     </group>
     <group id="Git.Stage.Tree.Menu">
       <reference id="Git.Stage.Merge"/>
