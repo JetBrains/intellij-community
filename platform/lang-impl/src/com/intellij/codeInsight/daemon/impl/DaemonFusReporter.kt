@@ -17,6 +17,7 @@ import com.intellij.openapi.editor.ex.EditorMarkupModel
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.TextEditor
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
@@ -36,7 +37,11 @@ open class DaemonFusReporter(private val project: Project) : DaemonCodeAnalyzer.
   @Volatile
   protected var canceled: Boolean = false
 
+  private var isDumbMode: Boolean = false
+
   override fun daemonStarting(fileEditors: Collection<FileEditor>) {
+    // it's important to check for dumb mode here because state can change to opposite in daemonFinished
+    isDumbMode = DumbService.isDumb(project)
     canceled = false
     daemonStartTime = System.currentTimeMillis()
     val editor = fileEditors.asSequence().filterIsInstance<TextEditor>().firstOrNull()?.editor
@@ -48,7 +53,6 @@ open class DaemonFusReporter(private val project: Project) : DaemonCodeAnalyzer.
       val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document)
       if (psiFile == null) null else FileStatusMap.getDirtyTextRange(document, psiFile, Pass.UPDATE_ALL)
     }
-    documentModificationStamp = document?.modificationStamp?:0
     documentStartedHash = document?.hashCode() ?: 0
 
     if (!initialEntireFileHighlightingReported) {
@@ -105,7 +109,8 @@ open class DaemonFusReporter(private val project: Project) : DaemonCodeAnalyzer.
       DaemonFusCollector.LINES with lines,
       EventFields.FileType with fileType,
       DaemonFusCollector.ENTIRE_FILE_HIGHLIGHTED with wasEntireFileHighlighted,
-      DaemonFusCollector.CANCELED with canceled
+      DaemonFusCollector.CANCELED with canceled,
+      DaemonFusCollector.DUMB_MODE with isDumbMode,
     )
     docPreviousAnalyzedModificationStamp = document?.modificationStamp ?: 0
   }
@@ -122,29 +127,44 @@ private class DaemonFusCollector : CounterUsagesCollector() {
   companion object {
     @JvmField
     val GROUP: EventLogGroup = EventLogGroup("daemon", 5)
+
     @JvmField
     val ERRORS: IntEventField = EventFields.Int("errors")
+
     @JvmField
     val WARNINGS: IntEventField = EventFields.Int("warnings")
+
     @JvmField
     val LINES: IntEventField = EventFields.Int("lines")
+
     @JvmField
-    /**
-     * `true` if the daemon was started with the entire file range,
-     * `false` when the daemon was started with sub-range of the file, for example, after the change inside a code block
-     */
+      /**
+       * `true` if the daemon was started with the entire file range,
+       * `false` when the daemon was started with sub-range of the file, for example, after the change inside a code block
+       */
     val ENTIRE_FILE_HIGHLIGHTED: BooleanEventField = EventFields.Boolean("entireFileHighlighted")
 
     @JvmField
-    /**
-     * `true` if the daemon was finished because of some cancellation event (e.g., user tried to type something into the editor).
-     * Usually it means the highlighting results are incomplete.
-     */
+      /**
+       * `true` if the daemon was finished because of some cancellation event (e.g., user tried to type something into the editor).
+       * Usually it means the highlighting results are incomplete.
+       */
     val CANCELED: BooleanEventField = EventFields.Boolean("canceled")
 
     @JvmField
-    val FINISHED: VarargEventId = GROUP.registerVarargEvent("finished",
-         EventFields.DurationMs, ERRORS, WARNINGS, LINES, EventFields.FileType, ENTIRE_FILE_HIGHLIGHTED, CANCELED)
+    val DUMB_MODE: BooleanEventField = EventFields.Boolean("dumb_mode")
+
+    @JvmField
+    val FINISHED: VarargEventId = GROUP.registerVarargEvent(
+      "finished",
+      EventFields.DurationMs,
+      ERRORS,
+      WARNINGS,
+      LINES,
+      EventFields.FileType,
+      ENTIRE_FILE_HIGHLIGHTED,
+      CANCELED,
+      DUMB_MODE)
   }
 
   override fun getGroup(): EventLogGroup = GROUP
