@@ -46,9 +46,8 @@ open class DarculaLaf : BasicLookAndFeel(), UserDataHolder {
   private var disposable: Disposable? = null
   private val userData = UserDataHolderBase()
   protected val baseDefaults: UIDefaults = UIDefaults()
-  override fun <T> getUserData(key: Key<T>): T? {
-    return userData.getUserData(key)
-  }
+
+  override fun <T> getUserData(key: Key<T>) = userData.getUserData(key)
 
   override fun <T> putUserData(key: Key<T>, value: T?) {
     userData.putUserData(key, value)
@@ -63,26 +62,26 @@ open class DarculaLaf : BasicLookAndFeel(), UserDataHolder {
         for (key in defaults.keys) {
           if (key.toString().endsWith(".font")) {
             val font = toFont(defaults, key)
-            defaults[key] = FontUIResource("Dialog", font.style, font.size)
+            defaults.put(key, FontUIResource("Dialog", font.style, font.size))
           }
         }
       }
       initInputMapDefaults(defaults)
-      initIdeaDefaults(defaults)
+      initDarculaDefaults(defaults)
       patchComboBox(metalDefaults, defaults)
       defaults.remove("Spinner.arrowButtonBorder")
-      defaults["Spinner.arrowButtonSize"] = JBDimension(16, 5).asUIResource()
+      defaults.put("Spinner.arrowButtonSize", JBDimension(16, 5).asUIResource())
       if (SystemInfoRt.isMac) {
-        defaults["RootPane.defaultButtonWindowKeyBindings"] = arrayOf<Any>(
+        defaults.put("RootPane.defaultButtonWindowKeyBindings", arrayOf<Any>(
           "ENTER", "press",
           "released ENTER", "release",
           "ctrl ENTER", "press",
           "ctrl released ENTER", "release",
           "meta ENTER", "press",
           "meta released ENTER", "release"
-        )
+        ))
       }
-      defaults["EditorPane.font"] = toFont(defaults, "TextField.font")
+      defaults.put("EditorPane.font", toFont(defaults, "TextField.font"))
       return defaults
     }
     catch (e: Exception) {
@@ -96,9 +95,9 @@ open class DarculaLaf : BasicLookAndFeel(), UserDataHolder {
   protected open val systemPrefix: String?
     get() = null
 
-  protected fun initIdeaDefaults(defaults: UIDefaults) {
+  private fun initDarculaDefaults(defaults: UIDefaults) {
     loadDefaults(defaults)
-    defaults["Table.ancestorInputMap"] = LazyInputMap(arrayOf<Any>(
+    defaults.put("Table.ancestorInputMap", LazyInputMap(arrayOf<Any>(
       "ctrl C", "copy",
       "meta C", "copy",
       "ctrl V", "paste",
@@ -150,19 +149,18 @@ open class DarculaLaf : BasicLookAndFeel(), UserDataHolder {
       "meta A", "selectAll",
       "ESCAPE", "cancel",
       "F2", "startEditing"
-    ))
+    )))
   }
 
   protected open fun loadDefaults(defaults: UIDefaults) {
-    defaults["ClassLoader"] = javaClass.getClassLoader()
+    defaults.put("ClassLoader", javaClass.getClassLoader())
     loadDefaultsFromJson(defaults)
   }
 
-  protected fun loadDefaultsFromJson(defaults: UIDefaults) {
+  private fun loadDefaultsFromJson(defaults: UIDefaults) {
     loadDefaultsFromJson(defaults, prefix)
-    val systemPrefix = systemPrefix
-    if (systemPrefix != null) {
-      loadDefaultsFromJson(defaults, systemPrefix)
+    systemPrefix?.let {
+      loadDefaultsFromJson(defaults, it)
     }
   }
 
@@ -218,10 +216,12 @@ open class DarculaLaf : BasicLookAndFeel(), UserDataHolder {
     }
     eventQueue.addDispatcher(object : IdeEventQueue.EventDispatcher {
       private var mnemonicAlarm: Alarm? = null
+
       override fun dispatch(e: AWTEvent): Boolean {
         if (e !is KeyEvent || e.keyCode != KeyEvent.VK_ALT) {
           return false
         }
+
         isAltPressed = e.getID() == KeyEvent.KEY_PRESSED
         var mnemonicAlarm = mnemonicAlarm
         if (mnemonicAlarm == null) {
@@ -231,8 +231,7 @@ open class DarculaLaf : BasicLookAndFeel(), UserDataHolder {
         mnemonicAlarm.cancelAllRequests()
         val focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().focusOwner
         if (focusOwner != null) {
-          mnemonicAlarm.addRequest(
-            Runnable { repaintMnemonics(focusOwner, isAltPressed) }, 10)
+          mnemonicAlarm.addRequest(Runnable { repaintMnemonics(focusOwner, isAltPressed) }, 10)
         }
         return false
       }
@@ -241,13 +240,14 @@ open class DarculaLaf : BasicLookAndFeel(), UserDataHolder {
 
   override fun uninitialize() {
     try {
-      base!!.uninitialize()
+      base?.uninitialize()
     }
     catch (ignore: Exception) {
     }
-    if (disposable != null) {
-      Disposer.dispose(disposable!!)
+
+    disposable?.let {
       disposable = null
+      Disposer.dispose(it)
     }
   }
 
@@ -266,7 +266,7 @@ open class DarculaLaf : BasicLookAndFeel(), UserDataHolder {
     }
   }
 
-  override fun getDisabledIcon(component: JComponent, icon: Icon?): Icon? = icon?.let { IconLoader.getDisabledIcon(it) }
+  override fun getDisabledIcon(component: JComponent?, icon: Icon?): Icon? = icon?.let { IconLoader.getDisabledIcon(it) }
 
   override fun getSupportsWindowDecorations() = true
 
