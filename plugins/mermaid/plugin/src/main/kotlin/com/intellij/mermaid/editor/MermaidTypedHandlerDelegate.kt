@@ -42,10 +42,11 @@ class MermaidTypedHandlerDelegate : TypedHandlerDelegate() {
       }
     }
     if (c == '{' && offset - 3 >= 0 && document.getText(TextRange(offset - 3, offset)) == "%%{") {
-      if (document.textLength == 3 || document.getText(TextRange(offset - 3, offset + 1)) != "%%{}") {
-        writeText(editor, offset, "}")
+      if (offset + 1 > document.textLength || document.getText(TextRange(offset - 3, offset + 1)) != "%%{}") {
+        writeText(editor, offset, "}%%", offset)
+      } else {
+        writeText(editor, offset + 1, "%%", offset)
       }
-      writeText(editor, offset + 1, "%%", offset)
     }
 
     return Result.CONTINUE
