@@ -42,8 +42,13 @@ public class WebPreviewFileEditor extends UserDataHolderBase implements FileEdit
   public WebPreviewFileEditor(@NotNull Project project, @NotNull WebPreviewVirtualFile file) {
     myFile = file.getOriginalFile();
     myUrl = file.getPreviewUrl().toExternalForm();
-    myPanel = new JCEFHtmlPanel(myUrl);
-    myPanel.setPageBackgroundColor("white");
+    myPanel = new JCEFHtmlPanel(myUrl) {
+      @Override
+      protected @NotNull Color getBackgroundColor() {
+        //noinspection UseJBColor
+        return Color.WHITE;
+      }
+    };
     reloadPage();
     previewsOpened++;
     showPreviewTooltip();
