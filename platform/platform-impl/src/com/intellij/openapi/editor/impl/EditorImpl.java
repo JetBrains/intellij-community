@@ -3901,7 +3901,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           if (composedTextIndex < text.getEndIndex()) {
             String composedString = createComposedString(composedTextIndex, text);
             if (myUseInputMethodInlay) {
-              var offset = getCaretModel().getPrimaryCaret().getOffset();
+              runUndoTransparent(() -> EditorModificationUtil.deleteSelectedTextForAllCarets(EditorImpl.this));
+
+              var offset = getCaretModel().getCurrentCaret().getOffset();
               var caret = e.getCaret();
               var leftLength = caret != null ? caret.getInsertionIndex() : 0;
               if (leftLength > 0) {
