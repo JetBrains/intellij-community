@@ -1,4 +1,4 @@
-package com.intellij.codeInsight.codeVision.ui.renderers.v2
+package com.intellij.codeInsight.codeVision.ui.renderers
 
 import com.intellij.codeInsight.codeVision.CodeVisionEntry
 import com.intellij.codeInsight.codeVision.ui.model.CodeVisionListData

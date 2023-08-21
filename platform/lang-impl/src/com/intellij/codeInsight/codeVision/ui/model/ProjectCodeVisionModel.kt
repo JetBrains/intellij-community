@@ -4,6 +4,7 @@ package com.intellij.codeInsight.codeVision.ui.model
 import com.intellij.codeInsight.codeVision.*
 import com.intellij.codeInsight.codeVision.settings.CodeVisionSettings
 import com.intellij.codeInsight.codeVision.ui.popup.CodeVisionPopup
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.Inlay
@@ -11,7 +12,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.jetbrains.rd.util.reactive.ViewableMap
 
-
+@Service(Service.Level.PROJECT)
 class ProjectCodeVisionModel private constructor(val project: Project) {
 
   companion object {
@@ -23,9 +24,6 @@ class ProjectCodeVisionModel private constructor(val project: Project) {
   }
 
   val maxVisibleLensCount: ViewableMap<CodeVisionAnchorKind, Int> = ViewableMap()
-  //val hoveredInlay: Property<Inlay<*>?> = Property(null)
-  //val hoveredEntry: Property<CodeVisionEntry?> = Property(null)
-  //val lensPopupActive: Property<Boolean> = Property(false)
 
   val moreEntry: AdditionalCodeVisionEntry = AdditionalCodeVisionEntry(MORE_PROVIDER_ID, CodeVisionBundle.message("more"))
 

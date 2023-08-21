@@ -5,7 +5,7 @@ import com.intellij.codeInsight.codeVision.CodeVisionHost
 import com.intellij.codeInsight.codeVision.CodeVisionInitializer
 import com.intellij.codeInsight.codeVision.settings.CodeVisionSettings
 import com.intellij.codeInsight.codeVision.ui.model.CodeVisionListData
-import com.intellij.codeInsight.codeVision.ui.renderers.v2.CodeVisionInlayRenderer
+import com.intellij.codeInsight.codeVision.ui.renderers.CodeVisionInlayRenderer
 import com.intellij.codeInsight.hints.InlayDumpUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.TestModeFlags

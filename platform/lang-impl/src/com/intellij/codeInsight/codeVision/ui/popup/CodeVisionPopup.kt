@@ -4,7 +4,7 @@ import com.intellij.codeInsight.codeVision.CodeVisionEntry
 import com.intellij.codeInsight.codeVision.ui.model.CodeVisionListData
 import com.intellij.codeInsight.codeVision.ui.model.RangeCodeVisionModel
 import com.intellij.codeInsight.codeVision.ui.popup.layouter.*
-import com.intellij.codeInsight.codeVision.ui.renderers.v2.CodeVisionInlayRenderer
+import com.intellij.codeInsight.codeVision.ui.renderers.CodeVisionInlayRenderer
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.project.Project

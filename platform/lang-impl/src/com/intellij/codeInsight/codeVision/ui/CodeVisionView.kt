@@ -9,9 +9,10 @@ import com.intellij.codeInsight.codeVision.ui.model.CodeVisionVisualVerticalPosi
 import com.intellij.codeInsight.codeVision.ui.model.ProjectCodeVisionModel
 import com.intellij.codeInsight.codeVision.ui.model.RangeCodeVisionModel
 import com.intellij.codeInsight.codeVision.ui.popup.CodeVisionPopup
-import com.intellij.codeInsight.codeVision.ui.renderers.v2.BlockCodeVisionInlayRenderer
-import com.intellij.codeInsight.codeVision.ui.renderers.v2.CodeVisionInlayRenderer
-import com.intellij.codeInsight.codeVision.ui.renderers.v2.InlineCodeVisionInlayRenderer
+import com.intellij.codeInsight.codeVision.ui.renderers.BlockCodeVisionInlayRenderer
+import com.intellij.codeInsight.codeVision.ui.renderers.CodeVisionInlayRenderer
+import com.intellij.codeInsight.codeVision.ui.renderers.InlineCodeVisionInlayRenderer
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.LogicalPosition
@@ -26,7 +27,7 @@ import com.jetbrains.rd.util.lifetime.LifetimeDefinition
 import com.jetbrains.rd.util.lifetime.isAlive
 import com.jetbrains.rd.util.reflection.usingTrueFlag
 
-
+@Service(Service.Level.PROJECT)
 class CodeVisionView(val project: Project) {
   companion object {
     private val logger = Logger.getInstance(CodeVisionView::class.java)
