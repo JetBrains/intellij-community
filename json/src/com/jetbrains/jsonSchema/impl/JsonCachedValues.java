@@ -6,6 +6,7 @@ import com.intellij.json.navigation.JsonQualifiedNameKind;
 import com.intellij.json.navigation.JsonQualifiedNameProvider;
 import com.intellij.json.psi.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
@@ -49,6 +50,7 @@ public final class JsonCachedValues {
 
   static final String URL_CACHE_KEY = "JsonSchemaUrlCache";
   private static final Key<CachedValue<String>> SCHEMA_URL_KEY = Key.create(URL_CACHE_KEY);
+
   @Nullable
   public static String getSchemaUrlFromSchemaProperty(@NotNull VirtualFile file,
                                                       @NotNull Project project) {
@@ -103,6 +105,7 @@ public final class JsonCachedValues {
   static final String ID_CACHE_KEY = "JsonSchemaIdCache";
   static final String OBSOLETE_ID_CACHE_KEY = "JsonSchemaObsoleteIdCache";
   private static final Key<CachedValue<String>> SCHEMA_ID_CACHE_KEY = Key.create(ID_CACHE_KEY);
+
   @Nullable
   public static String getSchemaId(@NotNull final VirtualFile schemaFile,
                                    @NotNull final Project project) {
@@ -131,10 +134,12 @@ public final class JsonCachedValues {
 
   static final String ID_PATHS_CACHE_KEY = "JsonSchemaIdToPointerCache";
   private static final Key<CachedValue<Map<String, String>>> SCHEMA_ID_PATHS_CACHE_KEY = Key.create(ID_PATHS_CACHE_KEY);
+
   public static Collection<String> getAllIdsInFile(PsiFile psiFile) {
     Map<String, String> map = getOrComputeIdsMap(psiFile);
     return map == null ? ContainerUtil.emptyList() : map.keySet();
   }
+
   @Nullable
   public static String resolveId(PsiFile psiFile, String id) {
     Map<String, String> map = getOrComputeIdsMap(psiFile);
@@ -148,7 +153,8 @@ public final class JsonCachedValues {
 
   @NotNull
   private static Map<String, String> computeIdsMap(PsiFile file) {
-    return SyntaxTraverser.psiTraverser(file).filter(JsonProperty.class).filter(p -> "$id".equals(StringUtil.unquoteString(p.getNameElement().getText())))
+    return SyntaxTraverser.psiTraverser(file).filter(JsonProperty.class)
+      .filter(p -> "$id".equals(StringUtil.unquoteString(p.getNameElement().getText())))
       .filter(p -> p.getValue() instanceof JsonStringLiteral)
       .toMap(p -> ((JsonStringLiteral)Objects.requireNonNull(p.getValue())).getValue(),
              p -> JsonQualifiedNameProvider.generateQualifiedName(p.getParent(), JsonQualifiedNameKind.JsonPointer));
@@ -166,6 +172,7 @@ public final class JsonCachedValues {
 
 
   private static final Key<CachedValue<List<JsonSchemaCatalogEntry>>> SCHEMA_CATALOG_CACHE_KEY = Key.create("JsonSchemaCatalogCache");
+
   @Nullable
   public static List<JsonSchemaCatalogEntry> getSchemaCatalog(@NotNull final VirtualFile catalog,
                                                               @NotNull final Project project) {
@@ -177,7 +184,8 @@ public final class JsonCachedValues {
     if (!catalog.isValid()) return null;
     VirtualFile virtualFile = catalog.getVirtualFile();
     if (virtualFile == null || !virtualFile.isValid()) return null;
-    JsonValue value = AstLoadingFilter.forceAllowTreeLoading(catalog, () -> catalog instanceof JsonFile ? ((JsonFile)catalog).getTopLevelValue() : null);
+    JsonValue value =
+      AstLoadingFilter.forceAllowTreeLoading(catalog, () -> catalog instanceof JsonFile ? ((JsonFile)catalog).getTopLevelValue() : null);
     if (!(value instanceof JsonObject)) return null;
 
     JsonProperty schemas = ((JsonObject)value).findProperty("schemas");
@@ -191,7 +199,7 @@ public final class JsonCachedValues {
   }
 
   private static void fillMap(@NotNull JsonArray array, @NotNull List<JsonSchemaCatalogEntry> catalogMap) {
-    for (JsonValue value: array.getValueList()) {
+    for (JsonValue value : array.getValueList()) {
       JsonObject obj = ObjectUtils.tryCast(value, JsonObject.class);
       if (obj == null) continue;
       JsonProperty fileMatch = obj.findProperty("fileMatch");
@@ -225,7 +233,7 @@ public final class JsonCachedValues {
 
     if (value instanceof JsonArray) {
       List<String> strings = new ArrayList<>();
-      for (JsonValue val: ((JsonArray)value).getValueList()) {
+      for (JsonValue val : ((JsonArray)value).getValueList()) {
         if (val instanceof JsonStringLiteral) {
           strings.add(((JsonStringLiteral)val).getValue());
         }
@@ -262,7 +270,11 @@ public final class JsonCachedValues {
 
   public static boolean hasComputedSchemaObjectForFile(@NotNull PsiFile file) {
     CachedValue<JsonSchemaObject> data = CompletionUtil.getOriginalOrSelf(file).getUserData(OBJECT_FOR_FILE_KEY);
-    return data != null && data.hasUpToDateValue();
+    if (data == null) return false;
+    Getter<JsonSchemaObject> cachedValueGetter = data.getUpToDateOrNull();
+    if (cachedValueGetter == null) return false;
+    JsonSchemaObject upToDateCachedValueOrNull = cachedValueGetter.get();
+    return upToDateCachedValueOrNull != null && upToDateCachedValueOrNull != JsonSchemaObject.NULL_OBJ;
   }
 
   private static @NotNull Pair<PsiFile, JsonSchemaObject> getSchemaFile(@NotNull PsiFile originalFile,
