@@ -44,7 +44,8 @@ object HostedGitRepositoryReferenceUtil {
     project: Project, repositoryManager: HostedGitRepositoriesManager<*>, file: VirtualFile, revision: GitRevisionNumber,
     uriProducer: (repository: URI, revisionHash: String) -> URI
   ): List<HostedGitRepositoryReference> {
-    val repository = GitUtil.getRepositoryManager(project).getRepositoryForFileQuick(file) ?: return emptyList()
+    val filePath = VcsUtil.getFilePath(file)
+    val repository = GitUtil.getRepositoryManager(project).getRepositoryForFileQuick(filePath) ?: return emptyList()
     return findReferences(repositoryManager, repository, revision, uriProducer)
   }
 
