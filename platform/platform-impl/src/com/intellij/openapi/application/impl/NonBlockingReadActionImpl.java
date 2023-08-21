@@ -44,8 +44,11 @@ import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import io.opentelemetry.api.metrics.Meter;
+import kotlin.Result;
+import kotlin.Unit;
+import kotlin.coroutines.Continuation;
 import kotlin.reflect.KClass;
-import kotlinx.coroutines.CompletableJob;
+import kotlinx.coroutines.Job;
 import org.jetbrains.annotations.*;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.CancellablePromise;
@@ -635,7 +638,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
       if (super.isCancelled()) {
         return true;
       }
-      CompletableJob job = myChildContext.getJob();
+      Job job = myChildContext.getJob();
       return job != null && job.isCancelled();
     }
 
@@ -644,23 +647,23 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
     }
 
     private void cancelJob(@Nullable CancellationException e) {
-      CompletableJob job = myChildContext.getJob();
+      Job job = myChildContext.getJob();
       if (job != null) {
         job.cancel(e);
       }
     }
 
     private void completeJob() {
-      CompletableJob job = myChildContext.getJob();
-      if (job != null) {
-        job.complete();
+      Continuation<Unit> continuation = myChildContext.getContinuation();
+      if (continuation != null) {
+        continuation.resumeWith(Unit.INSTANCE);
       }
     }
 
     private void failJob(@NotNull Throwable reason) {
-      CompletableJob job = myChildContext.getJob();
-      if (job != null) {
-        job.completeExceptionally(reason);
+      Continuation<Unit> continuation = myChildContext.getContinuation();
+      if (continuation != null) {
+        continuation.resumeWith(new Result.Failure(reason));
       }
     }
 

@@ -16,7 +16,7 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.ChildContext;
 import com.intellij.util.concurrency.Propagation;
 import kotlin.coroutines.CoroutineContext;
-import kotlinx.coroutines.CompletableJob;
+import kotlinx.coroutines.Job;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -127,7 +127,7 @@ public class MergingTaskQueue<T extends MergeableQueueTask<T>> {
 
     var childContext = AppExecutorUtil.propagateContextOrCancellation() ? Propagation.createChildContext() : null;
     CoroutineContext currentContext = childContext == null ? null : childContext.getContext();
-    CompletableJob job = childContext == null ? null : childContext.getJob();
+    Job job = childContext == null ? null : childContext.getJob();
 
     synchronized (myLock) {
       for (int i = myTasksQueue.size() - 1; i >= 0; i--) {

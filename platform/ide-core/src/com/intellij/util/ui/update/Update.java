@@ -6,7 +6,7 @@ import com.intellij.openapi.application.AccessToken;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.ChildContext;
 import com.intellij.util.concurrency.Propagation;
-import kotlinx.coroutines.CompletableJob;
+import kotlinx.coroutines.Job;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -128,7 +128,7 @@ public abstract class Update extends ComparableObject.Impl implements Runnable {
   public void setRejected() {
     myRejected = true;
     if (myChildContext != null) {
-      CompletableJob job = myChildContext.getJob();
+      Job job = myChildContext.getJob();
       if (job != null) {
         job.cancel(null);
       }

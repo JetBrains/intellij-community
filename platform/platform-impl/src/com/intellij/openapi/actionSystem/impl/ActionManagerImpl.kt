@@ -192,7 +192,7 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
 
   override fun removeTimerListener(listener: TimerListener) {
     if (listener is CapturingListener) {
-      listener.childContext.job?.cancel(null)
+      listener.childContext.continuation?.context?.job?.cancel()
     }
 
     if (ApplicationManager.getApplication().isUnitTestMode) {

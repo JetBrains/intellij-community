@@ -23,7 +23,7 @@ import com.intellij.util.ui.EDT;
 import kotlin.Unit;
 import kotlin.coroutines.CoroutineContext;
 import kotlin.coroutines.EmptyCoroutineContext;
-import kotlinx.coroutines.CompletableJob;
+import kotlinx.coroutines.Job;
 import org.jetbrains.annotations.*;
 
 import java.util.concurrent.*;
@@ -442,7 +442,7 @@ public final class ProgressRunner<R> {
     CompletableFuture<R> resultFuture = new CompletableFuture<>();
     ChildContext childContext = Propagation.createChildContext();
     CoroutineContext context = childContext.getContext();
-    CompletableJob job = childContext.getJob();
+    Job job = childContext.getJob();
     if (job != null) {
       // cancellation of the Job cancels the future
       job.invokeOnCompletion(true, true, (throwable) -> {

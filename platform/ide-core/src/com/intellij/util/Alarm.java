@@ -17,7 +17,7 @@ import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
-import kotlinx.coroutines.CompletableJob;
+import kotlinx.coroutines.Job;
 import org.jetbrains.annotations.Async;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -401,7 +401,7 @@ public class Alarm implements Disposable {
     private @Nullable Runnable cancel() {
       Future<?> future = myFuture;
       if (myChildContext != null) {
-        CompletableJob job = myChildContext.getJob();
+        Job job = myChildContext.getJob();
         if (job != null) {
           job.cancel(null);
         }
