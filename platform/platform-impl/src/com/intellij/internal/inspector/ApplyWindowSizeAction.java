@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.inspector;
 
 import com.intellij.codeInsight.lookup.LookupEx;
@@ -19,7 +19,6 @@ import java.awt.*;
  * @author Konstantin Bulenkov
  */
 final class ApplyWindowSizeAction extends DumbAwareAction {
-
   ApplyWindowSizeAction() {
     setEnabledInModalContext(true);
   }
