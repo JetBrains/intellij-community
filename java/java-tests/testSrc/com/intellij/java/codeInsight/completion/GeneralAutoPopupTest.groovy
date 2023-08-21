@@ -123,13 +123,9 @@ class GeneralAutoPopupTest extends JavaCompletionAutoPopupTestCase {
 
   void "test skip autopopup if confidence needs non-ready index"() {
     myFixture.configureByText 'a.java', 'class C { int abc; { getClass().getDeclaredField("<caret>x"); }}'
-    edt { DumbServiceImpl.getInstance(project).setDumb(true) }
-    try {
+    DumbServiceImpl.getInstance(project).runInDumbModeSynchronously {
       type 'a'
       assert !lookup
-    }
-    finally {
-      edt { DumbServiceImpl.getInstance(project).setDumb(false) }
     }
     myFixture.completeBasic()
     myFixture.assertPreferredCompletionItems 0, 'abc'

@@ -41,8 +41,7 @@ public class YAMLSearchEverywhereTest extends BasePlatformTestCase {
     DumbService service = DumbService.getInstance(myFixture.getProject());
     assert service instanceof DumbServiceImpl;
     DumbServiceImpl impl = (DumbServiceImpl)service;
-    impl.setDumb(true);
-    try {
+    impl.runInDumbModeSynchronously(() -> {
       String searchResults = collectSearchResults(requests, contributor);
 
       StringBuilder builder = new StringBuilder();
@@ -50,10 +49,7 @@ public class YAMLSearchEverywhereTest extends BasePlatformTestCase {
         addRequestToResult(builder, request);
       }
       assertSameLines(builder.toString(), searchResults);
-    } finally {
-      // dumb state lives between tests
-      impl.setDumb(false);
-    }
+    });
   }
 
   @NotNull

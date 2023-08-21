@@ -360,14 +360,10 @@ public class PyStubsTest extends PyTestCase {
       fooPyFile.setTreeElementPointer(null);
       //classes = PyClassNameIndex.find("Foo", project, GlobalSearchScope.allScope(project));
       //fooPyFile.unloadContent();
-      DumbServiceImpl.getInstance(project).setDumb(true);
-      try {
+      DumbServiceImpl.getInstance(project).runInDumbModeSynchronously(() -> {
         assertEquals(1, ((PyFile)fooPyFile).getTopLevelClasses().size());
         assertFalse(fooPyFile.isContentsLoaded());
-      }
-      finally {
-        DumbServiceImpl.getInstance(project).setDumb(false);
-      }
+      });
       final Collection<PyClass> committedClasses = PyClassNameIndex.find("Foo123", project, GlobalSearchScope.allScope(project));
       assertEquals(1, committedClasses.size());
     });

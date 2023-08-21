@@ -26,24 +26,20 @@ public class FormOpeningTest extends FileEditorManagerTestCase {
     FileEditorManagerEx editorManager = FileEditorManagerEx.getInstanceEx(getProject());
     VirtualFile file = myFixture.copyFileToProject("TestBorder.form");
     DumbServiceImpl dumbService = (DumbServiceImpl)DumbService.getInstance(getProject());
-    dumbService.setDumb(true);
-    try {
+    GuiEditor editorComponent = dumbService.computeInDumbModeSynchronously(() -> {
       FileEditor[] editors = editorManager.openFile(file, true);
       assertEquals(1, editors.length);
       assertInstanceOf(editors[0], UIFormEditor.class);
       JComponent component = getEditorComponent();
       assertInstanceOf(component, DumbUnawareHider.class);
-      GuiEditor editorComponent = UIUtil.uiTraverser(component).filter(GuiEditor.class).single();
-      assertNotNull("editor not found", editorComponent);
+      GuiEditor editor = UIUtil.uiTraverser(component).filter(GuiEditor.class).single();
+      assertNotNull("editor not found", editor);
 
-      assertFalse(editorComponent.isVisible());
+      assertFalse(editor.isVisible());
+      return editor;
+    });
 
-      dumbService.setDumb(false);
-      assertTrue(editorComponent.isVisible());
-    }
-    finally {
-      dumbService.setDumb(false);
-    }
+    assertTrue(editorComponent.isVisible());
   }
 
   private JComponent getEditorComponent() {

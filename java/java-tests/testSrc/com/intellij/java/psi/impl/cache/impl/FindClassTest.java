@@ -202,8 +202,7 @@ public class FindClassTest extends JavaPsiTestCase {
   }
 
   public void testFindClassInDumbMode() {
-    try {
-      DumbServiceImpl.getInstance(myProject).setDumb(true);
+    DumbServiceImpl.getInstance(myProject).runInDumbModeSynchronously(() -> {
       DumbService.getInstance(myProject).withAlternativeResolveEnabled(() -> {
         assertNotNull(myJavaFacade.findClass("p.A", GlobalSearchScope.allScope(myProject)));
         assertNotNull(myJavaFacade.findClass("p.A", new PackageScope(myJavaFacade.findPackage("p"), true, true)));
@@ -212,10 +211,7 @@ public class FindClassTest extends JavaPsiTestCase {
         assertNotNull(bClass);
         assertEquals("B", bClass.getName());
       });
-    }
-    finally {
-      DumbServiceImpl.getInstance(myProject).setDumb(false);
-    }
+    });
   }
 
 }

@@ -40,13 +40,13 @@ class InlayHintsPassFactoryTest : BasePlatformTestCase() {
     }), testRootDisposable)
 
     (DaemonCodeAnalyzer.getInstance(project) as DaemonCodeAnalyzerImpl).mustWaitForSmartMode(false, testRootDisposable)
-    DumbServiceImpl.getInstance(myFixture.project).isDumb = true
+    DumbServiceImpl.getInstance(myFixture.project).runInDumbModeSynchronously {
 
-    myFixture.doHighlighting()
-    assertEquals(1, myFixture.editor.inlayModel.getInlineElementsInRange(0, 1).size)
+      myFixture.doHighlighting()
+      assertEquals(1, myFixture.editor.inlayModel.getInlineElementsInRange(0, 1).size)
 
-    (DaemonCodeAnalyzer.getInstance(project) as DaemonCodeAnalyzerImpl).mustWaitForSmartMode(true, testRootDisposable)
-    DumbServiceImpl.getInstance(myFixture.project).isDumb = false
+      (DaemonCodeAnalyzer.getInstance(project) as DaemonCodeAnalyzerImpl).mustWaitForSmartMode(true, testRootDisposable)
+    }
 
     myFixture.doHighlighting()
     assertEquals(2, myFixture.editor.inlayModel.getInlineElementsInRange(0, 1).size)

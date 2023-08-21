@@ -2532,14 +2532,15 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     applied.clear();
 
     myDaemonCodeAnalyzer.mustWaitForSmartMode(false, getTestRootDisposable());
-    DumbServiceImpl.getInstance(myProject).setDumb(true);
-    type(' ');
-    doHighlighting();
+    DumbServiceImpl.getInstance(myProject).runInDumbModeSynchronously(() -> {
+      type(' ');
+      doHighlighting();
 
-    TextEditorHighlightingPassFactory f = assertOneElement(collected);
-    assertSame(dumbFac, f);
-    TextEditorHighlightingPassFactory f2 = assertOneElement(applied);
-    assertSame(dumbFac, f2);
+      TextEditorHighlightingPassFactory f = assertOneElement(collected);
+      assertSame(dumbFac, f);
+      TextEditorHighlightingPassFactory f2 = assertOneElement(applied);
+      assertSame(dumbFac, f2);
+    });
   }
 
   public void testIntentionActionIsAvailableMustBeQueriedOnlyOncePerHighlightingSession() {

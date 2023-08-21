@@ -897,13 +897,9 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     createFile("a.java", "foo bar foo true");
     FindModel findModel = FindManagerTestUtils.configureFindModel("true");
     findModel.setWholeWordsOnly(true);
-    DumbServiceImpl.getInstance(getProject()).setDumb(true);
-    try {
+    DumbServiceImpl.getInstance(getProject()).runInDumbModeSynchronously(() -> {
       assertSize(1, findInProject(findModel));
-    }
-    finally {
-      DumbServiceImpl.getInstance(getProject()).setDumb(false);
-    }
+    });
   }
 
   public void testNoFilesFromAdditionalIndexedRootsWithCustomExclusionScope() throws ParsingException {

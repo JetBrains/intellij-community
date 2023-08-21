@@ -1282,8 +1282,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     assertTrue(findWordInDumbMode("Foo", virtualFile, false))
     assertFalse(findWordInDumbMode("Bar", virtualFile, false))
 
-    dumbService.setDumb(true)
-    try {
+    dumbService.runInDumbModeSynchronously {
       assertTrue(findWordInDumbMode("Foo", virtualFile, true))
       assertFalse(findWordInDumbMode("Bar", virtualFile, true))
 
@@ -1293,9 +1292,6 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
       assertTrue(findWordInDumbMode("Bar", virtualFile, true))
       assertFalse(findWordInDumbMode("Foo", virtualFile, true))
 
-    }
-    finally {
-      dumbService.setDumb(false)
     }
 
     assertTrue(findWordInDumbMode("Bar", virtualFile, false))
@@ -1389,58 +1385,59 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     def clazz = myFixture.addClass('class Foo {}')
     assert clazz == myFixture.findClass('Foo')
 
-    DumbServiceImpl.getInstance(project).setDumb(true)
+    DumbServiceImpl.getInstance(project).runInDumbModeSynchronously {
 
-    def indexQueries = 0
-    def plainQueries = 0
+      def indexQueries = 0
+      def plainQueries = 0
 
-    def stubQuery = CachedValuesManager.getManager(project).createCachedValue {
-      indexQueries++
-      CachedValueProvider.Result.create(myFixture.findClass('Foo'), PsiModificationTracker.MODIFICATION_COUNT)
-    }
-    def idQuery = CachedValuesManager.getManager(project).createCachedValue {
-      indexQueries++
-      GlobalSearchScope fileScope = GlobalSearchScope.fileScope(clazz.containingFile)
-      IdIndexEntry key = new IdIndexEntry('Foo', true)
-      def hasId = !FileBasedIndex.instance.getContainingFiles(IdIndex.NAME, key, fileScope).isEmpty()
-      CachedValueProvider.Result.create(hasId, PsiModificationTracker.MODIFICATION_COUNT)
-    }
-    def plainValue = CachedValuesManager.getManager(project).createCachedValue {
-      plainQueries++
-      CachedValueProvider.Result.create("x", PsiModificationTracker.MODIFICATION_COUNT)
-    }
+      def stubQuery = CachedValuesManager.getManager(project).createCachedValue {
+        indexQueries++
+        CachedValueProvider.Result.create(myFixture.findClass('Foo'), PsiModificationTracker.MODIFICATION_COUNT)
+      }
+      def idQuery = CachedValuesManager.getManager(project).createCachedValue {
+        indexQueries++
+        GlobalSearchScope fileScope = GlobalSearchScope.fileScope(clazz.containingFile)
+        IdIndexEntry key = new IdIndexEntry('Foo', true)
+        def hasId = !FileBasedIndex.instance.getContainingFiles(IdIndex.NAME, key, fileScope).isEmpty()
+        CachedValueProvider.Result.create(hasId, PsiModificationTracker.MODIFICATION_COUNT)
+      }
+      def plainValue = CachedValuesManager.getManager(project).createCachedValue {
+        plainQueries++
+        CachedValueProvider.Result.create("x", PsiModificationTracker.MODIFICATION_COUNT)
+      }
 
-    // index queries aren't cached
-    5.times {
-      assert clazz == FileBasedIndex.instance.ignoreDumbMode(DumbModeAccessType.RELIABLE_DATA_ONLY, asComputable(stubQuery))
-    }
-    assert indexQueries >= 5
+      // index queries aren't cached
+      5.times {
+        assert clazz == FileBasedIndex.instance.ignoreDumbMode(DumbModeAccessType.RELIABLE_DATA_ONLY, asComputable(stubQuery))
+      }
+      assert indexQueries >= 5
 
-    indexQueries = 0
-    assert FileBasedIndex.instance.ignoreDumbMode(DumbModeAccessType.RAW_INDEX_DATA_ACCEPTABLE, asComputable(idQuery))
-    assert FileBasedIndex.instance.ignoreDumbMode(DumbModeAccessType.RELIABLE_DATA_ONLY, asComputable(idQuery))
-    assert indexQueries >= 2
+      indexQueries = 0
+      assert FileBasedIndex.instance.ignoreDumbMode(DumbModeAccessType.RAW_INDEX_DATA_ACCEPTABLE, asComputable(idQuery))
+      assert FileBasedIndex.instance.ignoreDumbMode(DumbModeAccessType.RELIABLE_DATA_ONLY, asComputable(idQuery))
+      assert indexQueries >= 2
 
-    // non-index queries should work as usual
-    3.times {
-      assert "x" == FileBasedIndex.instance.ignoreDumbMode(DumbModeAccessType.RAW_INDEX_DATA_ACCEPTABLE, asComputable(plainValue))
-      assert "x" == FileBasedIndex.instance.ignoreDumbMode(DumbModeAccessType.RELIABLE_DATA_ONLY, asComputable(plainValue))
-    }
-    assert plainQueries > 0 && plainQueries < 3*2
+      // non-index queries should work as usual
+      3.times {
+        assert "x" == FileBasedIndex.instance.ignoreDumbMode(DumbModeAccessType.RAW_INDEX_DATA_ACCEPTABLE, asComputable(plainValue))
+        assert "x" == FileBasedIndex.instance.ignoreDumbMode(DumbModeAccessType.RELIABLE_DATA_ONLY, asComputable(plainValue))
+      }
+      assert plainQueries > 0 && plainQueries < 3 * 2
 
-    // cache queries inside single ignoreDumbMode
-    indexQueries = 0
-    psiManager.dropPsiCaches()
-    FileBasedIndex.instance.ignoreDumbMode(DumbModeAccessType.RAW_INDEX_DATA_ACCEPTABLE) {
-      5.times {assert idQuery.getValue() }
-      assert indexQueries > 0 && indexQueries < 5
-    }
+      // cache queries inside single ignoreDumbMode
+      indexQueries = 0
+      psiManager.dropPsiCaches()
+      FileBasedIndex.instance.ignoreDumbMode(DumbModeAccessType.RAW_INDEX_DATA_ACCEPTABLE) {
+        5.times { assert idQuery.getValue() }
+        assert indexQueries > 0 && indexQueries < 5
+      }
 
-    indexQueries = 0
-    psiManager.dropPsiCaches()
-    FileBasedIndex.instance.ignoreDumbMode(DumbModeAccessType.RELIABLE_DATA_ONLY) {
-      5.times {assert clazz == stubQuery.getValue() }
-      assert indexQueries > 0 && indexQueries < 5
+      indexQueries = 0
+      psiManager.dropPsiCaches()
+      FileBasedIndex.instance.ignoreDumbMode(DumbModeAccessType.RELIABLE_DATA_ONLY) {
+        5.times { assert clazz == stubQuery.getValue() }
+        assert indexQueries > 0 && indexQueries < 5
+      }
     }
   }
 
@@ -1450,19 +1447,20 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     def clazz = myFixture.addClass('class Foo {}')
     assert clazz == myFixture.findClass('Foo')
 
-    DumbServiceImpl.getInstance(project).setDumb(true)
+    DumbServiceImpl.getInstance(project).runInDumbModeSynchronously {
 
-    def stubQuery = CachedValuesManager.getManager(project).createCachedValue {
-      CachedValueProvider.Result.create(myFixture.javaFacade.findClass('Foo', GlobalSearchScope.allScope(project)),
-                                        PsiModificationTracker.MODIFICATION_COUNT)
-    }
-
-    FileBasedIndex.instance.ignoreDumbMode(DumbModeAccessType.RELIABLE_DATA_ONLY) {
-      assert clazz == stubQuery.getValue()
-      WriteCommandAction.runWriteCommandAction(project) {
-        clazz.setName('Bar')
+      def stubQuery = CachedValuesManager.getManager(project).createCachedValue {
+        CachedValueProvider.Result.create(myFixture.javaFacade.findClass('Foo', GlobalSearchScope.allScope(project)),
+                                          PsiModificationTracker.MODIFICATION_COUNT)
       }
-      assert null == stubQuery.getValue()
+
+      FileBasedIndex.instance.ignoreDumbMode(DumbModeAccessType.RELIABLE_DATA_ONLY) {
+        assert clazz == stubQuery.getValue()
+        WriteCommandAction.runWriteCommandAction(project) {
+          clazz.setName('Bar')
+        }
+        assert null == stubQuery.getValue()
+      }
     }
   }
 
