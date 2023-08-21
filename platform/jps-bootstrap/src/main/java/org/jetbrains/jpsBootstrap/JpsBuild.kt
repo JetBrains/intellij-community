@@ -12,7 +12,6 @@ import org.jetbrains.intellij.build.dependencies.BuildDependenciesLogging.info
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesLogging.verbose
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesLogging.warn
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesUtil.cleanDirectory
-import org.jetbrains.intellij.build.dependencies.TeamCityHelper.isUnderTeamCity
 import org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope
 import org.jetbrains.jps.api.GlobalOptions
 import org.jetbrains.jps.build.Standalone
@@ -75,15 +74,6 @@ class JpsBuild(communityRoot: BuildDependenciesCommunityRoot, private val myMode
   @Throws(Exception::class)
   fun resolveProjectDependencies() {
     info("Resolving project dependencies...")
-    val spaceUsername = System.getProperty(BuildDependenciesConstants.JPS_AUTH_SPACE_USERNAME)
-    val spacePassword = System.getProperty(BuildDependenciesConstants.JPS_AUTH_SPACE_PASSWORD)
-    if (spaceUsername == null || spaceUsername.isBlank() || spacePassword == null || spacePassword.isBlank()) {
-      if (isUnderTeamCity) {
-        warn("Space credentials are not provided via -D" + BuildDependenciesConstants.JPS_AUTH_SPACE_USERNAME
-          + " and -D" + BuildDependenciesConstants.JPS_AUTH_SPACE_PASSWORD
-          + ". Private Space Maven dependencies, if not available locally, will fail to be resolved.")
-      }
-    }
     val buildStart = System.currentTimeMillis()
     val scopes: MutableList<TargetTypeBuildScope> = ArrayList()
     val builder = TargetTypeBuildScope.newBuilder()
