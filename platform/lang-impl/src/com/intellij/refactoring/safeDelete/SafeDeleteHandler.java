@@ -85,12 +85,12 @@ public final class SafeDeleteHandler implements RefactoringActionHandler {
       }
     }
 
-    PsiElement[] temptoDelete = PsiTreeUtil.filterAncestors(elements);
-    Set<PsiElement> elementsSet = Set.of(temptoDelete);
+    PsiElement[] tempToDelete = PsiTreeUtil.filterAncestors(elements);
+    Set<PsiElement> elementsSet = Set.of(tempToDelete);
     Set<PsiElement> fullElementsSet = new LinkedHashSet<>();
 
     if (checkDelegates) {
-      for (PsiElement element : temptoDelete) {
+      for (PsiElement element : tempToDelete) {
         boolean found = false;
         for(SafeDeleteProcessorDelegate delegate: SafeDeleteProcessorDelegate.EP_NAME.getExtensionList()) {
           if (delegate.handlesElement(element)) {
@@ -108,7 +108,7 @@ public final class SafeDeleteHandler implements RefactoringActionHandler {
         }
       }
     } else {
-      ContainerUtil.addAll(fullElementsSet, temptoDelete);
+      ContainerUtil.addAll(fullElementsSet, tempToDelete);
     }
 
     if (!CommonRefactoringUtil.checkReadOnlyStatusRecursively(project, fullElementsSet, true)) return;

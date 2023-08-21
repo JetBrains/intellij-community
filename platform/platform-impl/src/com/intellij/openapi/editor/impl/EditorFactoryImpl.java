@@ -13,9 +13,7 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.ActionPlan;
 import com.intellij.openapi.editor.actionSystem.TypedActionHandler;
 import com.intellij.openapi.editor.actionSystem.TypedActionHandlerEx;
-import com.intellij.openapi.editor.colors.EditorColorsListener;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.EditorEventMulticaster;
 import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.editor.event.EditorFactoryListener;
@@ -70,29 +68,19 @@ public class EditorFactoryImpl extends EditorFactory {
         });
       }
     });
-    busConnection.subscribe(EditorColorsManager.TOPIC, new EditorColorsListener() {
-      @Override
-      public void globalSchemeChange(@Nullable EditorColorsScheme scheme) {
+    busConnection.subscribe(EditorColorsManager.TOPIC, __ -> refreshAllEditors());
+    busConnection.subscribe(AdvancedSettingsChangeListener.TOPIC, (id, __, __1) -> {
+      if (id.equals(EditorGutterComponentImpl.DISTRACTION_FREE_MARGIN) ||
+          id.equals(EditorPainter.EDITOR_TAB_PAINTING) ||
+          id.equals(SettingsImplKt.EDITOR_SHOW_SPECIAL_CHARS)) {
         refreshAllEditors();
-      }
-    });
-    busConnection.subscribe(AdvancedSettingsChangeListener.TOPIC, new AdvancedSettingsChangeListener() {
-      @Override
-      public void advancedSettingChanged(@NotNull String id, @NotNull Object oldValue, @NotNull Object newValue) {
-        if (id.equals(EditorGutterComponentImpl.DISTRACTION_FREE_MARGIN) ||
-            id.equals(EditorPainter.EDITOR_TAB_PAINTING) ||
-            id.equals(SettingsImplKt.EDITOR_SHOW_SPECIAL_CHARS)) {
-          refreshAllEditors();
-        }
       }
     });
 
     LaterInvocator.addModalityStateListener(new ModalityStateListener() {
       @Override
       public void beforeModalityStateChanged(boolean entering, @NotNull Object modalEntity) {
-        collectAllEditors().forEach(editor -> {
-          ((EditorImpl)editor).beforeModalityStateChanged();
-        });
+        collectAllEditors().forEach(editor -> ((EditorImpl)editor).beforeModalityStateChanged());
       }
     }, ApplicationManager.getApplication());
   }
@@ -145,9 +133,7 @@ public class EditorFactoryImpl extends EditorFactory {
 
   @Override
   public void refreshAllEditors() {
-    collectAllEditors().forEach(editor -> {
-      ((EditorEx)editor).reinitSettings();
-    });
+    collectAllEditors().forEach(editor -> ((EditorEx)editor).reinitSettings());
   }
 
   @Override
@@ -205,24 +191,26 @@ public class EditorFactoryImpl extends EditorFactory {
     return editor;
   }
 
-  private @NotNull EditorImpl createEditor(@NotNull Document document, boolean isViewer, Project project, @NotNull EditorKind kind) {
+  private @NotNull EditorImpl createEditor(@NotNull Document document, boolean isViewer, @Nullable Project project, @NotNull EditorKind kind) {
     Document hostDocument = document instanceof DocumentWindow ? ((DocumentWindow)document).getDelegate() : document;
-    EditorImpl editor = new EditorImpl(hostDocument, isViewer, project, kind, null);
-    ClientEditorManager editorManager = ClientEditorManager.getCurrentInstance();
-    postEditorCreation(editor, editorManager);
-    return editor;
+    return doCreateEditor(project, hostDocument, isViewer, kind, null);
   }
 
   @ApiStatus.Internal
   @ApiStatus.Experimental
   public @NotNull EditorImpl createMainEditor(@NotNull Document document, @NotNull Project project, @NotNull VirtualFile file) {
     assert !(document instanceof DocumentWindow);
-    EditorImpl editor = new EditorImpl(document, false, project, EditorKind.MAIN_EDITOR, file);
-    postEditorCreation(editor, ClientEditorManager.getCurrentInstance());
-    return editor;
+    return doCreateEditor(project, document, false, EditorKind.MAIN_EDITOR, file);
   }
 
-  private void postEditorCreation(@NotNull EditorImpl editor, @NotNull ClientEditorManager editorManager) {
+  @NotNull
+  private EditorImpl doCreateEditor(@Nullable Project project,
+                                    @NotNull Document document,
+                                    boolean isViewer,
+                                    @NotNull EditorKind kind,
+                                    @Nullable VirtualFile file) {
+    EditorImpl editor = new EditorImpl(document, isViewer, project, kind, file);
+    ClientEditorManager editorManager = ClientEditorManager.getCurrentInstance();
     editorManager.editorCreated(editor);
     myEditorEventMulticaster.registerEditor(editor);
 
@@ -233,6 +221,7 @@ public class EditorFactoryImpl extends EditorFactory {
     if (LOG.isDebugEnabled()) {
       LOG.debug("number of editors after create: " + editorManager.editors().count());
     }
+    return editor;
   }
 
   @Override
