@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.facet.impl.invalid;
 
 import com.intellij.facet.ProjectFacetManager;
@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.Set;
 
 @State(name = InvalidFacetManagerImpl.COMPONENT_NAME, storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
-public class InvalidFacetManagerImpl extends InvalidFacetManager implements PersistentStateComponent<InvalidFacetManagerImpl.InvalidFacetManagerState> {
+public final class InvalidFacetManagerImpl extends InvalidFacetManager implements PersistentStateComponent<InvalidFacetManagerImpl.InvalidFacetManagerState> {
   public static final String COMPONENT_NAME = "InvalidFacetManager";
   private InvalidFacetManagerState myState = new InvalidFacetManagerState();
   private final Project myProject;
@@ -56,7 +56,7 @@ public class InvalidFacetManagerImpl extends InvalidFacetManager implements Pers
     return ProjectFacetManager.getInstance(myProject).getFacets(InvalidFacetType.TYPE_ID);
   }
 
-  public static class InvalidFacetManagerState {
+  public static final class InvalidFacetManagerState {
     private Set<String> myIgnoredFacets = new HashSet<>();
 
     @XCollection(propertyElementName = "ignored-facets", elementName = "facet", valueAttributeName = "id")

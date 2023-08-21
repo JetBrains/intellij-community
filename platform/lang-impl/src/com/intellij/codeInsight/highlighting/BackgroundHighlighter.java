@@ -243,6 +243,6 @@ final class BackgroundHighlighter implements StartupActivity, DumbAware {
     StartupActivity.Companion.getPOST_STARTUP_ACTIVITY().findExtension(BackgroundHighlighter.class).registerListeners(project, disposable);
   }
 
-  private static class HighlightIdentifiersKey {
+  private static final class HighlightIdentifiersKey {
   }
 }

@@ -484,7 +484,7 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
     return ContainerUtil.findAll(FilePropertyPusher.EP_NAME.getExtensionList(), pusher -> !pusher.pushDirectoriesOnly());
   }
 
-  private static class MyDumbModeTask extends DumbModeTask {
+  private static final class MyDumbModeTask extends DumbModeTask {
     private final @NotNull @NonNls String myReason;
     private final PushedFilePropertiesUpdaterImpl myUpdater;
 

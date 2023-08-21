@@ -89,7 +89,7 @@ public final class LookupUsageTracker extends CounterUsagesCollector {
     return GROUP;
   }
 
-  private static class MyLookupTracker implements LookupListener {
+  private static final class MyLookupTracker implements LookupListener {
     private final @NotNull LookupImpl myLookup;
     private final long myCreatedTimestamp;
     private final long myTimeToShow;
@@ -250,7 +250,7 @@ public final class LookupUsageTracker extends CounterUsagesCollector {
       return null;
     }
 
-    private static class MyTypingTracker implements PrefixChangeListener {
+    private static final class MyTypingTracker implements PrefixChangeListener {
       int backspaces = 0;
       int typing = 0;
 
@@ -284,7 +284,7 @@ public final class LookupUsageTracker extends CounterUsagesCollector {
     }
   }
 
-  private static class MyLookupResultDescriptor implements LookupResultDescriptor {
+  private static final class MyLookupResultDescriptor implements LookupResultDescriptor {
     private final Lookup myLookup;
     private final LookupElement mySelectedItem;
     private final FinishType myFinishType;

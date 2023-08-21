@@ -109,7 +109,7 @@ public final class ErrorStripeUpdateManager implements Disposable {
     return new TrafficLightRenderer(myProject, editor);
   }
   
-  private class EssentialHighlightingModeListener implements RegistryValueListener {
+  private final class EssentialHighlightingModeListener implements RegistryValueListener {
     @Override
     public void afterValueChanged(@NotNull RegistryValue value) {
       HighlightingSettingsPerFile.getInstance(myProject).incModificationCount();

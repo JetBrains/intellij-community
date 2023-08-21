@@ -25,7 +25,7 @@ import javax.swing.*;
  * @author Dmitry Avdeev
  */
 public class GutterIntentionAction extends AbstractIntentionAction implements Comparable<IntentionAction>, Iconable, ShortcutProvider,
-                                                                       PriorityAction {
+                                                                                    PriorityAction {
   private final AnAction myAction;
   private final int myOrder;
   private final Icon myIcon;

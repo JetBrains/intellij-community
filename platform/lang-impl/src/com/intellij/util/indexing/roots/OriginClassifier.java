@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 import java.util.HashSet;
 
-class OriginClassifier {
+final class OriginClassifier {
   private static final Logger LOG = Logger.getInstance(OriginClassifier.class);
   public final EntityStorage entityStorage;
   public final Collection<EntityReference<?>> entityReferences = new HashSet<>();

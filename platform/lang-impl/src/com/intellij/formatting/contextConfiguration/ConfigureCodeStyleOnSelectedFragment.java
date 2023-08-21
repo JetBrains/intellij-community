@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.formatting.contextConfiguration;
 
 import com.intellij.application.options.CodeStyle;
@@ -41,7 +41,7 @@ import static com.intellij.psi.codeStyle.CodeStyleSettingsCodeFragmentFilter.Cod
 import static com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider.SettingsType.SPACING_SETTINGS;
 import static com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider.SettingsType.WRAPPING_AND_BRACES_SETTINGS;
 
-public class ConfigureCodeStyleOnSelectedFragment implements IntentionAction, LowPriorityAction {
+public final class ConfigureCodeStyleOnSelectedFragment implements IntentionAction, LowPriorityAction {
   private static final Logger LOG = Logger.getInstance(ConfigureCodeStyleOnSelectedFragment.class);
 
   @Nls
@@ -109,7 +109,7 @@ public class ConfigureCodeStyleOnSelectedFragment implements IntentionAction, Lo
     return false;
   }
 
-  static class FragmentCodeStyleSettingsDialog extends DialogWrapper {
+  static final class FragmentCodeStyleSettingsDialog extends DialogWrapper {
     private final CodeFragmentCodeStyleSettingsPanel myTabbedLanguagePanel;
     private final Editor myEditor;
     private final Document myDocument;
@@ -187,7 +187,7 @@ public class ConfigureCodeStyleOnSelectedFragment implements IntentionAction, Lo
       super.doCancelAction();
     }
 
-    private class DialogPositionProvider {
+    private final class DialogPositionProvider {
       private static final int PREFERRED_PADDING = 100;
 
       private final JComponent myEditorComponent;
@@ -336,7 +336,7 @@ public class ConfigureCodeStyleOnSelectedFragment implements IntentionAction, Lo
       }
     }
 
-    private class ApplyToSettingsAndReformat extends AbstractAction {
+    private final class ApplyToSettingsAndReformat extends AbstractAction {
       ApplyToSettingsAndReformat() {
         super(InspectionsBundle.message("inspection.adjust.code.style.settings.save.and.reformat.file"));
       }

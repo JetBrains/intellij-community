@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.openapi.application.WriteAction;
@@ -213,7 +213,7 @@ public class MockSdk implements Sdk, SdkModificator {
     return "MockSDK[" + myName + "]";
   }
 
-  private class MyRootProvider extends RootProviderBaseImpl implements Supplier<Sdk> {
+  private final class MyRootProvider extends RootProviderBaseImpl implements Supplier<Sdk> {
     
     @Override
     public String @NotNull [] getUrls(@NotNull OrderRootType rootType) {

@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-public class RestoreFoldArrangementCallback implements ArrangementCallback {
+public final class RestoreFoldArrangementCallback implements ArrangementCallback {
 
   private final @NotNull Editor           myEditor;
 

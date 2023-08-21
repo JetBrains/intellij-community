@@ -43,7 +43,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 @ApiStatus.Internal
 @ApiStatus.Experimental
-public class UnresolvedReferenceQuickFixUpdaterImpl implements UnresolvedReferenceQuickFixUpdater {
+public final class UnresolvedReferenceQuickFixUpdaterImpl implements UnresolvedReferenceQuickFixUpdater {
   private static final Key<Future<?>> JOB = Key.create("JOB");
   private final Project myProject;
   private volatile boolean enabled = true;

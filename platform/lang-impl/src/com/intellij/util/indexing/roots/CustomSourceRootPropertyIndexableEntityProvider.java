@@ -2,17 +2,17 @@
 package com.intellij.util.indexing.roots;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders;
-import com.intellij.platform.workspace.storage.WorkspaceEntity;
 import com.intellij.platform.workspace.jps.entities.CustomSourceRootPropertiesEntity;
 import com.intellij.platform.workspace.jps.entities.SourceRootEntity;
+import com.intellij.platform.workspace.storage.WorkspaceEntity;
+import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Objects;
 
-class CustomSourceRootPropertyIndexableEntityProvider implements IndexableEntityProvider.Enforced<CustomSourceRootPropertiesEntity> {
+final class CustomSourceRootPropertyIndexableEntityProvider implements IndexableEntityProvider.Enforced<CustomSourceRootPropertiesEntity> {
 
   @Override
   public @NotNull Class<CustomSourceRootPropertiesEntity> getEntityClass() {

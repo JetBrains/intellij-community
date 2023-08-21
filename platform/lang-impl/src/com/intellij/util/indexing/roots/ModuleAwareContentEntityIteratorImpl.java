@@ -10,7 +10,7 @@ import com.intellij.util.indexing.roots.origin.ModuleAwareContentEntityOriginImp
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ModuleAwareContentEntityIteratorImpl extends RootHolderIteratorBase {
+public final class ModuleAwareContentEntityIteratorImpl extends RootHolderIteratorBase {
 
   private final Module module;
 

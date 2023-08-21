@@ -26,7 +26,7 @@ import org.jetbrains.annotations.TestOnly;
 import javax.swing.*;
 import java.util.Arrays;
 
-public class OptimizeImportsAction extends AnAction {
+public final class OptimizeImportsAction extends AnAction {
   private static final @NonNls String HELP_ID = "editing.manageImports";
   private static boolean myProcessVcsChangedFilesInTests;
 
@@ -242,7 +242,7 @@ public class OptimizeImportsAction extends AnAction {
     myProcessVcsChangedFilesInTests = value;
   }
 
-  private static class OptimizeImportsDialog extends DialogWrapper {
+  private static final class OptimizeImportsDialog extends DialogWrapper {
     private final boolean myContextHasChanges;
 
     private final @NlsContexts.Label String myText;

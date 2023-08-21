@@ -29,7 +29,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
-public class CleanupInspectionIntention implements IntentionAction, HighPriorityAction {
+public final class CleanupInspectionIntention implements IntentionAction, HighPriorityAction {
   @NotNull
   private final InspectionToolWrapper<?,?> myToolWrapper;
   private final FileModifier myQuickfix;

@@ -225,7 +225,7 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
     myHashBangs = null;
   }
 
-  private static class ExtensionRenderer extends ColoredListCellRenderer<Pair<FileNameMatcher, Language>> {
+  private static final class ExtensionRenderer extends ColoredListCellRenderer<Pair<FileNameMatcher, Language>> {
     @Override
     protected void customizeCellRenderer(@NotNull JList<? extends Pair<FileNameMatcher, Language>> list,
                                          Pair<FileNameMatcher, Language> value,
@@ -239,7 +239,7 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
     }
   }
 
-  private static class HashBangRenderer extends ColoredListCellRenderer<String> {
+  private static final class HashBangRenderer extends ColoredListCellRenderer<String> {
     @Override
     protected void customizeCellRenderer(@NotNull JList<? extends String> list,
                                          String value,
@@ -436,7 +436,7 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
     return "preferences.fileTypes";
   }
 
-  class RecognizedFileTypesPanel extends JPanel {
+  final class RecognizedFileTypesPanel extends JPanel {
     private final JList<FileTypeManagerImpl.FileTypeWithDescriptor> myFileTypesList = new JBList<>(new DefaultListModel<>());
     private final FileTypeWithDescriptorRenderer<FileTypeManagerImpl.FileTypeWithDescriptor> myCellRenderer;
 
@@ -595,7 +595,7 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
     }
   }
 
-  class PatternsPanel extends JPanel {
+  final class PatternsPanel extends JPanel {
     private final JBList<Pair<FileNameMatcher, Language>> myList = new JBList<>(new DefaultListModel<>());
 
     PatternsPanel() {
@@ -659,7 +659,7 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
     }
   }
 
-  class HashBangPanel extends JPanel {
+  final class HashBangPanel extends JPanel {
     private final JBList<String> myList = new JBList<>(new DefaultListModel<>());
 
     HashBangPanel() {

@@ -15,7 +15,7 @@ import java.util.Collections;
 /**
  * @author Dmitry Avdeev
  */
-public class JarFileReferenceHelper extends FileReferenceHelper {
+public final class JarFileReferenceHelper extends FileReferenceHelper {
 
   @Override
   public PsiFileSystemItem getPsiFileSystemItem(@NotNull Project project, @NotNull VirtualFile file) {

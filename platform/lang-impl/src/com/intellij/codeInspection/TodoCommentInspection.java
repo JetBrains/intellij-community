@@ -39,7 +39,7 @@ import java.util.stream.Collectors;
 
 import static com.intellij.codeInspection.options.OptPane.*;
 
-public class TodoCommentInspection extends LocalInspectionTool {
+public final class TodoCommentInspection extends LocalInspectionTool {
 
   public boolean onlyWarnOnEmpty = true;
 

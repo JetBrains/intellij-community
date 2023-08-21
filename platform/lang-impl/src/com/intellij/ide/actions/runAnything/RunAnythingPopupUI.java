@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.runAnything;
 
 import com.intellij.execution.Executor;
@@ -76,7 +76,7 @@ import static com.intellij.ide.actions.runAnything.RunAnythingIconHandler.MATCHE
 import static com.intellij.ide.actions.runAnything.RunAnythingSearchListModel.RunAnythingMainListModel;
 import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
 
-public class RunAnythingPopupUI extends BigPopupUI {
+public final class RunAnythingPopupUI extends BigPopupUI {
   public static final int SEARCH_FIELD_COLUMNS = 25;
   public static final Icon UNKNOWN_CONFIGURATION_ICON = AllIcons.Actions.Run_anything;
   static final String RUN_ANYTHING = "RunAnything";
@@ -580,7 +580,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
     return !SHIFT_IS_PRESSED.get() ? runExecutor : debugExecutor;
   }
 
-  private class MyListRenderer extends ColoredListCellRenderer<Object> {
+  private final class MyListRenderer extends ColoredListCellRenderer<Object> {
 
     private final GroupTitleRenderer groupTitleRenderer = new GroupTitleRenderer();
 

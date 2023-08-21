@@ -256,7 +256,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
     myInitialSelection = initialSelection;
   }
 
-  public class JPanelProvider extends JPanel implements DataProvider, QuickSearchComponent {
+  public final class JPanelProvider extends JPanel implements DataProvider, QuickSearchComponent {
     private JBPopup myHint;
     private boolean myFocusRequested;
 
@@ -1646,7 +1646,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
     public abstract PsiElement @NotNull [] getElements();
   }
 
-  private static class MyUsageInfo2UsageAdapter extends UsageInfo2UsageAdapter {
+  private static final class MyUsageInfo2UsageAdapter extends UsageInfo2UsageAdapter {
     private final PsiElement myElement;
     private final boolean mySeparateGroup;
 
@@ -1685,7 +1685,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
     return myTextField;
   }
 
-  private class MyCopyReferenceAction extends DumbAwareAction {
+  private final class MyCopyReferenceAction extends DumbAwareAction {
     @Override
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(myTextField.getSelectedText() == null && getChosenElement() instanceof PsiElement);

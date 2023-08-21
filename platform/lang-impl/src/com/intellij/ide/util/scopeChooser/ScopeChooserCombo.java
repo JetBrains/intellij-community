@@ -234,7 +234,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
     return scopeName != null ? ScopeIdMapper.getInstance().getScopeSerializationId(scopeName) : null;
   }
 
-  private static class MyRenderer extends SimpleListCellRenderer<ScopeDescriptor> {
+  private static final class MyRenderer extends SimpleListCellRenderer<ScopeDescriptor> {
     final TitledSeparator separator = new TitledSeparator();
 
     @Override
@@ -265,7 +265,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
     void onAfterBrowseFinished();
   }
 
-  private static class MyComboBox extends ComboBox {
+  private static final class MyComboBox extends ComboBox {
 
     @Override
     public void setSelectedItem(Object item) {

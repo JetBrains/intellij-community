@@ -35,7 +35,7 @@ import javax.swing.*;
 import java.awt.event.ActionListener;
 import java.util.Arrays;
 
-class FindPopupScopeUIImpl implements FindPopupScopeUI {
+final class FindPopupScopeUIImpl implements FindPopupScopeUI {
   static final ScopeType PROJECT = new ScopeType("Project", FindBundle.messagePointer("find.popup.scope.project"), EmptyIcon.ICON_0);
   static final ScopeType MODULE = new ScopeType("Module", FindBundle.messagePointer("find.popup.scope.module"), EmptyIcon.ICON_0);
   static final ScopeType DIRECTORY = new ScopeType("Directory", FindBundle.messagePointer("find.popup.scope.directory"), EmptyIcon.ICON_0);

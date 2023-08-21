@@ -567,7 +567,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
     }
 
     // Actions shouldn't be anonymous classes for statistics reasons.
-    private class ShowImportTooltipAction extends ToggleAction {
+    private final class ShowImportTooltipAction extends ToggleAction {
       private ShowImportTooltipAction() {
         super(EditorBundle.message("iw.show.import.tooltip"));
       }

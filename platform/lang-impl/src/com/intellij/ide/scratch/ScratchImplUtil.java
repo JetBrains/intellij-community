@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.scratch;
 
 import com.intellij.icons.AllIcons;
@@ -293,7 +293,7 @@ final class ScratchImplUtil {
     @Nullable String extractText();
   }
 
-  private static class TerminalExtractor implements TextExtractor {
+  private static final class TerminalExtractor implements TextExtractor {
     final Component component;
 
     TerminalExtractor(@Nullable Component dataContext) {
@@ -315,7 +315,7 @@ final class ScratchImplUtil {
     }
   }
 
-  private static class TextComponentExtractor implements TextExtractor {
+  private static final class TextComponentExtractor implements TextExtractor {
     final JTextComponent comp;
 
     TextComponentExtractor(@NotNull JTextComponent component) { comp = component; }
@@ -332,7 +332,7 @@ final class ScratchImplUtil {
     }
   }
 
-  private static class ListExtractor implements TextExtractor {
+  private static final class ListExtractor implements TextExtractor {
     final JList<Object> comp;
 
     /** @noinspection unchecked*/
@@ -364,7 +364,7 @@ final class ScratchImplUtil {
     }
   }
 
-  private static class TreeExtractor implements TextExtractor {
+  private static final class TreeExtractor implements TextExtractor {
     final JTree comp;
 
     TreeExtractor(@NotNull JTree component) { comp = component; }
@@ -405,7 +405,7 @@ final class ScratchImplUtil {
     }
   }
 
-  private static class TableExtractor implements TextExtractor {
+  private static final class TableExtractor implements TextExtractor {
     final JTable comp;
 
     TableExtractor(@NotNull JTable component) { comp = component; }

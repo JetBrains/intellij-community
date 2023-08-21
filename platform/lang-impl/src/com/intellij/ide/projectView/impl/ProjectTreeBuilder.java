@@ -81,7 +81,7 @@ public class ProjectTreeBuilder extends BaseProjectTreeBuilder {
     return new ProjectTreeBuilderPsiListener(project);
   }
 
-  protected class ProjectTreeBuilderPsiListener extends ProjectViewPsiTreeChangeListener {
+  protected final class ProjectTreeBuilderPsiListener extends ProjectViewPsiTreeChangeListener {
     public ProjectTreeBuilderPsiListener(final Project project) {
       super(project);
     }

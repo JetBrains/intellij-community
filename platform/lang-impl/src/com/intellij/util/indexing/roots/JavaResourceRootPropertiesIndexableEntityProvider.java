@@ -4,9 +4,9 @@ package com.intellij.util.indexing.roots;
 import com.intellij.java.workspace.entities.JavaResourceRootPropertiesEntity;
 import com.intellij.java.workspace.entities.JavaRootsKt;
 import com.intellij.openapi.project.Project;
-import com.intellij.platform.workspace.storage.WorkspaceEntity;
 import com.intellij.platform.workspace.jps.entities.ModuleEntity;
 import com.intellij.platform.workspace.jps.entities.SourceRootEntity;
+import com.intellij.platform.workspace.storage.WorkspaceEntity;
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl;
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders;
 import kotlin.Pair;
@@ -18,7 +18,7 @@ import java.util.Collections;
 import static com.intellij.util.indexing.roots.JavaSourceRootPropertiesIndexableEntityProvider.collectBuildersOnAddedEntityWithDataExtractor;
 import static com.intellij.util.indexing.roots.JavaSourceRootPropertiesIndexableEntityProvider.collectBuildersOnReplacedEntityWithDataExtractor;
 
-class JavaResourceRootPropertiesIndexableEntityProvider implements IndexableEntityProvider.Enforced<JavaResourceRootPropertiesEntity> {
+final class JavaResourceRootPropertiesIndexableEntityProvider implements IndexableEntityProvider.Enforced<JavaResourceRootPropertiesEntity> {
   @Override
   public @NotNull Class<JavaResourceRootPropertiesEntity> getEntityClass() {
     return JavaResourceRootPropertiesEntity.class;

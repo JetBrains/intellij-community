@@ -112,7 +112,7 @@ import static com.intellij.ui.SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES;
 import static com.intellij.ui.SimpleTextAttributes.STYLE_PLAIN;
 import static com.intellij.util.FontUtil.spaceAndThinSpace;
 
-public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, DataProvider {
+public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, DataProvider {
   private static final KeyStroke ENTER = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0);
   private static final KeyStroke ENTER_WITH_MODIFIERS = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, SystemInfo.isMac
                                                                                                   ? InputEvent.META_DOWN_MASK : InputEvent.CTRL_DOWN_MASK);
@@ -1795,7 +1795,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
     }
   }
 
-  private class MySwitchContextToggleAction extends ToggleAction implements DumbAware {
+  private final class MySwitchContextToggleAction extends ToggleAction implements DumbAware {
     MySwitchContextToggleAction(@NotNull FindModel.SearchContext context) {
       super(FindInProjectUtil.getPresentableName(context));
     }
@@ -1820,7 +1820,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
     }
   }
 
-  private class MySelectScopeToggleAction extends DumbAwareToggleAction {
+  private final class MySelectScopeToggleAction extends DumbAwareToggleAction {
     private final FindPopupScopeUI.ScopeType myScope;
 
     MySelectScopeToggleAction(@NotNull FindPopupScopeUI.ScopeType scope) {
@@ -1856,7 +1856,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
     }
   }
 
-  private class MyShowFilterPopupAction extends DumbAwareAction {
+  private final class MyShowFilterPopupAction extends DumbAwareAction {
     private final DefaultActionGroup mySwitchContextGroup;
 
     MyShowFilterPopupAction() {
@@ -1885,7 +1885,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
     }
   }
 
-  static class UsageTableCellRenderer extends SelectablePanel implements TableCellRenderer {
+  static final class UsageTableCellRenderer extends SelectablePanel implements TableCellRenderer {
     private final ColoredTableCellRenderer myUsageRenderer = new ColoredTableCellRenderer() {
       @Override
       protected void customizeCellRenderer(@NotNull JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
@@ -2108,7 +2108,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
     }
   }
 
-  private static class JBTextAreaWithMixedAccessibleContext extends JBTextArea {
+  private static final class JBTextAreaWithMixedAccessibleContext extends JBTextArea {
 
     private final AccessibleContext tableContext;
 

@@ -533,7 +533,7 @@ public final class DaemonListeners implements Disposable {
     return canChangeFileSilently(file, isInContent, ThreeState.UNSURE);
   }
 
-  private class MyApplicationListener implements ApplicationListener {
+  private final class MyApplicationListener implements ApplicationListener {
     @Override
     public void beforeWriteActionStart(@NotNull Object action) {
       if (!myDaemonCodeAnalyzer.isRunning()) return; // we'll restart in writeActionFinished()
@@ -627,7 +627,7 @@ public final class DaemonListeners implements Disposable {
     }
   }
 
-  private class MyProfileChangeListener implements ProfileChangeAdapter {
+  private final class MyProfileChangeListener implements ProfileChangeAdapter {
     @Override
     public void profileChanged(@NotNull InspectionProfile profile) {
       stopDaemonAndRestartAllFiles("Profile changed");

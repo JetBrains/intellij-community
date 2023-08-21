@@ -138,7 +138,7 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
     }
   }
 
-  private static class IndexDataController {
+  private static final class IndexDataController {
     private final @NotNull Int2ObjectMap<RandomAccessIntContainer> myInvertedIndex;
     private final @NotNull MappedFileTypeIndex.IndexDataController.ForwardIndexFileController myForwardIndex;
     private final @NotNull IntConsumer myInvertedIndexChangeCallback;
@@ -267,7 +267,7 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
     return new IndexDataController(invertedIndex, forwardIndex, invertedIndexChangeCallback);
   }
 
-  private static class ForwardIndexFileControllerOverFile implements IndexDataController.ForwardIndexFileController {
+  private static final class ForwardIndexFileControllerOverFile implements IndexDataController.ForwardIndexFileController {
     private static final int ELEMENT_BYTES = Short.BYTES;
     private static final int DEFAULT_FILE_ALLOCATION_BYTES = 512;
     private static final int DEFAULT_FULL_SCAN_BUFFER_BYTES = 1024;
@@ -454,7 +454,7 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
    * But we know that specialization uses memory-mapped file under the hood, and this is
    * that really important here.
    */
-  private static class ForwardIndexFileControllerOverMappedFile implements IndexDataController.ForwardIndexFileController {
+  private static final class ForwardIndexFileControllerOverMappedFile implements IndexDataController.ForwardIndexFileController {
 
     private static final String STORAGE_NAME = "filetype.index";
     private static final int BINARY_FORMAT_VERSION = 1;

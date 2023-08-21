@@ -1312,7 +1312,7 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
     }
   }
 
-  private static class ActivateToolWindowByContributorAction extends DumbAwareAction {
+  private static final class ActivateToolWindowByContributorAction extends DumbAwareAction {
     private final ServiceViewContributor<?> myContributor;
 
     ActivateToolWindowByContributorAction(ServiceViewContributor<?> contributor, ItemPresentation contributorPresentation) {

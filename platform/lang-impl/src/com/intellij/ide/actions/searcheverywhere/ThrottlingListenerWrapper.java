@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.openapi.Disposable;
@@ -16,7 +16,7 @@ import java.util.Map;
  * <br>
  * Not thread-safe and should be notified only in EDT
  */
-class ThrottlingListenerWrapper implements SearchListener, Disposable {
+final class ThrottlingListenerWrapper implements SearchListener, Disposable {
 
   private static final int DEFAULT_THROTTLING_TIMEOUT = 100;
 

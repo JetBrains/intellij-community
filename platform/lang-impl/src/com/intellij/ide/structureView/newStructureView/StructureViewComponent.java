@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.structureView.newStructureView;
 
 import com.intellij.icons.AllIcons;
@@ -833,7 +833,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     return provider == null ? 2 : provider.getMinimumAutoExpandDepth();
   }
 
-  private static class MyNodeWrapper extends TreeElementWrapper
+  private static final class MyNodeWrapper extends TreeElementWrapper
     implements NodeDescriptorProvidingKey, ValidateableNode {
 
     private long childrenStamp = -1;
@@ -953,7 +953,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     }
   }
 
-  private static class MyGroupWrapper extends GroupWrapper {
+  private static final class MyGroupWrapper extends GroupWrapper {
     MyGroupWrapper(Project project, @NotNull Group group, @NotNull TreeModel treeModel) {
       super(project, group, treeModel);
     }
@@ -977,7 +977,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     }
   }
 
-  private static class MyTree extends DnDAwareTree implements PlaceProvider {
+  private static final class MyTree extends DnDAwareTree implements PlaceProvider {
     MyTree(javax.swing.tree.TreeModel model) {
       super(model);
       HintUpdateSupply.installDataContextHintUpdateSupply(this);
@@ -1093,7 +1093,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     return actions;
   }
 
-  private static class MyExpandListener extends TreeModelAdapter {
+  private static final class MyExpandListener extends TreeModelAdapter {
     private static final RegistryValue autoExpandDepth = Registry.get("ide.tree.autoExpandMaxDepth");
 
     private final JTree tree;

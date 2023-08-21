@@ -13,8 +13,8 @@ import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ToggleSelectionOnlyAction extends ToggleAction implements ContextAwareShortcutProvider, DumbAware, LightEditCompatible,
-                                                                       ActionRemoteBehaviorSpecification.Frontend {
+public final class ToggleSelectionOnlyAction extends ToggleAction implements ContextAwareShortcutProvider, DumbAware, LightEditCompatible,
+                                                                             ActionRemoteBehaviorSpecification.Frontend {
   public ToggleSelectionOnlyAction() {
     super(FindBundle.message("find.selection.only"), null, AllIcons.Actions.InSelection);
   }

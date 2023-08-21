@@ -15,6 +15,9 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.backend.workspace.WorkspaceModel;
+import com.intellij.platform.workspace.jps.entities.ModuleEntity;
+import com.intellij.platform.workspace.storage.EntityStorage;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.AdditionalIndexableFileSet;
 import com.intellij.util.indexing.EntityIndexingServiceEx;
@@ -24,12 +27,9 @@ import com.intellij.util.indexing.dependenciesCache.DependenciesIndexedStatusSer
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin;
 import com.intellij.workspaceModel.core.fileIndex.EntityStorageKind;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex;
-import com.intellij.platform.backend.workspace.WorkspaceModel;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleEntityUtils;
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge;
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyIndex;
-import com.intellij.platform.workspace.storage.EntityStorage;
-import com.intellij.platform.workspace.jps.entities.ModuleEntity;
 import kotlin.sequences.Sequence;
 import kotlin.sequences.SequencesKt;
 import org.jetbrains.annotations.ApiStatus;
@@ -41,7 +41,7 @@ import static com.intellij.util.indexing.roots.LibraryIndexableFilesIteratorImpl
 
 @ApiStatus.Experimental
 @ApiStatus.Internal
-public class IndexableFilesIndexImpl implements IndexableFilesIndex {
+public final class IndexableFilesIndexImpl implements IndexableFilesIndex {
   @NotNull
   private final Project project;
   private final AdditionalIndexableFileSet filesFromIndexableSetContributors;

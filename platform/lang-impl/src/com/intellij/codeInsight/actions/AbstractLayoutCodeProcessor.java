@@ -389,7 +389,7 @@ public abstract class AbstractLayoutCodeProcessor {
     return vFile != null ? ProjectUtil.calcRelativeToProjectPath(vFile, project) : file.getName();
   }
 
-  private class ProcessingTask implements SequentialTask {
+  private final class ProcessingTask implements SequentialTask {
     private final List<AbstractLayoutCodeProcessor> myProcessors;
 
     private final FileRecursiveIterator myFileTreeIterator;

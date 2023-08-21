@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.refactoring.ui;
 
@@ -187,7 +187,7 @@ public class NameSuggestionsField extends JPanel {
     return field;
   }
 
-  private static class MyComboBoxModel extends DefaultComboBoxModel {
+  private static final class MyComboBoxModel extends DefaultComboBoxModel {
     private String[] mySuggestions;
 
     MyComboBoxModel() {
@@ -305,7 +305,7 @@ public class NameSuggestionsField extends JPanel {
     myComponent.setEnabled(enabled);
   }
 
-  private class MyDocumentListener implements DocumentListener {
+  private final class MyDocumentListener implements DocumentListener {
     @Override
     public void documentChanged(@NotNull DocumentEvent event) {
       if (!myNonHumanChange && myComponent instanceof JComboBox && ((JComboBox<?>)myComponent).isPopupVisible()) {
@@ -317,7 +317,7 @@ public class NameSuggestionsField extends JPanel {
     }
   }
 
-  private class MyComboBoxItemListener implements ItemListener {
+  private final class MyComboBoxItemListener implements ItemListener {
     @Override
     public void itemStateChanged(ItemEvent e) {
       fireDataChanged();

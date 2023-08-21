@@ -15,7 +15,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 
-class ProjectChangedFilesScanner {
+final class ProjectChangedFilesScanner {
   private static final Logger LOG = Logger.getInstance(ProjectChangedFilesScanner.class);
   private @NotNull final Project myProject;
 

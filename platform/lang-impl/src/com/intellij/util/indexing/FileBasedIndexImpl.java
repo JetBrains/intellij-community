@@ -1730,7 +1730,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     return ourWritingIndexFile.get();
   }
 
-  private class VirtualFileUpdateTask extends UpdateTask<VirtualFile> {
+  private final class VirtualFileUpdateTask extends UpdateTask<VirtualFile> {
     @Override
     void doProcess(VirtualFile item, Project project) {
       processRefreshedFile(project, new CachedFileContent(item));
@@ -2125,7 +2125,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
    * Legacy flushing implementation: do some basic precautions against contention. Wait for a period without modifications,
    * use .tryLock() to avoid competing with other threads
    */
-  private class SimpleFlusher implements Runnable, AutoCloseable {
+  private final class SimpleFlusher implements Runnable, AutoCloseable {
 
     private int lastModCount;
     private final Future<?> scheduledFuture;
@@ -2237,7 +2237,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
    * interval, and the contention quota is slightly decreased for the next attempt.
    * More details in a {@link GentleFlusherBase} javadocs
    */
-  private class GentleIndexFlusher extends GentleFlusherBase {
+  private final class GentleIndexFlusher extends GentleFlusherBase {
     private static final int MIN_CONTENTION_QUOTA = 2;
     private static final int INITIAL_CONTENTION_QUOTA = 16;
     private static final int MAX_CONTENTION_QUOTA = 64;
@@ -2336,7 +2336,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       return ((ReentrantReadWriteLock)lock).getQueueLength() + storageLockQueueLength;
     }
 
-    private class IndexFlushingState {
+    private final class IndexFlushingState {
       private final ID<?, ?> indexId;
       private long lastFlushedMs = -1;
 

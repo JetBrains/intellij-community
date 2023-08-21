@@ -811,14 +811,14 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
     }
   }
 
-  static class State {
+  static final class State {
     public final Set<String> configurationTypes = new HashSet<>();
     public final Set<String> excludedTypes = new HashSet<>();
     public final Map<String, Set<String>> hiddenConfigurations = new HashMap<>();
     public boolean openRunningConfigInTab = false;
   }
 
-  private static class RunDashboardServiceImpl implements RunDashboardService {
+  private static final class RunDashboardServiceImpl implements RunDashboardService {
     private final RunnerAndConfigurationSettings mySettings;
     private final Content myContent;
 
@@ -861,7 +861,7 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
     }
   }
 
-  private class ServiceContentManagerListener implements ContentManagerListener {
+  private final class ServiceContentManagerListener implements ContentManagerListener {
     private volatile Content myPreviousSelection = null;
 
     @Override

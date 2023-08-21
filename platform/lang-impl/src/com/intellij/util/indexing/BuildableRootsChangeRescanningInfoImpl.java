@@ -3,14 +3,14 @@ package com.intellij.util.indexing;
 
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.platform.workspace.jps.serialization.impl.LibraryNameGenerator;
-import com.intellij.util.SmartList;
-import com.intellij.util.containers.SmartHashSet;
-import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridge;
-import com.intellij.platform.workspace.storage.WorkspaceEntity;
 import com.intellij.platform.workspace.jps.entities.LibraryId;
 import com.intellij.platform.workspace.jps.entities.LibraryTableId;
 import com.intellij.platform.workspace.jps.entities.ModuleId;
+import com.intellij.platform.workspace.jps.serialization.impl.LibraryNameGenerator;
+import com.intellij.platform.workspace.storage.WorkspaceEntity;
+import com.intellij.util.SmartList;
+import com.intellij.util.containers.SmartHashSet;
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridge;
 import kotlin.Pair;
 import org.jetbrains.annotations.NotNull;
 
@@ -18,7 +18,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
-public class BuildableRootsChangeRescanningInfoImpl extends BuildableRootsChangeRescanningInfoEx {
+public final class BuildableRootsChangeRescanningInfoImpl extends BuildableRootsChangeRescanningInfoEx {
   private final Set<ModuleId> modules = new SmartHashSet<>();
   private boolean hasInheritedSdk;
   private final List<Pair<String, String>> sdks = new SmartList<>();

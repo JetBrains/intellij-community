@@ -19,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
-public class InjectionEditServiceImpl implements InjectionEditService {
+public final class InjectionEditServiceImpl implements InjectionEditService {
   @Override
   public @NotNull Disposable synchronizeWithFragment(@NotNull PsiFile injectedFile, @NotNull Document copyDocument) {
     Place shreds = InjectedLanguageUtilBase.getShreds(injectedFile);

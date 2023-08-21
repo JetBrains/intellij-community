@@ -14,9 +14,9 @@ import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.openapi.editor.StripTrailingSpacesFilter.ALL_LINES;
 
-public class KeepTrailingSpacesOnEmptyLinesFilterFactory extends StripTrailingSpacesFilterFactory {
+public final class KeepTrailingSpacesOnEmptyLinesFilterFactory extends StripTrailingSpacesFilterFactory {
 
-  private static class KeepTrailingSpacesOnEmptyLinesFilter extends SmartStripTrailingSpacesFilter {
+  private static final class KeepTrailingSpacesOnEmptyLinesFilter extends SmartStripTrailingSpacesFilter {
     private final @NotNull Document myDocument;
 
     KeepTrailingSpacesOnEmptyLinesFilter(@NotNull Document document) {

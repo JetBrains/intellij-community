@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.impl.dataRules;
 
@@ -32,7 +32,7 @@ import java.util.LinkedHashSet;
 import java.util.Objects;
 import java.util.Set;
 
-public class VirtualFileArrayRule implements GetDataRule {
+public final class VirtualFileArrayRule implements GetDataRule {
 
   private static final Logger LOG = Logger.getInstance(VirtualFileArrayRule.class);
 

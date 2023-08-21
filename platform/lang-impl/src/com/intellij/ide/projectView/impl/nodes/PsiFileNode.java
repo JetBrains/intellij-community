@@ -156,7 +156,7 @@ public class PsiFileNode extends BasePsiNode<PsiFile> implements NavigatableWith
     return null;
   }
 
-  public static class ExtensionSortKey implements Comparable<ExtensionSortKey> {
+  public static final class ExtensionSortKey implements Comparable<ExtensionSortKey> {
     private final String myExtension;
 
     public ExtensionSortKey(@NotNull String extension) {

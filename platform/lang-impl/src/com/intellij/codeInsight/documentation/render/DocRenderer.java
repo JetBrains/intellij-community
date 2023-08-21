@@ -377,7 +377,7 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
     return ourCachedStyleSheet;
   }
 
-  private static class ChangeFontSize extends DumbAwareAction {
+  private static final class ChangeFontSize extends DumbAwareAction {
     ChangeFontSize() {
       super(CodeInsightBundle.messagePointer("javadoc.adjust.font.size"));
     }
@@ -391,7 +391,7 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
     }
   }
 
-  class EditorPane extends JEditorPane {
+  final class EditorPane extends JEditorPane {
     private final List<Image> myImages = new ArrayList<>();
     private final AtomicBoolean myUpdateScheduled = new AtomicBoolean();
     private final AtomicBoolean myRepaintScheduled = new AtomicBoolean();
@@ -617,7 +617,7 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
     }
   }
 
-  private class CopySelection extends DumbAwareAction {
+  private final class CopySelection extends DumbAwareAction {
     CopySelection() {
       super(CodeInsightBundle.messagePointer("doc.render.copy.action.text"), AllIcons.Actions.Copy);
       AnAction copyAction = ActionManager.getInstance().getAction(IdeActions.ACTION_COPY);
@@ -645,7 +645,7 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
     }
   }
 
-  static class ToggleRenderingAction extends DumbAwareAction {
+  static final class ToggleRenderingAction extends DumbAwareAction {
     private final DocRenderItem item;
 
     ToggleRenderingAction(DocRenderItem i) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.packageDependencies.ui;
 
 import com.intellij.CommonBundle;
@@ -463,7 +463,7 @@ public final class DependenciesPanel extends JPanel implements Disposable, DataP
     return null;
   }
 
-  private static class MyTreeCellRenderer extends ColoredTreeCellRenderer {
+  private static final class MyTreeCellRenderer extends ColoredTreeCellRenderer {
     @Override
     public void customizeCellRenderer(
       @NotNull JTree tree,
@@ -676,7 +676,7 @@ public final class DependenciesPanel extends JPanel implements Disposable, DataP
     }
   }
 
-  private class DependenciesExporterToTextFile implements ExporterToTextFile {
+  private final class DependenciesExporterToTextFile implements ExporterToTextFile {
     @NotNull
     @Override
     public String getReportText() {
@@ -724,7 +724,7 @@ public final class DependenciesPanel extends JPanel implements Disposable, DataP
   }
 
 
-  private class RerunAction extends AnAction {
+  private final class RerunAction extends AnAction {
     RerunAction(JComponent comp) {
       super(CommonBundle.message("action.rerun"), CodeInsightBundle.message("action.rerun.dependency"), AllIcons.Actions.Rerun);
       registerCustomShortcutSet(CommonShortcuts.getRerun(), comp);
@@ -765,7 +765,7 @@ public final class DependenciesPanel extends JPanel implements Disposable, DataP
     }
   }
 
-  private static class MyTree extends Tree implements DataProvider {
+  private static final class MyTree extends Tree implements DataProvider {
     @Override
     public Object getData(@NotNull String dataId) {
       PackageDependenciesNode node = getSelectedNode();
@@ -933,7 +933,7 @@ public final class DependenciesPanel extends JPanel implements Disposable, DataP
     }
   }
 
-  private class SelectInLeftTreeAction extends AnAction {
+  private final class SelectInLeftTreeAction extends AnAction {
     SelectInLeftTreeAction() {
       super(CodeInsightBundle.messagePointer("action.select.in.left.tree"),
             CodeInsightBundle.messagePointer("action.select.in.left.tree.description"), null);
@@ -979,7 +979,7 @@ public final class DependenciesPanel extends JPanel implements Disposable, DataP
     }
   }
 
-  private class MarkAsIllegalAction extends AnAction {
+  private final class MarkAsIllegalAction extends AnAction {
     MarkAsIllegalAction() {
       super(CodeInsightBundle.messagePointer("mark.dependency.illegal.text"),
             CodeInsightBundle.messagePointer("mark.dependency.illegal.text"), AllIcons.Actions.Lightning);
@@ -1089,7 +1089,7 @@ public final class DependenciesPanel extends JPanel implements Disposable, DataP
     }
   }
 
-  public static class DependencyPanelSettings {
+  public static final class DependencyPanelSettings {
     public boolean UI_FLATTEN_PACKAGES;
     public boolean UI_SHOW_FILES;
     public boolean UI_SHOW_MODULES;

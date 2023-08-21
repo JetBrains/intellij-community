@@ -33,7 +33,7 @@ import java.util.List;
 /**
  * @author Dmitry Avdeev
  */
-public class SaveProjectAsTemplateDialog extends DialogWrapper {
+public final class SaveProjectAsTemplateDialog extends DialogWrapper {
 
   @NotNull private final Project myProject;
   private JPanel myPanel;

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileTypes.impl.associate.ui;
 
 import com.intellij.ide.highlighter.ArchiveFileType;
@@ -32,7 +32,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class FileTypeAssociationForm {
+public final class FileTypeAssociationForm {
 
   private final static int DEFAULT_EXTENSION_SPLIT_THRESHOLD = 5;
 

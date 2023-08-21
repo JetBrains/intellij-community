@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-public class SelectionManager {
+public final class SelectionManager {
   @NotNull private final SearchResults mySearchResults;
   private final boolean myHadSelectionInitially;
   private final List<FoldRegion> myRegionsToRestore = new ArrayList<>();

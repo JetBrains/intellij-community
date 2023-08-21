@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints;
 
 import com.intellij.codeHighlighting.EditorBoundHighlightingPass;
@@ -203,7 +203,7 @@ public final class ParameterHintsPass extends EditorBoundHighlightingPass {
     return myDocument.getTextLength() == rootRange.getLength();
   }
 
-  static class HintData {
+  static final class HintData {
     final String presentationText;
     final boolean relatesToPrecedingText;
     final HintWidthAdjustment widthAdjustment;

@@ -41,8 +41,8 @@ import java.util.List;
 import java.util.*;
 
 @SuppressWarnings("rawtypes")
-public class PostfixTemplatesConfigurable implements SearchableConfigurable, EditorOptionsProvider, Configurable.NoScroll,
-                                                     Configurable.WithEpDependencies {
+public final class PostfixTemplatesConfigurable implements SearchableConfigurable, EditorOptionsProvider, Configurable.NoScroll,
+                                                           Configurable.WithEpDependencies {
   public static final Comparator<PostfixTemplate> TEMPLATE_COMPARATOR = Comparator.comparing(PostfixTemplate::getKey);
 
   @Nullable

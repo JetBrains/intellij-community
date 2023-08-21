@@ -344,7 +344,7 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
     return true;
   }
 
-  private static class MyUsageInfo extends UsageInfo {
+  private static final class MyUsageInfo extends UsageInfo {
     private final PsiElement myTarget;
     final PsiReference myReference;
 

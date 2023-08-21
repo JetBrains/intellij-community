@@ -1274,7 +1274,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     return myFontPreferences;
   }
 
-  private static class NewUILookupAdvertiser extends Advertiser {
+  private static final class NewUILookupAdvertiser extends Advertiser {
 
     private NewUILookupAdvertiser() {
       setBorder(JBUI.Borders.empty());
@@ -1295,7 +1295,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
    * it gains focus when "Screen Reader" mode is enabled. So we need to delegate
    * key events and declare a permanent component to provide proper data context for actions.
    */
-  private class LookupList extends JBList<LookupElement> implements DependentTransientComponent {
+  private final class LookupList extends JBList<LookupElement> implements DependentTransientComponent {
     LookupList() { super(new CollectionListModelWithBatchUpdate<>()); }
 
     @Override

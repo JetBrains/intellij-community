@@ -36,7 +36,7 @@ import static com.intellij.util.indexing.roots.IndexableEntityProvider.Indexable
  */
 @ApiStatus.Internal
 @ApiStatus.Experimental
-public class DependenciesIndexedStatusService {
+public final class DependenciesIndexedStatusService {
   private static final Logger LOG = Logger.getInstance(DependenciesIndexedStatusService.class);
   @VisibleForTesting
   static final Key<Boolean> ENFORCEMENT_USAGE_TEST_MODE_FLAG = new Key<>("enforce.DependenciesIndexedStatusService.usage");

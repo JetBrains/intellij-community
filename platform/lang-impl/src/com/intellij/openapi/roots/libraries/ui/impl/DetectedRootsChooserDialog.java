@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.libraries.ui.impl;
 
 import com.intellij.lang.LangBundle;
@@ -45,7 +45,7 @@ import java.util.*;
  * @author max
  * @author Constantine.Plotnikov
  */
-public class DetectedRootsChooserDialog extends DialogWrapper {
+public final class DetectedRootsChooserDialog extends DialogWrapper {
   private static final ColumnInfo<?, ?> ROOT_COLUMN = new TreeColumnInfo("");
   private static final ColumnInfo<VirtualFileCheckedTreeNode, String> ROOT_TYPE_COLUMN = new ColumnInfo<>("") {
     @Override
@@ -222,7 +222,7 @@ public class DetectedRootsChooserDialog extends DialogWrapper {
     return myTreeTable;
   }
 
-  private static class VirtualFileCheckedTreeNode extends CheckedTreeNode {
+  private static final class VirtualFileCheckedTreeNode extends CheckedTreeNode {
     private final VirtualFile myFile;
 
     private VirtualFileCheckedTreeNode(VirtualFile file) {

@@ -27,7 +27,7 @@ import java.util.*;
 
 import static com.intellij.psi.codeStyle.CodeStyleSettingsProvider.EXTENSION_POINT_NAME;
 
-public class CodeStyleSettingsCodeFragmentFilter {
+public final class CodeStyleSettingsCodeFragmentFilter {
   private static final Logger LOG = Logger.getInstance(CodeStyleSettingsCodeFragmentFilter.class);
 
   private final Project myProject;
@@ -138,7 +138,7 @@ public class CodeStyleSettingsCodeFragmentFilter {
     }
   }
 
-  private class FilterFieldsTask implements SequentialTaskWithFixedIterationsNumber {
+  private final class FilterFieldsTask implements SequentialTaskWithFixedIterationsNumber {
     private final Iterator<String> myIterator;
     private final int myTotalFieldsNumber;
     private final Collection<String> myAllFields;
@@ -249,7 +249,7 @@ interface SequentialTaskWithFixedIterationsNumber extends SequentialTask {
   int getTotalIterationsNumber();
 }
 
-class CompositeSequentialTask implements SequentialTask {
+final class CompositeSequentialTask implements SequentialTask {
   private final List<SequentialTaskWithFixedIterationsNumber> myUnfinishedTasks = new ArrayList<>();
   private SequentialTask myCurrentTask = null;
 

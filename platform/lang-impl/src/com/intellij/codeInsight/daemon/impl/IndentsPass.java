@@ -237,7 +237,7 @@ public final class IndentsPass extends TextEditorHighlightingPass implements Dum
     return new ArrayList<>(myDescriptors);
   }
 
-  private class IndentsCalculator {
+  private final class IndentsCalculator {
     final @NotNull Map<Language, TokenSet> myComments = new HashMap<>();
     final int @NotNull [] lineIndents; // negative value means the line is empty (or contains a comment) and indent
     // (denoted by absolute value) was deduced from enclosing non-empty lines

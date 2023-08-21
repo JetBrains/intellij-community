@@ -16,10 +16,10 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 
-public class PersistentSubIndexerVersionEnumerator<SubIndexerVersion> implements Closeable {
+public final class PersistentSubIndexerVersionEnumerator<SubIndexerVersion> implements Closeable {
   private static volatile int STORAGE_SIZE_LIMIT = 1024 * 1024;
 
-  private class MyEnumerator implements DataEnumerator<SubIndexerVersion> {
+  private final class MyEnumerator implements DataEnumerator<SubIndexerVersion> {
     @Override
     public synchronized int enumerate(@Nullable SubIndexerVersion value) throws IOException {
       Integer val = myMap.get(value);

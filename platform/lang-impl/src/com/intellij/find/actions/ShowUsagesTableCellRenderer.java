@@ -404,7 +404,7 @@ final class ShowUsagesTableCellRenderer implements TableCellRenderer {
   private static final int ARC = 8;
   private static final int LEFT_OFFSET = 6;
 
-  private static class RoundedColoredComponent extends SimpleColoredComponent {
+  private static final class RoundedColoredComponent extends SimpleColoredComponent {
 
     private RoundedColoredComponent(boolean isSelected) {
       if (isSelected) {
@@ -447,7 +447,7 @@ final class ShowUsagesTableCellRenderer implements TableCellRenderer {
     }
   }
 
-  private static class MyFlowLayout extends FlowLayout {
+  private static final class MyFlowLayout extends FlowLayout {
     public MyFlowLayout(int align, int hgap, int vgap) {
       super(align, hgap, vgap);
     }

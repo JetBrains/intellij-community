@@ -8,7 +8,7 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class FormattingProgressTaskFactory implements FormattingProgressCallbackFactory {
+public final class FormattingProgressTaskFactory implements FormattingProgressCallbackFactory {
   @Override
   public @Nullable FormattingProgressCallback createProgressCallback(@NotNull Project project,
                                                                      @NotNull PsiFile file,

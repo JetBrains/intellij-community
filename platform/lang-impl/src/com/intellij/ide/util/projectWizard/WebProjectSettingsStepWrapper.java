@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.projectWizard;
 
 import com.intellij.openapi.ui.LabeledComponent;
@@ -15,7 +15,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-public class WebProjectSettingsStepWrapper implements SettingsStep {
+public final class WebProjectSettingsStepWrapper implements SettingsStep {
   private final List<Pair<String, JComponent>> myFields = new ArrayList<>();
   private final List<JComponent> myComponents = new ArrayList<>();
   private final @Nullable ProjectSettingsStepBase<?> myStepBase;

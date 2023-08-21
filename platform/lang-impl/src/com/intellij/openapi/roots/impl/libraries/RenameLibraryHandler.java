@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl.libraries;
 
 import com.intellij.ide.IdeBundle;
@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Konstantin Bulenkov
  */
-public class RenameLibraryHandler implements RenameHandler, TitledHandler {
+public final class RenameLibraryHandler implements RenameHandler, TitledHandler {
   private static final Logger LOG = Logger.getInstance(RenameLibraryHandler.class);
 
   @Override
@@ -56,7 +56,7 @@ public class RenameLibraryHandler implements RenameHandler, TitledHandler {
     return IdeBundle.message("title.rename.library");
   }
 
-  private static class MyInputValidator implements InputValidator {
+  private static final class MyInputValidator implements InputValidator {
     @NotNull
     private final Project myProject;
     @NotNull

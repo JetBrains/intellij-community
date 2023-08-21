@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
@@ -67,7 +67,7 @@ public abstract class CompletionPhase implements Disposable {
 
   public abstract int newCompletionStarted(int time, boolean repeated);
 
-  public static class CommittingDocuments extends CompletionPhase {
+  public static final class CommittingDocuments extends CompletionPhase {
     private static final ExecutorService ourExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Completion Preparation", 1);
     boolean replaced;
     private final ActionTracker myTracker;
@@ -182,7 +182,7 @@ public abstract class CompletionPhase implements Disposable {
     }
 
   }
-  public static class Synchronous extends CompletionPhase {
+  public static final class Synchronous extends CompletionPhase {
     public Synchronous(CompletionProgressIndicator indicator) {
       super(indicator);
     }
@@ -194,7 +194,7 @@ public abstract class CompletionPhase implements Disposable {
       return time;
     }
   }
-  public static class BgCalculation extends CompletionPhase {
+  public static final class BgCalculation extends CompletionPhase {
     boolean modifiersChanged = false;
     private final @NotNull ClientId ownerId = ClientId.getCurrent();
 
@@ -234,7 +234,7 @@ public abstract class CompletionPhase implements Disposable {
       return indicator.nextInvocationCount(time, repeated);
     }
   }
-  public static class ItemsCalculated extends CompletionPhase {
+  public static final class ItemsCalculated extends CompletionPhase {
 
     public ItemsCalculated(CompletionProgressIndicator indicator) {
       super(indicator);
@@ -275,7 +275,7 @@ public abstract class CompletionPhase implements Disposable {
     }
   }
 
-  public static class InsertedSingleItem extends ZombiePhase {
+  public static final class InsertedSingleItem extends ZombiePhase {
     public final Runnable restorePrefix;
 
     InsertedSingleItem(CompletionProgressIndicator indicator, Runnable restorePrefix) {
@@ -294,7 +294,7 @@ public abstract class CompletionPhase implements Disposable {
     }
 
   }
-  public static class NoSuggestionsHint extends ZombiePhase {
+  public static final class NoSuggestionsHint extends ZombiePhase {
     NoSuggestionsHint(@Nullable LightweightHint hint, CompletionProgressIndicator indicator) {
       super(indicator);
       expireOnAnyEditorChange(indicator.getEditor());
@@ -313,7 +313,7 @@ public abstract class CompletionPhase implements Disposable {
 
   }
 
-  public static class EmptyAutoPopup extends ZombiePhase {
+  public static final class EmptyAutoPopup extends ZombiePhase {
     private final ActionTracker myTracker;
     private final Editor myEditor;
     private final Set<? extends Pair<Integer, ElementPattern<String>>> myRestartingPrefixConditions;

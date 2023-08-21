@@ -1656,7 +1656,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     abstract @Nls String getDocumentation() throws Exception;
   }
 
-  private static class MyCollector extends DocumentationCollector {
+  private static final class MyCollector extends DocumentationCollector {
     final Project project;
     final PsiElement originalElement;
     final boolean onHover;

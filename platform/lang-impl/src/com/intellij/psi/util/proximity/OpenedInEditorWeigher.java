@@ -11,7 +11,7 @@ import com.intellij.psi.util.ProximityLocation;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class OpenedInEditorWeigher extends ProximityWeigher {
+public final class OpenedInEditorWeigher extends ProximityWeigher {
   private static final NotNullLazyKey<VirtualFile[], ProximityLocation> OPENED_EDITORS = NotNullLazyKey.createLazyKey("openedEditors",
                                                                                                                location -> FileEditorManager.getInstance(location.getProject()).getOpenFiles());
 

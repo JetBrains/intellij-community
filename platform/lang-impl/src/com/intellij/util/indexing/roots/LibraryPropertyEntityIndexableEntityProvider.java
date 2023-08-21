@@ -4,16 +4,18 @@ package com.intellij.util.indexing.roots;
 import com.intellij.openapi.project.Project;
 import com.intellij.platform.workspace.jps.entities.LibraryId;
 import com.intellij.platform.workspace.jps.entities.LibraryPropertiesEntity;
-import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders;
 import com.intellij.platform.workspace.storage.WorkspaceEntity;
+import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 
 @ApiStatus.Internal
 @ApiStatus.Experimental
-public class LibraryPropertyEntityIndexableEntityProvider implements IndexableEntityProvider.Enforced<LibraryPropertiesEntity> {
+public final class LibraryPropertyEntityIndexableEntityProvider implements IndexableEntityProvider.Enforced<LibraryPropertiesEntity> {
 
   @Override
   public @NotNull Class<LibraryPropertiesEntity> getEntityClass() {

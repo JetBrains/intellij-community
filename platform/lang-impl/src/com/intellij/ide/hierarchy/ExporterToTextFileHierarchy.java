@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.hierarchy;
 
 import com.intellij.ide.ExporterToTextFile;
@@ -12,7 +10,7 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeNode;
 import java.util.Enumeration;
 
-class ExporterToTextFileHierarchy implements ExporterToTextFile {
+final class ExporterToTextFileHierarchy implements ExporterToTextFile {
   private static final Logger LOG = Logger.getInstance(ExporterToTextFileHierarchy.class);
   private final HierarchyBrowserBase myHierarchyBrowserBase;
 

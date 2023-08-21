@@ -211,7 +211,7 @@ public final class ParameterHintsPresentationManager implements Disposable {
     }
   }
 
-  private class AnimationStep implements Runnable {
+  private final class AnimationStep implements Runnable {
     private final Editor myEditor;
     private final Set<Inlay> inlays = new HashSet<>();
 

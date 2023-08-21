@@ -38,7 +38,7 @@ import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class SdkDownloadTracker {
+public final class SdkDownloadTracker {
   private static final Logger LOG = Logger.getInstance(SdkDownloadTracker.class);
 
   @NotNull
@@ -233,7 +233,7 @@ public class SdkDownloadTracker {
   // see if that {@link ModalityState#dominates} the current modality state. In fact,
   // it does call the method from the dialog setup, with NON_MODAL modality, which
   // we would like to ignore.
-  private static class SmartPendingDownloadModalityTracker implements PendingDownloadModalityTracker{
+  private static final class SmartPendingDownloadModalityTracker implements PendingDownloadModalityTracker{
     @NotNull
     static ModalityState modality() {
       ModalityState state = ModalityState.current();
@@ -258,7 +258,7 @@ public class SdkDownloadTracker {
   }
 
   // synchronized newIdentityHashSet (Collections.synchronizedSet does not help the iterator)
-  private static class SynchronizedIdentityHashSet<T> {
+  private static final class SynchronizedIdentityHashSet<T> {
     private final Set<T> myCollection = Sets.newIdentityHashSet();
 
     synchronized boolean add(@NotNull T sdk) {

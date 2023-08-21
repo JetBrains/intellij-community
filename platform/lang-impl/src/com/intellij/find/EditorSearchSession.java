@@ -56,11 +56,11 @@ import java.util.regex.PatternSyntaxException;
 /**
  * @author max, andrey.zaytsev
  */
-public class EditorSearchSession implements SearchSession,
-                                            DataProvider,
-                                            SelectionListener,
-                                            SearchResults.SearchResultsListener,
-                                            SearchReplaceComponent.Listener {
+public final class EditorSearchSession implements SearchSession,
+                                                  DataProvider,
+                                                  SelectionListener,
+                                                  SearchResults.SearchResultsListener,
+                                                  SearchReplaceComponent.Listener {
   public static final DataKey<EditorSearchSession> SESSION_KEY = DataKey.create("EditorSearchSession");
   private static final Logger SELECTION_UPDATE_LOGGER = Logger.getInstance("com.intellij.find.selection");
 
@@ -699,7 +699,7 @@ public class EditorSearchSession implements SearchSession,
     protected abstract void onClick();
   }
 
-  private class ReplaceAction extends ButtonAction implements LightEditCompatible {
+  private final class ReplaceAction extends ButtonAction implements LightEditCompatible {
     ReplaceAction() {
       super(ApplicationBundle.message("editorsearch.replace.action.text"), 'p');
     }
@@ -715,7 +715,7 @@ public class EditorSearchSession implements SearchSession,
     }
   }
 
-  private class ReplaceAllAction extends ButtonAction implements LightEditCompatible {
+  private final class ReplaceAllAction extends ButtonAction implements LightEditCompatible {
     ReplaceAllAction() {
       super(ApplicationBundle.message("editorsearch.replace.all.action.text"), 'a');
     }
@@ -733,7 +733,7 @@ public class EditorSearchSession implements SearchSession,
     }
   }
 
-  private class ExcludeAction extends ButtonAction implements LightEditCompatible {
+  private final class ExcludeAction extends ButtonAction implements LightEditCompatible {
     ExcludeAction() {
       super(FindBundle.message("button.exclude"), 'l');
     }

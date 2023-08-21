@@ -1339,7 +1339,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     }
   }
 
-  private class ToolOptionsSeparator extends JPanel {
+  private final class ToolOptionsSeparator extends JPanel {
     private final ActionLink myResetLink;
     @Nullable
     private final ScopesAndSeveritiesTable myScopesAndSeveritiesTable;

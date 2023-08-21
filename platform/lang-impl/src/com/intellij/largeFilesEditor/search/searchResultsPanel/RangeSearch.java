@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.largeFilesEditor.search.searchResultsPanel;
 
 import com.intellij.CommonBundle;
@@ -52,7 +52,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class RangeSearch implements RangeSearchTask.Callback {
+public final class RangeSearch implements RangeSearchTask.Callback {
 
   public static final Key<RangeSearch> KEY = new Key<>("lfe.searchResultsToolWindow");
 
@@ -610,7 +610,7 @@ public class RangeSearch implements RangeSearchTask.Callback {
     void onSelected();
   }
 
-  private class SearchResultWrapper implements ListElementWrapper {
+  private final class SearchResultWrapper implements ListElementWrapper {
     private final SimpleTextAttributes attrForMatchers = new SimpleTextAttributes(
       SimpleTextAttributes.STYLE_SEARCH_MATCH, null);
 
@@ -635,7 +635,7 @@ public class RangeSearch implements RangeSearchTask.Callback {
     }
   }
 
-  private class SearchFurtherBtnWrapper implements ListElementWrapper {
+  private final class SearchFurtherBtnWrapper implements ListElementWrapper {
     private final SimpleTextAttributes linkText = new SimpleTextAttributes(
       SimpleTextAttributes.STYLE_PLAIN, JBUI.CurrentTheme.Link.Foreground.PRESSED);
     private final boolean isForwardDirection;
@@ -681,7 +681,7 @@ public class RangeSearch implements RangeSearchTask.Callback {
     }
   }
 
-  private class ShowingListModel implements ListModel<ListElementWrapper> {
+  private final class ShowingListModel implements ListModel<ListElementWrapper> {
 
     private final CollectionListModel<SearchResult> mySearchResultsListModel;
     private final SearchFurtherBtnWrapper btnSearchBackwardWrapper = new SearchFurtherBtnWrapper(false);
@@ -742,7 +742,7 @@ public class RangeSearch implements RangeSearchTask.Callback {
     }
   }
 
-  private class AnimatedProgressIcon extends AsyncProcessIcon {
+  private final class AnimatedProgressIcon extends AsyncProcessIcon {
 
     AnimatedProgressIcon() {
       super("");

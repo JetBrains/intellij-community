@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.ide.*;
@@ -1121,7 +1121,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
       abstract void paint(@NotNull Graphics2D g);
     }
 
-    private static class NodeRow extends DragImageRow {
+    private static final class NodeRow extends DragImageRow {
       private final @NotNull JTree tree;
       private final @Nullable TreePath path;
       private @Nullable Dimension size;
@@ -1162,7 +1162,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
       }
     }
 
-    private static class MoreFilesRow extends MyDragSource.DragImageRow {
+    private static final class MoreFilesRow extends MyDragSource.DragImageRow {
       private final @NotNull JLabel moreLabel;
 
       MoreFilesRow(JTree tree, int moreItemsCount) {

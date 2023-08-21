@@ -39,7 +39,7 @@ import java.util.List;
 import static com.intellij.codeInsight.editorActions.JoinLinesHandlerDelegate.CANNOT_JOIN;
 import static com.intellij.psi.util.PsiUtilCore.getElementType;
 
-public class JoinLinesHandler extends EditorActionHandler.ForEachCaret {
+public final class JoinLinesHandler extends EditorActionHandler.ForEachCaret {
   private static final Logger LOG = Logger.getInstance(JoinLinesHandler.class);
   private final EditorActionHandler myOriginalHandler;
 
@@ -88,7 +88,7 @@ public class JoinLinesHandler extends EditorActionHandler.ForEachCaret {
       });
   }
 
-  private static class JoinLineProcessor {
+  private static final class JoinLineProcessor {
     private final @NotNull DocumentEx myDoc;
     private final @NotNull PsiFile myFile;
     private int myLine;
@@ -377,7 +377,7 @@ public class JoinLinesHandler extends EditorActionHandler.ForEachCaret {
     return offset;
   }
 
-  private static class JoinLinesOffsets {
+  private static final class JoinLinesOffsets {
     final int lineEndOffset;
     final int lastNonSpaceOffsetInStartLine;
     final int firstNonSpaceOffsetInNextLine;

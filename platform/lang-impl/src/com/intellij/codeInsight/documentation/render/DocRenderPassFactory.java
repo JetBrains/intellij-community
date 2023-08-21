@@ -27,7 +27,7 @@ import java.util.Map;
 
 import static com.intellij.codeInsight.documentation.render.InlineDocumentationImplKt.inlineDocumentationItems;
 
-public class DocRenderPassFactory implements TextEditorHighlightingPassFactoryRegistrar, TextEditorHighlightingPassFactory, DumbAware {
+public final class DocRenderPassFactory implements TextEditorHighlightingPassFactoryRegistrar, TextEditorHighlightingPassFactory, DumbAware {
   private static final Key<Long> MODIFICATION_STAMP = Key.create("doc.render.modification.stamp");
   private static final Key<Boolean> RESET_TO_DEFAULT = Key.create("doc.render.reset.to.default");
   private static final Key<Boolean> ICONS_ENABLED = Key.create("doc.render.icons.enabled");
@@ -54,7 +54,7 @@ public class DocRenderPassFactory implements TextEditorHighlightingPassFactoryRe
     editor.putUserData(RESET_TO_DEFAULT, Boolean.TRUE);
   }
 
-  private static class DocRenderPass extends EditorBoundHighlightingPass implements DumbAware {
+  private static final class DocRenderPass extends EditorBoundHighlightingPass implements DumbAware {
     private Items items;
 
     DocRenderPass(@NotNull Editor editor, @NotNull PsiFile psiFile) {
@@ -125,7 +125,7 @@ public class DocRenderPassFactory implements TextEditorHighlightingPassFactoryRe
     DocRenderItemManager.getInstance().setItemsToEditor(editor, items, collapseNewRegions);
   }
 
-  public static class Items implements Iterable<Item> {
+  public static final class Items implements Iterable<Item> {
     private final Map<TextRange, Item> myItems = new LinkedHashMap<>();
 
     boolean isEmpty() {

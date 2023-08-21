@@ -1,11 +1,14 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection.ui;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.util.containers.*;
+import com.intellij.util.containers.BidirectionalMap;
+import com.intellij.util.containers.HashingStrategy;
+import com.intellij.util.containers.Interner;
+import com.intellij.util.containers.WeakInterner;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.Nls;
@@ -192,7 +195,7 @@ public abstract class InspectionTreeNode implements TreeNode {
     return getPresentableText();
   }
 
-  static class Children {
+  static final class Children {
     private static final InspectionTreeNode[] EMPTY_ARRAY = new InspectionTreeNode[0];
 
     volatile InspectionTreeNode[] myChildren = EMPTY_ARRAY;
@@ -204,7 +207,7 @@ public abstract class InspectionTreeNode implements TreeNode {
     }
   }
 
-  class ProblemLevels {
+  final class ProblemLevels {
     private volatile LevelAndCount[] myLevels;
 
     private LevelAndCount @NotNull [] compute() {

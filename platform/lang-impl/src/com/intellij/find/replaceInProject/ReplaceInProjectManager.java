@@ -67,7 +67,7 @@ public final class ReplaceInProjectManager {
     myProject = project;
   }
 
-  static class ReplaceContext {
+  static final class ReplaceContext {
     private final UsageView usageView;
     private final FindModel findModel;
     private Set<Usage> excludedSet;
@@ -162,7 +162,7 @@ public final class ReplaceInProjectManager {
     searchAndShowUsages(manager, factory, findModelCopy, presentation, processPresentation);
   }
 
-  private static class ReplaceInProjectTarget extends FindInProjectUtil.StringUsageTarget {
+  private static final class ReplaceInProjectTarget extends FindInProjectUtil.StringUsageTarget {
     ReplaceInProjectTarget(@NotNull Project project, @NotNull FindModel findModel) {
       super(project, findModel);
     }

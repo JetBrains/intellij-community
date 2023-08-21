@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options;
 
 import com.intellij.application.options.codeStyle.CodeStyleBlankLinesPanel;
@@ -462,7 +462,7 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
     }
   }
 
-  class MyBlankLinesPanel extends CodeStyleBlankLinesPanel {
+  final class MyBlankLinesPanel extends CodeStyleBlankLinesPanel {
     MyBlankLinesPanel(CodeStyleSettings settings) {
       super(settings);
     }
@@ -488,7 +488,7 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
 
   //========================================================================================================================================
 
-  private class CodeStyleConfigurableWrapperPanel extends CodeStyleAbstractPanel {
+  private final class CodeStyleConfigurableWrapperPanel extends CodeStyleAbstractPanel {
 
     private final Configurable myConfigurable;
     private JComponent myComponent;

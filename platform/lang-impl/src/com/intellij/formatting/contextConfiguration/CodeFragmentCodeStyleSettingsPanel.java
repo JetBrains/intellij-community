@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.formatting.contextConfiguration;
 
 import com.intellij.application.options.TabbedLanguageCodeStylePanel;
@@ -24,7 +24,7 @@ import static com.intellij.psi.codeStyle.CodeStyleSettingsCustomizableOptions.ge
 import static com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider.SettingsType.SPACING_SETTINGS;
 import static com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider.SettingsType.WRAPPING_AND_BRACES_SETTINGS;
 
-class CodeFragmentCodeStyleSettingsPanel extends TabbedLanguageCodeStylePanel {
+final class CodeFragmentCodeStyleSettingsPanel extends TabbedLanguageCodeStylePanel {
   private static final Logger LOG = Logger.getInstance(CodeFragmentCodeStyleSettingsPanel.class);
 
   private final CodeStyleSettingsCodeFragmentFilter.CodeStyleSettingsToShow mySettingsToShow;
@@ -118,7 +118,7 @@ class CodeFragmentCodeStyleSettingsPanel extends TabbedLanguageCodeStylePanel {
     mySelectedTextFormatter.reformatSelectedText(clonedSettings);
   }
 
-  private class SpacesPanelWithoutPreview extends MySpacesPanel {
+  private final class SpacesPanelWithoutPreview extends MySpacesPanel {
     private JPanel myPanel;
 
     SpacesPanelWithoutPreview(CodeStyleSettings settings) {
@@ -177,7 +177,7 @@ class CodeFragmentCodeStyleSettingsPanel extends TabbedLanguageCodeStylePanel {
     }
   }
 
-  private class WrappingAndBracesPanelWithoutPreview extends MyWrappingAndBracesPanel {
+  private final class WrappingAndBracesPanelWithoutPreview extends MyWrappingAndBracesPanel {
     public JPanel myPanel;
 
     WrappingAndBracesPanelWithoutPreview(CodeStyleSettings settings) {

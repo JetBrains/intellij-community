@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.services;
 
 import com.intellij.diagnostic.PluginException;
@@ -641,7 +641,7 @@ final class ServiceModel implements Disposable, InvokerSupplier {
     }
   }
 
-  static class ContributorNode extends ServiceViewItem {
+  static final class ContributorNode extends ServiceViewItem {
     private final Project myProject;
 
     ContributorNode(@NotNull Project project, @NotNull ServiceViewContributor<?> contributor) {
@@ -658,7 +658,7 @@ final class ServiceModel implements Disposable, InvokerSupplier {
     }
   }
 
-  static class ServiceNode extends ServiceViewItem {
+  static final class ServiceNode extends ServiceViewItem {
     private final Project myProject;
     private final ServiceViewContributor<?> myProvidingContributor;
     private volatile boolean myChildrenInitialized;
@@ -728,7 +728,7 @@ final class ServiceModel implements Disposable, InvokerSupplier {
     }
   }
 
-  static class ServiceGroupNode extends ServiceViewItem {
+  static final class ServiceGroupNode extends ServiceViewItem {
     ServiceGroupNode(@NotNull Object group, @Nullable ServiceViewItem parent, @NotNull ServiceViewContributor<?> contributor,
                      @NotNull ServiceViewDescriptor viewDescriptor) {
       super(group, parent, contributor, viewDescriptor);

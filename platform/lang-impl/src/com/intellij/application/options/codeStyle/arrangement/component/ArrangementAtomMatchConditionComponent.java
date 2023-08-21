@@ -34,7 +34,7 @@ import java.util.Set;
  * <p/>
  * Not thread-safe.
  */
-public class ArrangementAtomMatchConditionComponent implements ArrangementUiComponent {
+public final class ArrangementAtomMatchConditionComponent implements ArrangementUiComponent {
 
   @NotNull private static final BorderStrategy TEXT_BORDER_STRATEGY       = new NameBorderStrategy();
   @NotNull private static final BorderStrategy PREDEFINED_BORDER_STRATEGY = new PredefinedConditionBorderStrategy();
@@ -426,7 +426,7 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementUiComp
     void setup(@NotNull Graphics2D g);
   }
 
-  private static class PredefinedConditionBorderStrategy implements BorderStrategy {
+  private static final class PredefinedConditionBorderStrategy implements BorderStrategy {
     @Override
     public RoundedLineBorder create() {
       return IdeBorderFactory.createRoundedBorder(ArrangementConstants.BORDER_ARC_SIZE);
@@ -437,7 +437,7 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementUiComp
     }
   }
 
-  private static class NameBorderStrategy implements BorderStrategy {
+  private static final class NameBorderStrategy implements BorderStrategy {
 
     @NotNull private static final BasicStroke
       STROKE = new BasicStroke(1, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 1, new float[]{5, 5}, 0);

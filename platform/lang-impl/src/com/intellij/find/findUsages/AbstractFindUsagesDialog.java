@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.findUsages;
 
 import com.intellij.find.FindBundle;
@@ -290,7 +290,7 @@ public abstract class AbstractFindUsagesDialog extends DialogWrapper {
     return getPreferredFocusedControl();
   }
 
-  private static class Title extends JPanel {
+  private static final class Title extends JPanel {
     private Title(@NlsContexts.Separator String text, @NotNull Border border, @Nullable JComponent labelFor) {
       setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
       setBorder(border);
@@ -301,7 +301,7 @@ public abstract class AbstractFindUsagesDialog extends DialogWrapper {
     }
   }
 
-  private static class TitleLabel extends JBLabel {
+  private static final class TitleLabel extends JBLabel {
     private @NlsContexts.Separator String originalText;
 
     private TitleLabel(@NlsContexts.Separator String text, @Nullable JComponent labelFor) {

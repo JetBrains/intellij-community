@@ -6,13 +6,13 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders;
-import com.intellij.platform.workspace.storage.EntityStorage;
-import com.intellij.platform.workspace.storage.WorkspaceEntity;
 import com.intellij.platform.workspace.jps.entities.ContentRootEntity;
 import com.intellij.platform.workspace.jps.entities.ModuleEntity;
+import com.intellij.platform.workspace.storage.EntityStorage;
+import com.intellij.platform.workspace.storage.WorkspaceEntity;
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -22,7 +22,7 @@ import java.util.List;
 
 import static com.intellij.util.indexing.roots.IndexableEntityProvider.DependencyOnParent.create;
 
-class ContentRootIndexableEntityProvider implements IndexableEntityProvider.Existing<ContentRootEntity> {
+final class ContentRootIndexableEntityProvider implements IndexableEntityProvider.Existing<ContentRootEntity> {
 
   @Override
   public @NotNull Class<ContentRootEntity> getEntityClass() {

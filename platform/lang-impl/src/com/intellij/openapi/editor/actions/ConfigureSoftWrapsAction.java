@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.ide.actions.ShowSettingsUtilImpl.showSettingsDialog;
 
-public class ConfigureSoftWrapsAction extends DumbAwareAction implements ActionRemoteBehaviorSpecification.Frontend {
+public final class ConfigureSoftWrapsAction extends DumbAwareAction implements ActionRemoteBehaviorSpecification.Frontend {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     showSettingsDialog(e.getProject(), "preferences.editor", ApplicationBundle.message("group.soft.wraps"));

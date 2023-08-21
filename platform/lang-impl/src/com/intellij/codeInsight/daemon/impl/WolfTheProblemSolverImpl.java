@@ -408,7 +408,7 @@ public final class WolfTheProblemSolverImpl extends WolfTheProblemSolver impleme
   /**
    * GHP, which throws as soon as it found an error in the file
    */
-  private static class NasueousGeneralHighlightingPass extends GeneralHighlightingPass {
+  private static final class NasueousGeneralHighlightingPass extends GeneralHighlightingPass {
     private final @NotNull AtomicReference<? super HighlightInfo> myError;
 
     NasueousGeneralHighlightingPass(@NotNull PsiFile psiFile,

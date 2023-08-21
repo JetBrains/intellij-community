@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -27,7 +27,7 @@ import java.util.stream.Collectors;
 /**
  * @author msokolov
  */
-class MixedResultsSearcher implements SESearcher {
+final class MixedResultsSearcher implements SESearcher {
 
   private static final Logger LOG = Logger.getInstance(MixedResultsSearcher.class);
 
@@ -241,7 +241,7 @@ class MixedResultsSearcher implements SESearcher {
     }
   }
 
-  private static class ResultsAccumulator {
+  private static final class ResultsAccumulator {
 
     private final Map<? extends SearchEverywhereContributor<?>, Collection<SearchEverywhereFoundElementInfo>> mySections;
     private final SearchListener myListener;
@@ -421,7 +421,7 @@ class MixedResultsSearcher implements SESearcher {
     }
   }
 
-  private static class ProgressIndicatorWithCancelListener extends ProgressIndicatorBase {
+  private static final class ProgressIndicatorWithCancelListener extends ProgressIndicatorBase {
 
     private volatile Runnable cancelCallback = () -> {};
 

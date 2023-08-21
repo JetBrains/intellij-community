@@ -106,7 +106,7 @@ public final class IndexUpdateRunner {
   /**
    * This exception contains indexing statistics accumulated by the time of a thrown exception.
    */
-  public static class IndexingInterruptedException extends Exception {
+  public static final class IndexingInterruptedException extends Exception {
     public IndexingInterruptedException(@NotNull Throwable cause) {
       super(cause);
     }
@@ -521,7 +521,7 @@ public final class IndexUpdateRunner {
   private record FileIndexingJob(VirtualFile file, FileSet fileSet) {
   }
 
-  private static class IndexingJob {
+  private static final class IndexingJob {
     final Project myProject;
     final CachedFileContentLoader myContentLoader;
     final ArrayBlockingQueue<FileIndexingJob> myQueueOfFiles; // for Community sources the size is about 615K entries

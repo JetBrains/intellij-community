@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.ide.IdeBundle;
@@ -70,7 +70,7 @@ public final class AttachDirectoryUtils {
 
     if (adjustedRoots.isEmpty()) return;
 
-    class MyUndoable extends GlobalUndoableAction {
+    final class MyUndoable extends GlobalUndoableAction {
       @Override
       public void undo() {
         addRemoveEntriesInner(project, module, adjustedRoots, !add);
@@ -101,7 +101,7 @@ public final class AttachDirectoryUtils {
     if (roots.isEmpty()) return;
     Project project = module.getProject();
 
-    class MyUndoable extends GlobalUndoableAction {
+    final class MyUndoable extends GlobalUndoableAction {
       @Override
       public void undo() {
         excludeEntriesInner(module, roots, !exclude);

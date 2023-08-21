@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.postfix.settings;
 
 import com.intellij.codeInsight.template.postfix.templates.LanguagePostfixTemplate;
@@ -430,7 +430,7 @@ public class PostfixTemplatesCheckboxTree extends CheckboxTree implements Dispos
     return myProviderToLanguage;
   }
 
-  private static class LangTreeNode extends CheckedTreeNode {
+  private static final class LangTreeNode extends CheckedTreeNode {
     @NotNull private final String myLanguageId;
 
     LangTreeNode(@NotNull String languageName, @NotNull String languageId) {

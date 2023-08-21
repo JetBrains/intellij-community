@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 // this file is assigned to "Plain text" file type even though there's a plugin supporting this specific extension/file pattern
-public class ReassignedToPlainTextInspection extends LocalInspectionTool {
+public final class ReassignedToPlainTextInspection extends LocalInspectionTool {
   @Override
   @NonNls
   @NotNull

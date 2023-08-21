@@ -168,7 +168,7 @@ public class ConflictsDialog extends DialogWrapper implements ConflictsDialogBas
     myCommandName = commandName;
   }
 
-  private class CancelAction extends AbstractAction {
+  private final class CancelAction extends AbstractAction {
     CancelAction() {
       super(RefactoringBundle.message("cancel.button"));
       putValue(DEFAULT_ACTION,Boolean.TRUE);
@@ -184,7 +184,7 @@ public class ConflictsDialog extends DialogWrapper implements ConflictsDialogBas
     return myDoRefactoringRunnable;
   }
 
-  private class MyShowConflictsInUsageViewAction extends AbstractAction {
+  private final class MyShowConflictsInUsageViewAction extends AbstractAction {
 
 
     MyShowConflictsInUsageViewAction() {
@@ -239,7 +239,7 @@ public class ConflictsDialog extends DialogWrapper implements ConflictsDialogBas
       close(SHOW_CONFLICTS_EXIT_CODE);
     }
 
-    private class DescriptionOnlyUsage implements Usage {
+    private final class DescriptionOnlyUsage implements Usage {
       private final @NlsContexts.Tooltip String myConflictDescription;
 
       DescriptionOnlyUsage(@NotNull @NlsContexts.Tooltip String conflictDescription) {

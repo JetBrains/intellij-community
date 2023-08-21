@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.scopeView;
 
@@ -19,7 +19,7 @@ import com.intellij.ui.tree.project.ProjectFileNode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ScopePaneSelectInTarget extends ProjectViewSelectInTarget {
+public final class ScopePaneSelectInTarget extends ProjectViewSelectInTarget {
   public ScopePaneSelectInTarget(final Project project) {
     super(project);
   }

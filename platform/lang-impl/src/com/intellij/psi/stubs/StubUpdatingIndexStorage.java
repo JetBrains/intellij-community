@@ -126,7 +126,7 @@ public final class StubUpdatingIndexStorage extends TransientFileContentIndex<In
     }
   }
 
-  static class Data extends IndexerIdHolder {
+  static final class Data extends IndexerIdHolder {
     private final FileType myFileType;
 
     Data(int indexerId, FileType type) {

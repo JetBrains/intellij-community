@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.actions;
 
 import com.intellij.CommonBundle;
@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import static com.intellij.find.actions.ResolverKt.allTargets;
 import static com.intellij.openapi.actionSystem.IdeActions.ACTION_HIGHLIGHT_USAGES_IN_FILE;
 
-public class FindUsagesInFileAction extends AnAction implements PossiblyDumbAware {
+public final class FindUsagesInFileAction extends AnAction implements PossiblyDumbAware {
 
   public FindUsagesInFileAction() {
     setInjectedContext(true);

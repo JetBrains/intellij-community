@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -25,7 +25,7 @@ import java.util.stream.Collectors;
 /**
  * @author msokolov
  */
-class GroupedResultsSearcher implements SESearcher {
+final class GroupedResultsSearcher implements SESearcher {
 
   private static final Logger LOG = Logger.getInstance(GroupedResultsSearcher.class);
 
@@ -267,7 +267,7 @@ class GroupedResultsSearcher implements SESearcher {
     }
   }
 
-  private static class ShowMoreResultsAccumulator extends ResultsAccumulator {
+  private static final class ShowMoreResultsAccumulator extends ResultsAccumulator {
     private final SearchEverywhereContributor<?> myExpandedContributor;
     private final int myNewLimit;
     private volatile boolean hasMore;
@@ -341,7 +341,7 @@ class GroupedResultsSearcher implements SESearcher {
     }
   }
 
-  private static class FullSearchResultsAccumulator extends ResultsAccumulator {
+  private static final class FullSearchResultsAccumulator extends ResultsAccumulator {
 
     private final Map<? extends SearchEverywhereContributor<?>, Integer> sectionsLimits;
     private final Map<? extends SearchEverywhereContributor<?>, Condition> conditionsMap;
@@ -478,7 +478,7 @@ class GroupedResultsSearcher implements SESearcher {
     }
   }
 
-  private static class ProgressIndicatorWithCancelListener extends ProgressIndicatorBase {
+  private static final class ProgressIndicatorWithCancelListener extends ProgressIndicatorBase {
 
     private volatile Runnable cancelCallback = () -> {};
 

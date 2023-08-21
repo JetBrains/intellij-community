@@ -50,7 +50,7 @@ import org.jetbrains.annotations.TestOnly;
 import java.util.*;
 import java.util.stream.Collectors;
 
-class EntityIndexingServiceImpl implements EntityIndexingServiceEx {
+final class EntityIndexingServiceImpl implements EntityIndexingServiceEx {
   private static final Logger LOG = Logger.getInstance(EntityIndexingServiceImpl.class);
   private static final RootChangesLogger ROOT_CHANGES_LOGGER = new RootChangesLogger();
   @NotNull
@@ -422,7 +422,7 @@ class EntityIndexingServiceImpl implements EntityIndexingServiceEx {
     return tracker.shouldRescan(oldEntity, newEntity, project);
   }
 
-  private static class WorkspaceEventRescanningInfo implements RootsChangeRescanningInfo {
+  private static final class WorkspaceEventRescanningInfo implements RootsChangeRescanningInfo {
     @NotNull
     private final List<EntityChange<?>> events;
 
@@ -431,7 +431,7 @@ class EntityIndexingServiceImpl implements EntityIndexingServiceEx {
     }
   }
 
-  private static class WorkspaceEntitiesRootsChangedRescanningInfo implements RootsChangeRescanningInfo {
+  private static final class WorkspaceEntitiesRootsChangedRescanningInfo implements RootsChangeRescanningInfo {
     @NotNull
     private final List<EntityReference<WorkspaceEntity>> references;
 

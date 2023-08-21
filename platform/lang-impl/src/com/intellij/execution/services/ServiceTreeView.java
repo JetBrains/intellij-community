@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.services;
 
 import com.intellij.execution.ExecutionBundle;
@@ -499,7 +499,7 @@ final class ServiceTreeView extends ServiceView {
     return result;
   }
 
-  private class ServiceViewTreeModelListener implements ServiceViewModel.ServiceViewModelListener {
+  private final class ServiceViewTreeModelListener implements ServiceViewModel.ServiceViewModelListener {
     @Override
     public void eventProcessed(ServiceEventListener.@NotNull ServiceEvent e) {
       if (e.type == ServiceEventListener.EventType.UNLOAD_SYNC_RESET) {
@@ -543,7 +543,7 @@ final class ServiceTreeView extends ServiceView {
     }
   }
 
-  private static class PathSelectionVisitor implements TreeVisitor {
+  private static final class PathSelectionVisitor implements TreeVisitor {
     private final Queue<Object> myPath;
 
     PathSelectionVisitor(TreePath path) {
@@ -562,7 +562,7 @@ final class ServiceTreeView extends ServiceView {
     }
   }
 
-  private static class PathExpandVisitor implements TreeVisitor {
+  private static final class PathExpandVisitor implements TreeVisitor {
     private final List<? extends TreePath> myPaths;
 
     PathExpandVisitor(List<? extends TreePath> paths) {

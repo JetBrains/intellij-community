@@ -17,7 +17,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-class SourceRootIndexableEntityProvider implements IndexableEntityProvider.Existing<SourceRootEntity> {
+final class SourceRootIndexableEntityProvider implements IndexableEntityProvider.Existing<SourceRootEntity> {
 
   @Override
   public @NotNull Class<SourceRootEntity> getEntityClass() {

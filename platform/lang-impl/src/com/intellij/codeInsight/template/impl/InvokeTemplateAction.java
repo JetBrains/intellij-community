@@ -28,7 +28,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-public class InvokeTemplateAction extends DefaultActionGroup {
+public final class InvokeTemplateAction extends DefaultActionGroup {
   private final TemplateImpl myTemplate;
   private final Editor myEditor;
   private final Project myProject;
@@ -132,7 +132,7 @@ public class InvokeTemplateAction extends DefaultActionGroup {
     }
   }
 
-  private static class EditTemplateSettingsAction extends AnAction {
+  private static final class EditTemplateSettingsAction extends AnAction {
     private final Project myProject;
     private final TemplateImpl myTemplate;
 
@@ -151,7 +151,7 @@ public class InvokeTemplateAction extends DefaultActionGroup {
     }
   }
 
-  private static class DisableTemplateSettingsAction extends AnAction {
+  private static final class DisableTemplateSettingsAction extends AnAction {
     private final TemplateImpl myTemplate;
 
     private DisableTemplateSettingsAction(TemplateImpl template) {

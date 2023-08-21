@@ -40,7 +40,6 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
-import com.intellij.openapi.editor.ex.ScrollingModelEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.ContextMenuPopupHandler;
 import com.intellij.openapi.editor.impl.DocumentImpl;
@@ -1131,7 +1130,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     return null;
   }
 
-  private static class ClearThisConsoleAction extends ClearConsoleAction {
+  private static final class ClearThisConsoleAction extends ClearConsoleAction {
     private final ConsoleView myConsoleView;
 
     ClearThisConsoleAction(@NotNull ConsoleView consoleView) {
@@ -1244,7 +1243,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     }
   }
 
-  private static class EnterHandler extends ConsoleAction {
+  private static final class EnterHandler extends ConsoleAction {
     @Override
     public void execute(@NotNull ConsoleViewImpl consoleView, @NotNull DataContext context) {
       consoleView.print("\n", ConsoleViewContentType.USER_INPUT);
@@ -1254,7 +1253,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     }
   }
 
-  private static class PasteHandler extends ConsoleAction {
+  private static final class PasteHandler extends ConsoleAction {
     @Override
     public void execute(@NotNull ConsoleViewImpl consoleView, @NotNull DataContext context) {
       String text = CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor);
@@ -1264,7 +1263,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     }
   }
 
-  private static class DeleteBackspaceHandler extends ConsoleAction {
+  private static final class DeleteBackspaceHandler extends ConsoleAction {
     private final int myTextOffsetToDeleteRelativeToCaret;
     private final String myParentActionId;
 
@@ -1308,7 +1307,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     }
   }
 
-  private static class TabHandler extends ConsoleAction {
+  private static final class TabHandler extends ConsoleAction {
     @Override
     protected void execute(@NotNull ConsoleViewImpl console, @NotNull DataContext context) {
       console.type(console.getEditor(), "\t");
@@ -1515,7 +1514,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
    * <p/>
    * Our point is to fold such long command line and represent it as a single visual line by default.
    */
-  private class CommandLineFolding extends ConsoleFolding {
+  private final class CommandLineFolding extends ConsoleFolding {
     @Override
     public boolean shouldFoldLine(@NotNull Project project, @NotNull String line) {
       return line.length() >= 1000 && myState.isCommandLine(line);
@@ -1606,7 +1605,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     return myProject;
   }
 
-  private class HyperlinkNavigationAction extends DumbAwareAction {
+  private final class HyperlinkNavigationAction extends DumbAwareAction {
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       Runnable runnable = getHyperlinks().getLinkNavigationRunnable(getEditor().getCaretModel().getLogicalPosition());

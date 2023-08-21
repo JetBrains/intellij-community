@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hint.actions;
 
 import com.intellij.codeInsight.documentation.DocumentationManager;
@@ -252,7 +252,7 @@ public abstract class ShowRelatedElementsActionBase extends DumbAwareAction impl
     return false;
   }
 
-  private static class ImplementationViewComponentUpdater implements GenericListComponentUpdater<ImplementationViewElement> {
+  private static final class ImplementationViewComponentUpdater implements GenericListComponentUpdater<ImplementationViewElement> {
     private final ImplementationViewComponent myComponent;
     private final int myIncludeSelfIdx;
 

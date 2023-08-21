@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.build;
 
 import com.intellij.build.events.*;
@@ -189,7 +189,7 @@ public abstract class AbstractViewManager implements ViewManager, BuildProgressL
   }
 
   @ApiStatus.Internal
-  static class BuildInfo extends DefaultBuildDescriptor {
+  static final class BuildInfo extends DefaultBuildDescriptor {
     @BuildEventsNls.Message String message;
     @BuildEventsNls.Message String statusMessage;
     long endTime = -1;
@@ -247,7 +247,7 @@ public abstract class AbstractViewManager implements ViewManager, BuildProgressL
     return getViewName();
   }
 
-  private static class PinBuildViewAction extends DumbAwareAction implements Toggleable {
+  private static final class PinBuildViewAction extends DumbAwareAction implements Toggleable {
     private final Content myContent;
 
     PinBuildViewAction(MultipleBuildsView buildsView) {

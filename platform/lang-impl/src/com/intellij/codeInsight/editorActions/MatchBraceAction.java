@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.highlighting.BraceHighlightingHandler;
@@ -29,12 +29,12 @@ import org.jetbrains.annotations.NotNull;
  * <li>Otherwise moves from the caret position to the beginning of the file and finds first opening brace not closed before the caret position</li>
  * </ul>
  **/
-public class MatchBraceAction extends EditorAction {
+public final class MatchBraceAction extends EditorAction {
   public MatchBraceAction() {
     super(new MyHandler());
   }
 
-  private static class MyHandler extends EditorActionHandler.ForEachCaret {
+  private static final class MyHandler extends EditorActionHandler.ForEachCaret {
     @Override
     public void doExecute(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
       final PsiFile file = CommonDataKeys.PSI_FILE.getData(dataContext);

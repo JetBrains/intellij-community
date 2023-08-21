@@ -57,7 +57,7 @@ import java.util.List;
 import java.util.*;
 import java.util.function.Consumer;
 
-public class ImplementationViewComponent extends JPanel {
+public final class ImplementationViewComponent extends JPanel {
   @NonNls private static final String TEXT_PAGE_KEY = "Text";
   @NonNls private static final String BINARY_PAGE_KEY = "Binary";
   private static final String IMPLEMENTATION_VIEW_PLACE = "ImplementationView";
@@ -600,7 +600,7 @@ public class ImplementationViewComponent extends JPanel {
     return FindUtil.showInUsageView(null, collectElementsForShowUsages(), myTitle, project);
   }
 
-  private class BackAction extends AnAction implements HintManagerImpl.ActionToIgnore {
+  private final class BackAction extends AnAction implements HintManagerImpl.ActionToIgnore {
     BackAction() {
       super(CodeInsightBundle.messagePointer("quick.definition.back"), AllIcons.Actions.Play_back);
     }
@@ -624,7 +624,7 @@ public class ImplementationViewComponent extends JPanel {
     }
   }
 
-  private class ForwardAction extends AnAction implements HintManagerImpl.ActionToIgnore {
+  private final class ForwardAction extends AnAction implements HintManagerImpl.ActionToIgnore {
     ForwardAction() {
       super(CodeInsightBundle.messagePointer("quick.definition.forward"), AllIcons.Actions.Play_forward);
     }
@@ -647,7 +647,7 @@ public class ImplementationViewComponent extends JPanel {
     }
   }
 
-  private class EditSourceAction extends EditSourceActionBase {
+  private final class EditSourceAction extends EditSourceActionBase {
     EditSourceAction() {
       super(true, AllIcons.Actions.EditSource, CodeInsightBundle.message("quick.definition.edit.source"));
     }

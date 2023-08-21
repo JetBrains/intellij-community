@@ -47,7 +47,7 @@ import static com.intellij.codeInsight.highlighting.HighlightUsagesKt.getUsageRa
 import static com.intellij.model.psi.impl.TargetsKt.targetSymbols;
 
 
-public class IdentifierHighlighterPass {
+public final class IdentifierHighlighterPass {
   private static final Logger LOG = Logger.getInstance(IdentifierHighlighterPass.class);
 
   private final PsiFile myFile;

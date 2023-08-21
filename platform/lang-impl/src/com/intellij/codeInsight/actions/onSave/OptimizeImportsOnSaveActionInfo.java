@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.actions.onSave;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
-class OptimizeImportsOnSaveActionInfo extends FormatOnSaveActionInfoBase<OptimizeImportsOnSaveOptions> {
+final class OptimizeImportsOnSaveActionInfo extends FormatOnSaveActionInfoBase<OptimizeImportsOnSaveOptions> {
 
   private static final Key<OptimizeImportsOnSaveOptions> CURRENT_UI_STATE_KEY = Key.create("optimize.imports.on.save.options");
 

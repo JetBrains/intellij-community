@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.editorActions;
 
@@ -109,7 +109,7 @@ public final class CodeDocumentationUtil {
   /**
    * Utility class that contains information about current comment context.
    */
-  public static class CommentContext {
+  public static final class CommentContext {
 
     public final CodeDocumentationAwareCommenter commenter;
     public final int                             lineStart;

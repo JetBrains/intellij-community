@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.postfix.settings;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -24,7 +24,7 @@ import java.awt.*;
 import java.io.IOException;
 import java.io.StringReader;
 
-class PostfixDescriptionPanel implements Disposable {
+final class PostfixDescriptionPanel implements Disposable {
   private static final Logger LOG = Logger.getInstance(IntentionDescriptionPanel.class);
   private JPanel myPanel;
 

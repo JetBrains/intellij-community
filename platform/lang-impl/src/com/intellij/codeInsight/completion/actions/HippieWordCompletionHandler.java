@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.completion.actions;
 
@@ -24,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class HippieWordCompletionHandler implements CodeInsightActionHandler {
+public final class HippieWordCompletionHandler implements CodeInsightActionHandler {
   private static final Key<CompletionState> KEY_STATE = new Key<>("HIPPIE_COMPLETION_STATE");
   private final boolean myForward;
 
@@ -118,7 +118,7 @@ public class HippieWordCompletionHandler implements CodeInsightActionHandler {
   }
 
 
-  private static class CompletionData {
+  private static final class CompletionData {
     public String myPrefix;
     public int startOffset;
   }
@@ -214,7 +214,7 @@ public class HippieWordCompletionHandler implements CodeInsightActionHandler {
     return null;
   }
 
-  public static class CompletionVariant {
+  public static final class CompletionVariant {
     public final Editor editor;
     public final String variant;
     public int offset;
@@ -416,7 +416,7 @@ public class HippieWordCompletionHandler implements CodeInsightActionHandler {
     return ContainerUtil.map(editor.getCaretModel().getAllCarets(), caret -> caret.getOffset());
   }
 
-  private static class CompletionState {
+  private static final class CompletionState {
     public String oldPrefix;
     public CompletionVariant lastProposedVariant;
     public boolean fromOtherFiles;

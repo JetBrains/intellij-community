@@ -77,7 +77,7 @@ public final class ReincludedRootsUtil {
     return new CustomizableRootsBuilder(project, files);
   }
 
-  private static class CustomizableRootsBuilder implements Classifier {
+  private static final class CustomizableRootsBuilder implements Classifier {
     private final @NotNull EntityStorage entityStorage;
     private final Set<EntityReference<?>> references = new HashSet<>();
     private final List<ModuleRootData<?>> filesFromModulesContent = new ArrayList<>();

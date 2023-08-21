@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.fileTypes.FileType;
@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 @ApiStatus.Internal
-public class FileIndexesValuesApplier {
+public final class FileIndexesValuesApplier {
   private final FileBasedIndexImpl myIndex;
   private final int fileId;
   private final @NotNull List<? extends SingleIndexValueApplier<?>> appliers;

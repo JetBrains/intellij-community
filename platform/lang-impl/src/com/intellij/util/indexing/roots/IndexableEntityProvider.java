@@ -4,10 +4,10 @@ package com.intellij.util.indexing.roots;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.platform.workspace.jps.entities.ContentRootEntity;
-import com.intellij.util.indexing.IndexableFilesIndex;
+import com.intellij.platform.workspace.jps.entities.ModuleEntity;
 import com.intellij.platform.workspace.storage.EntityStorage;
 import com.intellij.platform.workspace.storage.WorkspaceEntity;
-import com.intellij.platform.workspace.jps.entities.ModuleEntity;
+import com.intellij.util.indexing.IndexableFilesIndex;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -96,7 +96,7 @@ public interface IndexableEntityProvider<E extends WorkspaceEntity> {
 
     static <E extends WorkspaceEntity> DependencyOnParent<E> create(@NotNull Class<E> parentClass,
                                                                     @NotNull BiFunction<? super E, ? super E, @NotNull Collection<? extends IndexableIteratorBuilder>> replacedIteratorsCreator) {
-      class MyDependency implements DependencyOnParent<E> {
+      final class MyDependency implements DependencyOnParent<E> {
         @Override
         public @NotNull Class<E> getParentClass() {
           return parentClass;

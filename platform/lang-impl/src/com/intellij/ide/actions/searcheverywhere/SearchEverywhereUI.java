@@ -1187,7 +1187,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
     }
   };
 
-  private class ShowInFindToolWindowAction extends DumbAwareAction {
+  private final class ShowInFindToolWindowAction extends DumbAwareAction {
 
     ShowInFindToolWindowAction() {
       super(IdeBundle.messagePointer("show.in.find.window.button.name"),
@@ -1355,7 +1355,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
     }
   }
 
-  private class CompleteCommandAction extends DumbAwareAction {
+  private final class CompleteCommandAction extends DumbAwareAction {
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       if (completeCommand()) {
@@ -1408,7 +1408,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
     return IdeBundle.message("searcheverywhere.nothing.found.for.contributor.anywhere", groupName.toLowerCase(Locale.ROOT));
   }
 
-  private class MySearchListener implements SearchListener {
+  private final class MySearchListener implements SearchListener {
 
     @Override
     public void elementsAdded(@NotNull List<? extends SearchEverywhereFoundElementInfo> list) {
@@ -1594,7 +1594,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
     }
   }
 
-  private static class SearchFieldTypingListener extends KeyAdapter {
+  private static final class SearchFieldTypingListener extends KeyAdapter {
     private int mySymbolKeysTyped;
     private int myBackspacesTyped;
 
@@ -1660,7 +1660,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
     }
   };
 
-  private static class HintHelper {
+  private static final class HintHelper {
 
     private final ExtendableTextField myTextField;
 

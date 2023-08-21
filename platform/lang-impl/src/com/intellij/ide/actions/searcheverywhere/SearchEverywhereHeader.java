@@ -314,7 +314,7 @@ public final class SearchEverywhereHeader {
                      contributors, actions, filter);
   }
 
-  public static class SETab {
+  public static final class SETab {
     private final @NotNull @NonNls String id;
     private final @NlsContexts.Label @NotNull String name;
     private final @NotNull List<SearchEverywhereContributor<?>> contributors;
@@ -391,7 +391,7 @@ public final class SearchEverywhereHeader {
     }
   }
 
-  private static class SETabLabel extends JLabel {
+  private static final class SETabLabel extends JLabel {
 
     /**
      * Can be null while initialization

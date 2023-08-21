@@ -38,7 +38,7 @@ public final class ToolsProjectConfig implements PersistentStateComponent<ToolsP
 
 
   @SuppressWarnings("UnusedDeclaration")
-  public static class State {
+  public static final class State {
     private String myAfterCommitToolId;
 
     public State() {
