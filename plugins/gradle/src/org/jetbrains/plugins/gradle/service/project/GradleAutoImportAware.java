@@ -13,8 +13,8 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.CompilerProjectExtension;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import org.gradle.initialization.BuildLayoutParameters;
 import org.jetbrains.annotations.NotNull;
@@ -101,9 +101,14 @@ public class GradleAutoImportAware implements ExternalSystemAutoImportAware {
   }
 
   @Override
-  public List<File> getAffectedExternalProjectFiles(String projectPath, @NotNull Project project) {
+  public List<File> getAffectedExternalProjectFiles(@NotNull String externalProjectPath, @NotNull Project project) {
+    GradleSettings settings = GradleSettings.getInstance(project);
+    GradleProjectSettings projectSettings = settings.getLinkedProjectSettings(externalProjectPath);
+    if (projectSettings == null) {
+      return null;
+    }
     return GradleAutoReloadSettingsCollector.EP_NAME.getExtensionList().stream()
-      .flatMap(it -> it.collectSettingsFiles(project, projectPath).stream())
+      .flatMap(it -> it.collectSettingsFiles(project, projectSettings).stream())
       .collect(Collectors.toList());
   }
 
@@ -111,21 +116,17 @@ public class GradleAutoImportAware implements ExternalSystemAutoImportAware {
 
     @NotNull
     @Override
-    public List<File> collectSettingsFiles(@NotNull Project project, @NotNull String projectPath) {
+    public List<File> collectSettingsFiles(@NotNull Project project, @NotNull GradleProjectSettings projectSettings) {
+      String gradleUserHome = ObjectUtils.chooseNotNull(
+        GradleSettings.getInstance(project).getServiceDirectoryPath(),
+        new BuildLayoutParameters().getGradleUserHomeDir().getPath()
+      );
+      String externalProjectPath = projectSettings.getExternalProjectPath();
+
       List<File> files = new SmartList<>();
-
-      // add global gradle.properties
-      String serviceDirectoryPath = GradleSettings.getInstance(project).getServiceDirectoryPath();
-      File gradleUserHomeDir = new BuildLayoutParameters().getGradleUserHomeDir();
-      files.add(new File(serviceDirectoryPath != null ? serviceDirectoryPath : gradleUserHomeDir.getPath(), "gradle.properties"));
-      // add init script
-      files.add(new File(serviceDirectoryPath != null ? serviceDirectoryPath : gradleUserHomeDir.getPath(), "init.gradle"));
-      // TODO add init scripts from USER_HOME/.gradle/init.d/ directory
-
-      // add project-specific gradle.properties
-      GradleProjectSettings projectSettings = GradleSettings.getInstance(project).getLinkedProjectSettings(projectPath);
-      files.add(new File(projectSettings == null ? projectPath : projectSettings.getExternalProjectPath(), "gradle.properties"));
-
+      files.add(new File(gradleUserHome, "gradle.properties"));
+      files.add(new File(gradleUserHome, "init.gradle"));
+      files.add(new File(externalProjectPath, "gradle.properties"));
       return files;
     }
   }
@@ -134,11 +135,11 @@ public class GradleAutoImportAware implements ExternalSystemAutoImportAware {
 
     @NotNull
     @Override
-    public List<File> collectSettingsFiles(@NotNull Project project, @NotNull String projectPath) {
-      List<File> files = new SmartList<>();
+    public List<File> collectSettingsFiles(@NotNull Project project, @NotNull GradleProjectSettings projectSettings) {
+      String externalProjectPath = projectSettings.getExternalProjectPath();
 
-      //add version catalog toml files
-      var node = ExternalSystemApiUtil.findProjectNode(project, GradleConstants.SYSTEM_ID, projectPath);
+      List<File> files = new SmartList<>();
+      var node = ExternalSystemApiUtil.findProjectNode(project, GradleConstants.SYSTEM_ID, externalProjectPath);
       if (node != null) {
         var versionCatalog = ExternalSystemApiUtil.find(node, BuildScriptClasspathData.VERSION_CATALOGS);
         if (versionCatalog != null) {
@@ -147,7 +148,6 @@ public class GradleAutoImportAware implements ExternalSystemAutoImportAware {
           }
         }
       }
-
       return files;
     }
   }
@@ -155,16 +155,13 @@ public class GradleAutoImportAware implements ExternalSystemAutoImportAware {
   public static class WrapperConfigCollector implements GradleAutoReloadSettingsCollector {
     @NotNull
     @Override
-    public List<File> collectSettingsFiles(@NotNull Project project, @NotNull String projectPath) {
+    public List<File> collectSettingsFiles(@NotNull Project project, @NotNull GradleProjectSettings projectSettings) {
+      String externalProjectPath = projectSettings.getExternalProjectPath();
+
       List<File> files = new SmartList<>();
-
-      GradleProjectSettings projectSettings = GradleSettings.getInstance(project).getLinkedProjectSettings(projectPath);
-
-      // add wrapper config file
-      if (projectSettings != null && projectSettings.getDistributionType() == DistributionType.DEFAULT_WRAPPED) {
-        files.add(new File(projectSettings.getExternalProjectPath(), "gradle/wrapper/gradle-wrapper.properties"));
+      if (projectSettings.getDistributionType() == DistributionType.DEFAULT_WRAPPED) {
+        files.add(new File(externalProjectPath, "gradle/wrapper/gradle-wrapper.properties"));
       }
-
       return files;
     }
   }
@@ -173,20 +170,14 @@ public class GradleAutoImportAware implements ExternalSystemAutoImportAware {
 
     @NotNull
     @Override
-    public List<File> collectSettingsFiles(@NotNull Project project, @NotNull String projectPath) {
+    public List<File> collectSettingsFiles(@NotNull Project project, @NotNull GradleProjectSettings projectSettings) {
       List<File> files = new SmartList<>();
 
-      GradleProjectSettings projectSettings = GradleSettings.getInstance(project).getLinkedProjectSettings(projectPath);
-
-      // add gradle scripts
-      Set<String> subProjectPaths = projectSettings != null && /*!projectSettings.getModules().isEmpty() &&*/
-                                    FileUtil.pathsEqual(projectSettings.getExternalProjectPath(), projectPath)
-                                    ? projectSettings.getModules() : Set.of(projectPath);
-      for (String path : subProjectPaths) {
+      for (String modulePath : projectSettings.getModules()) {
         ProgressManager.checkCanceled();
 
         try {
-          Files.walkFileTree(Paths.get(path), EnumSet.noneOf(FileVisitOption.class), 1, new SimpleFileVisitor<>() {
+          Files.walkFileTree(Paths.get(modulePath), EnumSet.noneOf(FileVisitOption.class), 1, new SimpleFileVisitor<>() {
             @Override
             public FileVisitResult visitFile(Path path, BasicFileAttributes attrs) {
               String fileName = path.getFileName().toString();
