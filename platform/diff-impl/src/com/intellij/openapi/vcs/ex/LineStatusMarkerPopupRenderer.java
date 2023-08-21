@@ -40,13 +40,6 @@ import static com.intellij.diff.util.DiffUtil.getLineCount;
 import static com.intellij.openapi.vcs.ex.LineStatusMarkerPopupActions.*;
 
 public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRenderer {
-  /**
-   * @deprecated Use {@link LineStatusMarkerPopupRenderer#LineStatusMarkerPopupRenderer(LineStatusTrackerI)}
-   */
-  @Deprecated(forRemoval = true)
-  public LineStatusMarkerPopupRenderer(@NotNull LineStatusTrackerBase<?> tracker) {
-    this((LineStatusTrackerI<?>)tracker);
-  }
 
   public LineStatusMarkerPopupRenderer(@NotNull LineStatusTrackerI<?> tracker) {
     super(tracker);
