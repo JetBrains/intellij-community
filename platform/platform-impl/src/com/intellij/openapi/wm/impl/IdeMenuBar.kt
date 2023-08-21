@@ -4,6 +4,7 @@ package com.intellij.openapi.wm.impl
 import com.intellij.DynamicBundle
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.impl.ActionMenu
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.SystemInfo
@@ -41,6 +42,9 @@ open class IdeMenuBar internal constructor(@JvmField internal val coroutineScope
                                            @JvmField internal val frame: JFrame,
                                            private val explicitMainMenuActionGroup: ActionGroup? = null) : JMenuBar(), ActionAwareIdeMenuBar {
   private val menuBarHelper: IdeMenuBarHelper
+  private val updateGlobalMenuRootsListeners = mutableListOf<Runnable>()
+  val rootMenuItems: List<ActionMenu>
+    get() = components.mapNotNull { it as? ActionMenu }
 
   init {
     val flavor = if (isFloatingMenuBarSupported) {
@@ -157,6 +161,14 @@ open class IdeMenuBar internal constructor(@JvmField internal val coroutineScope
     }
   }
 
+  fun addUpdateGlobalMenuRootsListener(runnable: Runnable) {
+    updateGlobalMenuRootsListeners.add(runnable)
+  }
+
+  fun removeUpdateGlobalMenuRootsListener(runnable: Runnable) {
+    updateGlobalMenuRootsListeners.remove(runnable)
+  }
+
   private fun paintBackground(g: Graphics) {
     if (IdeFrameDecorator.isCustomDecorationActive()) {
       val window = SwingUtilities.getWindowAncestor(this)
@@ -192,7 +204,11 @@ open class IdeMenuBar internal constructor(@JvmField internal val coroutineScope
     return if (menuBarHelper == null) 0 else menuBarHelper.flavor.correctMenuCount(super.getMenuCount())
   }
 
-  internal open fun updateGlobalMenuRoots() {}
+  internal open fun updateGlobalMenuRoots() {
+    for (listener in updateGlobalMenuRootsListeners) {
+      listener.run()
+    }
+  }
 
   internal open fun doInstallAppMenuIfNeeded(frame: JFrame) {}
 
