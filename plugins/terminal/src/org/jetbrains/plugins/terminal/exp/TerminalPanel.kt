@@ -20,7 +20,7 @@ import javax.swing.JScrollPane
 
 class TerminalPanel(private val project: Project,
                     private val settings: JBTerminalSystemSettingsProviderBase,
-                    model: TerminalModel,
+                    session: TerminalSession,
                     eventsHandler: TerminalEventsHandler,
                     private val withVerticalScroll: Boolean = true) : JPanel(), ComponentContainer {
   private val editor: EditorImpl
@@ -38,7 +38,7 @@ class TerminalPanel(private val project: Project,
 
   init {
     editor = createEditor()
-    controller = TerminalPanelController(settings, model, editor, eventsHandler)
+    controller = TerminalPanelController(settings, session, editor, eventsHandler)
     editor.addFocusListener(object : FocusChangeListener {
       override fun focusGained(editor: Editor) {
         controller.isFocused = true

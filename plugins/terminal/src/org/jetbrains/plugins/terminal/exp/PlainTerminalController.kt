@@ -20,7 +20,7 @@ class PlainTerminalController(
 
   init {
     val eventsHandler = TerminalEventsHandler(session, settings)
-    panel = TerminalPanel(project, settings, session.model, eventsHandler)
+    panel = TerminalPanel(project, settings, session, eventsHandler)
     panel.border = JBUI.Borders.empty()
     panel.addComponentListener(object : ComponentAdapter() {
       override fun componentResized(e: ComponentEvent?) {

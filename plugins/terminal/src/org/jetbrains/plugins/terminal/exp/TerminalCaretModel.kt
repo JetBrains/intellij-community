@@ -9,7 +9,7 @@ import java.util.concurrent.CopyOnWriteArrayList
 
 class TerminalCaretModel(private val session: TerminalSession,
                          private val outputModel: TerminalOutputModel,
-                         private val editor: EditorEx) : ShellCommandListener, TerminalModel.CursorListener {
+                         private val editor: EditorEx) : ShellCommandListener, TerminalModel.CursorListener, Disposable {
   private val terminalModel: TerminalModel
     get() = session.model
 
@@ -21,8 +21,8 @@ class TerminalCaretModel(private val session: TerminalSession,
     private set
 
   init {
-    session.addCommandListener(this)
-    terminalModel.addCursorListener(this)
+    session.addCommandListener(this, parentDisposable = this)
+    terminalModel.addCursorListener(this, parentDisposable = this)
   }
 
   fun addListener(listener: CaretListener, disposable: Disposable? = null) {
@@ -33,10 +33,17 @@ class TerminalCaretModel(private val session: TerminalSession,
   }
 
   override fun onPositionChanged(cursorX: Int, cursorY: Int) {
-    if (terminalModel.isCommandRunning) {
-      val position = calculateCaretPosition(cursorX, cursorY)
-      updateCaretPosition(position)
+    if (terminalModel.isCommandRunning && terminalModel.isCursorVisible) {
+      updateCaretPosition(cursorX, cursorY)
     }
+    else updateCaretPosition(null)
+  }
+
+  override fun onVisibilityChanged(visible: Boolean) {
+    if (visible) {
+      updateCaretPosition(terminalModel.cursorX, terminalModel.cursorY)
+    }
+    else updateCaretPosition(null)
   }
 
   override fun commandStarted(command: String) {
@@ -59,6 +66,11 @@ class TerminalCaretModel(private val session: TerminalSession,
     return LogicalPosition(blockStartLine + blockLine, cursorX)
   }
 
+  private fun updateCaretPosition(cursorX: Int, cursorY: Int) {
+    val position = calculateCaretPosition(cursorX, cursorY)
+    updateCaretPosition(position)
+  }
+
   private fun updateCaretPosition(newPosition: LogicalPosition?) {
     val oldPosition = caretPosition
     caretPosition = newPosition
@@ -68,6 +80,8 @@ class TerminalCaretModel(private val session: TerminalSession,
       }
     }
   }
+
+  override fun dispose() {}
 
   interface CaretListener {
     fun caretPositionChanged(oldPosition: LogicalPosition?, newPosition: LogicalPosition?) {}

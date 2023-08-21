@@ -98,7 +98,7 @@ class BlockTerminalPanel(
 
   private fun installAlternateBufferPanel() {
     val eventsHandler = TerminalEventsHandler(session, settings)
-    val panel = TerminalPanel(project, settings, session.model, eventsHandler, withVerticalScroll = false)
+    val panel = TerminalPanel(project, settings, session, eventsHandler, withVerticalScroll = false)
     Disposer.register(this, panel)
     alternateBufferPanel = panel
 

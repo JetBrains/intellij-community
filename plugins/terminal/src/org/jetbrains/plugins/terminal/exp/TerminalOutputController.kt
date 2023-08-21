@@ -45,6 +45,7 @@ class TerminalOutputController(
   init {
     editor.highlighter = textHighlighter
     session.model.addTerminalListener(this)
+    Disposer.register(session, caretModel)
   }
 
   @RequiresEdt

@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.ScrollType
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.markup.EffectType
 import com.intellij.openapi.editor.markup.TextAttributes
+import com.intellij.openapi.util.Disposer
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.jediterm.terminal.StyledTextConsumer
 import com.jediterm.terminal.TextStyle
@@ -20,27 +21,37 @@ import java.awt.Color
 import java.awt.Font
 
 class TerminalPanelController(private val settings: JBTerminalSystemSettingsProviderBase,
-                              private val model: TerminalModel,
+                              private val session: TerminalSession,
                               private val editor: EditorEx,
                               eventsHandler: TerminalEventsHandler) : Disposable {
   val document: Document
     get() = editor.document
   private val palette: ColorPalette
     get() = settings.terminalColorPalette
+  private val terminalModel: TerminalModel
+    get() = session.model
+
+  private val outputModel: TerminalOutputModel = TerminalOutputModel(editor)
+  private val caretModel: TerminalCaretModel = TerminalCaretModel(session, outputModel, editor)
+  private val caretPainter: TerminalCaretPainter = TerminalCaretPainter(caretModel, editor)
 
   var isFocused: Boolean = false
 
   init {
+    // create dummy logical block, that will cover all the output, needed only for caret model
+    outputModel.createBlock(command = null)
+    terminalModel.isCommandRunning = true
+
     setupContentListener()
     setupKeyEventDispatcher(editor, settings, eventsHandler, disposable = this, this::isFocused)
-    setupMouseListener(editor, settings, model, eventsHandler, disposable = this)
-    model.withContentLock {
+    setupMouseListener(editor, settings, terminalModel, eventsHandler, disposable = this)
+    terminalModel.withContentLock {
       updateEditorContent()
     }
   }
 
   private fun setupContentListener() {
-    model.addContentListener(object : TerminalModel.ContentListener {
+    terminalModel.addContentListener(object : TerminalModel.ContentListener {
       override fun onContentChanged() {
         updateEditorContent()
       }
@@ -92,11 +103,13 @@ class TerminalPanelController(private val settings: JBTerminalSystemSettingsProv
       }
     }
 
-    if (model.useAlternateBuffer) {
-      model.processScreenLines(0, model.screenLinesCount, consumer)
+    if (terminalModel.useAlternateBuffer) {
+      terminalModel.processScreenLines(0, terminalModel.screenLinesCount, consumer)
     }
     else {
-      model.processHistoryAndScreenLines(-model.historyLinesCount, model.historyLinesCount + model.cursorY, consumer)
+      terminalModel.processHistoryAndScreenLines(-terminalModel.historyLinesCount,
+                                                 terminalModel.historyLinesCount + terminalModel.cursorY,
+                                                 consumer)
     }
 
     while (builder.lastOrNull() == '\n') {
@@ -109,20 +122,16 @@ class TerminalPanelController(private val settings: JBTerminalSystemSettingsProv
   private fun updateEditor(content: TerminalContent) {
     document.setText(content.text)
     editor.highlighter = TerminalTextHighlighter(content.highlightings)
-    if (model.useAlternateBuffer) {
-      editor.setCaretEnabled(false)
-    }
-    else {
-      editor.setCaretEnabled(model.isCursorVisible)
-      val line = model.historyLinesCount + model.cursorY - 1
-      editor.caretModel.moveToLogicalPosition(LogicalPosition(line, model.cursorX))
-      editor.scrollingModel.scrollToCaret(ScrollType.CENTER_DOWN)
-    }
+
+    val line = terminalModel.historyLinesCount + terminalModel.cursorY - 1
+    editor.caretModel.moveToLogicalPosition(LogicalPosition(line, terminalModel.cursorX))
+    editor.scrollingModel.scrollToCaret(ScrollType.CENTER_DOWN)
+    caretPainter.repaint()
   }
 
   private fun TextStyle.toTextAttributes(): TextAttributes {
     return TextAttributes().also { attr ->
-      attr.backgroundColor = AwtTransformers.toAwtColor(palette.getBackground(model.styleState.getBackground(backgroundForRun)))
+      attr.backgroundColor = AwtTransformers.toAwtColor(palette.getBackground(terminalModel.styleState.getBackground(backgroundForRun)))
       attr.foregroundColor = getStyleForeground(this)
       if (hasOption(TextStyle.Option.BOLD)) {
         attr.fontType = attr.fontType or Font.BOLD
@@ -137,9 +146,9 @@ class TerminalPanelController(private val settings: JBTerminalSystemSettingsProv
   }
 
   private fun getStyleForeground(style: TextStyle): Color {
-    val foreground = palette.getForeground(model.styleState.getForeground(style.foregroundForRun))
+    val foreground = palette.getForeground(terminalModel.styleState.getForeground(style.foregroundForRun))
     return if (style.hasOption(TextStyle.Option.DIM)) {
-      val background = palette.getBackground(model.styleState.getBackground(style.backgroundForRun))
+      val background = palette.getBackground(terminalModel.styleState.getBackground(style.backgroundForRun))
       Color((foreground.red + background.red) / 2,
             (foreground.green + background.green) / 2,
             (foreground.blue + background.blue) / 2,
@@ -148,7 +157,9 @@ class TerminalPanelController(private val settings: JBTerminalSystemSettingsProv
     else AwtTransformers.toAwtColor(foreground)!!
   }
 
-  override fun dispose() {}
+  override fun dispose() {
+    Disposer.dispose(caretModel)
+  }
 
   private data class TerminalContent(val text: String, val highlightings: List<HighlightingInfo>)
 }
