@@ -8,7 +8,6 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
-import com.jetbrains.rd.util.reactive.IProperty
 import org.jetbrains.annotations.Nls
 
 class RangeCodeVisionModel(
@@ -28,13 +27,12 @@ class RangeCodeVisionModel(
   private val lensForRange: List<CodeVisionEntry> = lensMap.flatMap { it.value }
   val inlays: ArrayList<Inlay<*>> = ArrayList()
 
-  fun lensPopupActive(): IProperty<Boolean> = projectModel.lensPopupActive
   fun handleLensClick(entry: CodeVisionEntry) {
     projectModel.handleLensClick(editor, anchoringRange, entry)
   }
 
   fun handleLensRightClick() {
-    projectModel.handleLensRightClick()
+    //projectModel.handleLensRightClick()
   }
 
   fun handleLensExtraAction(selectedValue: CodeVisionEntry, actionId: String) {

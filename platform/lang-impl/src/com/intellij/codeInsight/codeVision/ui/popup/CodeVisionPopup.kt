@@ -4,15 +4,13 @@ import com.intellij.codeInsight.codeVision.CodeVisionEntry
 import com.intellij.codeInsight.codeVision.ui.model.CodeVisionListData
 import com.intellij.codeInsight.codeVision.ui.model.RangeCodeVisionModel
 import com.intellij.codeInsight.codeVision.ui.popup.layouter.*
-import com.intellij.codeInsight.codeVision.ui.renderers.CodeVisionRenderer
+import com.intellij.codeInsight.codeVision.ui.renderers.v2.CodeVisionInlayRenderer
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.project.Project
 import com.intellij.ui.popup.AbstractPopup
-
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.lifetime.LifetimeDefinition
-import com.jetbrains.rd.util.reactive.IProperty
 import com.jetbrains.rd.util.reactive.map
 import java.awt.Rectangle
 
@@ -54,7 +52,7 @@ class CodeVisionPopup {
       model: CodeVisionListData,
       project: Project
     ) {
-      showPopup(lifetime, inlay, entry, disposition, model.projectModel.lensPopupActive) {
+      showPopup(lifetime, inlay, entry, disposition) {
         CodeVisionContextPopup.createLensList(entry, model, project)
       }
     }
@@ -67,7 +65,7 @@ class CodeVisionPopup {
       model: RangeCodeVisionModel,
       project: Project
     ) {
-      showPopup(lifetime, inlay, entry, disposition, model.lensPopupActive()) {
+      showPopup(lifetime, inlay, entry, disposition) {
         CodeVisionListPopup.createLensList(model, project)
       }
     }
@@ -84,7 +82,7 @@ class CodeVisionPopup {
 
       val anchor = EditorAnchoringRect.createHorizontalSmartClipRect(ltd, offset, editor)
 
-      showPopup(ltd, project, editor, model.lensPopupActive(), anchor, disposition.list) {
+      showPopup(ltd, project, editor, anchor, disposition.list) {
         CodeVisionListPopup.createLensList(model, project)
       }
     }
@@ -93,7 +91,6 @@ class CodeVisionPopup {
       ltd: LifetimeDefinition,
       project: Project,
       editor: Editor,
-      lensPopupActive: IProperty<Boolean>,
       anchor: AnchoringRect,
       disposition: List<Anchoring2D>,
       popupFactory: (Lifetime) -> AbstractPopup
@@ -104,7 +101,7 @@ class CodeVisionPopup {
                                                       )
                                                     }, this::class.java.simpleName).createLayouter(ltd)
 
-      val pw = CodeVisionPopupWrapper(ltd, editor, popupFactory, popupLayouter, lensPopupActive)
+      val pw = CodeVisionPopupWrapper(ltd, editor, popupFactory, popupLayouter)
 
       //pw.show()
       anchor.rectangle.map { it != null }.view(ltd) { lt, it ->
@@ -122,7 +119,6 @@ class CodeVisionPopup {
       inlay: Inlay<*>,
       entry: CodeVisionEntry,
       disposition: Disposition,
-      lensPopupActive: IProperty<Boolean>,
       popupFactory: (Lifetime) -> AbstractPopup
     ) {
       val editor = inlay.editor
@@ -133,7 +129,7 @@ class CodeVisionPopup {
       val shift = getPopupShift(inlay, entry) ?: return
       val anchor = EditorAnchoringRect(ltd, editor, offset, shiftDelegate(editor, shift))
 
-      showPopup(ltd, project, editor, lensPopupActive, anchor, disposition.list, popupFactory)
+      showPopup(ltd, project, editor, anchor, disposition.list, popupFactory)
     }
 
 
@@ -141,8 +137,8 @@ class CodeVisionPopup {
       val inlayXY = inlay.bounds ?: return null
       val editor = inlay.editor
 
-      val renderer = inlay.renderer as CodeVisionRenderer
-      val entryBounds = renderer.entryBounds(inlay, entry) ?: return null
+      val renderer = inlay.renderer as CodeVisionInlayRenderer
+      val entryBounds = renderer.calculateCodeVisionEntryBounds(entry) ?: return null
 
       val offsetXY = editor.offsetToXY(inlay.offset)
       val shiftX = inlayXY.x - offsetXY.x + entryBounds.x - entryBounds.width

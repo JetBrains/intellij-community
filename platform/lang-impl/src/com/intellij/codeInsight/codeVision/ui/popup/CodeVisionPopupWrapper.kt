@@ -14,7 +14,6 @@ import com.jetbrains.rd.util.getLogger
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.lifetime.LifetimeDefinition
 import com.jetbrains.rd.util.lifetime.isAlive
-import com.jetbrains.rd.util.reactive.IProperty
 import com.jetbrains.rd.util.warn
 import java.awt.Dimension
 
@@ -22,9 +21,7 @@ class CodeVisionPopupWrapper(
   val mainLTD: LifetimeDefinition,
   val editor: Editor,
   val popupFactory: (Lifetime) -> AbstractPopup,
-  private val popupLayouter: DockingLayouter,
-  private val lensPopupActive: IProperty<Boolean>
-) {
+  private val popupLayouter: DockingLayouter) {
   private val logger = getLogger<CodeVisionPopupWrapper>()
 
   var popup: AbstractPopup? = null
@@ -61,11 +58,9 @@ class CodeVisionPopupWrapper(
   private fun close() {
     ltd?.terminate()
     ltd = null
-    lensPopupActive.set(false)
   }
 
   private fun createPopup(lifetimeDefinition: LifetimeDefinition) {
-    lensPopupActive.set(true)
 
     ltd = lifetimeDefinition
     val pp = popupFactory(lifetimeDefinition)

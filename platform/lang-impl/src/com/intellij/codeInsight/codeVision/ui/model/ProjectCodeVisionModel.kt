@@ -3,13 +3,10 @@ package com.intellij.codeInsight.codeVision.ui.model
 
 import com.intellij.codeInsight.codeVision.*
 import com.intellij.codeInsight.codeVision.settings.CodeVisionSettings
-import com.intellij.codeInsight.codeVision.ui.popup.CodeVisionPopup
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
-import com.jetbrains.rd.util.reactive.Property
 import com.jetbrains.rd.util.reactive.ViewableMap
 
 
@@ -24,9 +21,9 @@ class ProjectCodeVisionModel private constructor(val project: Project) {
   }
 
   val maxVisibleLensCount: ViewableMap<CodeVisionAnchorKind, Int> = ViewableMap()
-  val hoveredInlay: Property<Inlay<*>?> = Property(null)
-  val hoveredEntry: Property<CodeVisionEntry?> = Property(null)
-  val lensPopupActive: Property<Boolean> = Property(false)
+  //val hoveredInlay: Property<Inlay<*>?> = Property(null)
+  //val hoveredEntry: Property<CodeVisionEntry?> = Property(null)
+  //val lensPopupActive: Property<Boolean> = Property(false)
 
   val moreEntry: AdditionalCodeVisionEntry = AdditionalCodeVisionEntry(MORE_PROVIDER_ID, CodeVisionBundle.message("more"))
 
@@ -42,9 +39,9 @@ class ProjectCodeVisionModel private constructor(val project: Project) {
     getCodeVisionHost().handleLensClick(editor, range, entry)
   }
 
-  fun handleLensRightClick() {
-    showContextPopup()
-  }
+  //fun handleLensRightClick() {
+  //  showContextPopup()
+  //}
 
   fun handleLensExtraAction(editor: Editor, range: TextRange, entry: CodeVisionEntry, actionId: String) {
     if (actionId == HIDE_PROVIDER_ID) {
@@ -69,37 +66,37 @@ class ProjectCodeVisionModel private constructor(val project: Project) {
   }
 
   private fun showMore() {
-    val inlay = hoveredInlay.value ?: return
-    val model = inlay.getUserData(CodeVisionListData.KEY) ?: return
-
-    CodeVisionPopup.showMorePopup(
-      model.lifetime,
-      inlay,
-      moreEntry,
-      CodeVisionPopup.Disposition.MOUSE_POPUP_DISPOSITION,
-      model.rangeCodeVisionModel,
-      project
-    )
+    //val inlay = hoveredInlay.value ?: return
+    //val model = inlay.getUserData(CodeVisionListData.KEY) ?: return
+    //
+    //CodeVisionPopup.showMorePopup(
+    //  model.lifetime,
+    //  inlay,
+    //  moreEntry,
+    //  CodeVisionPopup.Disposition.MOUSE_POPUP_DISPOSITION,
+    //  model.rangeCodeVisionModel,
+    //  project
+    //)
   }
 
-  private fun showContextPopup() {
-    val inlay = hoveredInlay.value ?: return
-    val entry = hoveredEntry.value ?: return
-
-    if (entry.providerId == MORE_PROVIDER_ID) {
-      showMore()
-      return
-    }
-
-    val model = inlay.getUserData(CodeVisionListData.KEY) ?: return
-
-    CodeVisionPopup.showContextPopup(
-      model.lifetime,
-      inlay,
-      entry,
-      CodeVisionPopup.Disposition.MOUSE_POPUP_DISPOSITION,
-      model,
-      project
-    )
-  }
+  //private fun showContextPopup() {
+  //  val inlay = hoveredInlay.value ?: return
+  //  val entry = hoveredEntry.value ?: return
+  //
+  //  if (entry.providerId == MORE_PROVIDER_ID) {
+  //    showMore()
+  //    return
+  //  }
+  //
+  //  val model = inlay.getUserData(CodeVisionListData.KEY) ?: return
+  //
+  //  CodeVisionPopup.showContextPopup(
+  //    model.lifetime,
+  //    inlay,
+  //    entry,
+  //    CodeVisionPopup.Disposition.MOUSE_POPUP_DISPOSITION,
+  //    model,
+  //    project
+  //  )
+  //}
 }
