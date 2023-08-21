@@ -2,6 +2,7 @@
 package com.intellij.platform.ide.impl.customization
 
 import com.intellij.openapi.application.ApplicationInfo
+import com.intellij.openapi.updateSettings.impl.UpdateRequestParameters
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.platform.ide.customization.ExternalProductResourceUrls
 import com.intellij.platform.ide.customization.FeedbackReporter
@@ -37,8 +38,10 @@ abstract class BaseJetBrainsExternalProductResourceUrls : ExternalProductResourc
   open val zenDeskFeedbackFormData: ZenDeskFeedbackFormData?
     get() = null
 
-  override val updatesMetadataXmlUrl: String
-    get() = "https://www.jetbrains.com/updates/updates.xml"
+  override val updatesMetadataXmlUrl: Url
+    get() {
+      return UpdateRequestParameters.amendUpdateRequest(Urls.newFromEncoded("https://www.jetbrains.com/updates/updates.xml"))
+    }
   
   override val bugReportUrl: ((String) -> Url)?
     get() = { description ->

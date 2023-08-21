@@ -3,6 +3,7 @@ package com.intellij.platform.ide.impl.customization
 
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ex.ApplicationInfoEx
+import com.intellij.openapi.updateSettings.impl.UpdateRequestParameters
 import com.intellij.platform.ide.customization.ExternalProductResourceUrls
 import com.intellij.platform.ide.customization.FeedbackReporter
 import com.intellij.ui.LicensingFacade
@@ -12,8 +13,11 @@ import com.intellij.util.io.URLUtil
 import java.util.regex.Pattern
 
 class LegacyExternalProductResourceUrls : ExternalProductResourceUrls {
-  override val updatesMetadataXmlUrl: String?
-    get() = ApplicationInfoEx.getInstanceEx().updateUrls?.checkingUrl
+  override val updatesMetadataXmlUrl: Url?
+    get() {
+      val baseUrl = ApplicationInfoEx.getInstanceEx().updateUrls?.checkingUrl ?: return null
+      return UpdateRequestParameters.amendUpdateRequest(Urls.newFromEncoded(baseUrl))
+    }
   
   override val basePatchDownloadUrl: String?
     get() = ApplicationInfoEx.getInstanceEx().updateUrls?.patchesUrl

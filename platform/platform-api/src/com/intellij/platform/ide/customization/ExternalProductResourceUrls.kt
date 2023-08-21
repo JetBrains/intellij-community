@@ -28,7 +28,7 @@ interface ExternalProductResourceUrls {
    * is available. Currently, there is no specification of that XML file format; you may use [the file](https://www.jetbrains.com/updates/updates.xml)
    * used by JetBrains IDEs as a reference.
    */
-  val updatesMetadataXmlUrl: String?
+  val updatesMetadataXmlUrl: Url?
 
   /**
    * Returns the base part of a URL which can be used to download patches. If [a metadata][updatesMetadataXmlUrl] contains information about
