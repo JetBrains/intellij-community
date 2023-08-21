@@ -17,6 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
+import org.jetbrains.idea.maven.importing.MavenCustomModuleNameMapper;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
@@ -32,7 +33,9 @@ public class MavenRenameModuleWatcher implements ModuleListener {
   public void modulesRenamed(@NotNull Project project,
                              @NotNull List<? extends Module> modules,
                              @NotNull Function<? super Module, String> oldNameProvider) {
+    MavenCustomModuleNameMapper customNameMapper = project.getService(MavenCustomModuleNameMapper.class);
     for (var module : modules) {
+      customNameMapper.onModuleRename(module);
       new MavenRenameModuleHandler(project, module, oldNameProvider.fun(module)).handleModuleRename();
     }
   }
