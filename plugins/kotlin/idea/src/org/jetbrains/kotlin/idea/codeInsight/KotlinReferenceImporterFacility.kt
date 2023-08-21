@@ -2,7 +2,7 @@
 package org.jetbrains.kotlin.idea.codeInsight
 
 import com.intellij.openapi.components.service
-import org.jetbrains.kotlin.idea.quickfix.ImportFixBase
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinImportQuickFixAction
 import org.jetbrains.kotlin.psi.KtExpression
 
 interface KotlinReferenceImporterFacility {
@@ -13,5 +13,5 @@ interface KotlinReferenceImporterFacility {
     /**
      * Note that collected import fixes should not be stored and should be applied immediately.
      */
-    fun createImportFixesForExpression(expression: KtExpression): Sequence<ImportFixBase<*>>
+    fun createImportFixesForExpression(expression: KtExpression): Sequence<KotlinImportQuickFixAction<*>>
 }

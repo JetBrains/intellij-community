@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.quickfix
 import com.intellij.codeInsight.ImportFilter
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings
 import com.intellij.codeInsight.hint.HintManager
+import com.intellij.codeInsight.hint.QuestionAction
 import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInspection.HintAction
@@ -40,8 +41,7 @@ import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.resolveImportReference
 import org.jetbrains.kotlin.idea.caches.resolve.util.getResolveScope
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
-import org.jetbrains.kotlin.idea.codeInsight.KotlinAutoImportsFilter
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinImportQuickFixAction
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.UnresolvedReferenceQuickFixFactory
 import org.jetbrains.kotlin.idea.core.KotlinIndicesHelper
 import org.jetbrains.kotlin.idea.core.isVisible
@@ -87,7 +87,7 @@ abstract class ImportFixBase<T : KtExpression> protected constructor(
     expression: T,
     private val expressionToAnalyzePointer: SmartPsiElementPointer<KtExpression>?,
     factory: Factory
-) : KotlinQuickFixAction<T>(expression), HintAction, HighPriorityAction {
+) : KotlinImportQuickFixAction<T>(expression), HintAction, HighPriorityAction {
 
     constructor(expression: T, factory: Factory):
         this(expression, null, factory)
@@ -206,11 +206,11 @@ abstract class ImportFixBase<T : KtExpression> protected constructor(
         return createSingleImportAction(element.project, editor, element, suggestions)
     }
 
-    fun createAutoImportAction(
+    override fun createAutoImportAction(
         editor: Editor,
         file: KtFile,
-        filterSuggestions: (Collection<FqName>) -> Collection<FqName> = { suggestions -> suggestions },
-    ): KotlinAddImportAction? {
+        filterSuggestions: (Collection<FqName>) -> Collection<FqName>,
+    ): QuestionAction? {
         val suggestions = filterSuggestions(suggestions)
         if (suggestions.isEmpty() || !ImportFixHelper.suggestionsAreFromSameParent(suggestions)) return null
 
@@ -222,13 +222,6 @@ abstract class ImportFixBase<T : KtExpression> protected constructor(
 
     private fun isNestedClassifier(declaration: DeclarationDescriptor): Boolean =
         declaration is ClassifierDescriptor && declaration.containingDeclaration is ClassifierDescriptor
-
-    private fun createActionWithAutoImportsFilter(project: Project, editor: Editor, element: KtExpression): KotlinAddImportAction {
-        val filteredSuggestions =
-            KotlinAutoImportsFilter.filterSuggestionsIfApplicable(element.containingKtFile, suggestions)
-
-        return createSingleImportAction(project, editor, element, filteredSuggestions)
-    }
 
     private fun collectSuggestionDescriptors(): Collection<DeclarationDescriptor> {
         element?.takeIf(PsiElement::isValid)?.takeIf { it.containingFile is KtFile } ?: return emptyList()

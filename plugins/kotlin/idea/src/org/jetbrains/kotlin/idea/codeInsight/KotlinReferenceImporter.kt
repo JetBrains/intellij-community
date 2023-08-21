@@ -3,11 +3,11 @@
 package org.jetbrains.kotlin.idea.codeInsight
 
 import com.intellij.codeInsight.daemon.ReferenceImporter
+import com.intellij.codeInsight.hint.QuestionAction
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
-import org.jetbrains.kotlin.idea.actions.KotlinAddImportAction
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFile
@@ -36,7 +36,7 @@ abstract class AbstractKotlinReferenceImporter : ReferenceImporter {
             suggestions
         }
 
-    private fun computeAutoImport(file: KtFile, editor: Editor, expression: KtExpression): KotlinAddImportAction? {
+    private fun computeAutoImport(file: KtFile, editor: Editor, expression: KtExpression): QuestionAction? {
         val quickFixes = KotlinReferenceImporterFacility.getInstance().createImportFixesForExpression(expression)
 
         return quickFixes.firstNotNullOfOrNull { importFix ->
@@ -53,7 +53,7 @@ abstract class AbstractKotlinReferenceImporter : ReferenceImporter {
         val endOffset = document.getLineEndOffset(lineNumber)
         val expressions = file.elementsInRange(TextRange(startOffset, endOffset))
             .flatMap { it.collectDescendantsOfType<KtExpression>() }
-        val action: KotlinAddImportAction = expressions.firstNotNullOfOrNull { expression ->
+        val action: QuestionAction = expressions.firstNotNullOfOrNull { expression ->
             if (expression.endOffset != offset) computeAutoImport(file, editor, expression) else null
         } ?: return null
 
@@ -62,7 +62,7 @@ abstract class AbstractKotlinReferenceImporter : ReferenceImporter {
         }
     }
 
-    private fun doImport(action: KotlinAddImportAction): Boolean {
+    private fun doImport(action: QuestionAction): Boolean {
         var res = false
         CommandProcessor.getInstance().runUndoTransparentAction {
             res = action.execute()

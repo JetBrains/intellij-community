@@ -39,7 +39,7 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.utils.fqname.isImported
 import org.jetbrains.kotlin.idea.codeInsight.K2StatisticsInfoProvider
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.diagnosticFixFactory
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.QuickFixActionBase
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinImportQuickFixAction
 import org.jetbrains.kotlin.idea.codeinsight.utils.getFqNameIfPackageOrNonLocal
 import org.jetbrains.kotlin.idea.quickfix.AutoImportVariant
 import org.jetbrains.kotlin.idea.quickfix.ImportFixHelper
@@ -55,13 +55,14 @@ class ImportQuickFix(
     element: KtElement,
     @IntentionName private val text: String,
     private val importVariants: List<AutoImportVariant>
-) : QuickFixActionBase<KtElement>(element), HintAction, HighPriorityAction {
+) : KotlinImportQuickFixAction<KtElement>(element), HintAction, HighPriorityAction {
     private data class SymbolBasedAutoImportVariant(
         override val fqName: FqName,
         override val declarationToImport: PsiElement?,
         override val icon: Icon?,
         override val debugRepresentation: String,
-        val statisticsInfo: StatisticsInfo
+        val statisticsInfo: StatisticsInfo,
+        val canNotBeImportedOnTheFly: Boolean,
     ) : AutoImportVariant {
         override val hint: String = fqName.asString()
     }
@@ -74,10 +75,24 @@ class ImportQuickFix(
 
     override fun getFamilyName(): String = KotlinBundle.message("fix.import")
 
-    override fun invoke(project: Project, editor: Editor, file: PsiFile) {
-        if (file !is KtFile) return
+    override fun invoke(project: Project, editor: Editor?, file: KtFile) {
+        if (editor == null) return
 
         createAddImportAction(project, editor, file).execute()
+    }
+
+    override fun createAutoImportAction(
+        editor: Editor,
+        file: KtFile,
+        filterSuggestions: (Collection<FqName>) -> Collection<FqName>
+    ): QuestionAction? {
+        val filteredFqNames = filterSuggestions(importVariants.map { it.fqName }).toSet()
+        if (filteredFqNames.isEmpty() || !ImportFixHelper.suggestionsAreFromSameParent(filteredFqNames)) return null
+
+        val filteredSuggestions = importVariants.filter { it.fqName in filteredFqNames }
+        if (filteredSuggestions.any { (it as SymbolBasedAutoImportVariant).canNotBeImportedOnTheFly }) return null
+
+        return ImportQuestionAction(file.project, editor, file, filteredSuggestions)
     }
 
     private fun createAddImportAction(project: Project, editor: Editor, file: KtFile): QuestionAction {
@@ -136,9 +151,8 @@ class ImportQuickFix(
         return modificationCountOnCreate != PsiModificationTracker.getInstance(project).modificationCount
     }
 
-    override fun isAvailableImpl(project: Project, editor: Editor?, file: PsiFile): Boolean {
-        return super.isAvailableImpl(project, editor, file) && !isOutdated(project)
-    }
+    override fun isAvailable(project: Project, editor: Editor?, file: KtFile): Boolean =
+        !isOutdated(project)
 
     private class ImportQuestionAction(
         private val project: Project,
@@ -308,11 +322,16 @@ class ImportQuickFix(
                         getIconFor(symbol),
                         renderSymbol(symbol),
                         priority.statisticsInfo,
+                        // don't import nested class on the fly because this will probably add qualification and confuse the user
+                        doNotImportOnFly = (symbol as? KtNamedClassOrObjectSymbol)?.isNested() == true,
                     )
                 }
 
             return ImportQuickFix(position, text, sortedImportVariants)
         }
+
+        context(KtAnalysisSession)
+        private fun KtNamedClassOrObjectSymbol.isNested(): Boolean = getContainingSymbol() is KtNamedClassOrObjectSymbol
 
         context(KtAnalysisSession)
         private fun KtDeclarationSymbol.getImportKind(): ImportFixHelper.ImportKind? = when {
