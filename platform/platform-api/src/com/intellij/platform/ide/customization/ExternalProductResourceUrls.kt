@@ -2,7 +2,9 @@
 package com.intellij.platform.ide.customization
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.project.Project
 import com.intellij.util.Url
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -88,4 +90,15 @@ interface FeedbackReporter {
    * extension point.
    */
   fun feedbackFormUrl(description: String): Url
+
+  /**
+   * Override this function to show a custom form when "Submit Feedback" action is invoked or when the IDE requests a user to provide 
+   * feedback during the evaluation period.
+   * @param requestedForEvaluation `true` if the form is shown by the IDE during the evaluation period and `false` if user explicitly 
+   * invoked "Submit Feedback" action.  
+   * @return `true` if the custom form was shown, and `false` otherwise;
+   * in the latter case, the default way with opening [feedbackFormUrl] in the browser will be used.
+   */
+  @RequiresEdt
+  fun showFeedbackForm(project: Project?, requestedForEvaluation: Boolean): Boolean = false
 }

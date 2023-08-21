@@ -18,18 +18,6 @@
 
   <help webhelp-url="https://www.jetbrains.com/help/idea/"/>
   <documentation url="https://www.jetbrains.com/idea/resources/"/>
-  <feedback zendesk-form-id="360001912739" zendesk-url="https://jbsintellij.zendesk.com">
-    <field id="28147552" value="ij_idea"/>
-    <field id="28102551" value="sl_unknown"/>   <!-- country -->
-    <field id="29444529" type="rating"/>
-    <field id="28500325" type="build"/>
-    <field id="28151042" type="os"/>
-    <field id="28500645" type="timezone"/>
-    <field id="28351649" type="eval"/>
-    <field id="360021010939" type="systeminfo"/>
-    <field id="22996310" type="needsupport"/>
-    <field id="28116681" type="topic"/>
-  </feedback>
   <whatsnew url="https://www.jetbrains.com/idea/whatsnew/" show-on-update="true"/>
   <keymap win="https://www.jetbrains.com/idea/docs/IntelliJIDEA_ReferenceCard.pdf"
           mac="https://www.jetbrains.com/idea/docs/IntelliJIDEA_ReferenceCard_Mac.pdf"/>

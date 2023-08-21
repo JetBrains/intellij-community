@@ -12,10 +12,9 @@ import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
-import com.intellij.openapi.application.ex.ApplicationInfoEx
-import com.intellij.openapi.application.impl.ZenDeskForm
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.platform.ide.impl.customization.ZenDeskFeedbackFormData
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.LicensingFacade
 import com.intellij.ui.PopupBorder
@@ -24,8 +23,7 @@ import com.intellij.ui.components.JBTextArea
 import com.intellij.ui.components.TextComponentEmptyText
 import com.intellij.ui.components.dialog
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.layout.*
+import com.intellij.ui.layout.selectedValueMatches
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.Nls
@@ -54,7 +52,7 @@ private val topicOptions = listOf(
 
 class FeedbackForm(
   private val project: Project?,
-  val form: ZenDeskForm,
+  private val zenDeskFormData: ZenDeskFeedbackFormData,
   val isEvaluation: Boolean
 ) : DialogWrapper(project, false) {
   private var details = ""
@@ -230,15 +228,12 @@ class FeedbackForm(
     val systemInfo = if (shareSystemInformation) AboutDialog(project).extendedAboutText else ""
     ApplicationManager.getApplication().executeOnPooledThread {
       ZenDeskRequests().submit(
-        form,
+        zenDeskFormData,
         email,
         ApplicationNamesInfo.getInstance().fullProductName + " Feedback",
         details.ifEmpty { "No details" },
-        mapOf(
-          "systeminfo" to systemInfo,
-          "needsupport" to needSupport
-        ) + (ratingComponent?.let { mapOf("rating" to it.myRating) } ?: mapOf()) + (topic?.let { mapOf("topic" to it.id) } ?: emptyMap())
-        , onDone = {
+        CustomFieldValues(systemInfo, needSupport, ratingComponent?.myRating, topic?.id),
+        onDone = {
         ApplicationManager.getApplication().invokeLater {
           var message = ApplicationBundle.message("feedback.form.thanks", ApplicationNamesInfo.getInstance().fullProductName)
           if (isEvaluation) {
