@@ -10,7 +10,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IconPathPatcher;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.ui.ColorHexUtil;
-import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.Gray;
 import com.intellij.ui.icons.ImageDataByPathLoader;
 import com.intellij.ui.icons.ImageDataByPathLoaderKt;
@@ -43,66 +42,51 @@ public final class UITheme {
 
   private static final Logger LOG = Logger.getInstance(UITheme.class);
 
-  private String name;
-  private boolean dark;
-  private String author;
-  private String id;
-  private String editorScheme;
-  private @Nullable String parentTheme;
-  private String[] additionalEditorSchemes;
-  private Map<String, Object> ui;
-  private @Nullable Map<String, Object> icons;
-  private @Nullable IconPathPatcher patcher;
-  private Map<String, Object> background;
-  private Map<String, Object> emptyFrameBackground;
-  private @Nullable Map<String, Object> colors;
-  private @Nullable Map<String, Object> iconColorsOnSelection;
-  private ClassLoader providerClassLoader = getClass().getClassLoader();
-  private String editorSchemeName;
-  private SVGLoader.SvgElementColorPatcherProvider colorPatcher;
-  private SVGLoader.SvgElementColorPatcherProvider selectionColorPatcher;
-  private @Nullable String resourceBundle = "messages.IdeBundle";
-  private @Nullable String nameKey;
+  private final UIThemeBean bean;
 
   private static final String OS_MACOS_KEY = "os.mac";
   private static final String OS_WINDOWS_KEY = "os.windows";
   private static final String OS_LINUX_KEY = "os.linux";
   private static final String OS_DEFAULT_KEY = "os.default";
 
-  private UITheme() { }
+  private UITheme(@NotNull UIThemeBean bean) {
+    this.bean = bean;
+  }
 
   public String getName() {
-    return name;
+    return bean.name;
   }
 
   public String getDisplayName() {
-    if (resourceBundle != null & nameKey != null) {
-      ResourceBundle bundle = DynamicBundle.getResourceBundle(providerClassLoader, resourceBundle);
-      return AbstractBundle.message(bundle, nameKey);
+    if (bean.resourceBundle != null && bean.nameKey != null && bean.providerClassLoader != null) {
+      ResourceBundle bundle = DynamicBundle.getResourceBundle(bean.providerClassLoader, bean.resourceBundle);
+      return AbstractBundle.message(bundle, bean.nameKey);
     }
     return getName();
   }
 
   public boolean isDark() {
-    return dark;
+    return bean.dark;
   }
 
   public String getAuthor() {
-    return author;
+    return bean.author;
   }
 
   // it caches classes - must be not extracted to util class
-  // .disable(JSON.Feature.PRESERVE_FIELD_ORDERING) - cannot be disabled, for unknown reason order is important
+  // .disable(JSON.Feature.PRESERVE_FIELD_ORDERING) - cannot be disabled, for unknown reason order is important,
   // for example, button label font color for light theme is not white, but black
   private static final JSON JSON_READER = JSON.builder()
     .enable(JSON.Feature.READ_ONLY)
+    .disable(JSON.Feature.USE_DEFERRED_MAPS)
+    .disable(JSON.Feature.HANDLE_JAVA_BEANS)
     .build();
 
   public static @NotNull UITheme loadFromJson(@NotNull InputStream stream,
                                               @NotNull @NonNls String themeId,
                                               @Nullable ClassLoader provider,
                                               @NotNull Function<? super String, String> iconsMapper) throws IOException {
-    UITheme theme = JSON_READER.beanFrom(UITheme.class, stream);
+    UIThemeBean theme = JSON_READER.beanFrom(UIThemeBean.class, stream);
     theme.id = themeId;
     return postProcessTheme(theme, findParentTheme(theme), provider, iconsMapper);
   }
@@ -111,7 +95,7 @@ public final class UITheme {
                                               @NotNull @NonNls String themeId,
                                               @Nullable ClassLoader provider,
                                               @NotNull Function<? super String, String> iconsMapper) throws IOException {
-    UITheme theme = JSON_READER.beanFrom(UITheme.class, data);
+    UIThemeBean theme = JSON_READER.beanFrom(UIThemeBean.class, data);
     theme.id = themeId;
     return postProcessTheme(theme, findParentTheme(theme), provider, iconsMapper);
   }
@@ -121,24 +105,24 @@ public final class UITheme {
                                               @NotNull @NonNls String themeId,
                                               @Nullable ClassLoader provider,
                                               @NotNull Function<? super String, String> iconsMapper) throws IOException {
-    UITheme theme = JSON_READER.beanFrom(UITheme.class, data);
+    UIThemeBean theme = JSON_READER.beanFrom(UIThemeBean.class, data);
     theme.id = themeId;
     return postProcessTheme(theme, parentTheme, provider, iconsMapper);
   }
 
-  private static @NotNull UITheme postProcessTheme(@NotNull UITheme theme,
+  private static @NotNull UITheme postProcessTheme(@NotNull UIThemeBean theme,
                                                    @Nullable UITheme parentTheme,
                                                    @Nullable ClassLoader provider,
                                                    @NotNull Function<? super String, String> iconsMapper) throws IllegalStateException {
     normalizeKeyPaths(theme);
     if (parentTheme != null) {
-      importFromParentTheme(theme, parentTheme);
+      UIThemeBean.Companion.importFromParentTheme(theme, parentTheme.bean);
     }
-    putDefaultsIfAbsent(theme);
-    return loadFromJson(theme, provider, iconsMapper);
+    UIThemeBean.Companion.putDefaultsIfAbsent(theme);
+    return new UITheme(loadFromJson(theme, provider, iconsMapper));
   }
 
-  private static @Nullable UITheme findParentTheme(@NotNull UITheme theme) {
+  private static @Nullable UITheme findParentTheme(@NotNull UIThemeBean theme) {
     String parentTheme = theme.parentTheme;
     if (parentTheme != null) {
       for (UIManager.LookAndFeelInfo laf : LafManager.getInstance().getInstalledLookAndFeels()) {
@@ -168,16 +152,18 @@ public final class UITheme {
    *  }
    * }</pre>
    * <p>
-   * This is helpful when we need to check if some key was already set in {@link #putDefaultsIfAbsent},
+   * This is helpful when we need to check if some key was already set in {@link UIThemeBean.Companion#putDefaultsIfAbsent},
    * and to make overriding parentTheme keys independent of used form.
    * <p>
    * NB: we intentionally do not expand "*" patterns here.
    */
-  private static void normalizeKeyPaths(@NotNull UITheme theme) {
-    if (theme.ui == null) return;
+  private static void normalizeKeyPaths(@NotNull UIThemeBean theme) {
+    if (theme.ui == null) {
+      return;
+    }
 
     Map<String, Object> result = new LinkedHashMap<>();
-    for (Map.Entry<String, Object> entry : theme.ui.entrySet()) {
+    for (Map.Entry<String, ?> entry : theme.ui.entrySet()) {
       normalizeKeyValue(entry.getKey(), entry.getValue(), result);
     }
     theme.ui = result;
@@ -188,17 +174,16 @@ public final class UITheme {
                                         @NotNull Map<String, Object> result) {
     if (value instanceof Map) {
       @SuppressWarnings("unchecked") Map<String, Object> valueMap = (Map<String, Object>)value;
-      if (isOSCustomization(valueMap)) {
-        Object osValue = getOSCustomization(valueMap);
-        if (osValue != null) {
-          normalizeKeyValue(keyPrefix, osValue, result);
-        }
-      }
-      else {
+
+      Object osValue = getOSCustomization(valueMap);
+      if (osValue == null) {
         for (Map.Entry<String, Object> entry : valueMap.entrySet()) {
           String uiKey = createUIKey(keyPrefix, entry.getKey());
           normalizeKeyValue(uiKey, entry.getValue(), result);
         }
+      }
+      else {
+        normalizeKeyValue(keyPrefix, osValue, result);
       }
     }
     else {
@@ -206,51 +191,9 @@ public final class UITheme {
     }
   }
 
-  private static void importFromParentTheme(@NotNull UITheme theme, @NotNull UITheme parentTheme) {
-    theme.ui = importMapFromParentTheme(theme.ui, parentTheme.ui);
-    theme.icons = importMapFromParentTheme(theme.icons, parentTheme.icons);
-    theme.background = importMapFromParentTheme(theme.background, parentTheme.background);
-    theme.emptyFrameBackground = importMapFromParentTheme(theme.emptyFrameBackground, parentTheme.emptyFrameBackground);
-    theme.colors = importMapFromParentTheme(theme.colors, parentTheme.colors);
-    theme.iconColorsOnSelection = importMapFromParentTheme(theme.iconColorsOnSelection, parentTheme.iconColorsOnSelection);
-  }
-
-  private static @Nullable Map<String, Object> importMapFromParentTheme(@Nullable Map<String, Object> themeMap,
-                                                                        @Nullable Map<String, Object> parentThemeMap) {
-    if (parentThemeMap == null) return themeMap;
-    Map<String, Object> result = new LinkedHashMap<>(parentThemeMap);
-    if (themeMap != null) {
-      for (Map.Entry<String, Object> entry : themeMap.entrySet()) {
-        String key = entry.getKey();
-        Object value = entry.getValue();
-        result.remove(key);
-        result.put(key, value);
-      }
-    }
-    return result;
-  }
-
-  /**
-   * Ensure that the old themes are not missing some vital keys.
-   * <p>
-   * We are patching them here instead of using {@link com.intellij.ui.JBColor#namedColor} fallback
-   * to make sure {@link UIManager#getColor} works properly.
-   */
-  private static void putDefaultsIfAbsent(@NotNull UITheme theme) {
-    if (theme.ui == null) theme.ui = new LinkedHashMap<>();
-
-    if (ExperimentalUI.isNewUI()) {
-      theme.ui.putIfAbsent("EditorTabs.underlineArc", "4");
-
-      // require theme to specify ToolWindow stripe button colors explicitly, without "*"
-      theme.ui.putIfAbsent("ToolWindow.Button.selectedBackground", "#3573F0");
-      theme.ui.putIfAbsent("ToolWindow.Button.selectedForeground", "#FFFFFF");
-    }
-  }
-
-  private static @NotNull UITheme loadFromJson(@NotNull UITheme theme,
-                                               @Nullable ClassLoader provider,
-                                               @NotNull Function<? super String, String> iconsMapper) throws IllegalStateException {
+  private static @NotNull UIThemeBean loadFromJson(@NotNull UIThemeBean theme,
+                                                   @Nullable ClassLoader provider,
+                                                   @NotNull Function<? super String, String> iconsMapper) throws IllegalStateException {
     if (provider != null) {
       theme.providerClassLoader = provider;
     }
@@ -258,11 +201,11 @@ public final class UITheme {
     initializeNamedColors(theme);
     PaletteScopeManager paletteScopeManager = new PaletteScopeManager();
 
-    Map<String, Object> colorsOnSelection = theme.iconColorsOnSelection;
+    Map<String, ?> colorsOnSelection = theme.iconColorsOnSelection;
     if (colorsOnSelection != null && !colorsOnSelection.isEmpty()) {
       Map<String, String> colors = new HashMap<>(colorsOnSelection.size());
       Set<String> alphaColors = new HashSet<>(colorsOnSelection.size());
-      for (Map.Entry<String, Object> entry : colorsOnSelection.entrySet()) {
+      for (Map.Entry<String, ?> entry : colorsOnSelection.entrySet()) {
         String value = entry.getValue().toString();
         colors.put(entry.getKey(), value);
         alphaColors.add(value);
@@ -318,7 +261,7 @@ public final class UITheme {
             continue;
           }
 
-          String key = toColorString(colorKey, theme.isDark());
+          String key = toColorString(colorKey, theme.dark);
           Object v = colors.get(colorKey);
           if (v instanceof String value) {
             Object namedColor = theme.colors != null ? theme.colors.get(value) : null;
@@ -360,7 +303,7 @@ public final class UITheme {
     return theme;
   }
 
-  private static void initializeNamedColors(UITheme theme) {
+  private static void initializeNamedColors(UIThemeBean theme) {
     Map<String, Object> map = theme.colors;
     if (map == null) {
       return;
@@ -408,7 +351,7 @@ public final class UITheme {
 
   @TestOnly
   public static Map<String, String> getColorPalette() {
-    return Collections.unmodifiableMap(colorPalette);
+    return colorPalette;
   }
 
   private static final @NonNls Map<String, String> colorPalette;
@@ -466,40 +409,40 @@ public final class UITheme {
   }
 
   public @NonNls String getId() {
-    return id;
+    return bean.id;
   }
 
   public @Nullable String getEditorScheme() {
-    return editorScheme;
+    return bean.editorScheme;
   }
 
   public String @Nullable [] getAdditionalEditorSchemes() {
-    return additionalEditorSchemes;
+    return bean.additionalEditorSchemes;
   }
 
   public Map<String, Object> getBackground() {
-    return background;
+    return bean.background;
   }
 
   public Map<String, Object> getEmptyFrameBackground() {
-    return emptyFrameBackground;
+    return bean.emptyFrameBackground;
   }
 
   public void applyProperties(@NotNull UIDefaults defaults) {
-    if (ui == null) {
+    if (bean.ui == null) {
       return;
     }
 
     loadColorPalette(defaults);
 
-    for (Map.Entry<String, Object> entry : ui.entrySet()) {
+    for (Map.Entry<String, Object> entry : bean.ui.entrySet()) {
       apply(this, entry.getKey(), entry.getValue(), defaults);
     }
   }
 
   private void loadColorPalette(@NotNull UIDefaults defaults) {
-    if (colors != null) {
-      for (Map.Entry<String, Object> entry : colors.entrySet()) {
+    if (bean.colors != null) {
+      for (Map.Entry<String, Object> entry : bean.colors.entrySet()) {
         Object value = entry.getValue();
         if (value instanceof String) {
           Color color = parseColor((String)value);
@@ -513,41 +456,41 @@ public final class UITheme {
 
   @ApiStatus.Internal
   public @Nullable IconPathPatcher getPatcher() {
-    return patcher;
+    return bean.patcher;
   }
 
   @ApiStatus.Internal
   public void setPatcher(@Nullable IconPathPatcher patcher) {
-    this.patcher = patcher;
+    bean.patcher = patcher;
   }
 
   public SVGLoader.SvgElementColorPatcherProvider getColorPatcher() {
-    return colorPatcher;
+    return bean.colorPatcher;
   }
 
   public SVGLoader.SvgElementColorPatcherProvider getSelectionColorPatcher() {
-    return selectionColorPatcher;
+    return bean.selectionColorPatcher;
   }
 
   @ApiStatus.Internal
   public @NotNull ClassLoader getProviderClassLoader() {
-    if (providerClassLoader == null) {
+    if (bean.providerClassLoader == null) {
       throw new RuntimeException("The theme classloader has already been detached");
     }
 
-    return providerClassLoader;
+    return bean.providerClassLoader;
   }
 
   @ApiStatus.Internal
   public void setProviderClassLoader(@Nullable ClassLoader providerClassLoader) {
-    this.providerClassLoader = providerClassLoader;
+    bean.providerClassLoader = providerClassLoader;
   }
 
   private static void apply(@NotNull UITheme theme, String key, Object value, UIDefaults defaults) {
     String valueStr = value.toString();
     Color color = null;
-    if (theme.colors != null) {
-      Object obj = theme.colors.get(valueStr);
+    if (theme.bean.colors != null) {
+      Object obj = theme.bean.colors.get(valueStr);
       if (obj != null) {
         color = parseColor(obj.toString());
         if (color != null && !key.startsWith("*")) {
@@ -591,13 +534,6 @@ public final class UITheme {
     else {
       return map.get(OS_DEFAULT_KEY);
     }
-  }
-
-  private static boolean isOSCustomization(Map<String, Object> map) {
-    return map.containsKey(OS_MACOS_KEY) ||
-           map.containsKey(OS_WINDOWS_KEY) ||
-           map.containsKey(OS_LINUX_KEY) ||
-           map.containsKey(OS_DEFAULT_KEY);
   }
 
   @SuppressWarnings("unchecked")
@@ -700,8 +636,7 @@ public final class UITheme {
   }
 
   public static Object parseValue(String key, @NotNull String value) {
-    ClassLoader classLoader = UIManager.getLookAndFeel().getClass().getClassLoader();
-    return parseValue(key, value, classLoader);
+    return parseValue(key, value, UIManager.getLookAndFeel().getClass().getClassLoader());
   }
 
   private static Insets parseInsets(@NotNull String value) {
@@ -780,11 +715,11 @@ public final class UITheme {
   }
 
   public String getEditorSchemeName() {
-    return editorSchemeName;
+    return bean.editorSchemeName;
   }
 
   public void setEditorSchemeName(String editorSchemeName) {
-    this.editorSchemeName = editorSchemeName;
+    bean.editorSchemeName = editorSchemeName;
   }
 
   static final class PaletteScope {
@@ -837,75 +772,11 @@ public final class UITheme {
     }
   }
 
-  //<editor-fold desc="JSON deserialization methods">
-  @SuppressWarnings("unused")
-  private void setName(String name) {
-    this.name = name;
-  }
-
-  @SuppressWarnings("unused")
-  private void setDark(boolean dark) {
-    this.dark = dark;
-  }
-
-  @SuppressWarnings("unused")
-  private void setAuthor(String author) {
-    this.author = author;
-  }
-
-  @SuppressWarnings("unused")
-  private void setUi(Map<String, Object> ui) {
-    this.ui = ui;
-  }
-
-  @SuppressWarnings("unused")
-  private void setIcons(@Nullable Map<String, Object> icons) {
-    this.icons = icons;
-  }
-
-  @SuppressWarnings("unused")
-  private void setParentTheme(@Nullable String parentTheme) {
-    this.parentTheme = parentTheme;
-  }
-
-  @SuppressWarnings("unused")
-  private void setNameKey(@Nullable String nameKey) {
-    this.nameKey = nameKey;
-  }
-
-  @SuppressWarnings("unused")
-  private void setResourceBundle(@Nullable String resourceBundle) {
-    this.resourceBundle = resourceBundle;
-  }
-
-  @SuppressWarnings("unused")
-  public void setEditorScheme(String editorScheme) {
-    this.editorScheme = editorScheme;
-  }
-
-  @SuppressWarnings("unused")
-  public void setAdditionalEditorSchemes(String[] additionalEditorSchemes) {
-    this.additionalEditorSchemes = additionalEditorSchemes;
-  }
-
-  public void setBackground(Map<String, Object> background) {
-    this.background = background;
-  }
-
-  public void setIconColorsOnSelection(@Nullable Map<String, Object> iconColorsOnSelection) {
-    this.iconColorsOnSelection = iconColorsOnSelection;
-  }
-
-  public void setEmptyFrameBackground(Map<String, Object> emptyFrameBackground) {
-    this.emptyFrameBackground = emptyFrameBackground;
-  }
-
-  public @Nullable Map<String, Object> getColors() {
-    return colors;
-  }
-
+  /**
+   * @deprecated Do not use.
+   */
+  @Deprecated
   public void setColors(@Nullable Map<String, Object> colors) {
-    this.colors = colors;
+    bean.colors = colors;
   }
-  //</editor-fold>
 }
