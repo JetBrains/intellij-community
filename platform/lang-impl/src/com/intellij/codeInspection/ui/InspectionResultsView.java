@@ -451,8 +451,10 @@ public final class InspectionResultsView extends JPanel implements Disposable, D
     final int problemCount = myTree.getSelectedProblemCount();
     JComponent previewPanel = null;
     final InspectionToolWrapper<?,?> tool = myTree.getSelectedToolWrapper(true);
+    boolean isCustomActionPanelAlignedToLeft = false;
     if (tool != null) {
       final InspectionToolPresentation presentation = myGlobalInspectionContext.getPresentation(tool);
+      isCustomActionPanelAlignedToLeft = presentation.shouldAlignCustomActionPanelToLeft();
       final TreePath path = myTree.getSelectionPath();
       if (path != null) {
         Object last = path.getLastPathComponent();
@@ -462,7 +464,8 @@ public final class InspectionResultsView extends JPanel implements Disposable, D
             previewPanel = presentation.getCustomPreviewPanel(descriptor, this);
             JComponent customActions = presentation.getCustomActionsPanel(descriptor, this);
             if (customActions != null) {
-              actionsPanel.add(customActions, BorderLayout.EAST);
+              String borderLayout = isCustomActionPanelAlignedToLeft ? BorderLayout.WEST : BorderLayout.EAST;
+              actionsPanel.add(customActions, borderLayout);
             }
           }
         }
@@ -494,7 +497,8 @@ public final class InspectionResultsView extends JPanel implements Disposable, D
         if (previewEditor != null) {
           previewPanel.setBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
         }
-        actionsPanel.add(fixToolbar, BorderLayout.WEST);
+        String borderLayout = isCustomActionPanelAlignedToLeft ? BorderLayout.EAST : BorderLayout.WEST;
+        actionsPanel.add(fixToolbar, borderLayout);
       }
     }
     if (previewEditor != null) {

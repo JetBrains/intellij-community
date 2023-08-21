@@ -64,6 +64,12 @@ public interface InspectionToolPresentation extends InspectionToolResultExporter
   }
 
   /**
+   * @return true iff custom actions panel should be aligned to the left and
+   * fix toolbar to the right
+   */
+  default boolean shouldAlignCustomActionPanelToLeft() { return false; }
+
+  /**
    * see {@link com.intellij.codeInspection.deadCode.DummyEntryPointsPresentation}
    * @return false only if contained problem elements contain real highlighted problem in code.
    */
