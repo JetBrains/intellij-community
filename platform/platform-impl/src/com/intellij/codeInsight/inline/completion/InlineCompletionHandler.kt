@@ -20,13 +20,13 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiFile
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collectIndexed
+import kotlinx.coroutines.flow.onCompletion
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicBoolean
 
 @ApiStatus.Experimental
 class InlineCompletionHandler(private val scope: CoroutineScope) : CodeInsightActionHandler {
   private var runningJob: Job? = null
-  private var showingPlaceholder: Boolean = false
 
   private fun getProvider(event: InlineCompletionEvent): InlineCompletionProvider? {
     return InlineCompletionProvider.extensions().firstOrNull { it.isEnabled(event) }
@@ -52,9 +52,6 @@ class InlineCompletionHandler(private val scope: CoroutineScope) : CodeInsightAc
     // TODO: move to launch
     val request = event.toRequest() ?: return
     val provider = getProvider(event) ?: return
-    val editor = request.editor
-    val offset = request.endOffset
-    val inlineState = editor.initOrGetInlineCompletionState()
 
     runningJob?.cancel()
     runningJob = scope.launch {
@@ -63,10 +60,15 @@ class InlineCompletionHandler(private val scope: CoroutineScope) : CodeInsightAc
         provider.getProposals(request)
       }
 
+      val editor = request.editor
+      val offset = request.endOffset
+
+      val inlineState = editor.initOrGetInlineCompletionState()
+
       withContext(Dispatchers.EDT) {
         showPlaceholder(editor, offset)
 
-        resultFlow.collectIndexed { index, value ->
+        resultFlow.onCompletion { if (it != null) disposePlaceholder(editor) }.collectIndexed { index, value ->
           disposePlaceholder(editor)
           if (index == 0 && modificationStamp != request.document.modificationStamp) {
             cancel()
@@ -87,29 +89,21 @@ class InlineCompletionHandler(private val scope: CoroutineScope) : CodeInsightAc
           }
         }
       }
-    }.also {
-      it.invokeOnCompletion { error ->
-        if (error != null) {
-          scope.launch { withContext(Dispatchers.EDT) { disposePlaceholder(editor) } }
-        }
-      }
     }
   }
 
   private fun showPlaceholder(editor: Editor, startOffset: Int, placeholder: String = "...") {
+    //disposePlaceholder(editor)
     if (!shouldShowPlaceholder()) return
 
     val ctx = editor.initOrGetInlineCompletionContextWithPlaceholder()
     ctx.update(listOf(InlineCompletionElement(placeholder)), 0, startOffset)
-    showingPlaceholder = true
   }
 
   private fun disposePlaceholder(editor: Editor) {
     if (!shouldShowPlaceholder()) return
-    if (!showingPlaceholder) return
 
     editor.resetInlineCompletionContextWithPlaceholder()
-    showingPlaceholder = false
   }
 
   private fun showInlineSuggestion(editor: Editor, inlineContext: InlineState, startOffset: Int) {

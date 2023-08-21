@@ -3,6 +3,7 @@ package com.intellij.codeInsight.inline.completion.listeners
 
 import com.intellij.codeInsight.completion.CompletionUtil
 import com.intellij.codeInsight.inline.completion.InlineCompletionContext.Companion.resetInlineCompletionContext
+import com.intellij.codeInsight.inline.completion.InlineCompletionContext.Companion.resetInlineCompletionContextWithPlaceholder
 import com.intellij.codeInsight.inline.completion.InlineCompletionHandler
 import com.intellij.codeWithMe.ClientId
 import com.intellij.codeWithMe.isCurrent
@@ -67,7 +68,7 @@ class InlineCaretListener(private val editor: Editor) : CaretListener {
   override fun caretPositionChanged(event: CaretEvent) {
     if (isSimple(event)) return
 
-    editor.resetInlineCompletionContext()
+    editor.resetInlineCompletionContextWithPlaceholder()
   }
 
   private fun isSimple(event: CaretEvent): Boolean {
