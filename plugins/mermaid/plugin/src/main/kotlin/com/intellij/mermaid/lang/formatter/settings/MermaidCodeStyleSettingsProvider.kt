@@ -108,6 +108,12 @@ internal class MermaidCodeStyleSettingsProvider : LanguageCodeStyleSettingsProvi
           MermaidBundle.message("mermaid.style.settings.spacing.after.colon"),
           MermaidBundle.message("mermaid.style.settings.spacing.punctuation")
         )
+        consumer.showCustomOption(
+          MermaidCustomCodeStyleSettings::class.java,
+          MermaidCustomCodeStyleSettings::BEFORE_SEMICOLON.name,
+          MermaidBundle.message("mermaid.style.settings.spacing.before.semicolon"),
+          MermaidBundle.message("mermaid.style.settings.spacing.punctuation")
+        )
 
         consumer.showCustomOption(
           MermaidCustomCodeStyleSettings::class.java,

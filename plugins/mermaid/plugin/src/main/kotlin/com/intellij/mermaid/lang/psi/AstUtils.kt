@@ -6,11 +6,11 @@ import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.util.PsiUtilCore
 
-internal fun ASTNode.hasType(type: IElementType): Boolean {
+internal fun ASTNode?.hasType(type: IElementType): Boolean {
   return PsiUtilCore.getElementType(this) == type
 }
 
-internal fun ASTNode.hasType(type: TokenSet): Boolean {
+internal fun ASTNode?.hasType(type: TokenSet): Boolean {
   return PsiUtilCore.getElementType(this) in type
 }
 

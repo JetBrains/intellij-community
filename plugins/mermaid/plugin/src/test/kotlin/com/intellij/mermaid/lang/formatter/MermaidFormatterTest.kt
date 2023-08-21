@@ -38,22 +38,39 @@ class MermaidFormatterTest : MermaidBaseTestCase("formatter") {
   fun `test quadrant`() = doTest()
 
   fun `test sankey`() = doTest()
+  
+  fun `test semicolon as separator`() = doTest {
+    getLanguageIndentOptions(MermaidLanguage).apply {
+      INDENT_SIZE = 2
+      TAB_SIZE = 2
+      CONTINUATION_INDENT_SIZE = 4
+    }
+    getCustomSettings(MermaidCustomCodeStyleSettings::class.java).apply {
+      KEEP_LINES_BETWEEN_OTHER_STETEMENTS = 0
+      KEEP_LINES_WITHIN_STRUCTURES = 0
+      MIN_LINES_BETWEEN_OTHER_STETEMENTS = 1
+    }
+  }
 
   private fun doTest() {
+    doTest {
+      getLanguageIndentOptions(MermaidLanguage).apply {
+        INDENT_SIZE = 2
+        TAB_SIZE = 2
+        CONTINUATION_INDENT_SIZE = 4
+      }
+      getCustomSettings(MermaidCustomCodeStyleSettings::class.java).apply {
+        KEEP_LINES_BETWEEN_OTHER_STETEMENTS = 1
+        KEEP_LINES_WITHIN_STRUCTURES = 1
+      }
+    }
+  }
+  
+  private fun doTest(codeStyleSettings: CodeStyleSettings.() -> Unit) {
     val before = getTestName(true) + "_before.mermaid"
     val after = getTestName(true) + "_after.mermaid"
     runWithTemporaryStyleSettings { settings ->
-      settings.apply {
-        getLanguageIndentOptions(MermaidLanguage).apply {
-          INDENT_SIZE = 2
-          TAB_SIZE = 2
-          CONTINUATION_INDENT_SIZE = 4
-        }
-        getCustomSettings(MermaidCustomCodeStyleSettings::class.java).apply {
-          KEEP_LINES_BETWEEN_OTHER_STETEMENTS = 1
-          KEEP_LINES_WITHIN_STRUCTURES = 1
-        }
-      }
+      settings.apply(codeStyleSettings)
       doReformatTest(before, after)
       //check idempotence of formatter
       doReformatTest(after, after)

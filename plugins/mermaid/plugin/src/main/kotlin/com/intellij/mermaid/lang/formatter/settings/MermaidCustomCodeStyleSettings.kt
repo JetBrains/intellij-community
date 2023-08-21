@@ -33,6 +33,9 @@ class MermaidCustomCodeStyleSettings(settings: CodeStyleSettings) :
   var AFTER_COLON: Boolean = true
 
   @JvmField
+  var BEFORE_SEMICOLON: Boolean = false
+
+  @JvmField
   var BEFORE_OPEN_CURLY: Boolean = true
 
   @JvmField

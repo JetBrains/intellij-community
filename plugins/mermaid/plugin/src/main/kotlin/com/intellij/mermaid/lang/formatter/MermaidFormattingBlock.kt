@@ -2,6 +2,7 @@ package com.intellij.mermaid.lang.formatter
 
 import com.intellij.formatting.*
 import com.intellij.lang.ASTNode
+import com.intellij.mermaid.lang.formatter.settings.MermaidCustomCodeStyleSettings
 import com.intellij.mermaid.lang.lexer.MermaidTokenTypeSets
 import com.intellij.mermaid.lang.lexer.MermaidTokenTypeSets.DIAGRAM_BODIES_AND_BLOCKS
 import com.intellij.mermaid.lang.lexer.MermaidTokenTypeSets.MINDMAP_STATEMENTS
@@ -11,6 +12,7 @@ import com.intellij.mermaid.lang.parser.MermaidElements
 import com.intellij.mermaid.lang.psi.children
 import com.intellij.mermaid.lang.psi.hasType
 import com.intellij.mermaid.lang.psi.siblings
+import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.formatter.common.AbstractBlock
@@ -28,7 +30,22 @@ internal open class MermaidFormattingBlock(
   override fun isLeaf(): Boolean = subBlocks.isEmpty()
 
   override fun getSpacing(child1: Block?, child2: Block): Spacing? {
-    return spacing.getSpacing(this, child1, child2)
+    return when {
+      child1 !is ASTBlock || child2 !is ASTBlock -> null
+
+      child1.node.hasType(MermaidTokens.SEMICOLON) && child2.node.hasType(STATEMENTS) -> {
+        val mermaid = settings.getCustomSettings(MermaidCustomCodeStyleSettings::class.java)
+        val textRange = TextRange.create(child1.textRange.startOffset, child2.textRange.endOffset)
+        val rule = DependentSpacingRule(DependentSpacingRule.Trigger.HAS_LINE_FEEDS).registerData(
+          DependentSpacingRule.Anchor.MIN_LINE_FEEDS,
+          mermaid.MIN_LINES_BETWEEN_OTHER_STETEMENTS + 1
+        )
+
+        Spacing.createDependentLFSpacing(1, 1, textRange, false, mermaid.KEEP_LINES_BETWEEN_OTHER_STETEMENTS, rule)
+      }
+
+      else -> spacing.getSpacing(this, child1, child2)
+    }
   }
 
   override fun getIndent(): Indent? {
@@ -73,8 +90,8 @@ internal open class MermaidFormattingBlock(
 
   private fun ASTNode.isColonBeforeTaskData(): Boolean {
     return hasType(MermaidTokens.COLON) &&
-      siblings(forward = true, withSelf = false)
-        .filterFromWhitespaces()
-        .firstOrNull()?.elementType == MermaidElements.SECTION_TASK_DATA
+        siblings(forward = true, withSelf = false)
+          .filterFromWhitespaces()
+          .firstOrNull()?.elementType == MermaidElements.SECTION_TASK_DATA
   }
 }

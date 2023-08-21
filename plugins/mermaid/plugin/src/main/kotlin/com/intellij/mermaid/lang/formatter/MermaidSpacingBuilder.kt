@@ -169,6 +169,7 @@ internal object MermaidSpacingBuilder {
       .after(MermaidTokens.COMMA).spaceIf(mermaid.AFTER_COMMA)
       .before(MermaidTokens.COLON).spaceIf(mermaid.BEFORE_COLON)
       .after(MermaidTokens.COLON).spaceIf(mermaid.AFTER_COLON)
+      .between(STATEMENTS, MermaidTokens.SEMICOLON).spaceIf(mermaid.BEFORE_SEMICOLON)
 
       .before(MermaidTokens.OPEN_CURLY).spaceIf(mermaid.BEFORE_OPEN_CURLY)
       .between(MermaidElements.CLASS_HEADER, MermaidElements.CLASS_BLOCK).spaceIf(mermaid.BEFORE_OPEN_CURLY)
