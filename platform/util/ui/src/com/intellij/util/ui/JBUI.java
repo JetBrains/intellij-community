@@ -124,8 +124,7 @@ public final class JBUI {
   }
 
   public static @NotNull JBInsets insets(@NonNls @NotNull String propName, @NotNull JBInsets defaultValue) {
-    Insets i = UIManager.getInsets(propName);
-    return i != null ? JBInsets.create(i) : defaultValue;
+    return JBInsets.create(propName, defaultValue);
   }
 
   public static @NotNull JBInsets insets(int topBottom, int leftRight) {
@@ -260,8 +259,10 @@ public final class JBUI {
     }
 
     public static @NotNull Border empty(@NotNull Insets insets) {
-      insets = JBInsets.unwrap(insets);
-      return empty(insets.top, insets.left, insets.bottom, insets.right);
+      if (insets.top == 0 && insets.left == 0 && insets.bottom == 0 && insets.right == 0) {
+        return JBEmptyBorder.SHARED_EMPTY_INSTANCE;
+      }
+      return new JBEmptyBorder(insets);
     }
 
     public static @NotNull Border customLine(Color color, int top, int left, int bottom, int right) {
