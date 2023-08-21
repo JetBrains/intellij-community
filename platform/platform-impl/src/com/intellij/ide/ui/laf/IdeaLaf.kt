@@ -1,89 +1,75 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.ui.laf;
+package com.intellij.ide.ui.laf
 
-import com.intellij.icons.AllIcons;
-import com.intellij.ui.ColoredSideBorder;
-import com.intellij.ui.TableActions;
-import com.intellij.ui.plaf.beg.*;
-import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.ui.StartupUiUtil;
-import kotlin.Pair;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
-import javax.swing.plaf.ColorUIResource;
-import javax.swing.plaf.metal.MetalLookAndFeel;
-import java.awt.*;
-import java.util.Map;
-import java.util.function.Supplier;
+import com.intellij.icons.AllIcons
+import com.intellij.ui.ColoredSideBorder
+import com.intellij.ui.TableActions
+import com.intellij.ui.plaf.beg.*
+import com.intellij.ui.scale.JBUIScale.getSystemFontData
+import com.intellij.util.ui.StartupUiUtil.getFontWithFallback
+import com.intellij.util.ui.StartupUiUtil.initFontDefaults
+import com.intellij.util.ui.StartupUiUtil.initInputMapDefaults
+import java.awt.Color
+import java.awt.Font
+import java.awt.Insets
+import java.util.function.Supplier
+import javax.swing.UIDefaults
+import javax.swing.plaf.ColorUIResource
+import javax.swing.plaf.metal.MetalLookAndFeel
 
 /**
-* @author Konstantin Bulenkov
-*/
-public final class IdeaLaf extends MetalLookAndFeel {
-  public static final ColorUIResource TOOLTIP_BACKGROUND_COLOR = new ColorUIResource(255, 255, 231);
-
-  private final Map<Object, Object> myCustomFontDefaults;
-
-  public IdeaLaf(@Nullable Map<Object, Object> customFontDefaults) {
-    myCustomFontDefaults = customFontDefaults;
-  }
-
-  @Override
-  public void initComponentDefaults(UIDefaults defaults) {
-    super.initComponentDefaults(defaults);
-    StartupUiUtil.initInputMapDefaults(defaults);
-    initIdeaDefaults(defaults);
-
+ * @author Konstantin Bulenkov
+ */
+internal class IdeaLaf(private val myCustomFontDefaults: Map<Any, Any>?) : MetalLookAndFeel() {
+  public override fun initComponentDefaults(defaults: UIDefaults) {
+    super.initComponentDefaults(defaults)
+    initInputMapDefaults(defaults)
+    initIdeaDefaults(defaults)
     if (myCustomFontDefaults != null) {
-      defaults.putAll(myCustomFontDefaults);
+      defaults.putAll(myCustomFontDefaults)
     }
     else {
-      Pair<String, Integer> systemFont = JBUIScale.getSystemFontData(() -> defaults);
-      StartupUiUtil.initFontDefaults(defaults, StartupUiUtil.getFontWithFallback(systemFont.getFirst(), Font.PLAIN, systemFont.getSecond()));
+      val systemFont = getSystemFontData(
+        Supplier { defaults })
+      initFontDefaults(defaults, getFontWithFallback(systemFont.first, Font.PLAIN, systemFont.second.toFloat()))
     }
   }
 
-  @SuppressWarnings("HardCodedStringLiteral")
-  static void initIdeaDefaults(UIDefaults defaults) {
-    defaults.put("Menu.maxGutterIconWidth", 18);
-    defaults.put("MenuItem.maxGutterIconWidth", 18);
-    // TODO[vova,anton] REMOVE!!! INVESTIGATE??? Borland???
-    defaults.put("MenuItem.acceleratorDelimiter", "-");
-
-    defaults.put("TitledBorder.titleColor", new ColorUIResource(10, 36, 106));
-    ColorUIResource col = new ColorUIResource(230, 230, 230);
-    defaults.put("ScrollBar.background", col);
-    defaults.put("ScrollBar.track", col);
-
-    defaults.put("TextField.border", createLazyValue(() -> BegBorders.getTextFieldBorder()));
-    defaults.put("PasswordField.border", createLazyValue(() -> BegBorders.getTextFieldBorder()));
-    defaults.put("PopupMenu.border", createLazyValue(() -> new BegPopupMenuBorder()));
-    defaults.put("ScrollPane.border", createLazyValue(() -> BegBorders.getScrollPaneBorder()));
-
-    defaults.put("ToggleButtonUI", createLazyValue(() -> BegToggleButtonUI.class.getName()));
-    defaults.put("RadioButtonUI", createLazyValue(() -> BegRadioButtonUI.class.getName()));
-    defaults.put("TabbedPaneUI", createLazyValue(() -> BegTabbedPaneUI.class.getName()));
-    defaults.put("TableUI", createLazyValue(() -> BegTableUI.class.getName()));
-    defaults.put("TreeUI", createLazyValue(() -> BegTreeUI.class.getName()));
-
-    defaults.put("TabbedPane.tabInsets", new Insets(0, 4, 0, 4));
-    defaults.put("ToolTip.background", TOOLTIP_BACKGROUND_COLOR);
-    defaults.put("ToolTip.border", new ColoredSideBorder(Color.gray, Color.gray, Color.black, Color.black, 1));
-    defaults.put("Tree.ancestorInputMap", null);
-    defaults.put("FileView.directoryIcon", createLazyValue(() -> AllIcons.Nodes.Folder));
-    defaults.put("FileChooser.upFolderIcon", createLazyValue(() -> AllIcons.Nodes.UpFolder));
-    defaults.put("FileChooser.newFolderIcon", createLazyValue(() -> AllIcons.Nodes.Folder));
-    defaults.put("FileChooser.homeFolderIcon", createLazyValue(() -> AllIcons.Nodes.HomeFolder));
-    defaults.put("OptionPane.errorIcon", createLazyValue(() -> AllIcons.General.ErrorDialog));
-    defaults.put("OptionPane.informationIcon", createLazyValue(() -> AllIcons.General.InformationDialog));
-    defaults.put("OptionPane.warningIcon", createLazyValue(() -> AllIcons.General.WarningDialog));
-    defaults.put("OptionPane.questionIcon", createLazyValue(() -> AllIcons.General.QuestionDialog));
-    defaults.put("Table.ancestorInputMap", new UIDefaults.LazyValue() {
-      @Override
-      public Object createValue(UIDefaults table) {
-        return LookAndFeel.makeInputMap(new Object[]{
+  companion object {
+    val TOOLTIP_BACKGROUND_COLOR: ColorUIResource = ColorUIResource(255, 255, 231)
+    @Suppress("HardCodedStringLiteral")
+    fun initIdeaDefaults(defaults: UIDefaults) {
+      defaults["Menu.maxGutterIconWidth"] = 18
+      defaults["MenuItem.maxGutterIconWidth"] = 18
+      // TODO[vova,anton] REMOVE!!! INVESTIGATE??? Borland???
+      defaults["MenuItem.acceleratorDelimiter"] = "-"
+      defaults["TitledBorder.titleColor"] = ColorUIResource(10, 36, 106)
+      val col = ColorUIResource(230, 230, 230)
+      defaults["ScrollBar.background"] = col
+      defaults["ScrollBar.track"] = col
+      defaults["TextField.border"] = createLazyValue(Supplier { BegBorders.getTextFieldBorder() })
+      defaults["PasswordField.border"] = createLazyValue(Supplier { BegBorders.getTextFieldBorder() })
+      defaults["PopupMenu.border"] = createLazyValue(Supplier { BegPopupMenuBorder() })
+      defaults["ScrollPane.border"] = createLazyValue(Supplier { BegBorders.getScrollPaneBorder() })
+      defaults["ToggleButtonUI"] = createLazyValue(Supplier { BegToggleButtonUI::class.java.getName() })
+      defaults["RadioButtonUI"] = createLazyValue(Supplier { BegRadioButtonUI::class.java.getName() })
+      defaults["TabbedPaneUI"] = createLazyValue(Supplier { BegTabbedPaneUI::class.java.getName() })
+      defaults["TableUI"] = createLazyValue(Supplier { BegTableUI::class.java.getName() })
+      defaults["TreeUI"] = createLazyValue(Supplier { BegTreeUI::class.java.getName() })
+      defaults["TabbedPane.tabInsets"] = Insets(0, 4, 0, 4)
+      defaults["ToolTip.background"] = TOOLTIP_BACKGROUND_COLOR
+      defaults["ToolTip.border"] = ColoredSideBorder(Color.gray, Color.gray, Color.black, Color.black, 1)
+      defaults["Tree.ancestorInputMap"] = null
+      defaults["FileView.directoryIcon"] = createLazyValue(Supplier { AllIcons.Nodes.Folder })
+      defaults["FileChooser.upFolderIcon"] = createLazyValue(Supplier { AllIcons.Nodes.UpFolder })
+      defaults["FileChooser.newFolderIcon"] = createLazyValue(Supplier { AllIcons.Nodes.Folder })
+      defaults["FileChooser.homeFolderIcon"] = createLazyValue(Supplier { AllIcons.Nodes.HomeFolder })
+      defaults["OptionPane.errorIcon"] = createLazyValue(Supplier { AllIcons.General.ErrorDialog })
+      defaults["OptionPane.informationIcon"] = createLazyValue(Supplier { AllIcons.General.InformationDialog })
+      defaults["OptionPane.warningIcon"] = createLazyValue(Supplier { AllIcons.General.WarningDialog })
+      defaults["OptionPane.questionIcon"] = createLazyValue(Supplier { AllIcons.General.QuestionDialog })
+      defaults["Table.ancestorInputMap"] = UIDefaults.LazyValue {
+        makeInputMap(arrayOf<Any>(
           "ctrl C", "copy",
           "ctrl V", "paste",
           "ctrl X", "cut",
@@ -126,35 +112,28 @@ public final class IdeaLaf extends MetalLookAndFeel {
           "ctrl shift HOME", TableActions.CtrlShiftHome.ID,
           "ctrl shift END", TableActions.CtrlShiftEnd.ID,
           "TAB", "selectNextColumnCell",
-          "shift TAB", "selectPreviousColumnCell",
-          //"ENTER", "selectNextRowCell",
+          "shift TAB", "selectPreviousColumnCell",  //"ENTER", "selectNextRowCell",
           "shift ENTER", "selectPreviousRowCell",
-          "ctrl A", "selectAll",
-          //"ESCAPE", "cancel",
+          "ctrl A", "selectAll",  //"ESCAPE", "cancel",
           "F2", "startEditing"
-        });
+        ))
       }
-    });
-  }
+    }
 
-  static void fillFallbackDefaults(UIDefaults defaults) {
-    // These icons are only needed to prevent Swing from trying to fetch defaults with AWT ImageFetcher threads (IDEA-322089),
-    // but might as well just put something sensibly-looking there, just in case they show up due to some bug:
-    UIDefaults.LazyValue folderIcon = createLazyValue(() -> AllIcons.Nodes.Folder);
-    defaults.put("Tree.openIcon", folderIcon);
-    defaults.put("Tree.closedIcon", folderIcon);
-    defaults.put("Tree.leafIcon", createLazyValue(() -> AllIcons.FileTypes.Any_type));
-    // These two are actually set by our themes, so we don't want to override them here:
-    //defaults.put("Tree.expandedIcon", AllIcons.Toolbar.Expand);
-    //defaults.put("Tree.collapsedIcon", AllIcons.Actions.ArrowExpand);
-  }
+    fun fillFallbackDefaults(defaults: UIDefaults) {
+      // These icons are only needed to prevent Swing from trying to fetch defaults with AWT ImageFetcher threads (IDEA-322089),
+      // but might as well just put something sensibly-looking there, just in case they show up due to some bug:
+      val folderIcon = createLazyValue(Supplier { AllIcons.Nodes.Folder })
+      defaults["Tree.openIcon"] = folderIcon
+      defaults["Tree.closedIcon"] = folderIcon
+      defaults["Tree.leafIcon"] = createLazyValue(Supplier { AllIcons.FileTypes.Any_type })
+      // These two are actually set by our themes, so we don't want to override them here:
+      //defaults.put("Tree.expandedIcon", AllIcons.Toolbar.Expand);
+      //defaults.put("Tree.collapsedIcon", AllIcons.Actions.ArrowExpand);
+    }
 
-  private static @NotNull UIDefaults.LazyValue createLazyValue(@NotNull Supplier<Object> supplier) {
-    return new UIDefaults.LazyValue() {
-      @Override
-      public Object createValue(UIDefaults table) {
-        return supplier.get();
-      }
-    };
+    private fun createLazyValue(supplier: Supplier<Any>): UIDefaults.LazyValue {
+      return UIDefaults.LazyValue { supplier.get() }
+    }
   }
 }
