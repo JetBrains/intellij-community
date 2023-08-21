@@ -5,6 +5,7 @@ import com.intellij.codeInsight.CodeInsightActionHandler
 import com.intellij.codeInsight.inline.completion.InlineCompletionContext.Companion.getInlineCompletionContextOrNull
 import com.intellij.codeInsight.inline.completion.InlineCompletionContext.Companion.initOrGetInlineCompletionContext
 import com.intellij.codeInsight.inline.completion.InlineCompletionContext.Companion.initOrGetInlineCompletionContextWithPlaceholder
+import com.intellij.codeInsight.inline.completion.InlineCompletionContext.Companion.resetInlineCompletionContextWithPlaceholder
 import com.intellij.codeInsight.inline.completion.InlineState.Companion.getInlineCompletionState
 import com.intellij.codeInsight.inline.completion.InlineState.Companion.initOrGetInlineCompletionState
 import com.intellij.codeInsight.lookup.LookupEvent
@@ -25,6 +26,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 @ApiStatus.Experimental
 class InlineCompletionHandler(private val scope: CoroutineScope) : CodeInsightActionHandler {
   private var runningJob: Job? = null
+  private var showingPlaceholder: Boolean = false
 
   private fun getProvider(event: InlineCompletionEvent): InlineCompletionProvider? {
     return InlineCompletionProvider.extensions().firstOrNull { it.isEnabled(event) }
@@ -50,6 +52,9 @@ class InlineCompletionHandler(private val scope: CoroutineScope) : CodeInsightAc
     // TODO: move to launch
     val request = event.toRequest() ?: return
     val provider = getProvider(event) ?: return
+    val editor = request.editor
+    val offset = request.endOffset
+    val inlineState = editor.initOrGetInlineCompletionState()
 
     runningJob?.cancel()
     runningJob = scope.launch {
@@ -57,11 +62,6 @@ class InlineCompletionHandler(private val scope: CoroutineScope) : CodeInsightAc
       val resultFlow = withContext(Dispatchers.IO) {
         provider.getProposals(request)
       }
-
-      val editor = request.editor
-      val offset = request.endOffset
-
-      val inlineState = editor.initOrGetInlineCompletionState()
 
       withContext(Dispatchers.EDT) {
         showPlaceholder(editor, offset)
@@ -87,6 +87,12 @@ class InlineCompletionHandler(private val scope: CoroutineScope) : CodeInsightAc
           }
         }
       }
+    }.also {
+      it.invokeOnCompletion { error ->
+        if (error != null) {
+          scope.launch { withContext(Dispatchers.EDT) { disposePlaceholder(editor) } }
+        }
+      }
     }
   }
 
@@ -95,12 +101,15 @@ class InlineCompletionHandler(private val scope: CoroutineScope) : CodeInsightAc
 
     val ctx = editor.initOrGetInlineCompletionContextWithPlaceholder()
     ctx.update(listOf(InlineCompletionElement(placeholder)), 0, startOffset)
+    showingPlaceholder = true
   }
 
   private fun disposePlaceholder(editor: Editor) {
     if (!shouldShowPlaceholder()) return
+    if (!showingPlaceholder) return
 
-    editor.initOrGetInlineCompletionContext()
+    editor.resetInlineCompletionContextWithPlaceholder()
+    showingPlaceholder = false
   }
 
   private fun showInlineSuggestion(editor: Editor, inlineContext: InlineState, startOffset: Int) {
