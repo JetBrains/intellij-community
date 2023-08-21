@@ -13,6 +13,7 @@ import java.awt.Graphics
 import java.awt.Point
 import java.awt.Rectangle
 import java.awt.event.MouseEvent
+import javax.swing.SwingUtilities
 
 abstract class CodeVisionInlayRendererBase(theme: CodeVisionTheme = CodeVisionTheme()) : CodeVisionInlayRenderer {
   private var isHovered = false
@@ -52,8 +53,28 @@ abstract class CodeVisionInlayRendererBase(theme: CodeVisionTheme = CodeVisionTh
     inlay.repaint()
   }
 
-  override fun mouseClicked(event: MouseEvent, translated: Point) {
+  override fun mousePressed(event: MouseEvent, translated: Point) {
+    if (event.isShiftDown) return
+    val clickedEntry = hoveredEntry ?: return
+    if (SwingUtilities.isLeftMouseButton(event)) {
+      handleLeftClick(clickedEntry)
+      event.consume()
+      return
+    }
 
+    if (SwingUtilities.isRightMouseButton(event)) {
+      handleRightClick(clickedEntry)
+      event.consume()
+      return
+    }
+  }
+
+  private fun handleRightClick(clickedEntry: CodeVisionEntry) {
+    inlay.getUserData(CodeVisionListData.KEY)?.rangeCodeVisionModel?.handleLensRightClick(clickedEntry, inlay)
+  }
+
+  private fun handleLeftClick(clickedEntry: CodeVisionEntry) {
+    inlay.getUserData(CodeVisionListData.KEY)?.rangeCodeVisionModel?.handleLensClick(clickedEntry, inlay)
   }
 
   private fun updateHoveredEntry(point: Point) {

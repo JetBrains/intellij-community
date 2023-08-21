@@ -31,8 +31,8 @@ class RangeCodeVisionModel(
     projectModel.handleLensClick(editor, anchoringRange, entry)
   }
 
-  fun handleLensRightClick() {
-    //projectModel.handleLensRightClick()
+  fun handleLensRightClick(clickedEntry: CodeVisionEntry, anchorInlay: Inlay<*>) {
+    projectModel.handleLensRightClick(clickedEntry, anchorInlay)
   }
 
   fun handleLensExtraAction(selectedValue: CodeVisionEntry, actionId: String) {

@@ -66,7 +66,7 @@ class CodeVisionPopup {
       project: Project
     ) {
       showPopup(lifetime, inlay, entry, disposition) {
-        CodeVisionListPopup.createLensList(model, project)
+        CodeVisionListPopup.createLensList(model, project, inlay)
       }
     }
 
@@ -83,7 +83,7 @@ class CodeVisionPopup {
       val anchor = EditorAnchoringRect.createHorizontalSmartClipRect(ltd, offset, editor)
 
       showPopup(ltd, project, editor, anchor, disposition.list) {
-        CodeVisionListPopup.createLensList(model, project)
+        CodeVisionListPopup.createLensList(model, project, model.inlays.first())
       }
     }
 

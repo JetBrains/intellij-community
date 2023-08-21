@@ -34,16 +34,8 @@ class CodeVisionListData(
     }
 
   val visibleLens: ArrayList<CodeVisionEntry> = ArrayList()
-  private var throttle = false
 
   init {
-    //projectModel.hoveredInlay.map {
-    //  it == inlay
-    //}.throttleLast(Duration.ofMillis(300), SwingScheduler).advise(lifetime) {
-    //  throttle = it
-    //  inlay.repaint()
-    //}
-
     updateVisible()
   }
 
@@ -63,6 +55,5 @@ class CodeVisionListData(
 
   fun state(): RangeCodeVisionModel.InlayState = rangeCodeVisionModel.state()
   fun isMoreLensActive(): Boolean = Registry.`is`("editor.codeVision.more.inlay")
-  //fun isHoveredEntry(entry: CodeVisionEntry): Boolean = projectModel.hoveredEntry.value == entry && projectModel.hoveredInlay.value == inlay
 }
 
