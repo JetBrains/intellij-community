@@ -67,4 +67,7 @@ class LegacyExternalProductResourceUrls : ExternalProductResourceUrls {
         }
       }
     }
+
+  override val downloadPageUrl: Url
+    get() = Urls.newFromEncoded(ApplicationInfoEx.getInstanceEx().downloadUrl)
 }

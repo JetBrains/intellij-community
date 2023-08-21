@@ -21,7 +21,7 @@
         <xs:element type="iconEapType" name="icon-eap" minOccurs="0"/>
         <xs:element type="licenseeType" name="licensee" minOccurs="0"/>
         <xs:element type="namesType" name="names"/>
-        <xs:element type="productUrlType" name="productUrl"/>
+        <xs:element type="productUrlType" name="productUrl" minOccurs="0"/>
         <xs:element type="essentialPluginType" name="essential-plugin" minOccurs="0" maxOccurs="unbounded"/>
         <xs:element type="welcome-screenType" name="welcome-screen" minOccurs="0">
           <xs:annotation>

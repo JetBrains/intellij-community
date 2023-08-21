@@ -70,6 +70,12 @@ interface ExternalProductResourceUrls {
    */
   val feedbackReporter: FeedbackReporter?
     get() = null
+
+  /**
+   * Returns URL of the product's download page. It will be shown in the browser if automatic downloading isn't available for some reason.
+   */
+  val downloadPageUrl: Url?
+    get() = null
 }
 
 /**

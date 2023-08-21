@@ -29,6 +29,12 @@ abstract class BaseJetBrainsExternalProductResourceUrls : ExternalProductResourc
   abstract val shortProductNameUsedInForms: String
 
   /**
+   * Returns URL of the product page on jetbrains.com site. 
+   * It's supposed that by appending `download` to this URL you get the address of the download page.
+   */
+  abstract val productPageUrl: String
+
+  /**
    * Returns ID of the form used to contact support at intellij-support.jetbrains.com site 
    */
   open val intellijSupportFormId: Int
@@ -72,6 +78,9 @@ abstract class BaseJetBrainsExternalProductResourceUrls : ExternalProductResourc
 
   override val feedbackReporter: FeedbackReporter?
     get() = JetBrainsFeedbackReporter(shortProductNameUsedInForms, zenDeskFeedbackFormData)
+
+  override val downloadPageUrl: Url?
+    get() = Urls.newFromEncoded(productPageUrl).resolve("download")
 }
 
 /**

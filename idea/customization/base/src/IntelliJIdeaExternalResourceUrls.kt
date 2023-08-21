@@ -8,7 +8,10 @@ import com.intellij.platform.ide.impl.customization.ZenDeskFeedbackFormFieldIds
 class IntelliJIdeaExternalResourceUrls : BaseJetBrainsExternalProductResourceUrls() {
   override val basePatchDownloadUrl: String
     get() = "https://download.jetbrains.com/idea/"
-
+  
+  override val productPageUrl: String
+    get() = "https://www.jetbrains.com/idea/"
+  
   override val youtrackProjectId: String
     get() = "IDEA"
 

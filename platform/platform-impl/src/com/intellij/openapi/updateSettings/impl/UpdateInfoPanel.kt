@@ -6,12 +6,12 @@ import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.IdeUrlTrackingParametersProvider
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.ui.VerticalFlowLayout
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.platform.ide.customization.ExternalProductResourceUrls
 import com.intellij.ui.BrowserHyperlinkListener
 import com.intellij.ui.JBColor
 import com.intellij.ui.ScrollPaneFactory
@@ -152,7 +152,7 @@ internal object UpdateInfoPanel {
       newBuild.downloadUrl ?:
       newBuild.blogPost ?:
       updatedChannel.url ?:
-      ApplicationInfoEx.getInstanceEx().downloadUrl ?:
+      ExternalProductResourceUrls.getInstance().downloadPageUrl?.toExternalForm() ?:
       ApplicationInfo.getInstance().companyURL ?:
       "https://www.jetbrains.com")
 }
