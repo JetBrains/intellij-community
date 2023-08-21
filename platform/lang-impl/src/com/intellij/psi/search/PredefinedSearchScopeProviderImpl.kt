@@ -195,7 +195,7 @@ open class PredefinedSearchScopeProviderImpl : PredefinedSearchScopeProvider() {
     private val myDirectories: MutableSet<VirtualFile> = HashSet()
 
     init {
-      require(filesOrDirs.isEmpty())
+      require(filesOrDirs.isNotEmpty())
 
       for (fileOrDir in filesOrDirs) {
         if (fileOrDir.isDirectory()) {
