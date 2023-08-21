@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
+import com.jetbrains.rd.util.reactive.Property
 import com.jetbrains.rd.util.reactive.ViewableMap
 
 @Service(Service.Level.PROJECT)
@@ -24,7 +25,7 @@ class ProjectCodeVisionModel private constructor(val project: Project) {
   }
 
   val maxVisibleLensCount: ViewableMap<CodeVisionAnchorKind, Int> = ViewableMap()
-
+  val lensPopupActive: Property<Boolean> = Property(false)
   val moreEntry: AdditionalCodeVisionEntry = AdditionalCodeVisionEntry(MORE_PROVIDER_ID, CodeVisionBundle.message("more"))
 
 
@@ -71,6 +72,7 @@ class ProjectCodeVisionModel private constructor(val project: Project) {
       model.lifetime,
       anchorInlay,
       moreEntry,
+      lensPopupActive,
       CodeVisionPopup.Disposition.MOUSE_POPUP_DISPOSITION,
       model.rangeCodeVisionModel,
       project
@@ -90,6 +92,7 @@ class ProjectCodeVisionModel private constructor(val project: Project) {
       model.lifetime,
       anchorInlay,
       clickedEntry,
+      lensPopupActive,
       CodeVisionPopup.Disposition.MOUSE_POPUP_DISPOSITION,
       model,
       project

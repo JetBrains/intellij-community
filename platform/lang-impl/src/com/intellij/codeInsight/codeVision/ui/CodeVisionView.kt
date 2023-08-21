@@ -97,7 +97,7 @@ class CodeVisionView(val project: Project) {
       updateSubscription()
     }
     return {
-      CodeVisionPopup.showMorePopup(lifetime, project, editor, it, CodeVisionPopup.Disposition.CURSOR_POPUP_DISPOSITION,
+      CodeVisionPopup.showMorePopup(lifetime, project, editor, it, ProjectCodeVisionModel.getInstance(project).lensPopupActive, CodeVisionPopup.Disposition.CURSOR_POPUP_DISPOSITION,
                                     rangeCodeVisionModel)
     }
   }

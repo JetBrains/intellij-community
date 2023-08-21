@@ -7,6 +7,7 @@ import com.intellij.codeInsight.codeVision.CodeVisionHost
 import com.intellij.codeInsight.codeVision.CodeVisionInitializer
 import com.intellij.codeInsight.codeVision.CodeVisionProviderFactory
 import com.intellij.codeInsight.codeVision.settings.CodeVisionSettings
+import com.intellij.codeInsight.codeVision.ui.model.ProjectCodeVisionModel
 import com.intellij.concurrency.JobLauncher
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
@@ -14,6 +15,7 @@ import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.rd.createLifetime
 import com.intellij.openapi.util.TextRange
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.diagnostic.telemetry.helpers.computeWithSpan
@@ -23,6 +25,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.Processor
+import com.jetbrains.rd.util.reactive.adviseUntil
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.system.measureTimeMillis
@@ -111,19 +114,18 @@ class CodeVisionPass(
 
   override fun doApplyInformationToEditor() {
     saveToCache(myProject, editor, providerIdToLenses)
-    // todo
-    //val lensPopupActive = ProjectCodeVisionModel.getInstance(editor.project!!).lensPopupActive
-    //if (lensPopupActive.value.not()) {
+    val lensPopupActive = ProjectCodeVisionModel.getInstance(editor.project!!).lensPopupActive
+    if (lensPopupActive.value.not()) {
       updateProviders(myProject, editor, providerIdToLenses)
-    //}
-    //else {
-    //  lensPopupActive.adviseUntil(myProject.createLifetime()) {
-    //    if (it) return@adviseUntil false
-    //    if (currentIndicator == null || currentIndicator.isCanceled) return@adviseUntil true
-    //    updateProviders(myProject, editor, providerIdToLenses)
-    //    true
-    //  }
-    //}
+    }
+    else {
+      lensPopupActive.adviseUntil(myProject.createLifetime()) {
+        if (it) return@adviseUntil false
+        if (currentIndicator == null || currentIndicator.isCanceled) return@adviseUntil true
+        updateProviders(myProject, editor, providerIdToLenses)
+        true
+      }
+    }
     CodeVisionPassFactory.putCurrentModificationStamp(editor, myFile)
   }
 
