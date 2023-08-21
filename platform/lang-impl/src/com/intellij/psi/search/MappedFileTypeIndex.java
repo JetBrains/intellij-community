@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search;
 
+import com.intellij.diagnostic.LoadingState;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
@@ -368,12 +369,13 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
     @Override
     public void processEntries(@NotNull EntriesProcessor processor) throws StorageException {
       try {
-        boolean isReadAction = ApplicationManager.getApplication().isReadAccessAllowed();
+        boolean isCheckCanceledNeeded = LoadingState.COMPONENTS_LOADED.isOccurred() &&
+                                        ApplicationManager.getApplication().isReadAccessAllowed();
 
         final int bufferSize = DEFAULT_FULL_SCAN_BUFFER_BYTES;
         final ByteBuffer buffer = ByteBuffer.allocate(bufferSize);
         for (int i = 0; i < myElementsCount; ) {
-          if (isReadAction) {
+          if (isCheckCanceledNeeded) {
             ProgressManager.checkCanceled();
           }
           buffer.clear();
