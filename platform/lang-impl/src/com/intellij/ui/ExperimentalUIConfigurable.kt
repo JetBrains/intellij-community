@@ -17,12 +17,8 @@ import com.intellij.platform.feedback.newUi.NewUIFeedbackDialog
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.builder.Cell
-import com.intellij.util.IconUtil
 import com.intellij.util.PlatformUtils
-import com.intellij.util.ui.JBFont
-import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.Nls
-import java.awt.Font
 import javax.swing.JLabel
 
 private const val PROMO_URL = "https://youtu.be/WGwECgPmQ-8"
@@ -94,15 +90,13 @@ open class ExperimentalUIConfigurable : BoundSearchableConfigurable(IdeBundle.me
         .bottomGap(BottomGap.SMALL)
 
       row {
-        icon(IconUtil.scale(AllIcons.Actions.EnableNewUi, newUiCheckBox.component, JBUI.scale(24).toFloat() / AllIcons.Actions.EnableNewUi.iconWidth))
-          .gap(RightGap.SMALL)
-        label(IdeBundle.message("new.ui.title")).applyToComponent {
-          font = JBFont.create(Font("Sans", Font.PLAIN, 18))
+        label("").applyToComponent {
+          icon = AllIcons.Ide.Settings.NewUI
         }
       }
       row {
         text(IdeBundle.message("new.ui.description"))
-      }.topGap(TopGap.SMALL)
+      }
       row {
         browserLink(getExploreNewUiLabel(), getExploreNewUiUrl())
         link(IdeBundle.message("new.ui.submit.feedback")) { onSubmitFeedback() }
