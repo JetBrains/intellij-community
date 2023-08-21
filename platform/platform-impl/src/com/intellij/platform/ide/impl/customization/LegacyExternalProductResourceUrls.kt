@@ -4,6 +4,7 @@ package com.intellij.platform.ide.impl.customization
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.updateSettings.impl.UpdateRequestParameters
+import com.intellij.openapi.util.BuildNumber
 import com.intellij.platform.ide.customization.ExternalProductResourceUrls
 import com.intellij.platform.ide.customization.FeedbackReporter
 import com.intellij.ui.LicensingFacade
@@ -18,9 +19,11 @@ class LegacyExternalProductResourceUrls : ExternalProductResourceUrls {
       val baseUrl = ApplicationInfoEx.getInstanceEx().updateUrls?.checkingUrl ?: return null
       return UpdateRequestParameters.amendUpdateRequest(Urls.newFromEncoded(baseUrl))
     }
-  
-  override val basePatchDownloadUrl: String?
-    get() = ApplicationInfoEx.getInstanceEx().updateUrls?.patchesUrl
+
+  override fun computePatchUrl(from: BuildNumber, to: BuildNumber): Url? {
+    val baseUrl = ApplicationInfoEx.getInstanceEx().updateUrls?.patchesUrl ?: return null
+    return Urls.newFromEncoded(baseUrl).resolve(computePatchFileName(from, to))
+  }
 
   override val bugReportUrl: ((String) -> Url)?
     get() {

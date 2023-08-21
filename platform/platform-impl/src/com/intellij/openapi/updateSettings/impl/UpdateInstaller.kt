@@ -13,12 +13,12 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.ide.customization.ExternalProductResourceUrls
 import com.intellij.platform.ide.impl.customization.computePatchFileName
+import com.intellij.util.Urls
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.copy
 import java.io.File
 import java.io.IOException
-import java.net.URL
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.zip.ZipException
@@ -33,10 +33,6 @@ internal object UpdateInstaller {
   private const val PATCH_FILE_NAME = "patch-file.zip"
   private const val UPDATER_ENTRY = "com/intellij/updater/Runner.class"
 
-  private val patchesUrl: URL
-    get() = URL(System.getProperty("idea.patches.url") ?: ExternalProductResourceUrls.getInstance().basePatchDownloadUrl 
-                ?: error("Metadata contains information about a patch, but 'ExternalProductResourceUrls.basePatchDownloadUrl' returns null"))
-
   @JvmStatic
   @Throws(IOException::class)
   fun downloadPatchChain(chain: List<BuildNumber>, indicator: ProgressIndicator): List<File> {
@@ -48,9 +44,16 @@ internal object UpdateInstaller {
     for (i in 1 until chain.size) {
       val from = chain[i - 1]
       val to = chain[i]
-      val patchName = computePatchFileName(from, to)
-      val patchFile = File(getTempDir(), patchName)
-      val url = URL(patchesUrl, patchName).toString()
+      val patchFileName = computePatchFileName(from, to)
+      val patchFile = File(getTempDir(), patchFileName)
+      val customPatchesUrl = System.getProperty("idea.patches.url")
+      val url = if (customPatchesUrl != null) {
+        Urls.newFromEncoded(customPatchesUrl).resolve(patchFileName)
+      }
+      else {
+        ExternalProductResourceUrls.getInstance().computePatchUrl(from, to) 
+        ?: error("Metadata contains information about patch '$from' -> '$to', but 'computePatchUrl' returns 'null'")
+      }
       val partIndicator = object : DelegatingProgressIndicator(indicator) {
         override fun setFraction(fraction: Double) {
           super.setFraction((i - 1) * share + fraction / share)

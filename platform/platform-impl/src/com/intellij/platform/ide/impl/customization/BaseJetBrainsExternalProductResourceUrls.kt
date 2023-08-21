@@ -16,7 +16,7 @@ import com.intellij.util.system.CpuArch
  * A base class for implementations of [ExternalProductResourceUrls] describing IDEs developed by JetBrains.
  */
 abstract class BaseJetBrainsExternalProductResourceUrls : ExternalProductResourceUrls {
-  abstract override val basePatchDownloadUrl: String
+  abstract val basePatchDownloadUrl: String
 
   /**
    * Returns ID of YouTrack Project which will be used by "Submit a Bug Report" action.
@@ -44,7 +44,11 @@ abstract class BaseJetBrainsExternalProductResourceUrls : ExternalProductResourc
     get() {
       return UpdateRequestParameters.amendUpdateRequest(Urls.newFromEncoded("https://www.jetbrains.com/updates/updates.xml"))
     }
-  
+
+  override fun computePatchUrl(from: BuildNumber, to: BuildNumber): Url? {
+    return Urls.newFromEncoded(basePatchDownloadUrl).resolve(computePatchFileName(from, to)) 
+  }
+
   override val bugReportUrl: ((String) -> Url)?
     get() = { description ->
       Urls.newFromEncoded("https://youtrack.jetbrains.com/newissue").addParameters(mapOf(
