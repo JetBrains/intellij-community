@@ -565,10 +565,9 @@ public final class UITheme {
       }
 
       if (value.endsWith(".png") || value.endsWith(".svg")) {
-        Icon icon = ImageDataByPathLoader.Companion.findIconByPath(value, classLoader, null, null);
-        if (icon != null) {
-          return icon;
-        }
+        return (UIDefaults.LazyValue)table -> {
+          return ImageDataByPathLoader.Companion.findIconByPath(value, classLoader, null, null);
+        };
       }
 
       if (key.endsWith("Insets") || key.endsWith(".insets") || key.endsWith("padding")) {
@@ -612,7 +611,9 @@ public final class UITheme {
         return parseGrayFilter(value);
       }
       else if (value.startsWith("AllIcons.")) {
-        return ImageDataByPathLoaderKt.getReflectiveIcon(value, UITheme.class.getClassLoader());
+        return (UIDefaults.LazyValue)table -> {
+          return ImageDataByPathLoaderKt.getReflectiveIcon(value, classLoader);
+        };
       }
       else if (!value.startsWith("#") && getIntegerOrFloat(value, null) != null) {
         return getIntegerOrFloat(value, key);

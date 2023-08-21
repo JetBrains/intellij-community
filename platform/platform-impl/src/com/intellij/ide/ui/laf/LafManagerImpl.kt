@@ -757,8 +757,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
   private fun defaultNonLaFSchemeName(dark: Boolean) = if (dark) DarculaLaf.NAME else EditorColorsScheme.DEFAULT_SCHEME_NAME
 
   /**
-   * Updates LAF of all windows. The method also updates font of components
-   * as it's configured in `UISettings`.
+   * Updates LAF of all windows. The method also updates font of components as it's configured in `UISettings`.
    */
   override fun updateUI() {
     val uiDefaults = UIManager.getLookAndFeelDefaults()
@@ -771,7 +770,9 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
     uiDefaults.put("Balloon.error.textInsets", JBInsets(3, 8, 3, 8).asUIResource())
     patchFileChooserStrings(uiDefaults)
     patchLafFonts(uiDefaults)
-    patchTreeUI(uiDefaults)
+
+    patchTreeUI(uiDefaults, currentLaf)
+
     if (ExperimentalUI.isNewUI()) {
       applyDensity(uiDefaults)
     }
@@ -1333,9 +1334,19 @@ private fun installLinuxFonts(defaults: UIDefaults) {
   defaults.put("MenuItem.acceleratorFont", defaults.get("MenuItem.font"))
 }
 
-private fun patchTreeUI(defaults: UIDefaults) {
+private fun patchTreeUI(defaults: UIDefaults, currentLaf: LookAndFeelInfo?) {
   defaults.put("TreeUI", DefaultTreeUI::class.java.name)
   defaults.put("Tree.repaintWholeRow", true)
+
+  if (currentLaf is UIThemeBasedLookAndFeelInfo &&
+      defaults.containsKey("Tree.collapsedIcon") &&
+      defaults.containsKey("Tree.collapsedSelectedIcon") &&
+      defaults.containsKey("Tree.expandedIcon") &&
+      defaults.containsKey("Tree.expandedSelectedIcon")) {
+    // do not resolve lazy icons for Darcula and other modern UI themes
+    return
+  }
+
   if (isUnsupported(defaults.getIcon("Tree.collapsedIcon"))) {
     defaults.put("Tree.collapsedIcon", getIcon("treeCollapsed"))
     defaults.put("Tree.collapsedSelectedIcon", getSelectedIcon("treeCollapsed"))
@@ -1347,7 +1358,6 @@ private fun patchTreeUI(defaults: UIDefaults) {
 }
 
 /**
- * @param icon an icon retrieved from L&F
  * @return `true` if an icon is not specified or if it is declared in some Swing L&F
  * (such icons do not have a variant to paint in the selected row)
  */
