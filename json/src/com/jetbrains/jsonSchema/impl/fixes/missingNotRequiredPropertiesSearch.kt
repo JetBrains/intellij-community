@@ -15,7 +15,7 @@ import com.jetbrains.jsonSchema.impl.JsonValidationError
 import com.jetbrains.jsonSchema.impl.JsonValidationError.*
 
 @RequiresReadLock
-fun collectMissingPropertiesFromSchema(objectNodePointer: SmartPsiElementPointer<PsiElement>,
+fun collectMissingPropertiesFromSchema(objectNodePointer: SmartPsiElementPointer<out PsiElement>,
                                        project: Project): JsonSchemaPropertiesInfo? {
   val objectNode = objectNodePointer.dereference() ?: return null
   val schemaObjectFile = JsonSchemaService.Impl.get(project).getSchemaObject(objectNode.containingFile) ?: return null
