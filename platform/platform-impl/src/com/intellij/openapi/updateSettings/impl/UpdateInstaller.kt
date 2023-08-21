@@ -3,7 +3,6 @@ package com.intellij.openapi.updateSettings.impl
 
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.util.DelegatingProgressIndicator
-import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -13,10 +12,10 @@ import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.ide.customization.ExternalProductResourceUrls
+import com.intellij.platform.ide.impl.customization.computePatchFileName
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.copy
-import com.intellij.util.system.CpuArch
 import java.io.File
 import java.io.IOException
 import java.net.URL
@@ -44,14 +43,12 @@ internal object UpdateInstaller {
     indicator.text = IdeBundle.message("update.downloading.patch.progress")
 
     val files = mutableListOf<File>()
-    val product = ApplicationInfo.getInstance().build.productCode
-    val runtime = if (CpuArch.isArm64()) "-aarch64" else ""
     val share = 1.0 / (chain.size - 1)
 
     for (i in 1 until chain.size) {
-      val from = chain[i - 1].withoutProductCode().asString()
-      val to = chain[i].withoutProductCode().asString()
-      val patchName = "${product}-${from}-${to}-patch${runtime}-${PatchInfo.OS_SUFFIX}.jar"
+      val from = chain[i - 1]
+      val to = chain[i]
+      val patchName = computePatchFileName(from, to)
       val patchFile = File(getTempDir(), patchName)
       val url = URL(patchesUrl, patchName).toString()
       val partIndicator = object : DelegatingProgressIndicator(indicator) {

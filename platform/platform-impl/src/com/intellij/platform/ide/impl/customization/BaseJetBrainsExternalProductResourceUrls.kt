@@ -2,7 +2,9 @@
 package com.intellij.platform.ide.impl.customization
 
 import com.intellij.openapi.application.ApplicationInfo
+import com.intellij.openapi.updateSettings.impl.PatchInfo
 import com.intellij.openapi.updateSettings.impl.UpdateRequestParameters
+import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.platform.ide.customization.ExternalProductResourceUrls
 import com.intellij.platform.ide.customization.FeedbackReporter
@@ -95,4 +97,10 @@ internal fun currentOsNameForIntelliJSupport(): String = when {
   else -> {
     "other-os"
   }
+}
+
+internal fun computePatchFileName(from: BuildNumber, to: BuildNumber): String {
+  val product = ApplicationInfo.getInstance().build.productCode
+  val runtime = if (CpuArch.isArm64()) "-aarch64" else ""
+  return "${product}-${from.withoutProductCode().asString()}-${to.withoutProductCode().asString()}-patch${runtime}-${PatchInfo.OS_SUFFIX}.jar"
 }
