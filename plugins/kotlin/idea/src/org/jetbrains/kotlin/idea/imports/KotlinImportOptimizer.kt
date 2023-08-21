@@ -97,11 +97,15 @@ class KotlinImportOptimizer : ImportOptimizer {
 
     private class CollectUsedDescriptorsVisitor(file: KtFile) : KtVisitorVoid() {
         private val currentPackageName = file.packageFqName
-        private val aliases: Map<FqName, List<Name>> = file.importDirectives
-            .asSequence()
-            .filter { !it.isAllUnder && it.alias != null }
-            .mapNotNull { it.importPath }
-            .groupBy(keySelector = { it.fqName }, valueTransform = { it.importedName as Name })
+        private val aliases: Map<FqName, List<Name>> = if (file.hasImportAlias()) {
+            file.importDirectives
+              .asSequence()
+              .filter { !it.isAllUnder && it.alias != null }
+              .mapNotNull { it.importPath }
+              .groupBy(keySelector = { it.fqName }, valueTransform = { it.importedName as Name })
+        } else {
+            emptyMap()
+        }
 
         private val descriptorsToImport = hashSetOf<OptimizedImportsBuilder.ImportableDescriptor>()
         private val namesToImport = hashMapOf<FqName, MutableSet<Name>>()
