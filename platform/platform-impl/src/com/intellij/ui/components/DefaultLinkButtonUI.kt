@@ -1,7 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components
 
-import com.intellij.ide.ui.laf.darcula.DarculaLaf.isAltPressed
+import com.intellij.ide.ui.laf.darcula.DarculaLaf
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.JBColor
 import com.intellij.ui.paint.RectanglePainter
@@ -104,9 +104,11 @@ internal class DefaultLinkButtonUI : BasicButtonUI() {
       val view = htmlView(button)
       if (view == null) {
         g.color = getTextColor(button)
-        val index = if (isEnabled(button) && isAltPressed()) button.displayedMnemonicIndex else -1
+        val index = if (isEnabled(button) && DarculaLaf.isAltPressed) button.displayedMnemonicIndex else -1
         UIUtilities.drawStringUnderlineCharAt(button, g, layout.text, index, layout.textBounds.x, layout.baseline)
-        if (hovered) g.fillRect(layout.textBounds.x, layout.baseline + 1, layout.textBounds.width, 1)
+        if (hovered) {
+          g.fillRect(layout.textBounds.x, layout.baseline + 1, layout.textBounds.width, 1)
+        }
       }
       else if (hovered) {
         if (cached == null) {
@@ -302,6 +304,7 @@ private class UnderlinedView(private val button: AbstractButton, private val vie
   override fun modelToView(pos: Int, shape: Shape, bias: Bias): Shape = view.modelToView(pos, shape, bias)
 
   @Throws(BadLocationException::class)
-  override fun modelToView(pos0: Int, bias0: Bias, pos1: Int, bias1: Bias, shape: Shape): Shape =
-    view.modelToView(pos0, bias0, pos1, bias1, shape)
+  override fun modelToView(pos0: Int, bias0: Bias, pos1: Int, bias1: Bias, shape: Shape): Shape {
+    return view.modelToView(pos0, bias0, pos1, bias1, shape)
+  }
 }

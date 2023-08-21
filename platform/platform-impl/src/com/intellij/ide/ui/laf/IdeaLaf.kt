@@ -19,7 +19,7 @@ import javax.swing.plaf.metal.MetalLookAndFeel
 /**
  * @author Konstantin Bulenkov
  */
-internal class IdeaLaf(private val customFontDefaults: Map<Any, Any>?) : MetalLookAndFeel() {
+internal class IdeaLaf(private val customFontDefaults: Map<Any, Any?>?) : MetalLookAndFeel() {
   public override fun initComponentDefaults(defaults: UIDefaults) {
     super.initComponentDefaults(defaults)
 
