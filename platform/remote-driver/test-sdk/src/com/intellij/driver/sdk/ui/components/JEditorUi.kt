@@ -12,11 +12,27 @@ fun Finder.editor(@Language("xpath") xpath: String? = null) = x(xpath ?: "//div[
 class JEditorUiComponent(data: ComponentData) : UiComponent(data) {
   private val editor by lazy { driver.cast(component, EditorComponentImpl::class).getEditor() }
   private val document by lazy { editor.getDocument() }
-  val text: String
+  var text: String
     get() = document.getText()
+    set(value) {
+      driver.withWriteAction {
+        document.setText(value)
+      }
+    }
 }
 
 @Remote("com.intellij.openapi.editor.impl.EditorComponentImpl")
 interface EditorComponentImpl : Component {
   fun getEditor(): Editor
+}
+
+fun Finder.gutter(@Language("xpath") xpath: String = "//div[@class='EditorGutterComponentImpl']") = x(xpath, GutterUiComponent::class.java)
+
+class GutterUiComponent(data: ComponentData) : UiComponent(data) {
+
+}
+
+@Remote("com.intellij.openapi.editor.impl.EditorGutterComponentImpl")
+interface EditorGutterComponentImpl : Component {
+
 }
