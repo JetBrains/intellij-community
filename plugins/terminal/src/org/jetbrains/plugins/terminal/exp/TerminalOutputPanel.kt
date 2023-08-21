@@ -3,18 +3,14 @@ package org.jetbrains.plugins.terminal.exp
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
-import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.ex.FocusChangeListener
 import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComponentContainer
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
-import com.intellij.util.ui.JBUI
-import java.awt.Cursor
 import java.awt.Dimension
 import javax.swing.JComponent
-import javax.swing.JScrollPane
 
 class TerminalOutputPanel(
   private val project: Project,
@@ -36,7 +32,7 @@ class TerminalOutputPanel(
     get() = Dimension(editor.charHeight, editor.lineHeight)
 
   init {
-    editor = createEditor()
+    editor = createEditor(settings)
     controller = TerminalOutputController(editor, session, settings)
 
     editor.addFocusListener(object : FocusChangeListener {
@@ -50,30 +46,10 @@ class TerminalOutputPanel(
     })
   }
 
-  private fun createEditor(): EditorImpl {
+  private fun createEditor(settings: JBTerminalSystemSettingsProviderBase): EditorImpl {
     val document = DocumentImpl("", true)
-    val editor = EditorFactory.getInstance().createEditor(document, project, EditorKind.CONSOLE) as EditorImpl
-
-    editor.isScrollToCaret = false
-    editor.isRendererMode = true
-    editor.setCustomCursor(this, Cursor.getDefaultCursor())
-    editor.scrollPane.border = JBUI.Borders.empty()
-    editor.scrollPane.horizontalScrollBarPolicy = JScrollPane.HORIZONTAL_SCROLLBAR_NEVER
-    editor.gutterComponentEx.isPaintBackground = false
-    editor.gutterComponentEx.setRightFreePaintersAreaWidth(0)
-
-    editor.settings.apply {
-      isUseSoftWraps = true
-      isShowingSpecialChars = false
-      isLineNumbersShown = false
-      setGutterIconsShown(false)
-      isRightMarginShown = false
-      isFoldingOutlineShown = false
-      isCaretRowShown = false
-      additionalLinesCount = 0
-      additionalColumnsCount = 0
-      isBlockCursor = true
-    }
+    val editor = TerminalUiUtils.createOutputEditor(document, project, settings)
+    editor.settings.isUseSoftWraps = true
     return editor
   }
 

@@ -32,13 +32,15 @@ import javax.swing.JScrollPane
 import kotlin.math.max
 
 object TerminalUiUtils {
-  fun createEditor(document: Document, project: Project, settings: JBTerminalSystemSettingsProviderBase): EditorImpl {
+  fun createOutputEditor(document: Document, project: Project, settings: JBTerminalSystemSettingsProviderBase): EditorImpl {
     val editor = EditorFactory.getInstance().createEditor(document, project, EditorKind.CONSOLE) as EditorImpl
     editor.isScrollToCaret = false
+    editor.isRendererMode = true
     editor.setCustomCursor(this, Cursor.getDefaultCursor())
     editor.scrollPane.border = JBUI.Borders.empty()
     editor.scrollPane.horizontalScrollBarPolicy = JScrollPane.HORIZONTAL_SCROLLBAR_NEVER
     editor.gutterComponentEx.isPaintBackground = false
+    editor.gutterComponentEx.setRightFreePaintersAreaWidth(0)
 
     editor.colorsScheme.apply {
       editorFontName = settings.terminalFont.fontName
@@ -49,7 +51,6 @@ object TerminalUiUtils {
     editor.settings.apply {
       isShowingSpecialChars = false
       isLineNumbersShown = false
-      isLineMarkerAreaShown = false
       setGutterIconsShown(false)
       isRightMarginShown = false
       isFoldingOutlineShown = false

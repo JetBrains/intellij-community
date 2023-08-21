@@ -30,13 +30,15 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.JScrollPane
 
-class TerminalPanel(project: Project,
+class TerminalPanel(private val project: Project,
                     private val settings: JBTerminalSystemSettingsProviderBase,
                     private val model: TerminalModel,
                     eventsHandler: TerminalEventsHandler,
-                    withVerticalScroll: Boolean = true) : JPanel(), ComponentContainer {
-  private val document: Document
+                    private val withVerticalScroll: Boolean = true) : JPanel(), ComponentContainer {
   private val editor: EditorImpl
+
+  private val document: Document
+    get() = editor.document
 
   // disposable for updating content and forwarding mouse events
   private val runningDisposable: Disposable = Disposer.newDisposable()
@@ -56,13 +58,7 @@ class TerminalPanel(project: Project,
     get() = Dimension(editor.charHeight, editor.lineHeight)
 
   init {
-    document = DocumentImpl("", true)
-    editor = TerminalUiUtils.createEditor(document, project, settings)
-    editor.scrollPane.verticalScrollBarPolicy = if (withVerticalScroll) {
-      JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED
-    }
-    else JScrollPane.VERTICAL_SCROLLBAR_NEVER
-
+    editor = createEditor()
     Disposer.register(this) {
       EditorFactory.getInstance().releaseEditor(editor)
     }
@@ -80,6 +76,17 @@ class TerminalPanel(project: Project,
     model.withContentLock {
       updateEditorContent()
     }
+  }
+
+  private fun createEditor(): EditorImpl {
+    val document = DocumentImpl("", true)
+    val editor = TerminalUiUtils.createOutputEditor(document, project, settings)
+    editor.settings.isLineMarkerAreaShown = false
+    editor.scrollPane.verticalScrollBarPolicy = if (withVerticalScroll) {
+      JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED
+    }
+    else JScrollPane.VERTICAL_SCROLLBAR_NEVER
+    return editor
   }
 
   private fun setupContentListener() {
