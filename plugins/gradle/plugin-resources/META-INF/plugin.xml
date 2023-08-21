@@ -46,6 +46,9 @@
                     dynamic="true"/>
     <extensionPoint qualifiedName="org.jetbrains.plugins.gradle.operationHelperExtension" interface="org.jetbrains.plugins.gradle.service.project.GradleOperationHelperExtension"
                     dynamic="true"/>
+    <extensionPoint qualifiedName="org.jetbrains.plugins.gradle.autoReloadSettingsCollector"
+                    interface="org.jetbrains.plugins.gradle.service.project.GradleAutoReloadSettingsCollector"
+                    dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="org.jetbrains.plugins.gradle">
@@ -58,6 +61,15 @@
     <issueChecker implementation="org.jetbrains.plugins.gradle.issue.GradleBuildCancelledIssueChecker"/>
     <issueChecker implementation="org.jetbrains.plugins.gradle.issue.GradleOutOfMemoryIssueChecker"/>
     <operationHelperExtension implementation="org.jetbrains.plugins.gradle.service.execution.GradleExecutionMeasuringExtension"/>
+
+    <autoReloadSettingsCollector
+      implementation="org.jetbrains.plugins.gradle.service.project.GradleAutoImportAware$GradlePropertiesCollector"/>
+    <autoReloadSettingsCollector
+      implementation="org.jetbrains.plugins.gradle.service.project.GradleAutoImportAware$VersionCatalogCollector"/>
+    <autoReloadSettingsCollector
+      implementation="org.jetbrains.plugins.gradle.service.project.GradleAutoImportAware$WrapperConfigCollector"/>
+    <autoReloadSettingsCollector
+      implementation="org.jetbrains.plugins.gradle.service.project.GradleAutoImportAware$GradleScriptCollector"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
