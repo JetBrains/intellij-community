@@ -145,7 +145,9 @@ public class MavenRenameModuleWatcher implements ModuleListener {
         }
       }
 
-      myProjectsManager.forceUpdateProjects(myUpdatedMavenProjects);
+      if (!myUpdatedMavenProjects.isEmpty()) {
+        myProjectsManager.forceUpdateProjects(myUpdatedMavenProjects);
+      }
     }
   }
 }
