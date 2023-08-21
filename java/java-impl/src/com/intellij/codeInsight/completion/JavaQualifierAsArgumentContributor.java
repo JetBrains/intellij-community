@@ -223,7 +223,7 @@ public class JavaQualifierAsArgumentContributor extends CompletionContributor im
         }
       }
       return new JavaQualifierAsParameterMethodCallElement(members.stream().filter(t -> filter(t)).toList(), myOldQualifiedExpression,
-                                                           shouldImport, shouldImportOrQualify, shouldShowClass);
+                                                           shouldImport, shouldImportOrQualify, shouldShowClass, isSmart);
     }
 
     private boolean filter(PsiMethod member) {
@@ -282,18 +282,21 @@ public class JavaQualifierAsArgumentContributor extends CompletionContributor im
     private final boolean myShouldImportOrQualify;
     private final boolean myMergedOverloads;
     private final boolean myShouldShowClass;
+    private final boolean myIsSmart;
 
     private JavaQualifierAsParameterMethodCallElement(@NotNull Collection<? extends PsiMethod> methods,
                                                       @NotNull PsiExpression oldQualifierExpression,
                                                       boolean shouldImportStatic,
                                                       boolean shouldImportOrQualify,
-                                                      boolean shouldShowClass) {
+                                                      boolean shouldShowClass,
+                                                      boolean isSmart) {
       super(methods.iterator().next(), shouldImportStatic, methods.size() > 1);
       myMethods = methods;
       myMergedOverloads = methods.size() > 1;
       myOldQualifierExpression = oldQualifierExpression;
       myShouldImportOrQualify = shouldImportOrQualify;
       myShouldShowClass = shouldShowClass;
+      myIsSmart = isSmart;
     }
 
     @Override
@@ -303,6 +306,8 @@ public class JavaQualifierAsArgumentContributor extends CompletionContributor im
 
     @Override
     public void handleInsert(@NotNull InsertionContext context) {
+      JavaContributorCollectors.logInsertHandle(context.getProject(), JavaContributorCollectors.STATIC_QUALIFIER_TYPE,
+                                                myIsSmart ? CompletionType.SMART : CompletionType.BASIC);
       super.handleInsert(context);
     }
 
