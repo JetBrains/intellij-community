@@ -41,24 +41,6 @@ public class DirectoryCoverageViewExtension extends CoverageViewExtension {
   }
 
   @Override
-  public String getSummaryForNode(@NotNull AbstractTreeNode node) {
-    String statInfo = myAnnotator.getDirCoverageInformationString((PsiDirectory)node.getValue(),
-                                                                  mySuitesBundle,
-                                                                  myCoverageDataManager);
-    
-    if (statInfo == null) {
-      return CoverageBundle.message("node.summary.no.coverage", node.toString());
-    }
-    return CoverageBundle.message("node.summary.coverage.statistic", statInfo, node.toString());
-  }
-
-  @Override
-  public String getSummaryForRootNode(@NotNull AbstractTreeNode childNode) {
-    final Object value = childNode.getValue();
-    return myAnnotator.getDirCoverageInformationString(((PsiDirectory)value), mySuitesBundle, myCoverageDataManager);
-  }
-
-  @Override
   public String getPercentage(int columnIdx, @NotNull AbstractTreeNode node) {
     final Object value = node.getValue();
     if (value instanceof PsiFile) {

@@ -14,7 +14,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ui.ColumnInfo;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,52 +28,6 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
                                    CoverageViewManager.StateBean stateBean) {
     super(project, suitesBundle, stateBean);
     myAnnotator = annotator;
-  }
-
-  @Override
-  public String getSummaryForNode(@NotNull AbstractTreeNode node) {
-    if (!myCoverageViewManager.isReady()) return CommonBundle.getLoadingTreeNodeText();
-    if (myCoverageDataManager.isSubCoverageActive()) {
-      return showSubCoverageNotification();
-    }
-    PsiPackage aPackage = (PsiPackage)node.getValue();
-    final String coverageInformationString = myAnnotator
-      .getPackageCoverageInformationString(aPackage, null, myCoverageDataManager, myStateBean.myFlattenPackages);
-    return JavaCoverageBundle.message("coverage.view.node.summary", getNotCoveredMessage(coverageInformationString),
-                                   aPackage != null ? aPackage.getQualifiedName() : node.getName());
-  }
-
-  private static @Nls String showSubCoverageNotification() {
-    return JavaCoverageBundle.message("sub.coverage.notification");
-  }
-
-  @Override
-  public String getSummaryForRootNode(@NotNull AbstractTreeNode childNode) {
-    if (myCoverageDataManager.isSubCoverageActive()) {
-      return showSubCoverageNotification();
-    }
-    final Object value = childNode.getValue();
-    String coverageInformationString = myAnnotator.getPackageCoverageInformationString((PsiPackage)value, null,
-                                                                                       myCoverageDataManager);
-    if (coverageInformationString == null) {
-      if (!myCoverageViewManager.isReady()) return CommonBundle.getLoadingTreeNodeText();
-      PackageAnnotator.SummaryCoverageInfo info = new PackageAnnotator.PackageCoverageInfo();
-      final Collection children = childNode.getChildren();
-      for (Object child : children) {
-        final Object childValue = ((CoverageListNode)child).getValue();
-        PackageAnnotator.SummaryCoverageInfo childInfo = getSummaryCoverageForNodeValue((AbstractTreeNode<?>)childValue);
-        info = JavaCoverageAnnotator.merge(info, childInfo);
-      }
-      coverageInformationString = JavaCoverageAnnotator.getCoverageInformationString(info, false);
-    }
-    return JavaCoverageBundle.message("coverage.view.root.node.summary", getNotCoveredMessage(coverageInformationString));
-  }
-
-  private static String getNotCoveredMessage(String coverageInformationString) {
-    if (coverageInformationString == null) {
-      coverageInformationString = JavaCoverageBundle.message("coverage.view.no.coverage");
-    }
-    return coverageInformationString;
   }
 
   @Override

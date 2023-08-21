@@ -14,7 +14,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.ui.ColumnInfo;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,14 +41,18 @@ public abstract class CoverageViewExtension {
    */
   @Nullable
   @Deprecated
-  public abstract @Nls String getSummaryForNode(@NotNull AbstractTreeNode<?> node);
+  public String getSummaryForNode(@NotNull AbstractTreeNode<?> ignoredNode) {
+    return null;
+  }
 
   /**
    * @deprecated This method is not used in CoverageView.
    */
   @Nullable
   @Deprecated
-  public abstract @Nls String getSummaryForRootNode(@NotNull AbstractTreeNode<?> childNode);
+  public String getSummaryForRootNode(@NotNull AbstractTreeNode<?> ignoredNode) {
+    return null;
+  }
 
   @Nullable
   public abstract String getPercentage(int columnIdx, @NotNull AbstractTreeNode<?> node);
