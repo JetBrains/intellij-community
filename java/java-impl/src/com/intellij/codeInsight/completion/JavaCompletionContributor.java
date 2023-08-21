@@ -134,6 +134,8 @@ public final class JavaCompletionContributor extends CompletionContributor imple
   private static final ElementPattern<PsiElement> IN_VARIABLE_TYPE = psiElement()
     .withParents(PsiJavaCodeReferenceElement.class, PsiTypeElement.class, PsiDeclarationStatement.class)
     .afterLeaf(psiElement().inside(psiAnnotation()));
+  private static final ElementPattern<PsiElement> TOP_LEVEL_VAR_IN_MODULE = psiElement().withSuperParent(3, PsiJavaFile.class)
+    .inVirtualFile(virtualFile().withName("module-info.java"));
 
   /**
    * @param position completion invocation position
@@ -740,6 +742,7 @@ public final class JavaCompletionContributor extends CompletionContributor imple
                                                                 Set<? extends ExpectedTypeInfo> expectedTypes,
                                                                 Condition<? super String> nameCondition) {
     PsiElement position = parameters.getPosition();
+    if (TOP_LEVEL_VAR_IN_MODULE.accepts(position)) return Collections.emptyList();
     ElementFilter filter = getReferenceFilter(position);
     if (filter == null) return Collections.emptyList();
     if (parameters.getInvocationCount() <= 1 && JavaClassNameCompletionContributor.AFTER_NEW.accepts(position)) {
