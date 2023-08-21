@@ -982,6 +982,23 @@ abstract class ComponentManagerImpl(
         store.unloadComponent(instance)
       }
     }
+
+    if (isLightServiceSupported) {
+      val store = componentStore
+      val iterator = componentKeyToAdapter.values.iterator()
+      while (iterator.hasNext()) {
+        val adapter = iterator.next() as? LightServiceComponentAdapter ?: continue
+        if (adapter.pluginId == pluginId) {
+          adapter.getInitializedInstance()?.let { instance ->
+            if (instance is Disposable) {
+              Disposer.dispose(instance)
+            }
+            store.unloadComponent(instance)
+          }
+          iterator.remove()
+        }
+      }
+    }
   }
 
   open fun activityNamePrefix(): String? = null
