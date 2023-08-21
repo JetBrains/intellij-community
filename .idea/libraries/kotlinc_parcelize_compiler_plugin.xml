@@ -1,12 +1,12 @@
 <component name="libraryTable">
   <library name="kotlinc.parcelize-compiler-plugin" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:parcelize-compiler-plugin-for-ide:1.9.20-dev-9232" />
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:parcelize-compiler-plugin-for-ide:1.9.20-Beta-50" />
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/parcelize-compiler-plugin-for-ide/1.9.20-dev-9232/parcelize-compiler-plugin-for-ide-1.9.20-dev-9232.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/parcelize-compiler-plugin-for-ide/1.9.20-Beta-50/parcelize-compiler-plugin-for-ide-1.9.20-Beta-50.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/parcelize-compiler-plugin-for-ide/1.9.20-dev-9232/parcelize-compiler-plugin-for-ide-1.9.20-dev-9232-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/parcelize-compiler-plugin-for-ide/1.9.20-Beta-50/parcelize-compiler-plugin-for-ide-1.9.20-Beta-50-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
