@@ -1752,9 +1752,6 @@
       <keyboard-shortcut first-keystroke="TAB" keymap="$default"/>
     </action>
     <action id="CallInlineCompletionAction" class="com.intellij.codeInsight.inline.completion.CallInlineCompletionAction"/>
-    <action id="CallMultiLineCompletionAction" class="com.intellij.codeInsight.inline.completion.CallMultiLineCompletionAction">
-      <keyboard-shortcut first-keystroke="meta BACK_SLASH" keymap="$default"/>
-    </action>
 
     <!-- copy of CheckVfsSanityInMenu: !internal so could be invoked via 'search everywhere' -->
     <action id="CheckVfsSanity" class="com.intellij.openapi.vfs.newvfs.persistent.CheckVFSHealthAction"/>
