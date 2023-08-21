@@ -25,7 +25,7 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.multiplatform.*
 
 fun MemberDescriptor.expectedDescriptors(): List<DeclarationDescriptor> {
-    val expectedCompatibilityMap = ExpectedActualResolver.findExpectedForActual_incrementalCompilationWorkaround(this)
+    val expectedCompatibilityMap = ExpectedActualResolver.findExpectedForActual(this)
         ?: return emptyList()
 
     return expectedCompatibilityMap[ExpectActualCompatibility.Compatible]
