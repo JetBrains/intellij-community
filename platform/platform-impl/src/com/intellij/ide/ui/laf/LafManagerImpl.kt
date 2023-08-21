@@ -348,7 +348,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
 
   private fun detectAndSyncLaf() {
     if (autodetect) {
-      val lafDetector = orCreateLafDetector
+      val lafDetector = getOrCreateLafDetector
       if (lafDetector.detectionSupported) {
         lafDetector.check()
       }
@@ -396,7 +396,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
     }
 
     if (autodetect) {
-      orCreateLafDetector
+      getOrCreateLafDetector
     }
     if (!isFirstSetup && newLaF != oldLaF) {
       QuickChangeLookAndFeel.switchLafAndUpdateUI(this, newLaF, true, true, true)
@@ -901,9 +901,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
     }
   }
 
-  override fun getAutodetect(): Boolean {
-    return autodetect && autodetectSupported
-  }
+  override fun getAutodetect(): Boolean = autodetect && autodetectSupported
 
   override fun setAutodetect(value: Boolean) {
     if (autodetect == value) {
@@ -920,15 +918,13 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
     }
   }
 
-  override fun getAutodetectSupported(): Boolean {
-    return orCreateLafDetector.detectionSupported
-  }
+  override fun getAutodetectSupported(): Boolean = getOrCreateLafDetector.detectionSupported
 
-  private val orCreateLafDetector: SystemDarkThemeDetector
+  private val getOrCreateLafDetector: SystemDarkThemeDetector
     get() {
       var result = lafDetector
       if (result == null) {
-        result = createDetector { systemIsDark: Boolean -> syncLaf(systemIsDark) }
+        result = createDetector(::syncLaf)
         lafDetector = result
       }
 
@@ -944,7 +940,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
   }
 
   override fun getPreviousSchemeForLaf(lookAndFeelInfo: LookAndFeelInfo): EditorColorsScheme? {
-    val schemeName = lafToPreviousScheme[lookAndFeelInfo.name] ?: return null
+    val schemeName = lafToPreviousScheme.get(lookAndFeelInfo.name) ?: return null
     return EditorColorsManager.getInstance().getScheme(schemeName)
   }
 
@@ -959,7 +955,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
         lafToPreviousScheme.remove(lookAndFeelInfo.name)
       }
       else {
-        lafToPreviousScheme[lookAndFeelInfo.name] = scheme.name
+        lafToPreviousScheme.put(lookAndFeelInfo.name, scheme.name)
       }
     }
   }
@@ -1025,31 +1021,6 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
         }
         updateUI()
       }
-    }
-  }
-
-  private class LafCellRenderer : SimpleListCellRenderer<LafReference>() {
-    companion object {
-      private val separator: SeparatorWithText = object : SeparatorWithText() {
-        override fun paintComponent(g: Graphics) {
-          g.color = foreground
-          val bounds = Rectangle(width, height)
-          JBInsets.removeFrom(bounds, insets)
-          paintLine(g, bounds.x, bounds.y + bounds.height / 2, bounds.width)
-        }
-      }
-    }
-
-    override fun getListCellRendererComponent(list: JList<out LafReference>,
-                                              value: LafReference,
-                                              index: Int,
-                                              isSelected: Boolean,
-                                              cellHasFocus: Boolean): Component {
-      return if (value === SEPARATOR) separator else super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
-    }
-
-    override fun customize(list: JList<out LafReference>, value: LafReference, index: Int, selected: Boolean, hasFocus: Boolean) {
-      text = value.toString()
     }
   }
 
@@ -1157,6 +1128,31 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
     override fun isDumbAware(): Boolean = true
+  }
+}
+
+private class LafCellRenderer : SimpleListCellRenderer<LafManager.LafReference>() {
+  companion object {
+    private val separator: SeparatorWithText = object : SeparatorWithText() {
+      override fun paintComponent(g: Graphics) {
+        g.color = foreground
+        val bounds = Rectangle(width, height)
+        JBInsets.removeFrom(bounds, insets)
+        paintLine(g, bounds.x, bounds.y + bounds.height / 2, bounds.width)
+      }
+    }
+  }
+
+  override fun getListCellRendererComponent(list: JList<out LafManager.LafReference>,
+                                            value: LafManager.LafReference,
+                                            index: Int,
+                                            isSelected: Boolean,
+                                            cellHasFocus: Boolean): Component {
+    return if (value === SEPARATOR) separator else super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
+  }
+
+  override fun customize(list: JList<out LafManager.LafReference>, value: LafManager.LafReference, index: Int, selected: Boolean, hasFocus: Boolean) {
+    text = value.toString()
   }
 }
 
