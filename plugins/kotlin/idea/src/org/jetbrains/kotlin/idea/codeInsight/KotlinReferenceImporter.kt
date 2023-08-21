@@ -7,20 +7,13 @@ import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
-import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.idea.actions.KotlinAddImportAction
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.core.targetDescriptors
-import org.jetbrains.kotlin.idea.highlighter.Fe10QuickFixProvider
-import org.jetbrains.kotlin.idea.quickfix.ImportFixBase
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 import org.jetbrains.kotlin.psi.psiUtil.elementsInRange
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
-import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import java.util.function.BooleanSupplier
 
 class KotlinReferenceImporter : AbstractKotlinReferenceImporter() {
@@ -43,33 +36,10 @@ abstract class AbstractKotlinReferenceImporter : ReferenceImporter {
             suggestions
         }
 
-    private fun hasUnresolvedImportWhichCanImport(file: KtFile, name: String): Boolean = file.importDirectives.any {
-        (it.isAllUnder || it.importPath?.importedName?.asString() == name) && it.targetDescriptors().isEmpty()
-    }
-
     private fun computeAutoImport(file: KtFile, editor: Editor, expression: KtExpression): KotlinAddImportAction? {
-        val referencedName = (expression as? KtSimpleNameExpression)?.getReferencedName()
-        if (referencedName != null && hasUnresolvedImportWhichCanImport(file, referencedName)) return null
+        val quickFixes = KotlinReferenceImporterFacility.getInstance().createImportFixesForExpression(expression)
 
-        val bindingContext = expression.analyze(BodyResolveMode.PARTIAL_WITH_DIAGNOSTICS)
-        val diagnostics = bindingContext.diagnostics.filter {
-            it.severity == Severity.ERROR && expression.textRange in it.psiElement.textRange
-        }.ifEmpty { return null }
-
-        val quickFixProvider = Fe10QuickFixProvider.getInstance(expression.project)
-
-        return sequence {
-            diagnostics.groupBy { it.psiElement }.forEach { (_, sameElementDiagnostics) ->
-                sameElementDiagnostics.groupBy { it.factory }.forEach { (_, sameTypeDiagnostic) ->
-                    val quickFixes = quickFixProvider.createUnresolvedReferenceQuickFixes(sameTypeDiagnostic)
-                    for (action in quickFixes.values()) {
-                        if (action is ImportFixBase<*>) {
-                            this.yield(action)
-                        }
-                    }
-                }
-            }
-        }.firstNotNullOfOrNull { importFix ->
+        return quickFixes.firstNotNullOfOrNull { importFix ->
             importFix.createAutoImportAction(editor, file) { suggestions -> filterSuggestions(file, suggestions) }
         }
     }

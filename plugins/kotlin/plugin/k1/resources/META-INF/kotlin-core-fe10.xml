@@ -50,6 +50,9 @@
     <projectService
             serviceInterface="org.jetbrains.kotlin.idea.base.projectStructure.LibrarySourceScopeService"
             serviceImplementation="org.jetbrains.kotlin.idea.decompiler.navigation.Fe10LibrarySourceScopeService"/>
+    <applicationService
+            serviceInterface="org.jetbrains.kotlin.idea.codeInsight.KotlinReferenceImporterFacility"
+            serviceImplementation="org.jetbrains.kotlin.idea.codeInsight.K1ReferenceImporterFacility"/>
 
     <projectService serviceImplementation="org.jetbrains.kotlin.idea.migration.KotlinMigrationProjectService"/>
 
