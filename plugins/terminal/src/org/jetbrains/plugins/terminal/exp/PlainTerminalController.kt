@@ -6,6 +6,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.util.ui.JBUI
 import com.jediterm.core.util.TermSize
+import java.awt.Dimension
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import javax.swing.JComponent
@@ -34,7 +35,7 @@ class PlainTerminalController(
   // return preferred size of the terminal calculated from the component size
   override fun getTerminalSize(): TermSize? {
     if (panel.bounds.isEmpty) return null
-    val contentSize = panel.getContentSize()
+    val contentSize = Dimension(panel.terminalWidth, panel.height)
     return TerminalUiUtils.calculateTerminalSize(contentSize, panel.charSize)
   }
 
