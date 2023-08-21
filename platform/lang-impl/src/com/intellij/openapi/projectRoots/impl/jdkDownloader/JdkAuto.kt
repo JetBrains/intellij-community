@@ -286,7 +286,7 @@ class JdkAuto : UnknownSdkResolver, JdkDownloaderBase {
           val version = runCatching { JavaVersion.tryParse(versionString) }.getOrNull() ?: continue
           val suggestedName = runCatching { JdkUtil.suggestJdkName(versionString) }.getOrNull() ?: continue
 
-          if (it !is MockSdk && runCatching {
+          if (!homeDir.contains("mockJDK") && runCatching {
               val homePath = it.homePath
               homePath != null && sdkType.isValidSdkHome(homePath)
             }.getOrNull() != true) continue
