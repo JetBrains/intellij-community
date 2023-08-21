@@ -205,6 +205,7 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
   override fun getData(dataId: String): Any? {
     if (QuickActionProvider.KEY.`is`(dataId)) return toolbar
     if (EditorTabDiffPreviewManager.EDITOR_TAB_DIFF_PREVIEW.`is`(dataId)) return editorTabPreview
+    if (PlatformDataKeys.HELP_ID.`is`(dataId)) return HELP_ID
     return null
   }
 
