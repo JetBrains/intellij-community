@@ -47,7 +47,6 @@ internal object MermaidSpacingBuilder {
   private val FLOWCHART_KEYWORDS_SPACE_BEFORE = TokenSet.create(
     MermaidTokens.Flowchart.STYLE_TARGET,
     MermaidElements.STYLE_OPTIONS,
-    MermaidElements.VERTEX_STATEMENT
   )
   //endregion
 
