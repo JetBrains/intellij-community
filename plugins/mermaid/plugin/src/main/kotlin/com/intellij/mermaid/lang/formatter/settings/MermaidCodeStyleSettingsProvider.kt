@@ -33,7 +33,7 @@ internal class MermaidCodeStyleSettingsProvider : LanguageCodeStyleSettingsProvi
         )
         consumer.showCustomOption(
           MermaidCustomCodeStyleSettings::class.java,
-          MermaidCustomCodeStyleSettings::MIN_LINES_BETWEEN_OTHER_STETEMENTS.name,
+          MermaidCustomCodeStyleSettings::MIN_LINES_BETWEEN_OTHER_STATEMENTS.name,
           MermaidBundle.message("mermaid.style.settings.blank.lines.between.other.statements"),
           CodeStyleSettingsCustomizableOptions.getInstance().BLANK_LINES
         )
@@ -58,7 +58,7 @@ internal class MermaidCodeStyleSettingsProvider : LanguageCodeStyleSettingsProvi
         )
         consumer.showCustomOption(
           MermaidCustomCodeStyleSettings::class.java,
-          MermaidCustomCodeStyleSettings::KEEP_LINES_BETWEEN_OTHER_STETEMENTS.name,
+          MermaidCustomCodeStyleSettings::KEEP_LINES_BETWEEN_OTHER_STATEMENTS.name,
           MermaidBundle.message("mermaid.style.settings.blank.lines.between.other.statements"),
           CodeStyleSettingsCustomizableOptions.getInstance().BLANK_LINES_KEEP
         )

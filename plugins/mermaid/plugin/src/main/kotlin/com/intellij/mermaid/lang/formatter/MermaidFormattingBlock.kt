@@ -38,10 +38,10 @@ internal open class MermaidFormattingBlock(
         val textRange = TextRange.create(child1.textRange.startOffset, child2.textRange.endOffset)
         val rule = DependentSpacingRule(DependentSpacingRule.Trigger.HAS_LINE_FEEDS).registerData(
           DependentSpacingRule.Anchor.MIN_LINE_FEEDS,
-          mermaid.MIN_LINES_BETWEEN_OTHER_STETEMENTS + 1
+          mermaid.MIN_LINES_BETWEEN_OTHER_STATEMENTS + 1
         )
 
-        Spacing.createDependentLFSpacing(1, 1, textRange, false, mermaid.KEEP_LINES_BETWEEN_OTHER_STETEMENTS, rule)
+        Spacing.createDependentLFSpacing(1, 1, textRange, false, mermaid.KEEP_LINES_BETWEEN_OTHER_STATEMENTS, rule)
       }
 
       else -> spacing.getSpacing(this, child1, child2)

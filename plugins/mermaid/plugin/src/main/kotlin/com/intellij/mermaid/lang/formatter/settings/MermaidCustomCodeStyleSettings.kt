@@ -95,10 +95,10 @@ class MermaidCustomCodeStyleSettings(settings: CodeStyleSettings) :
   var KEEP_LINES_BETWEEN_STRUCTURED_STATEMENTS: Int = 1
 
   @JvmField
-  var MIN_LINES_BETWEEN_OTHER_STETEMENTS: Int = 0
+  var MIN_LINES_BETWEEN_OTHER_STATEMENTS: Int = 0
 
   @JvmField
-  var KEEP_LINES_BETWEEN_OTHER_STETEMENTS: Int = 0
+  var KEEP_LINES_BETWEEN_OTHER_STATEMENTS: Int = 0
 
   @JvmField
   var MIN_LINES_WITHIN_STRUCTURES: Int = 0

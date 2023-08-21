@@ -46,9 +46,9 @@ class MermaidFormatterTest : MermaidBaseTestCase("formatter") {
       CONTINUATION_INDENT_SIZE = 4
     }
     getCustomSettings(MermaidCustomCodeStyleSettings::class.java).apply {
-      KEEP_LINES_BETWEEN_OTHER_STETEMENTS = 0
+      KEEP_LINES_BETWEEN_OTHER_STATEMENTS = 0
       KEEP_LINES_WITHIN_STRUCTURES = 0
-      MIN_LINES_BETWEEN_OTHER_STETEMENTS = 1
+      MIN_LINES_BETWEEN_OTHER_STATEMENTS = 1
     }
   }
 
@@ -60,7 +60,7 @@ class MermaidFormatterTest : MermaidBaseTestCase("formatter") {
         CONTINUATION_INDENT_SIZE = 4
       }
       getCustomSettings(MermaidCustomCodeStyleSettings::class.java).apply {
-        KEEP_LINES_BETWEEN_OTHER_STETEMENTS = 1
+        KEEP_LINES_BETWEEN_OTHER_STATEMENTS = 1
         KEEP_LINES_WITHIN_STRUCTURES = 1
       }
     }
