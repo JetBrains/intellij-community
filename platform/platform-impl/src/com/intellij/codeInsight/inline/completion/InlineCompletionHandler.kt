@@ -21,6 +21,7 @@ import com.intellij.psi.PsiFile
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collectIndexed
 import kotlinx.coroutines.flow.onCompletion
+import kotlinx.coroutines.flow.onEmpty
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -68,26 +69,29 @@ class InlineCompletionHandler(private val scope: CoroutineScope) : CodeInsightAc
       withContext(Dispatchers.EDT) {
         showPlaceholder(editor, offset)
 
-        resultFlow.onCompletion { if (it != null) disposePlaceholder(editor) }.collectIndexed { index, value ->
-          disposePlaceholder(editor)
-          if (index == 0 && modificationStamp != request.document.modificationStamp) {
-            cancel()
-            return@collectIndexed
-          }
-
-          if (index == 0) {
-            inlineState.suggestions = listOf(InlineCompletionElement(value.text))
-            showInlineSuggestion(editor, inlineState, offset)
-          }
-          else {
-            if (editor.getInlineCompletionContextOrNull() == null) {
+        resultFlow
+          .onCompletion { if (it != null) disposePlaceholder(editor) }
+          .onEmpty { disposePlaceholder(editor) }
+          .collectIndexed { index, value ->
+            disposePlaceholder(editor)
+            if (index == 0 && modificationStamp != request.document.modificationStamp) {
               cancel()
+              return@collectIndexed
             }
-            ensureActive()
-            inlineState.suggestions = inlineState.suggestions.map { it.withText(it.text + value.text) }
-            showInlineSuggestion(editor, inlineState, offset)
+
+            if (index == 0) {
+              inlineState.suggestions = listOf(InlineCompletionElement(value.text))
+              showInlineSuggestion(editor, inlineState, offset)
+            }
+            else {
+              if (editor.getInlineCompletionContextOrNull() == null) {
+                cancel()
+              }
+              ensureActive()
+              inlineState.suggestions = inlineState.suggestions.map { it.withText(it.text + value.text) }
+              showInlineSuggestion(editor, inlineState, offset)
+            }
           }
-        }
       }
     }
   }
