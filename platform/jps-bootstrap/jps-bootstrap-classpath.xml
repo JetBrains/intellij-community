@@ -48,7 +48,7 @@
   </condition>
 
   <target name="ij-ultimate-packages-auth" if="exec-ij-ultimate-packages-auth">
-    <java sourcefile="${ij.packages.auth.java.path}" fork="true" >
+    <java sourcefile="${ij.packages.auth.java.path}" fork="true" failonerror="true" >
       <sysproperty key="ij.private.packages.authorizer.idea.ultimate.path" value="${ultimate.home}"/>
     </java>
   </target>
