@@ -970,6 +970,13 @@ abstract class ComponentManagerImpl(
   open fun unloadServices(services: List<ServiceDescriptor>, pluginId: PluginId) {
     checkState()
 
+    /**
+     * FIXME: possible race with concurrent service construction:
+     *  1. com.intellij.serviceContainer.BaseComponentAdapter.getInstance @ checkContainerIsActive
+     *  2. com.intellij.ide.plugins.DynamicPlugins.unloadPluginWithoutProgress @ forbidGettingServices & unload
+     *  3. com.intellij.serviceContainer.BaseComponentAdapter.getInstance @ deferred.join
+     */
+
     if (!services.isEmpty()) {
       val store = componentStore
       for (service in services) {
