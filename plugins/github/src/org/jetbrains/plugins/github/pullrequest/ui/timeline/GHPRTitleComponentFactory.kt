@@ -10,7 +10,7 @@ import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import javax.swing.JComponent
 
-internal object GHPRTitleComponent {
+internal object GHPRTitleComponentFactory {
 
   fun create(model: SingleValueModel<GHPullRequestShort>): JComponent {
     val titlePane = SimpleHtmlPane().apply {
