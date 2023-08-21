@@ -10,74 +10,63 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.search.GlobalSearchScope
 import org.assertj.core.api.Assertions.assertThat
+import org.gradle.initialization.BuildLayoutParameters
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
 import org.jetbrains.plugins.gradle.importing.TestGradleBuildScriptBuilder
+import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.testFramework.util.importProject
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.Test
+import java.io.File
+import java.nio.file.Path
 import java.util.function.Consumer
 
 class GradleAttachSourcesProviderTest : GradleImportingTestCase() {
 
+  private companion object {
+    private const val DEPENDENCY = "junit:junit:4.12"
+    private const val DEPENDENCY_NAME = "Gradle: junit:junit:4.12"
+    private const val DEPENDENCY_JAR = "junit-4.12.jar"
+    private const val DEPENDENCY_SOURCES_JAR = "junit-4.12-sources.jar"
+    private const val CLASS_FROM_DEPENDENCY = "junit.framework.Test"
+    private const val DEPENDENCY_SOURCES_JAR_CACHE_PATH = "caches/modules-2/files-2.1/junit/junit/4.12/" +
+                                                          "a6c32b40bf3d76eca54e3c601e5d1470c86fcdfa/$DEPENDENCY_SOURCES_JAR"
+  }
+
   @Test
   fun `test download sources dynamic task`() {
-    val dependency = "junit:junit:4.12"
-    val dependencyName = "Gradle: junit:junit:4.12"
-    val dependencyJar = "junit-4.12.jar"
-    val dependencySourcesJar = "junit-4.12-sources.jar"
-    val classFromDependency = "junit.framework.Test"
-
+    removeCachedLibrary()
     importProject {
       withJavaPlugin()
       withIdeaPlugin()
       withMavenCentral()
-      addTestImplementationDependency(dependency)
+      addTestImplementationDependency(DEPENDENCY)
       addPrefix("idea.module.downloadSources = false")
     }
     assertModules("project", "project.main", "project.test")
-    assertSourcesDownloadedAndAttached(dependencyName = dependencyName,
-                                       dependencyJar = dependencyJar,
-                                       dependencySourcesJar = dependencySourcesJar,
-                                       classFromDependency = classFromDependency,
-                                       targetModule = "project.test"
-    )
+    assertSourcesDownloadedAndAttached(targetModule = "project.test")
   }
 
   @Test
   @TargetVersions("6.5+")
   fun `test download sources with configuration cache`() {
-    val dependency = "junit:junit:4.12"
-    val dependencyName = "Gradle: junit:junit:4.12"
-    val dependencyJar = "junit-4.12.jar"
-    val dependencySourcesJar = "junit-4.12-sources.jar"
-    val classFromDependency = "junit.framework.Test"
-
+    removeCachedLibrary()
     createProjectSubFile("gradle.properties", "org.gradle.configuration-cache=true\n org.gradle.unsafe.configuration-cache=true")
     importProject {
       withJavaPlugin()
       withIdeaPlugin()
       addPrefix("idea.module.downloadSources = false")
       withMavenCentral()
-      addTestImplementationDependency(dependency)
+      addTestImplementationDependency(DEPENDENCY)
     }
     assertModules("project", "project.main", "project.test")
-    assertSourcesDownloadedAndAttached(dependencyName = dependencyName,
-                                       dependencyJar = dependencyJar,
-                                       dependencySourcesJar = dependencySourcesJar,
-                                       classFromDependency = classFromDependency,
-                                       targetModule = "project.test"
-    )
+    assertSourcesDownloadedAndAttached(targetModule = "project.test")
   }
 
   @Test
   @TargetVersions("!4.0")
   fun `test download sources from gradle sub module repository`() {
-    val dependency = "junit:junit:4.12"
-    val dependencyName = "Gradle: junit:junit:4.12"
-    val dependencyJar = "junit-4.12.jar"
-    val dependencySourcesJar = "junit-4.12-sources.jar"
-    val classFromDependency = "junit.framework.Test"
-
+    removeCachedLibrary()
     createSettingsFile("include 'projectA', 'projectB' ")
     importProject(
       createBuildScriptBuilder()
@@ -87,7 +76,7 @@ class GradleAttachSourcesProviderTest : GradleImportingTestCase() {
             .withIdeaPlugin()
             .addPrefix("idea.module.downloadSources = false")
             .withMavenCentral()
-            .addTestImplementationDependency(dependency)
+            .addTestImplementationDependency(DEPENDENCY)
         }
         .project(":projectB") { it: TestGradleBuildScriptBuilder ->
           it
@@ -100,19 +89,14 @@ class GradleAttachSourcesProviderTest : GradleImportingTestCase() {
       "project.projectA", "project.projectA.main", "project.projectA.test",
       "project.projectB", "project.projectB.main", "project.projectB.test",
     )
-    assertSourcesDownloadedAndAttached(dependencyName = dependencyName,
-                                       dependencyJar = dependencyJar,
-                                       dependencySourcesJar = dependencySourcesJar,
-                                       classFromDependency = classFromDependency,
-                                       targetModule = "project.projectA.test"
-    )
-    assertThat(getModuleLibDeps("project.projectB.test", dependencyName)).isEmpty()
+    assertSourcesDownloadedAndAttached(targetModule = "project.projectA.test")
+    assertThat(getModuleLibDeps("project.projectB.test", DEPENDENCY_NAME)).isEmpty()
   }
 
-  private fun assertSourcesDownloadedAndAttached(dependencyName: String,
-                                                 dependencyJar: String,
-                                                 dependencySourcesJar: String,
-                                                 classFromDependency: String,
+  private fun assertSourcesDownloadedAndAttached(dependencyName: String = DEPENDENCY_NAME,
+                                                 dependencyJar: String = DEPENDENCY_JAR,
+                                                 dependencySourcesJar: String = DEPENDENCY_SOURCES_JAR,
+                                                 classFromDependency: String = CLASS_FROM_DEPENDENCY,
                                                  targetModule: String
   ) {
     val library: LibraryOrderEntry = getModuleLibDeps(targetModule, dependencyName).single()
@@ -150,5 +134,17 @@ class GradleAttachSourcesProviderTest : GradleImportingTestCase() {
     assertThat(library.getRootFiles(OrderRootType.SOURCES))
       .hasSize(1)
       .allSatisfy(Consumer { assertEquals(dependencySourcesJar, it.name) })
+  }
+
+  private fun removeCachedLibrary(cachePath: String = DEPENDENCY_SOURCES_JAR_CACHE_PATH) {
+    val serviceDirectory = GradleSettings.getInstance(myProject).serviceDirectoryPath
+    val gradleUserHome = if (serviceDirectory != null) Path.of(serviceDirectory) else BuildLayoutParameters().gradleUserHomeDir.toPath()
+    val junitPath = "$gradleUserHome/$cachePath"
+    val cachedSource = File(junitPath)
+    if (cachedSource.exists()) {
+      if (!cachedSource.delete()) {
+        throw IllegalStateException("Unable to prepare test execution environment")
+      }
+    }
   }
 }

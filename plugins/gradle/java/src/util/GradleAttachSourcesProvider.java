@@ -5,7 +5,6 @@ import com.intellij.codeInsight.AttachSourcesProvider;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
-import com.intellij.openapi.externalSystem.model.project.LibraryData;
 import com.intellij.openapi.externalSystem.model.project.LibraryPathType;
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode;
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemNotificationManager;
@@ -22,12 +21,10 @@ import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.ContainerUtil;
@@ -36,9 +33,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.plugins.gradle.execution.build.CachedModuleDataFinder;
-import org.jetbrains.plugins.gradle.execution.target.GradleTargetUtil;
-import org.jetbrains.plugins.gradle.service.GradleInstallationManager;
-import org.jetbrains.plugins.gradle.service.execution.BuildLayoutParameters;
 import org.jetbrains.plugins.gradle.service.execution.GradleInitScriptUtil;
 import org.jetbrains.plugins.gradle.service.task.GradleTaskManager;
 import org.jetbrains.plugins.gradle.service.task.LazyVersionSpecificInitScript;
@@ -47,11 +41,16 @@ import org.jetbrains.plugins.gradle.settings.GradleSettings;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.LinkOption;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.*;
 import java.util.function.Predicate;
 
 import static com.intellij.jarFinder.InternetAttachSourceProvider.attachSourceJar;
-import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil.attachSourcesAndJavadocFromGradleCacheIfNeeded;
+import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil.collectSourcesAndJavadocsFor;
 
 /**
  * @author Vladislav.Soroka
@@ -100,10 +99,42 @@ final class GradleAttachSourcesProvider implements AttachSourcesProvider {
       }
       String artifactCoordinates = artifactMetadata.getFirst();
       LibraryOrderEntry libraryOrderEntry = artifactMetadata.getSecond();
+      String cachedSourcesPath = lookupSourcesPathFromCache(libraryOrderEntry);
+      if (cachedSourcesPath != null && isValidJar(cachedSourcesPath)) {
+        attachSources(new File(cachedSourcesPath), orderEntries);
+        return ActionCallback.DONE;
+      }
       String sourceArtifactNotation = getSourcesArtifactNotation(artifactCoordinates, artifactIdCandidate -> {
         VirtualFile[] rootFiles = libraryOrderEntry.getRootFiles(OrderRootType.CLASSES);
         return rootFiles.length == 0 || ContainerUtil.exists(rootFiles, file -> file.getName().startsWith(artifactIdCandidate));
       });
+      return downloadSources(psiFile, sourceArtifactNotation, artifactCoordinates);
+    }
+
+    @Nullable
+    private static String lookupSourcesPathFromCache(LibraryOrderEntry libraryOrderEntry) {
+      VirtualFile[] rootFiles = libraryOrderEntry.getRootFiles(OrderRootType.CLASSES);
+      if (rootFiles.length == 0) {
+        return null;
+      }
+      VirtualFile classesFile = rootFiles[0];
+      String path = classesFile.getPath();
+      if (path.contains("/caches/transforms-")) {
+        return null;
+      }
+      Map<LibraryPathType, List<String>> target = new HashMap<>();
+      collectSourcesAndJavadocsFor(path, target, /*source resolved*/ false, /*javadoc resolved*/ true);
+      List<String> sources = target.get(LibraryPathType.SOURCE);
+      if (sources == null || sources.isEmpty()) {
+        return null;
+      }
+      return sources.iterator().next();
+    }
+
+    @NotNull
+    private ActionCallback downloadSources(@NotNull PsiFile psiFile,
+                                           String sourceArtifactNotation,
+                                           String artifactCoordinates) {
       final String sourcesLocationFilePath;
       final File sourcesLocationFile;
       try {
@@ -136,28 +167,25 @@ final class GradleAttachSourcesProvider implements AttachSourcesProvider {
         new TaskCallback() {
           @Override
           public void onSuccess() {
-            VirtualFile classesFile = libraryOrderEntry.getRootFiles(OrderRootType.CLASSES)[0];
-            File sourceJar = getSourceFile(artifactCoordinates, classesFile, project, settings.getExternalProjectPath());
-            if (sourceJar == null) {
-              try {
-                sourceJar = new File(FileUtil.loadFile(sourcesLocationFile));
+            File sourceJar;
+            try {
+              String downloadedArtifactPath = FileUtil.loadFile(sourcesLocationFile);
+              if (!isValidJar(downloadedArtifactPath)) {
+                GradleLog.LOG.warn("Incorrect file header: " + downloadedArtifactPath + ". Unable to process downloaded file as a JAR file");
                 FileUtil.delete(sourcesLocationFile);
+                resultWrapper.setRejected();
+                return;
               }
-              catch (IOException e) {
-                GradleLog.LOG.warn(e);
-              }
+              sourceJar = new File(downloadedArtifactPath);
+              FileUtil.delete(sourcesLocationFile);
             }
-            File finalSourceJar = sourceJar;
-            ApplicationManager.getApplication().invokeLater(() -> {
-              final Set<Library> libraries = new HashSet<>();
-              for (LibraryOrderEntry orderEntry : orderEntries) {
-                ContainerUtil.addIfNotNull(libraries, orderEntry.getLibrary());
-              }
-              if (finalSourceJar != null) {
-                attachSourceJar(finalSourceJar, libraries);
-              }
-              resultWrapper.setDone();
-            });
+            catch (IOException e) {
+              GradleLog.LOG.warn(e);
+              resultWrapper.setRejected();
+              return;
+            }
+            attachSources(sourceJar, orderEntries);
+            resultWrapper.setDone();
           }
 
           @Override
@@ -171,8 +199,18 @@ final class GradleAttachSourcesProvider implements AttachSourcesProvider {
             ExternalSystemNotificationManager.getInstance(project).showNotification(GradleConstants.SYSTEM_ID, notification);
           }
         }, ProgressExecutionMode.IN_BACKGROUND_ASYNC, false, userData);
-
       return resultWrapper;
+    }
+
+    private static void attachSources(@NotNull File sourcesJar, @NotNull List<? extends LibraryOrderEntry> orderEntries) {
+      ApplicationManager.getApplication()
+        .invokeLater(() -> {
+          final Set<Library> libraries = new HashSet<>();
+          for (LibraryOrderEntry orderEntry : orderEntries) {
+            ContainerUtil.addIfNotNull(libraries, orderEntry.getLibrary());
+          }
+          attachSourceJar(sourcesJar, libraries);
+        });
     }
   }
 
@@ -221,20 +259,6 @@ final class GradleAttachSourcesProvider implements AttachSourcesProvider {
       .orElse(null);
   }
 
-  private static @Nullable File getSourceFile(@NotNull String artifactCoordinates,
-                                              VirtualFile classesFile,
-                                              @NotNull Project project,
-                                              @NotNull @NlsSafe String projectPath) {
-    LibraryData data = new LibraryData(GradleConstants.SYSTEM_ID, artifactCoordinates);
-    data.addPath(LibraryPathType.BINARY, VfsUtil.getLocalFile(classesFile).getPath());
-    BuildLayoutParameters buildLayoutParameters = GradleInstallationManager.getInstance().guessBuildLayoutParameters(project, projectPath);
-    String gradleUserHome = GradleTargetUtil.maybeGetLocalValue(buildLayoutParameters.getGradleUserHome());
-    if (gradleUserHome == null) return null;
-    attachSourcesAndJavadocFromGradleCacheIfNeeded(new File(gradleUserHome), data);
-    Iterator<String> iterator = data.getPaths(LibraryPathType.SOURCE).iterator();
-    return iterator.hasNext() ? new File(iterator.next()) : null;
-  }
-
   private static @NotNull Map<LibraryOrderEntry, Module> getGradleModules(@NotNull List<? extends LibraryOrderEntry> libraryOrderEntries) {
     Map<LibraryOrderEntry, Module> result = new HashMap<>();
     for (LibraryOrderEntry entry : libraryOrderEntries) {
@@ -267,5 +291,18 @@ final class GradleAttachSourcesProvider implements AttachSourcesProvider {
       return null;
     }
     return new Pair<>(artifactCoordinates, libraryOrderEntry);
+  }
+
+  private static boolean isValidJar(@NotNull String rawPath) {
+    try (InputStream is = Files.newInputStream(Path.of(rawPath), StandardOpenOption.READ, LinkOption.NOFOLLOW_LINKS)) {
+      byte[] head = is.readNBytes(2);
+      if (head.length < 2) {
+        return false;
+      }
+      return head[0] == 0x50 && head[1] == 0x4b;
+    }
+    catch (IOException e) {
+      return false;
+    }
   }
 }

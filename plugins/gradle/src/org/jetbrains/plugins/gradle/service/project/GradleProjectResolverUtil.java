@@ -452,7 +452,8 @@ public final class GradleProjectResolverUtil {
     }
   }
 
-  private static void collectSourcesAndJavadocsFor(@NonNls @NotNull String binaryPath,
+  @ApiStatus.Internal
+  public static void collectSourcesAndJavadocsFor(@NonNls @NotNull String binaryPath,
                                                    @NotNull Map<LibraryPathType, List<String>> collect,
                                                    boolean sourceResolved, boolean docResolved) {
     if (sourceResolved && docResolved) {
