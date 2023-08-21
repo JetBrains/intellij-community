@@ -24,6 +24,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiNamedElement
+import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.impl.file.PsiPackageBase
 import com.intellij.psi.impl.light.LightElement
@@ -32,6 +33,7 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.collapseSpaces
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.allChildren
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import java.util.*
 import javax.swing.Icon
@@ -145,7 +147,7 @@ private fun <T : PsiElement> getPsiElementPopup(
         .presentationProvider(presentationProvider)
         .builderConsumer { builder ->
             builder
-                .setItemSelectedCallback() { presentation ->
+                .setItemSelectedCallback { presentation ->
                     highlighter?.dropHighlight()
                     val psiElement = (presentation?.item as? SmartPsiElementPointer<*>)?.element ?: return@setItemSelectedCallback
                     highlighter?.highlight(psiElement)
@@ -202,6 +204,18 @@ private fun popupPresentationProvider() = object : PsiTargetPresentationRenderer
         is SeparateFileWrapper -> KotlinBundle.message("refactoring.extract.to.separate.file.text")
         is PsiPackageBase -> qualifiedName
         is PsiFile -> name
+        is KtClassOrObject -> {
+            val list = mutableListOf<String>()
+            modifierList?.let {
+                for (child in it.allChildren) {
+                    if (child is KtAnnotationEntry || child is KtAnnotation || child is PsiWhiteSpace) continue
+                    list.add(child.text)
+                }
+            }
+            getDeclarationKeyword()?.text?.let(list::add)
+            name?.let(list::add)
+            StringUtil.shortenTextWithEllipsis(list.joinToString(separator = " "), 53, 0)
+        }
         else -> {
             val text = text ?: "<invalid text>"
             StringUtil.shortenTextWithEllipsis(text.collapseSpaces(), 53, 0)
