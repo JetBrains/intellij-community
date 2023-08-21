@@ -22,6 +22,8 @@ import javax.swing.plaf.basic.BasicGraphicsUtils;
 import javax.swing.plaf.basic.BasicMenuUI;
 import java.awt.*;
 
+import static com.intellij.ui.plaf.beg.BegMenuItemUI.isSelected;
+
 public class IdeaMenuUI extends BasicMenuUI {
   private static final Rectangle ourZeroRect = new Rectangle(0, 0, 0, 0);
   private static final Rectangle ourTextRect = new Rectangle();
@@ -447,6 +449,9 @@ public class IdeaMenuUI extends BasicMenuUI {
 
   private Icon getAllowedIcon() {
     Icon icon = menuItem.isEnabled() ? menuItem.getIcon() : menuItem.getDisabledIcon();
+    if (menuItem.isEnabled() && isSelected(menuItem) && menuItem.getSelectedIcon() != null) {
+      icon = menuItem.getSelectedIcon();
+    }
     if (icon != null && icon.getIconWidth() > myMaxGutterIconWidth){
       icon = null;
     }
