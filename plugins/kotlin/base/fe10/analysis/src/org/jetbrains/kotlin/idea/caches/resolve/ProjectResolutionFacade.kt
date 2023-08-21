@@ -158,8 +158,8 @@ internal class ProjectResolutionFacade(
     internal fun resolverForElement(element: PsiElement): ResolverForModule {
         val moduleInfos = mutableSetOf<IdeaModuleInfo>()
 
-        val sequence = ModuleInfoProvider.getInstance(element.project).collect(element)
-        for (result in sequence) {
+        val elementModuleInfos = ModuleInfoProvider.getInstance(element.project).collect(element, existingInfos = allModules)
+        for (result in elementModuleInfos) {
             val moduleInfo = result.getOrNull()
             if (moduleInfo != null) {
                 val resolver = cachedResolverForProject.tryGetResolverForModule(moduleInfo)

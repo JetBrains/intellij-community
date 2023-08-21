@@ -61,6 +61,22 @@ data class ScriptModuleInfo(
         dependenciesInfo.sdk?.let { add(SdkInfo(project, it)) }
     }.toList()
 
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is ScriptModuleInfo) return false
+
+        if (project != other.project) return false
+        if (scriptFile != other.scriptFile) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = project.hashCode()
+        result = 31 * result + scriptFile.hashCode()
+        return result
+    }
+
     override val platform: TargetPlatform
         get() = getPlatform(project, scriptFile, scriptDefinition)
 

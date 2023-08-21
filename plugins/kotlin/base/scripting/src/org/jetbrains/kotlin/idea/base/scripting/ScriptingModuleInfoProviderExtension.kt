@@ -41,7 +41,8 @@ internal class ScriptingModuleInfoProviderExtension : ModuleInfoProviderExtensio
     override fun SeqScope<Result<IdeaModuleInfo>>.collectByFile(
         project: Project,
         virtualFile: VirtualFile,
-        isLibrarySource: Boolean
+        isLibrarySource: Boolean,
+        existingInfos: Collection<IdeaModuleInfo>?
     ) {
         val isBinary = virtualFile.fileType.isKotlinBinary
 
@@ -49,7 +50,8 @@ internal class ScriptingModuleInfoProviderExtension : ModuleInfoProviderExtensio
             if (isLibrarySource) {
                 register(ScriptDependenciesSourceInfo.ForProject(project))
             } else {
-                register(ScriptDependenciesInfo.ForProject(project))
+                val existing = existingInfos?.find { it is ScriptDependenciesInfo.ForFile }
+                register(existing ?: ScriptDependenciesInfo.ForProject(project))
             }
         }
 

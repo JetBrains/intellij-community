@@ -79,6 +79,22 @@ sealed class ScriptDependenciesInfo(override val project: Project) : IdeaModuleI
                     ScriptConfigurationManager.getInstance(project).getScriptDependenciesClassFilesScope(scriptVFile), project
  )
             }
+
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (other !is ForFile) return false
+            if (!super.equals(other)) return false
+
+            if (scriptFile != other.scriptFile) return false
+
+            return true
+        }
+
+        override fun hashCode(): Int {
+            var result = super.hashCode()
+            result = 31 * result + scriptFile.hashCode()
+            return result
+        }
     }
 
     // we do not know which scripts these dependencies are
