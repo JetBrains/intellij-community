@@ -123,36 +123,47 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
   protected FutureTask<Boolean> prepareTask(@NotNull final PsiFile file, final boolean processChangedTextOnly)
     throws IncorrectOperationException
   {
-    return new FutureTask<>(() -> {
-      final PsiFile psiFile = ensureValid(file);
-      if (psiFile == null) {
-        return false;
-      }
-
-      ApplicationManager.getApplication().invokeAndWait(() -> {
-        final PsiDocumentManager docManager = PsiDocumentManager.getInstance(myProject);
-        Document document = PsiDocumentManager.getInstance(myProject).getDocument(psiFile);
+    Pair<PsiFile, Runnable> fileToFormatAndCommitActionIfNeed = ReadAction.compute(() -> {
+      PsiFile psiFile = ensureValid(file);
+      if (psiFile != null) {
+        PsiDocumentManager instance = PsiDocumentManager.getInstance(myProject);
+        Document document = instance.getDocument(psiFile);
         if (document != null) {
-          // In languages that are supported by a non-commit typing assistant (such as C++ and Kotlin),
-          // the `document` here can be in an uncommitted state. In the case of an external formatter,
-          // this may be the cause of formatting artifacts
-          docManager.commitDocument(document);
+          return Pair.create(psiFile, () -> instance.commitDocument(document));
         }
-      });
+      }
+      return Pair.create(psiFile, null);
+    });
 
-      List<TextRange> ranges = ReadAction.compute(() -> {
-        List<TextRange> formattingRanges = getRangesToFormat(file, processChangedTextOnly);
-        CodeFormattingData.getOrCreate(psiFile).prepare(psiFile, formattingRanges);
-        return formattingRanges;
-      });
+    PsiFile fileToProcess = fileToFormatAndCommitActionIfNeed.first;
+    if (fileToProcess == null) {
+      return new FutureTask<>(() -> false);
+    }
 
-      boolean doNotKeepLineBreaks = confirmSecondReformat(file);
+    Computable<List<TextRange>> prepareRangesForFormat = () -> {
+      List<TextRange> formattingRanges = getRangesToFormat(file, processChangedTextOnly);
+      CodeFormattingData.getOrCreate(fileToProcess).prepare(fileToProcess, formattingRanges);
+      return formattingRanges;
+    };
+
+    Ref<List<TextRange>> rangesForFormat = Ref.create();
+    final Runnable commitAction = fileToFormatAndCommitActionIfNeed.second;
+    if (commitAction == null) {
+      rangesForFormat.set(ReadAction.compute(() -> prepareRangesForFormat.compute()));
+    }
+
+    boolean doNotKeepLineBreaks = confirmSecondReformat(file);
+    return new FutureTask<>(() -> {
       Ref<Boolean> result = new Ref<>();
-      CodeStyle.doWithTemporarySettings(myProject, CodeStyle.getSettings(psiFile), (settings) -> {
+      CodeStyle.doWithTemporarySettings(myProject, CodeStyle.getSettings(fileToProcess), (settings) -> {
         if (doNotKeepLineBreaks) {
-          settings.getCommonSettings(psiFile.getLanguage()).KEEP_LINE_BREAKS = false;
+          settings.getCommonSettings(fileToProcess.getLanguage()).KEEP_LINE_BREAKS = false;
         }
-        result.set(doReformat(file, ranges));
+        if (commitAction != null) {
+          commitAction.run();
+          rangesForFormat.set(prepareRangesForFormat.compute());
+        }
+        result.set(doReformat(file, rangesForFormat.get()));
       });
       return result.get();
     });
