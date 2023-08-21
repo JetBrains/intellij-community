@@ -80,11 +80,7 @@ class SearchEverywhereMlExperiment {
 
   @VisibleForTesting
   internal class Experiment(vararg experiments: Pair<Int, ExperimentType>) {
-    val tabExperiments: Map<Int, ExperimentType>
-
-    init {
-      tabExperiments = hashMapOf(*experiments)
-    }
+    val tabExperiments: Map<Int, ExperimentType> = hashMapOf(*experiments)
 
     fun getExperimentByGroup(group: Int) = tabExperiments.getOrDefault(group, ExperimentType.NO_EXPERIMENT)
   }

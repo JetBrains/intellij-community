@@ -188,11 +188,7 @@ open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorPro
 private class MyDelayedFoldingState(private val project: Project,
                                     private val file: VirtualFile,
                                     state: Element) : Supplier<CodeFoldingState?> {
-  private val _serializedState: Element
-
-  init {
-    _serializedState = JDOMUtil.internElement(state)
-  }
+  private val _serializedState: Element = JDOMUtil.internElement(state)
 
   override fun get(): CodeFoldingState? {
     val document = FileDocumentManager.getInstance().getCachedDocument(file) ?: return null

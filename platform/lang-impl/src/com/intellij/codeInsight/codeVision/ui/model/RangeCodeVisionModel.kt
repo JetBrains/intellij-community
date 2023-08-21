@@ -25,12 +25,8 @@ class RangeCodeVisionModel(
   }
 
   private val projectModel = ProjectCodeVisionModel.getInstance(project)
-  private val lensForRange: List<CodeVisionEntry>
+  private val lensForRange: List<CodeVisionEntry> = lensMap.flatMap { it.value }
   val inlays: ArrayList<Inlay<*>> = ArrayList()
-
-  init {
-    lensForRange = lensMap.flatMap { it.value }
-  }
 
   fun lensPopupActive(): IProperty<Boolean> = projectModel.lensPopupActive
   fun handleLensClick(entry: CodeVisionEntry) {

@@ -7,17 +7,13 @@ import java.nio.file.Path
 import kotlin.io.path.inputStream
 
 class LuceneHunspellDictionary(dictionary: Path, affix: Path) : HunspellDictionary {
-  private val dict: HunspellWordList
-
-  init {
-    this.dict = affix.inputStream().use { affix ->
-      dictionary.inputStream().use { dictionary ->
-        HunspellWordList(
-          affix,
-          dictionary,
-          checkCanceled = { ProgressManager.checkCanceled() }
-        )
-      }
+  private val dict: HunspellWordList = affix.inputStream().use { affix ->
+    dictionary.inputStream().use { dictionary ->
+      HunspellWordList(
+        affix,
+        dictionary,
+        checkCanceled = { ProgressManager.checkCanceled() }
+      )
     }
   }
 

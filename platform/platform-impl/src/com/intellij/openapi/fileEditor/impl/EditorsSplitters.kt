@@ -816,15 +816,10 @@ class EditorSplitterStateSplitter(
   splitterElement: Element,
 ) {
   @JvmField
-  val isVertical: Boolean
+  val isVertical: Boolean = splitterElement.getAttributeValue("split-orientation") == "vertical"
 
   @JvmField
-  val proportion: Float
-
-  init {
-    isVertical = splitterElement.getAttributeValue("split-orientation") == "vertical"
-    proportion = splitterElement.getAttributeValue("split-proportion")?.toFloat() ?: 0.5f
-  }
+  val proportion: Float = splitterElement.getAttributeValue("split-proportion")?.toFloat() ?: 0.5f
 }
 
 @Internal

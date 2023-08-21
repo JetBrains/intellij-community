@@ -715,14 +715,13 @@ internal interface BlockOrder {
 }
 
 private class BlockState(list: List<CombinedBlockId>, current: CombinedBlockId) : PrevNextDifferenceIterable, BlockOrder {
-  private val blocks: List<CombinedBlockId>
+  private val blocks: List<CombinedBlockId> = list.toList()
 
   private val blockByIndex: MutableMap<CombinedBlockId, Int> = mutableMapOf()
 
   var currentBlock: CombinedBlockId = current
 
   init {
-    blocks = list.toList()
     blocks.forEachIndexed { index, block ->
       blockByIndex[block] = index
     }

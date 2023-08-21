@@ -48,14 +48,12 @@ internal fun isEnterKeyStroke(keyStroke: KeyStroke): Boolean {
 class ActionMenuItem internal constructor(action: AnAction,
                                           @JvmField val place: String,
                                           private val context: DataContext,
-                                          enableMnemonics: Boolean,
-                                          insideCheckedGroup: Boolean,
-                                          useDarkIcons: Boolean) : JBCheckBoxMenuItem() {
-                                            private val actionRef = createActionRef(action)
-  private val insideCheckedGroup: Boolean
-  private val enableMnemonics: Boolean
-  val isToggleable: Boolean
-  private val useDarkIcons: Boolean
+                                          private val enableMnemonics: Boolean,
+                                          private val insideCheckedGroup: Boolean,
+                                          private val useDarkIcons: Boolean) : JBCheckBoxMenuItem() {
+
+  private val actionRef = createActionRef(action)
+  val isToggleable: Boolean = action is Toggleable
 
   @JvmField
   internal val screenMenuItemPeer: MenuItem?
@@ -67,10 +65,6 @@ class ActionMenuItem internal constructor(action: AnAction,
     private set
 
   init {
-    this.enableMnemonics = enableMnemonics
-    isToggleable = action is Toggleable
-    this.insideCheckedGroup = insideCheckedGroup
-    this.useDarkIcons = useDarkIcons
     addActionListener(ActionListener { e -> performAction(e.modifiers) })
     setBorderPainted(false)
     if (Menu.isJbScreenMenuEnabled() && ActionPlaces.MAIN_MENU == this.place) {

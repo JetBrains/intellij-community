@@ -22,11 +22,8 @@ class MavenArtifactDownloader(private val myProject: Project,
                               artifacts: Collection<MavenArtifact>?,
                               private val myIndicator: ProgressIndicator?,
                               private val syncConsole: MavenSyncConsole?) {
-  private val myArtifacts: Collection<MavenArtifact>?
 
-  init {
-    myArtifacts = if (artifacts == null) null else HashSet(artifacts)
-  }
+  private val myArtifacts: Collection<MavenArtifact>? = if (artifacts == null) null else HashSet(artifacts)
 
   @Throws(MavenProcessCanceledException::class)
   fun downloadSourcesAndJavadocs(mavenProjects: Collection<MavenProject>,
