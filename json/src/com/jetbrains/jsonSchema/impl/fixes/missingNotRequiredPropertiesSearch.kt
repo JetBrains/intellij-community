@@ -5,6 +5,7 @@ package com.jetbrains.jsonSchema.impl.fixes
 
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.jetbrains.jsonSchema.extension.JsonLikePsiWalker
 import com.jetbrains.jsonSchema.ide.JsonSchemaService
@@ -14,8 +15,9 @@ import com.jetbrains.jsonSchema.impl.JsonValidationError
 import com.jetbrains.jsonSchema.impl.JsonValidationError.*
 
 @RequiresReadLock
-fun collectMissingPropertiesFromSchema(objectNode: PsiElement,
+fun collectMissingPropertiesFromSchema(objectNodePointer: SmartPsiElementPointer<PsiElement>,
                                        project: Project): JsonSchemaPropertiesInfo? {
+  val objectNode = objectNodePointer.dereference() ?: return null
   val schemaObjectFile = JsonSchemaService.Impl.get(project).getSchemaObject(objectNode.containingFile) ?: return null
   val psiWalker = JsonLikePsiWalker.getWalker(objectNode, schemaObjectFile) ?: return null
   val position = psiWalker.findPosition(objectNode, true) ?: return null
