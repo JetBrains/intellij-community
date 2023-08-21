@@ -13,6 +13,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.terminal.TerminalUiSettingsManager
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jediterm.terminal.StyledTextConsumer
 import com.jediterm.terminal.TextStyle
 import com.jediterm.terminal.emulator.ColorPalette
@@ -46,6 +47,7 @@ class TerminalOutputController(
     session.model.addTerminalListener(this)
   }
 
+  @RequiresEdt
   fun startCommandBlock(command: String?) {
     outputModel.createBlock(command)
     installRunningCommandListeners()

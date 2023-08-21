@@ -66,14 +66,17 @@ class TerminalPromptController(
     else "~"
   }
 
+  @RequiresEdt
   fun handleEnterPressed() {
     commandExecutor.startCommandExecution(editor.document.text)
   }
 
+  @RequiresEdt
   fun showCommandHistory() {
     listeners.forEach { it.commandHistoryStateChanged(showing = true) }
   }
 
+  @RequiresEdt
   fun onCommandHistoryClosed() {
     listeners.forEach { it.commandHistoryStateChanged(showing = false) }
   }

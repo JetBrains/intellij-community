@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.markup.*
 import com.intellij.ui.scale.JBUIScale
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBUI
 import java.awt.Font
@@ -26,6 +27,7 @@ class TerminalBlocksDecorator(private val editor: EditorEx) {
     }
   }
 
+  @RequiresEdt
   fun installDecoration(block: CommandBlock, isFirstBlock: Boolean = false): BlockDecoration {
     // add additional empty space on top of the block, if it is the first block
     val topInset = TerminalUI.blockTopInset + if (isFirstBlock) TerminalUI.blocksGap else 0

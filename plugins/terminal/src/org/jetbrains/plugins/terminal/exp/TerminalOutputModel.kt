@@ -7,14 +7,17 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.impl.RangeMarkerImpl
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
+import com.intellij.util.concurrency.annotations.RequiresEdt
+import java.util.*
 
 class TerminalOutputModel(private val editor: EditorEx) {
-  private val blocks: MutableList<CommandBlock> = mutableListOf()
+  private val blocks: MutableList<CommandBlock> = Collections.synchronizedList(ArrayList())
   private val decorations: MutableMap<CommandBlock, BlockDecoration> = HashMap()
   private val highlightings: MutableMap<CommandBlock, List<HighlightingInfo>> = LinkedHashMap()  // order matters
 
   private val document: Document = editor.document
 
+  @RequiresEdt
   fun createBlock(command: String?): CommandBlock {
     val lastBlock = getLastBlock()
     // restrict previous block expansion
@@ -39,6 +42,7 @@ class TerminalOutputModel(private val editor: EditorEx) {
     return block
   }
 
+  @RequiresEdt
   fun removeBlock(block: CommandBlock) {
     document.deleteString(block.startOffset, block.endOffset)
 
@@ -60,22 +64,27 @@ class TerminalOutputModel(private val editor: EditorEx) {
 
   fun getBlocksSize(): Int = blocks.size
 
+  @RequiresEdt
   fun getDecoration(block: CommandBlock): BlockDecoration? {
     return decorations[block]
   }
 
+  @RequiresEdt
   fun putDecoration(block: CommandBlock, decoration: BlockDecoration) {
     decorations[block] = decoration
   }
 
+  @RequiresEdt
   fun getAllHighlightings(): List<HighlightingInfo> {
     return highlightings.flatMap { it.value }
   }
 
+  @RequiresEdt
   fun getHighlightings(block: CommandBlock): List<HighlightingInfo>? {
     return highlightings[block]
   }
 
+  @RequiresEdt
   fun putHighlightings(block: CommandBlock, highlightings: List<HighlightingInfo>) {
     this.highlightings[block] = highlightings
   }

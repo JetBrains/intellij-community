@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.Gray
 import com.intellij.ui.JBColor
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import java.awt.Color
 import java.awt.Font
 import java.awt.Graphics2D
@@ -30,6 +31,7 @@ class TerminalCaretPainter(private val caretModel: TerminalCaretModel,
     caretModel.addListener(this)
   }
 
+  @RequiresEdt
   fun repaint() {
     updateCaretHighlighter(caretModel.caretPosition)
   }
