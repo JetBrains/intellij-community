@@ -2,7 +2,6 @@
 package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.diagnostic.ThrottledLogger;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.io.pagecache.FilePageCacheStatistics;
 import com.intellij.util.io.pagecache.impl.*;
@@ -42,7 +41,6 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 @ApiStatus.Internal
 public final class FilePageCacheLockFree implements AutoCloseable {
   private static final Logger LOG = Logger.getInstance(FilePageCacheLockFree.class);
-  private static final ThrottledLogger THROTTLED_LOG = new ThrottledLogger(LOG, 1000);
 
   public static final String DEFAULT_HOUSEKEEPER_THREAD_NAME = "FilePageCache housekeeper";
 
@@ -103,7 +101,7 @@ public final class FilePageCacheLockFree implements AutoCloseable {
     2 * DEFAULT_PERCENTS_OF_PAGES_TO_PREPARE_FOR_RECLAIM
   );
 
-  private final RateController rateController;
+  private final RateController rateController = new RateController();
 
   private final ConcurrentLinkedQueue<Command> commandsQueue = new ConcurrentLinkedQueue<>();
 
@@ -133,7 +131,6 @@ public final class FilePageCacheLockFree implements AutoCloseable {
       cacheCapacityBytes / 10, // allow allocating up to 10% buffers from the heap
       statistics
     );
-    rateController = new RateController(memoryManager);
 
 
     housekeeperThread = maintenanceThreadFactory.newThread(this::cacheMaintenanceLoop);
@@ -201,6 +198,37 @@ public final class FilePageCacheLockFree implements AutoCloseable {
     return statistics;
   }
 
+  public String dumpContent() {
+    StringBuilder sb = new StringBuilder();
+    for (Map.Entry<Path, PagesTable> e : pagesPerFile.entrySet()) {
+      Path path = e.getKey();
+      PagesTable pagesTable = e.getValue();
+
+
+      AtomicReferenceArray<PageImpl> pages = pagesTable.pages();
+      int pagesCount = 0;
+      int pageSize = 0;
+      for (int i = 0; i < pages.length(); i++) {
+        PageImpl page = pages.get(i);
+        if (page != null) {
+          pageSize = page.pageSize();
+          if (!page.isTombstone()) {
+            pagesCount++;
+          }
+        }
+      }
+
+      sb.append('[').append(path).append("]: pageSize=").append(pageSize).append('\n');
+      sb.append("\tpagesTable: ")
+        .append(pagesCount).append(" live out of ").append(pages.length())
+        .append('\n');
+      sb.append(pagesTable.probeLengthsHistogram()).append('\n');
+    }
+    return sb.toString();
+  }
+
+  private final Throttler releaseMemoryOverflowThrottler = new Throttler(100, MILLISECONDS);
+
 
   private void cacheMaintenanceLoop() {
     while (!Thread.interrupted()) {
@@ -219,6 +247,9 @@ public final class FilePageCacheLockFree implements AutoCloseable {
 
 
         //ensure queue is fresh enough -- drop out pages not good enough for reclaim anymore:
+        //TODO RC: throttle it each ~5ms? Right now it is useless optimization, because we need
+        //         reclaimQueue.size() anyway, and it is basically the same scanning through the queue.
+        //         But as soon as we'll have non-O(N) size impl -- this code may be throttled, for sure
         int pagesRemainedForReclaim = 0;
         int pagesDroppedFromReclaimQueue = 0;
         for (Iterator<PageImpl> it = pagesToProbablyReclaim.pagesToProbablyReclaimQueue.iterator();
@@ -233,24 +264,43 @@ public final class FilePageCacheLockFree implements AutoCloseable {
           }
         }
 
-        int pagesPreparedToReclaim = pagesForReclaimCollector.totalPagesPreparedToReclaim();
-        int pagesDemandForecast = rateController.forecastPagesDemand(pagesPreparedToReclaim, pagesRemainedForReclaim);
-        boolean pageDeficitIsLikely = pageDeficitIsLikely(pagesRemainedForReclaim, pagesDemandForecast);
-        if (pageDeficitIsLikely) {
-          refillPagesForReclaim(pagesDemandForecast);
-        }
-        else if (reclaimingQueueTooOld(turnStartedAtNs)) {
-          refillPagesForReclaim(pagesDemandForecast);
-        }
+        //int pagesPreparedToReclaim = pagesForReclaimCollector.totalPagesPreparedToReclaim();
+        int pagesDemandForecast = rateController.predictPagesDemandForNextTurn();
 
+        boolean pageDeficitIsLikely = isPageDeficitLikely(pagesRemainedForReclaim, pagesDemandForecast);
+        if (pageDeficitIsLikely
+            || pagesToProbablyReclaim.isOlderThen(turnStartedAtNs, MILLISECONDS.toNanos(500))) {
+          //We collect pages for reclaim based on their recent utility -- but this utility changes
+          // with time. Pages good-for-reclaim a second ago -- may become not-so-good for reclaim
+          // anymore now. Hence, we need to refresh pagesToReclaim if exhausted -- but also regularly
+
+          refillPagesForReclaim(pagesDemandForecast);
+
+          //if <50% of pages collected to reclaim are clean -> try to eagerly flush some dirty pages:
+          //MAYBE RC: flush 50% seems to be an overkill -- better to flush ~pagesToCollect. Since we
+          //  collect pages well in advance, i.e. way above forecasted demand in next 1ms, flushing
+          //  50% is an overkill, since it is likely most of those pages won't be reclaimed until
+          //  next queue refill, or they become dirty again.
+          int pagesFlushed = pagesForReclaimCollector.ensureEnoughCleanPagesToReclaim(0.5);
+
+          actuallyDidSomeMaintenance = true;
+
+          pagesRemainedForReclaim = pagesForReclaimCollector.totalPagesPreparedToReclaim();
+          pageDeficitIsLikely = isPageDeficitLikely(pagesRemainedForReclaim, pagesDemandForecast);
+        }
 
         if (memoryManager.hasOverflow()) {
-          releasePagesAllocatedAboveCapacity(/*maxPagesToRelease: */ 10);
-          actuallyDidSomeMaintenance = true;
+          boolean executed = releaseMemoryOverflowThrottler.runThrottled(
+            turnStartedAtNs,
+            () -> releasePagesAllocatedAboveCapacity(/*maxPagesToRelease: */ 10)
+          );
+
+          actuallyDidSomeMaintenance |= executed;
         }
 
 
         long timeSpentNs = System.nanoTime() - turnStartedAtNs;
+
         if (actuallyDidSomeMaintenance) {
           statistics.cacheMaintenanceTurnDone(timeSpentNs);
         }
@@ -259,6 +309,9 @@ public final class FilePageCacheLockFree implements AutoCloseable {
         }
 
 
+        //TODO RC: we could predict ~how soon we'll need refill -- based on current reclaimQueue size
+        //         and the load forecast -- and adjust .wait() time accordingly, e.g. in [1..10]ms
+        //         This even more reduce CPU consumption in case of low load
         //Assess allocation pressure and adjust our efforts:
         if (!pageDeficitIsLikely) {
           //allocation pressure low: could collect less and sleep more
@@ -272,7 +325,7 @@ public final class FilePageCacheLockFree implements AutoCloseable {
           Thread.yield();
         }
         else {
-          //allocation pressure is so high we don't catch up with it:
+          //allocation pressure is so high we can't catch up with it:
           // 1) no time to wait
           // 2) must collect more pages-to-reclaim
           pagesForReclaimCollector.collectMoreAggressively();
@@ -288,27 +341,11 @@ public final class FilePageCacheLockFree implements AutoCloseable {
     LOG.info("maintenance loop interrupted -> exiting");
   }
 
-  private long lastRefillDoneAtNs = System.nanoTime();
-
-  private boolean reclaimingQueueTooOld(long nowNs) {
-    //We collect pages for reclaim based on their recent utility -- but this utility change with time.
-    //Pages good-for-reclaim a second ago -- may become not-good-for-reclaim anymore now.
-    //Hence, we need to refresh pagesToReclaim regularly, even if they weren't excessively used.
-    if (lastRefillDoneAtNs < nowNs - MILLISECONDS.toNanos(500)) {
-      lastRefillDoneAtNs = nowNs;
-      return true;
-    }
-    return false;
-  }
-
-  private boolean pageDeficitIsLikely(int pagesRemainedForReclaim,
+  private boolean isPageDeficitLikely(int pagesRemainedForReclaim,
                                       int pagesDemandForecast) {
     boolean memoryBudgetIsAboutToExhaust = memoryManager.nativeBytesUsed() > 4 * memoryManager.nativeCapacityBytes() / 5;
     boolean pagesPileIsAboutToExhaust = pagesDemandForecast > pagesRemainedForReclaim;
-    if (pagesPileIsAboutToExhaust && memoryBudgetIsAboutToExhaust) {
-      return true;
-    }
-    return false;
+    return pagesPileIsAboutToExhaust && memoryBudgetIsAboutToExhaust;
   }
 
   //TODO RC:
@@ -331,13 +368,6 @@ public final class FilePageCacheLockFree implements AutoCloseable {
   //        Better solution could be: ring buffer of last 16 exceptions, that could be requested from
   //        any thread, and cleared?
 
-  //================================================================================================
-  // MAYBE: Find out current 'page reclamation pressure' -- i.e. if there are a lot of pages still
-  //        available for allocation -> no need to release anything, except for STATE_TO_UNMAP (because
-  //        apt PagedFileStorage was closed). Also we could .force() pages which are not used for a
-  //        long (hence low chance of contention .force() vs use)
-  //        As long, as page pressure becomes higher -> we start to be more aggressive in reclaiming pages
-
 
   //================================================================================================
   //Main idea is following: all else equal, the page already loaded is always worth more than the one
@@ -350,8 +380,8 @@ public final class FilePageCacheLockFree implements AutoCloseable {
   // would prevent such a page from being unloaded and reclaimed as the need arises.
 
   private void refillPagesForReclaim(int pagesToCollect) {
-    //Now scan all pages and collect candidates for reclamation: basically, build not-fully-up-to-date
-    // index for a query like
+    //Now scan all pages and collect candidates for reclamation.
+    //Basically, build not-fully-up-to-date index for a query like:
     // `SELECT top <N> FROM pages WHERE usageCount=0 ORDER BY utility DESC`
 
     int totalPages = statistics.totalPagesAllocated() - statistics.totalPagesReclaimed();
@@ -366,14 +396,13 @@ public final class FilePageCacheLockFree implements AutoCloseable {
       for (int pageTableNo = 0; pageTableNo < tablesToScan; pageTableNo++) {
         PagesTable pageTable = pagesTablesToScan.next();
         AtomicReferenceArray<PageImpl> pages = pageTable.pages();
-        int pagesAliveInTable = 0;//will shrink table if too much TOMBSTONEs
-        for (int i = 0; i < pages.length(); i++) {
+        int pagesAliveInTable = 0;//count alive entries to shrink the table if there are too few of them
+        int pagesCount = pages.length();
+        for (int i = 0; i < pagesCount; i++) {
           PageImpl page = pages.get(i);
           if (page == null || page.isTombstone()) {
             continue;
           }
-
-          pagesAliveInTable++;
 
           if (page.isAboutToUnmap()
               && page.usageCount() == 0) {
@@ -385,7 +414,9 @@ public final class FilePageCacheLockFree implements AutoCloseable {
             }
           }
 
-          //Copy usefulness to field accessed by this thread only -- so comparison by this field is
+          pagesAliveInTable++;
+
+          //Copy 'usefulness' to field accessed by this thread only -- so comparison by this field is
           // stable. Shared field .tokensOfUsefulness could be modified concurrently anytime, hence
           // its use for sorting violates Comparator contract.
           int tokensOfUsefulness = adjustPageUsefulness(page);
@@ -409,9 +440,6 @@ public final class FilePageCacheLockFree implements AutoCloseable {
     }
 
     pagesToProbablyReclaim.refill(pagesForReclaimCollector);
-
-    //if <50% of pages collected to reclaim are clean -> try to eagerly flush some dirty pages:
-    int pagesFlushed = pagesForReclaimCollector.ensureEnoughCleanPagesToReclaim(0.5);
   }
 
   private void releasePagesAllocatedAboveCapacity(int maxPagesToReclaim) {
@@ -426,6 +454,9 @@ public final class FilePageCacheLockFree implements AutoCloseable {
 
     int remainsToReclaim = maxPagesToReclaim;
 
+    //TODO RC: we don't need to scan pagesToProbablyReclaim -- it is CLQ, scanning it is expensive.
+    //         better to scan pagesForReclaimCollector lists -- they are array-based, scanning is
+    //         very fast, and it is safe since housekeeper thread owns the collections anyway.
     Iterator<PageImpl> it = pagesToProbablyReclaim.iterator();
     while (it.hasNext() && memoryManager.hasOverflow()) {
       PageImpl candidate = it.next();
@@ -915,12 +946,19 @@ public final class FilePageCacheLockFree implements AutoCloseable {
      */
     private final Object refillSignalLock = new Object();
 
+    private long lastRefillAtNs = 0;
+
 
     public int size() {
       //FiXME RC: CLQ.size is O(N), but current attempt to fix it with counter leads to freezes
       //          due to out-of-sync counter & queue
       return pagesToProbablyReclaimQueue.size();
       //return pagesInQueue.get();
+    }
+
+    public boolean isOlderThen(long nowNs,
+                               long thresholdNs) {
+      return (nowNs - thresholdNs > lastRefillAtNs);
     }
 
     public void refill(@NotNull PagesForReclaimCollector pagesCollector) {
@@ -933,6 +971,7 @@ public final class FilePageCacheLockFree implements AutoCloseable {
       this.pagesToProbablyReclaimQueue = pagesForReclaim;
       this.pagesInQueue.addAndGet(forReclaimDirty.size() + forReclaimNonDirty.size());
 
+      lastRefillAtNs = System.nanoTime();
       notifyAboutRefill();
     }
 
@@ -1047,15 +1086,47 @@ public final class FilePageCacheLockFree implements AutoCloseable {
     }
   }
 
-  private static class RateController {
-    private final @NotNull IMemoryManager memoryManager;
+  private class RateController {
+    private long totalPagesAllocatedTurnBefore = 0L;
+    private long totalPagesWaitedTurnBefore = 0L;
 
-    private RateController(@NotNull IMemoryManager memoryManager) { this.memoryManager = memoryManager; }
+    private final ConfinedIntValue safetyMarginFactor = new ConfinedIntValue(12, 12, 36);
 
-    public int forecastPagesDemand(int pagesPreparedToReclaim,
-                                   int pagesRemainedForReclaim) {
-      int pagesUsed = pagesPreparedToReclaim - pagesRemainedForReclaim;
-      return Math.max(pagesUsed * 6 / 5, 1);
+    public int predictPagesDemandForNextTurn() {
+      //We need a time series forecasting here:
+      // 1) Value we're trying to predict is statistics.totalPagesAllocated() increase on next turn.
+      // 2) We don't need a precise forecast: it is fine to be systematically biased 'above' -- we
+      //    usually over-provision pages for reclaim anyway, so being biased 'above' doesn't change
+      //    much, as long as we're not order of magnitude off.
+      // 3) We should try hard to NOT systematically forecast 'below', since this leads to worker threads
+      //    stalling -- we could use statistics.totalPageAllocationsWaited() as a feedback to auto-tune
+      //    forecast parameters to reach that goal.
+
+      //Right now we use very primitive forecasting: forecast is just current value is multiplied by
+      //  some 'safety margin factor'. Safety margin factor is a value in range [10/10...36/10], and we
+      //  double it each time some there are 'waits' during turn before, and decrement it each time
+      //  there were no waits -- so it is a simple feedback loop 'multiplicative-increase/additive-decrease'.
+
+      long totalPagesAllocatedNow = statistics.totalPagesAllocated();
+      int totalPagesWaitedNow = statistics.totalPageAllocationsWaited();
+
+      int pagesAllocatedInTurn = Math.toIntExact(totalPagesAllocatedNow - totalPagesAllocatedTurnBefore);
+      int pagesWaitedInTurn = Math.toIntExact(totalPagesWaitedNow - totalPagesWaitedTurnBefore);
+
+      totalPagesAllocatedTurnBefore = totalPagesAllocatedNow;
+      totalPagesWaitedTurnBefore = totalPagesWaitedNow;
+
+      if (pagesWaitedInTurn > 0) {
+        safetyMarginFactor.update(safetyMarginFactor.value() * 2);
+      }
+      else {
+        safetyMarginFactor.dec();
+      }
+
+      return Math.max(
+        pagesAllocatedInTurn * safetyMarginFactor.value() / 10,
+        1
+      );
     }
   }
 }
