@@ -32,7 +32,7 @@ open class DaemonFusReporter(private val project: Project) : DaemonCodeAnalyzer.
   private var dirtyRange: TextRange? = null
   private var initialEntireFileHighlightingActivity: Activity? = null
   private var initialEntireFileHighlightingReported: Boolean = false
-  private var documentModificationStamp: Long = 0
+  private var docPreviousAnalyzedModificationStamp: Long = 0
   private var documentStartedHash: Int = 0 // Document the `daemonStarting` event was received for. Store the hash instead of Document instance to avoid leaks
 
   @Volatile
@@ -50,7 +50,6 @@ open class DaemonFusReporter(private val project: Project) : DaemonCodeAnalyzer.
       val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document)
       if (psiFile == null) null else FileStatusMap.getDirtyTextRange(document, psiFile, Pass.UPDATE_ALL)
     }
-    documentModificationStamp = document?.modificationStamp ?: 0
     documentStartedHash = document?.hashCode() ?: 0
 
     if (!initialEntireFileHighlightingReported) {
@@ -71,7 +70,7 @@ open class DaemonFusReporter(private val project: Project) : DaemonCodeAnalyzer.
       return
     }
 
-    if (document != null && documentModificationStamp == document.modificationStamp && initialEntireFileHighlightingReported) {
+    if (document != null && docPreviousAnalyzedModificationStamp == document.modificationStamp && initialEntireFileHighlightingReported) {
       // Don't report 'finished' event in case of no changes in the document
       return
     }
@@ -109,6 +108,7 @@ open class DaemonFusReporter(private val project: Project) : DaemonCodeAnalyzer.
       DaemonFusCollector.ENTIRE_FILE_HIGHLIGHTED with wasEntireFileHighlighted,
       DaemonFusCollector.CANCELED with canceled
     )
+    docPreviousAnalyzedModificationStamp = document?.modificationStamp ?: 0
   }
 }
 
