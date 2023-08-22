@@ -1,9 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.vfs.newvfs.persistent
+package com.intellij.openapi.vfs.newvfs.persistent.bytearraystorage
 
-import com.intellij.openapi.vfs.newvfs.persistent.StorageDurabilityTest.Proto
-import com.intellij.openapi.vfs.newvfs.persistent.StorageDurabilityTest.readProto
-import com.intellij.openapi.vfs.newvfs.persistent.StorageDurabilityTest.writeProto
+import com.intellij.openapi.vfs.newvfs.persistent.*
+import com.intellij.openapi.vfs.newvfs.persistent.bytearraystorage.StorageDurabilityTest.Proto
+import com.intellij.openapi.vfs.newvfs.persistent.bytearraystorage.StorageDurabilityTest.readProto
+import com.intellij.openapi.vfs.newvfs.persistent.bytearraystorage.StorageDurabilityTest.writeProto
 import kotlinx.coroutines.*
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
