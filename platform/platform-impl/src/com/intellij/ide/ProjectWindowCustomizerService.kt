@@ -16,10 +16,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.ProjectFrameHelper
 import com.intellij.ui.ColorUtil
-import com.intellij.ui.GotItTooltip
 import com.intellij.ui.JBColor
 import com.intellij.util.PlatformUtils
 import com.intellij.util.concurrency.SynchronizedClearableLazy
@@ -306,10 +304,6 @@ class ProjectWindowCustomizerService : Disposable {
 
   fun isActive(): Boolean = wasGradientPainted && ourSettingsValue && isAvailable()
 
-  private var gotItShown
-    get() = PropertiesComponent.getInstance().getBoolean("colorful.instances.gotIt.shown", false)
-    set(value) { PropertiesComponent.getInstance().setValue("colorful.instances.gotIt.shown", value) }
-
   fun enableIfNeeded() {
     if (!wasGradientPainted && conditionToEnable()) {
       wasGradientPainted = true
@@ -329,31 +323,6 @@ class ProjectWindowCustomizerService : Disposable {
 
   private fun fireUpdate() {
     listeners.forEach { it(isActive()) }
-  }
-
-  private fun recordGotItShown() {
-    gotItShown = true
-  }
-
-  fun showGotIt(project: Project, component: JComponent) {
-    if (!PlatformUtils.isRider()) {
-      return
-    }
-    if (gotItShown || !isActive()) {
-      return
-    }
-
-    val gotIt = GotItTooltip("colorful.instances", IdeBundle.message("colorfulInstances.gotIt.text"), this).apply {
-      withHeader(IdeBundle.message("colorfulInstances.gotIt.title"))
-      // withTimeout(5000) TODO: to discuss with designers: do we want autohide or do we want a button?
-    }
-
-    gotIt.showCondition = { true }
-
-    if (WindowManagerEx.getInstanceEx().getFrameHelper(project)?.frame?.isFocused == true) {
-      gotIt.show(component, GotItTooltip.BOTTOM_MIDDLE)
-      recordGotItShown()
-    }
   }
 
   /**
