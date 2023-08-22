@@ -3,12 +3,12 @@ package org.jetbrains.kotlin.idea.k2.codeinsight
 
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.KtImportOptimizerResult
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinOptimizeImportsFacility
+import org.jetbrains.kotlin.idea.base.psi.imports.KotlinImportPathComparator
 import org.jetbrains.kotlin.name.parentOrNull
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtImportDirective
@@ -90,7 +90,14 @@ internal class K2OptimizeImportsFacility : KotlinOptimizeImportsFacility {
     ): List<ImportPath>? {
         require(data is K2ImportData)
 
-        if (data.unusedImports.isEmpty()) return null
-        return file.importDirectives.filterNot { it in data.unusedImports }.mapNotNull { it.importPath }
+        val usedImports = (file.importDirectives - data.unusedImports).mapNotNull { it.importPath }
+        val sortedUsedImports = usedImports.sortedWith(KotlinImportPathComparator.create(file))
+
+        if (data.unusedImports.isEmpty() && usedImports == sortedUsedImports) {
+            // Imports did not change, do nothing
+            return null
+        }
+
+        return sortedUsedImports
     }
 }
