@@ -3659,6 +3659,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private class MyInputMethodHandler implements InputMethodRequests {
+    /**
+     * Very high inlay priority to keep IME inlays to be always the nearest to the caret.
+     * Not the Integer.MAX_VALUE to prevent accidental overflow.
+     */
+    private static final int IME_INLAY_PRIORITY = 1000000;
+
     private RangeMarker composedRangeMarker;
     private Inlay<?> inlayLeft;
     private Inlay<?> inlayRight;
@@ -3907,11 +3913,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
               var caret = e.getCaret();
               var leftLength = caret != null ? caret.getInsertionIndex() : 0;
               if (leftLength > 0) {
-                inlayLeft = getInlayModel().addInlineElement(offset, false,
+                inlayLeft = getInlayModel().addInlineElement(offset, false, -IME_INLAY_PRIORITY,
                                                              new InputMethodInlayRenderer(composedString.substring(0, leftLength)));
               }
               if (leftLength < composedString.length()) {
-                inlayRight = getInlayModel().addInlineElement(offset, true,
+                inlayRight = getInlayModel().addInlineElement(offset, true, IME_INLAY_PRIORITY,
                                                               new InputMethodInlayRenderer(composedString.substring(leftLength)));
               }
             } else {
