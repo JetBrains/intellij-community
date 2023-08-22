@@ -279,18 +279,18 @@ public final class ExpUiIcons {
     /** 28x28 */ public static final @NotNull Icon InformationDialog = load("expui/general/informationDialog.svg", 658647123, 2);
 
     public static final class Inspections {
-      /** 16x16 */ public static final @NotNull Icon InspectionsError = load("expui/general/inspections/inspectionsError.svg", -1168752437, 0);
-      /** 16x16 */ public static final @NotNull Icon InspectionsErrorEmpty = load("expui/general/inspections/inspectionsErrorEmpty.svg", 2135562312, 0);
+      /** 16x16 */ public static final @NotNull Icon InspectionsError = load("expui/general/inspections/inspectionsError.svg", 1576466233, 0);
+      /** 16x16 */ public static final @NotNull Icon InspectionsErrorEmpty = load("expui/general/inspections/inspectionsErrorEmpty.svg", -641361387, 0);
       /** 16x16 */ public static final @NotNull Icon InspectionsEye = load("expui/general/inspections/inspectionsEye.svg", -1922526067, 2);
-      /** 16x16 */ public static final @NotNull Icon InspectionsMixed = load("expui/general/inspections/inspectionsMixed.svg", -1889408145, 2);
-      /** 16x16 */ public static final @NotNull Icon InspectionsOK = load("expui/general/inspections/inspectionsOK.svg", 1799696664, 2);
-      /** 16x16 */ public static final @NotNull Icon InspectionsOKEmpty = load("expui/general/inspections/inspectionsOKEmpty.svg", -605501921, 2);
+      /** 16x16 */ public static final @NotNull Icon InspectionsMixed = load("expui/general/inspections/inspectionsMixed.svg", -1700862393, 2);
+      /** 16x16 */ public static final @NotNull Icon InspectionsOK = load("expui/general/inspections/inspectionsOK.svg", 1832549894, 2);
+      /** 16x16 */ public static final @NotNull Icon InspectionsOKEmpty = load("expui/general/inspections/inspectionsOKEmpty.svg", -926905296, 2);
       /** 16x16 */ public static final @NotNull Icon InspectionsPause = load("expui/general/inspections/inspectionsPause.svg", -1097867678, 2);
       /** 16x16 */ public static final @NotNull Icon InspectionsPowerSaveMode = load("expui/general/inspections/inspectionsPowerSaveMode.svg", -1084191665, 2);
-      /** 16x16 */ public static final @NotNull Icon InspectionsTrafficOff = load("expui/general/inspections/inspectionsTrafficOff.svg", 639662663, 2);
-      /** 16x16 */ public static final @NotNull Icon InspectionsTypos = load("expui/general/inspections/inspectionsTypos.svg", -179572159, 2);
-      /** 16x16 */ public static final @NotNull Icon InspectionsWarning = load("expui/general/inspections/inspectionsWarning.svg", 1204686546, 0);
-      /** 16x16 */ public static final @NotNull Icon InspectionsWarningEmpty = load("expui/general/inspections/inspectionsWarningEmpty.svg", -806840252, 0);
+      /** 16x16 */ public static final @NotNull Icon InspectionsTrafficOff = load("expui/general/inspections/inspectionsTrafficOff.svg", 23383921, 2);
+      /** 16x16 */ public static final @NotNull Icon InspectionsTypos = load("expui/general/inspections/inspectionsTypos.svg", -312735021, 2);
+      /** 16x16 */ public static final @NotNull Icon InspectionsWarning = load("expui/general/inspections/inspectionsWarning.svg", 1436857947, 0);
+      /** 16x16 */ public static final @NotNull Icon InspectionsWarningEmpty = load("expui/general/inspections/inspectionsWarningEmpty.svg", 57350527, 0);
     }
 
     /** 16x16 */ public static final @NotNull Icon Layout = load("expui/general/layout.svg", 1425337863, 2);
