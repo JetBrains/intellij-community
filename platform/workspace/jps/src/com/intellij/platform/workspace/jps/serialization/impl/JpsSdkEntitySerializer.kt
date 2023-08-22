@@ -48,7 +48,7 @@ private val ELEMENT_HOMEPATH = "homePath"
 val ELEMENT_ADDITIONAL = "additional"
 
 
-class JpsSdkEntitySerializer(val entitySource: JpsGlobalFileEntitySource): JpsFileEntitiesSerializer<SdkMainEntity> {
+class JpsSdkEntitySerializer(val entitySource: JpsGlobalFileEntitySource, private val sortedRootTypes: List<String>): JpsFileEntitiesSerializer<SdkMainEntity> {
   private val LOG = logger<JpsSdkEntitySerializer>()
   private val rootTypes = ConcurrentFactoryMap.createMap<String, SdkRootTypeId> { SdkRootTypeId(it) }
 
@@ -157,19 +157,19 @@ class JpsSdkEntitySerializer(val entitySource: JpsGlobalFileEntitySource): JpsFi
     home.setAttribute(ATTRIBUTE_VALUE, sdkEntity.homePath.url)
     sdkRootElement.addContent(home)
 
-    val rootsElement = Element(ELEMENT_ROOTS)
     val sortedRoots = sdkEntity.roots.groupBy { it.type.name }.toSortedMap()
-    sortedRoots.forEach { (rootType, roots) ->
-      rootsElement.addContent(writeRoots(rootType, roots))
+    val rootsElement = Element(ELEMENT_ROOTS)
+    sortedRootTypes.forEach { rootType ->
+      val sdkRoots = sortedRoots[rootType] ?: emptyList()
+      rootsElement.addContent(writeRoots(rootType, sdkRoots))
     }
     sdkRootElement.addContent(rootsElement)
 
-    val additional = Element(ELEMENT_ADDITIONAL)
     val additionalData = sdkEntity.additionalData
     if (additionalData.isNotBlank()) {
-      additional.addContent(JDOMUtil.load(additionalData))
+      sdkRootElement.addContent(JDOMUtil.load(additionalData))
     }
-    sdkRootElement.addContent(additional)
+    //sdkRootElement.addContent(additional)
   }
 
   private fun writeRoots(rootType: String, roots: List<SdkRoot>): Element {

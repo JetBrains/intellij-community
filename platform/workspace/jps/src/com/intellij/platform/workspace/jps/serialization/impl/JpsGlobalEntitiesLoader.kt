@@ -10,11 +10,13 @@ object JpsGlobalEntitiesSerializers {
   const val SDK_FILE_NAME: String = "jdk.table"
   const val GLOBAL_LIBRARIES_FILE_NAME: String = "applicationLibraries"
 
-  fun createApplicationSerializers(virtualFileUrlManager: VirtualFileUrlManager, createLibSerializer: Boolean): List<JpsFileEntitiesSerializer<WorkspaceEntity>> {
+  fun createApplicationSerializers(virtualFileUrlManager: VirtualFileUrlManager,
+                                   sortedRootTypes: List<String>,
+                                   createLibSerializer: Boolean): List<JpsFileEntitiesSerializer<WorkspaceEntity>> {
     val globalSdkFile = virtualFileUrlManager.fromUrl(PathManager.getOptionsFile(SDK_FILE_NAME).absolutePath)
     val globalSdkEntitySource = JpsGlobalFileEntitySource(globalSdkFile)
 
-    val serializers = mutableListOf(JpsSdkEntitySerializer(globalSdkEntitySource) as JpsFileEntitiesSerializer<WorkspaceEntity>)
+    val serializers = mutableListOf(JpsSdkEntitySerializer(globalSdkEntitySource, sortedRootTypes) as JpsFileEntitiesSerializer<WorkspaceEntity>)
 
     if (createLibSerializer) {
       val globalLibrariesFile = virtualFileUrlManager.fromUrl(PathManager.getOptionsFile(GLOBAL_LIBRARIES_FILE_NAME).absolutePath)

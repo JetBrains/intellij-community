@@ -4,20 +4,18 @@ package com.intellij.workspaceModel.ide.impl.jps.serialization
 import com.intellij.openapi.application.*
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.roots.OrderRootType
 import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMs
 import com.intellij.platform.workspace.jps.JpsGlobalFileEntitySource
-import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.serialization.impl.*
 import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.url.VirtualFileUrl
+import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.workspaceModel.ide.*
 import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
 import com.intellij.workspaceModel.ide.impl.jpsMetrics
 import com.intellij.workspaceModel.ide.legacyBridge.GlobalLibraryTableBridge
-import com.intellij.platform.workspace.storage.url.VirtualFileUrl
-import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.workspaceModel.ide.legacyBridge.sdk.GlobalSdkTableBridge
-import com.intellij.workspaceModel.ide.*
-import com.intellij.workspaceModel.ide.impl.jpsMetrics
 import io.opentelemetry.api.metrics.Meter
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.TestOnly
@@ -121,7 +119,9 @@ class JpsGlobalModelSynchronizerImpl(private val coroutineScope: CoroutineScope)
   }
 
   private fun createSerializers(): List<JpsFileEntitiesSerializer<WorkspaceEntity>> {
+    val sortedRootTypes = OrderRootType.getSortedRootTypes().mapNotNull { it.sdkRootName }
     return JpsGlobalEntitiesSerializers.createApplicationSerializers(VirtualFileUrlManager.getGlobalInstance(),
+                                                                     sortedRootTypes,
                                                                      !isLibSerializationProhibited)
   }
 
