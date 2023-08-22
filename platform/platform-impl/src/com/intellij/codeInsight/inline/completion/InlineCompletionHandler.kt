@@ -73,7 +73,7 @@ class InlineCompletionHandler(private val scope: CoroutineScope) : CodeInsightAc
           .onCompletion { if (it != null) disposePlaceholder(editor) }
           .onEmpty { disposePlaceholder(editor) }
           .collectIndexed { index, value ->
-            disposePlaceholder(editor)
+            if (index == 0) disposePlaceholder(editor)
             if (index == 0 && modificationStamp != request.document.modificationStamp) {
               cancel()
               return@collectIndexed
@@ -97,7 +97,6 @@ class InlineCompletionHandler(private val scope: CoroutineScope) : CodeInsightAc
   }
 
   private fun showPlaceholder(editor: Editor, startOffset: Int, placeholder: String = "...") {
-    //disposePlaceholder(editor)
     if (!shouldShowPlaceholder()) return
 
     val ctx = editor.initOrGetInlineCompletionContextWithPlaceholder()
