@@ -6,6 +6,7 @@ import com.intellij.diagnostic.PluginException;
 import com.intellij.internal.statistic.eventLog.*;
 import com.intellij.internal.statistic.eventLog.events.EventId;
 import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger;
+import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointListener;
@@ -38,7 +39,7 @@ import static com.intellij.internal.statistic.service.fus.collectors.UsageCollec
 @ApiStatus.Internal
 public final class FUCounterUsageLogger {
   private static final int LOG_REGISTERED_DELAY_MIN = 24 * 60;
-  private static final int LOG_REGISTERED_INITIAL_DELAY_MIN = 5;
+  private static final int LOG_REGISTERED_INITIAL_DELAY_MIN = StatisticsUploadAssistant.isUseTestStatisticsConfig() ? 1 : 5;
 
   private static final Logger LOG = Logger.getInstance(FUCounterUsageLogger.class);
 
