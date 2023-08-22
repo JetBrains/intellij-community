@@ -8,6 +8,7 @@ import com.intellij.openapi.extensions.ProjectExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.components.breadcrumbs.Crumb;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,6 +24,7 @@ public abstract class FileBreadcrumbsCollector {
   /**
    * Checks if this collector handles the given file.
    */
+  @RequiresBackgroundThread
   public abstract boolean handlesFile(@NotNull VirtualFile virtualFile);
 
   /**
