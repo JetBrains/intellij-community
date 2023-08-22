@@ -1,8 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide
 
 import com.intellij.ide.util.TipAndTrickManager
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
@@ -20,7 +21,7 @@ private class TipOfTheDayStartupActivity : ProjectActivity {
   }
 
   override suspend fun execute(project: Project) {
-    val tipManager = TipAndTrickManager.getInstance()
+    val tipManager = serviceAsync<TipAndTrickManager>()
     if (tipManager.canShowDialogAutomaticallyNow(project)
         // prevent tip dialog showing when any popup already open
         && WindowManager.getInstance().mostRecentFocusedWindow is IdeFrame) {
