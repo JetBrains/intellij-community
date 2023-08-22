@@ -24,14 +24,14 @@ class BlockTerminalView(
   private val project: Project,
   private val session: TerminalSession,
   private val settings: JBTerminalSystemSettingsProviderBase
-) : JPanel(), TerminalContentView, TerminalCommandExecutor {
+) : TerminalContentView, TerminalCommandExecutor {
   private val controller: BlockTerminalController
 
   private val outputView: TerminalOutputView = TerminalOutputView(project, session, settings)
   private val promptView: TerminalPromptView = TerminalPromptView(project, settings, session, this)
   private var alternateBufferView: SimpleTerminalView? = null
 
-  override val component: JComponent = this
+  override val component: JComponent = JPanel()
 
   override val preferredFocusableComponent: JComponent
     get() = when {
@@ -47,7 +47,7 @@ class BlockTerminalView(
     promptView.controller.addListener(object : PromptStateListener {
       override fun promptVisibilityChanged(visible: Boolean) {
         promptView.component.isVisible = visible
-        revalidate()
+        component.revalidate()
         invokeLater {
           IdeFocusManager.getInstance(project).requestFocus(preferredFocusableComponent, true)
         }
@@ -57,23 +57,23 @@ class BlockTerminalView(
     promptView.controller.addDocumentListener(object : DocumentListener {
       override fun documentChanged(event: DocumentEvent) {
         if (promptView.component.preferredHeight != promptView.component.height) {
-          revalidate()
+          component.revalidate()
         }
       }
     })
 
     outputView.controller.addDocumentListener(object : DocumentListener {
       override fun documentChanged(event: DocumentEvent) {
-        if (outputView.component.height < this@BlockTerminalView.height    // do not revalidate if output already occupied all height
+        if (outputView.component.height < component.height    // do not revalidate if output already occupied all height
             && outputView.component.preferredHeight > outputView.component.height) { // revalidate if output no more fit in current bounds
-          revalidate()
+          component.revalidate()
         }
       }
     })
 
     controller = BlockTerminalController(session, outputView.controller, promptView.controller)
 
-    addComponentListener(object : ComponentAdapter() {
+    component.addComponentListener(object : ComponentAdapter() {
       override fun componentResized(e: ComponentEvent?) {
         updateTerminalSize()
       }
@@ -87,6 +87,7 @@ class BlockTerminalView(
       }
     })
 
+    component.background = TerminalUI.terminalBackground
     installPromptAndOutput()
   }
 
@@ -111,26 +112,26 @@ class BlockTerminalView(
     Disposer.register(this, view)
     alternateBufferView = view
 
-    removeAll()
-    layout = BorderLayout()
-    add(view.component, BorderLayout.CENTER)
-    revalidate()
+    with(component) {
+      removeAll()
+      layout = BorderLayout()
+      add(view.component, BorderLayout.CENTER)
+      revalidate()
+    }
   }
 
   private fun installPromptAndOutput() {
-    removeAll()
-    layout = BlockTerminalLayout()
-    add(outputView.component, BlockTerminalLayout.TOP)
-    add(promptView.component, BlockTerminalLayout.BOTTOM)
-    revalidate()
+    with(component) {
+      removeAll()
+      layout = BlockTerminalLayout()
+      add(outputView.component, BlockTerminalLayout.TOP)
+      add(promptView.component, BlockTerminalLayout.BOTTOM)
+      revalidate()
+    }
   }
 
   override fun startCommandExecution(command: String) {
     controller.startCommandExecution(command)
-  }
-
-  override fun getBackground(): Color {
-    return TerminalUI.terminalBackground
   }
 
   private fun updateTerminalSize() {
@@ -143,8 +144,8 @@ class BlockTerminalView(
       alternateBufferView!!.let { it.terminalWidth to it.charSize }
     }
     else outputView.let { it.terminalWidth to it.charSize }
-    return if (width > 0 && height > 0) {
-      TerminalUiUtils.calculateTerminalSize(Dimension(width, height), charSize)
+    return if (width > 0 && component.height > 0) {
+      TerminalUiUtils.calculateTerminalSize(Dimension(width, component.height), charSize)
     }
     else null
   }

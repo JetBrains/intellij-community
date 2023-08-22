@@ -12,7 +12,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.util.ui.JBUI
 import java.awt.BorderLayout
-import java.awt.Color
 import java.awt.Dimension
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -24,11 +23,11 @@ class SimpleTerminalView(
   session: TerminalSession,
   eventsHandler: TerminalEventsHandler,
   private val withVerticalScroll: Boolean = true
-) : JPanel(), Disposable {
+) : Disposable {
   private val editor: EditorImpl
   private val controller: SimpleTerminalController
 
-  val component: JComponent = this
+  val component: JComponent = JPanel()
   val preferredFocusableComponent: JComponent
     get() = editor.contentComponent
 
@@ -55,9 +54,10 @@ class SimpleTerminalView(
       }
     })
 
-    border = JBUI.Borders.emptyLeft(TerminalUI.alternateBufferLeftInset)
-    layout = BorderLayout()
-    add(editor.component, BorderLayout.CENTER)
+    component.background = TerminalUI.terminalBackground
+    component.border = JBUI.Borders.emptyLeft(TerminalUI.alternateBufferLeftInset)
+    component.layout = BorderLayout()
+    component.add(editor.component, BorderLayout.CENTER)
   }
 
   private fun createEditor(): EditorImpl {
@@ -72,10 +72,6 @@ class SimpleTerminalView(
   }
 
   fun isFocused(): Boolean = editor.contentComponent.hasFocus()
-
-  override fun getBackground(): Color {
-    return TerminalUI.terminalBackground
-  }
 
   override fun dispose() {
     EditorFactory.getInstance().releaseEditor(editor)

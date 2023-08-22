@@ -4,7 +4,6 @@ package org.jetbrains.plugins.terminal.exp
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
-import com.intellij.util.ui.JBUI
 import com.jediterm.core.util.TermSize
 import java.awt.Dimension
 import java.awt.event.ComponentAdapter
@@ -26,8 +25,7 @@ class PlainTerminalView(
   init {
     val eventsHandler = TerminalEventsHandler(session, settings)
     view = SimpleTerminalView(project, settings, session, eventsHandler)
-    view.border = JBUI.Borders.empty()
-    view.addComponentListener(object : ComponentAdapter() {
+    view.component.addComponentListener(object : ComponentAdapter() {
       override fun componentResized(e: ComponentEvent?) {
         val newSize = getTerminalSize() ?: return
         session.postResize(newSize)
@@ -39,8 +37,8 @@ class PlainTerminalView(
 
   // return preferred size of the terminal calculated from the component size
   override fun getTerminalSize(): TermSize? {
-    if (view.bounds.isEmpty) return null
-    val contentSize = Dimension(view.terminalWidth, view.height)
+    if (view.component.bounds.isEmpty) return null
+    val contentSize = Dimension(view.terminalWidth, view.component.height)
     return TerminalUiUtils.calculateTerminalSize(contentSize, view.charSize)
   }
 

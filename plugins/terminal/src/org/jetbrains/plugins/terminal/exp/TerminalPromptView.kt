@@ -25,10 +25,10 @@ class TerminalPromptView(
   private val settings: JBTerminalSystemSettingsProviderBase,
   session: TerminalSession,
   commandExecutor: TerminalCommandExecutor
-) : JPanel(), PromptStateListener, Disposable {
+) : PromptStateListener, Disposable {
   val controller: TerminalPromptController
+  val component: JComponent = JPanel()
 
-  val component: JComponent = this
   val preferredFocusableComponent: JComponent
     get() = editor.contentComponent
 
@@ -52,11 +52,12 @@ class TerminalPromptView(
                                          TerminalUI.promptBottomInset,
                                          TerminalUI.blockRightInset + TerminalUI.cornerToBlockInset)
     val outerBorder = JBUI.Borders.customLineTop(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground())
-    border = JBUI.Borders.compound(outerBorder, innerBorder)
+    component.border = JBUI.Borders.compound(outerBorder, innerBorder)
 
-    layout = ListLayout.vertical(TerminalUI.promptToCommandInset)
-    add(promptLabel)
-    add(editorTextField)
+    component.background = TerminalUI.terminalBackground
+    component.layout = ListLayout.vertical(TerminalUI.promptToCommandInset)
+    component.add(promptLabel)
+    component.add(editorTextField)
   }
 
   override fun promptLabelChanged(newText: @NlsSafe String) {
@@ -119,8 +120,6 @@ class TerminalPromptView(
     label.alignmentX = JComponent.LEFT_ALIGNMENT
     return label
   }
-
-  override fun getBackground(): Color = TerminalUI.terminalBackground
 
   override fun dispose() {}
 }
