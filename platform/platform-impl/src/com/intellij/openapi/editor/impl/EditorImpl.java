@@ -326,8 +326,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   public final boolean myDisableRtl = Registry.is("editor.disable.rtl");
 
-  private final boolean myUseInputMethodInlay = Registry.is("editor.input.method.inlay", false);
-
   /**
    * @deprecated use UISettings#getEditorFractionalMetricsHint instead
    */
@@ -3670,7 +3668,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     private Inlay<?> inlayRight;
 
     private @Nullable ProperTextRange getRange() {
-      if (myUseInputMethodInlay || composedRangeMarker == null) return null;
+      if (composedRangeMarker == null) return null;
       return new ProperTextRange(composedRangeMarker.getStartOffset(), composedRangeMarker.getEndOffset());
     }
 
@@ -3775,7 +3773,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     @Override
     public int getCommittedTextLength() {
       int length = getDocument().getTextLength();
-      if (!myUseInputMethodInlay && composedRangeMarker != null) {
+      if (composedRangeMarker != null) {
         length -= composedRangeMarker.getEndOffset() - composedRangeMarker.getStartOffset();
       }
       return length;
@@ -3808,7 +3806,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     private void setInputMethodCaretPosition(@NotNull InputMethodEvent e) {
-      if (!myUseInputMethodInlay && composedRangeMarker != null) {
+      if (composedRangeMarker != null) {
         int dot = composedRangeMarker.getStartOffset();
 
         TextHitInfo caretPos = e.getCaret();
@@ -3852,6 +3850,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
       boolean isCaretMoved = false;
       int caretPositionToRestore = 0;
+      int composedStartIndex = -1;
 
       int commitCount = e.getCommittedCharacterCount();
       AttributedCharacterIterator text = e.getText();
@@ -3859,34 +3858,39 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       // old composed text deletion
       Document doc = getDocument();
 
-      if (inlayLeft != null) {
-        Disposer.dispose(inlayLeft);
-        inlayLeft = null;
-      }
-      if (inlayRight != null) {
-        Disposer.dispose(inlayRight);
-        inlayRight = null;
+      if (inlayLeft != null || inlayRight != null) {
+        composedStartIndex = inlayLeft != null ? inlayLeft.getOffset() : inlayRight.getOffset();
+        if (inlayLeft != null) {
+          Disposer.dispose(inlayLeft);
+          inlayLeft = null;
+        }
+        if (inlayRight != null) {
+          Disposer.dispose(inlayRight);
+          inlayRight = null;
+        }
       }
       if (composedRangeMarker != null) {
-        if (!myUseInputMethodInlay && !isViewer() && doc.isWritable()) {
-          int composedStartIndex = composedRangeMarker.getStartOffset();
+        if (!isViewer() && doc.isWritable()) {
+          composedStartIndex = composedRangeMarker.getStartOffset();
           runUndoTransparent(() -> {
             if (composedRangeMarker.isValid()) {
               doc.deleteString(composedRangeMarker.getStartOffset(), composedRangeMarker.getEndOffset());
             }
           });
-          isCaretMoved = getCaretModel().getOffset() != composedStartIndex;
-          if (isCaretMoved) {
-            caretPositionToRestore = getCaretModel().getCurrentCaret().getOffset();
-            // if caret set further in the doc, we should add commitCount
-            if (caretPositionToRestore > composedStartIndex) {
-              caretPositionToRestore += commitCount;
-            }
-            getCaretModel().moveToOffset(composedStartIndex);
-          }
         }
         composedRangeMarker.dispose();
         composedRangeMarker = null;
+      }
+      if (composedStartIndex >= 0) {
+        isCaretMoved = getCaretModel().getOffset() != composedStartIndex;
+        if (isCaretMoved) {
+          caretPositionToRestore = getCaretModel().getCurrentCaret().getOffset();
+          // if caret set further in the doc, we should add commitCount
+          if (caretPositionToRestore > composedStartIndex) {
+            caretPositionToRestore += commitCount;
+          }
+          getCaretModel().moveToOffset(composedStartIndex);
+        }
       }
 
       if (text != null) {
@@ -3906,7 +3910,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           int composedTextIndex = text.getIndex();
           if (composedTextIndex < text.getEndIndex()) {
             String composedString = createComposedString(composedTextIndex, text);
-            if (myUseInputMethodInlay) {
+            if (Registry.is("editor.input.method.inlay")) {
               runUndoTransparent(() -> EditorModificationUtil.deleteSelectedTextForAllCarets(EditorImpl.this));
 
               var offset = getCaretModel().getCurrentCaret().getOffset();
